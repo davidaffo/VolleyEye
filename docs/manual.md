@@ -129,6 +129,14 @@ Soltanto alcuni eventi richiedono intervento manuale, ad esempio se dopo un appo
 
 Se disattivi il flusso automatico, per ogni giocatrice scegli tu il fondamentale da valutare. Il programma ti chiederà comunque tipo di alzata, traiettoria e valutazione prima di chiudere l'evento. Questa modalità è più lenta ed è generalmente sconsigliata.
 
+### Inserimento da codice DataVolley
+
+Nella colonna del log è disponibile anche l'inserimento tramite **codice DataVolley**. Puoi scrivere uno o più codici nella barra dedicata e premere **Applica** o invio per trasformarli in eventi dello scout.
+
+Questa modalità è pensata per chi conosce già la sintassi dei codici scouting e vuole lavorare più velocemente da tastiera. Il programma mostra l'ultimo codice riconosciuto e permette di aprire il manuale dei codici direttamente dal tasto di aiuto accanto al campo di inserimento.
+
+L'inserimento da codice e quello tramite interfaccia grafica possono essere alternati durante la stessa partita. Se un codice non è supportato o non è interpretabile nel contesto corrente, il programma lo segnala senza applicarlo.
+
 ### Traiettoria degli attacchi
 
 Il programma supporta due modalità:
@@ -284,6 +292,10 @@ Per ogni set viene disegnato un grafico del **delta punti**, cioè la differenza
 
 Cliccando sui punti del grafico puoi leggere un dettaglio del rally o della sequenza di eventi che ha portato a quel cambio di punteggio.
 
+### Play by play
+
+La sottosezione **Play by play** ricostruisce la sequenza dei rally e dei cambi di punteggio del set selezionato. Serve per leggere l'andamento della partita azione per azione, senza dover scorrere tutto il log eventi.
+
 ### Filtri condivisi
 
 Tutte le successive viste della sezione **Analisi** usano un sistema di filtri specifici, che si aggiungono a quelli principali di prima.
@@ -313,6 +325,21 @@ Le linee sono colorate in base all'esito dell'azione. Oltre alla mappa delle tra
 
 Ogni card mostra le traiettorie della singola atleta, così puoi vedere con facilità abitudini, direzioni preferite e distribuzione del servizio.
 
+### Foglio gara
+
+La sottosezione **Foglio gara** prepara una vista compatta pensata per la stampa e la consultazione rapida a bordo campo. Il foglio è organizzato in formato orizzontale e riassume graficamente le informazioni principali della squadra analizzata.
+
+Il foglio contiene:
+
+- dati individuali delle giocatrici, con campetti per servizio e attacco
+- una sezione **Difesa**, organizzata per provenienza dell'attacco
+- una sezione **Cambio palla**, divisa per rotazione
+- note modificabili sotto i singoli campetti, che vengono mantenute anche in stampa
+
+Le traiettorie derivano dagli eventi realmente registrati durante lo scout. Nel cambio palla le traiettorie partono dalla zona reale dell'attacco: dalla rete per gli attacchi di prima linea e dalla linea dei tre metri per quelli di seconda linea.
+
+Gli attacchi errore sono esclusi di default dalle traiettorie del foglio gara, ma possono essere reinclusi tramite il filtro dedicato.
+
 ### Scheda atleta e confronto
 
 La sezione **Giocatrice** permette di selezionare un'atleta e vedere una scheda completa con tutti i dati delle altre sezioni di analisi (tabellino, traiettorie ecc...)
@@ -322,6 +349,8 @@ Puoi anche attivare il **confronto tra giocatrici**. In questo caso il programma
 ### Esportazione dell'analisi
 
 È possibile esportare l'intera analisi in formato html. In questo modo chiunque, da qualunque dispositivo, ha accesso a tutte le funzionalità di analisi in modo interattivo senza dover per forza utilizzare il programma.
+
+È disponibile anche il comando **Stampa / PDF**, che prepara l'analisi per la stampa o per il salvataggio come PDF tramite le funzioni del browser.
 
 ### Nota importante sulle metriche
 
@@ -432,6 +461,19 @@ Alcuni eventi sono collegati, ad esempio battuta e ricezione, attacco muro e dif
 
 In questo caso basta sincronizzare solo, ad esempio, tutte le battute, e poi premere il taasto apposito per sincronizzare automaticamente tutte le ricezioni allo stesso tempo.
 
+### Strumenti avanzati della sezione video
+
+La sezione video include alcuni strumenti aggiuntivi per correggere e rifinire il lavoro di sincronizzazione:
+
+- **Correggi punteggio**: modifica il punteggio associato agli eventi quando trova incongruenze tra gli eventi o se è stato aggiunto manualmente un evento mancante
+- **Aggiungi evento**: inserisce un evento mancante direttamente dalla sezione video
+- **Offset skill**: applica uno spostamento temporale agli eventi filtrati, anche per fondamentale. Particolarmente utile in fase di sincronizzazione per applicare il ritardo di un determinato fondamentale in base al ritardo di inserimento dello scout man
+- **Unifica tempi**: copia il tempo video tra eventi collegati, ad esempio battuta e ricezione oppure attacco, muro e difesa
+- **Durata skill**: imposta il tempo di visualizzazione usato nel play by play video
+- **Frame - / Frame +**: permette di spostarsi nel video frame by frame, usando anche le scorciatoie **Shift + freccia sinistra/destra**
+
+Puoi inoltre salvare **preset di filtri video**. In questo modo puoi richiamare rapidamente combinazioni ricorrenti, ad esempio gli attacchi di una giocatrice, le ricezioni negative, le azioni in una rotazione specifica o un certo tipo di servizio.
+
 ### Cosa succede dopo la sincronizzazione
 
 Una volta sincronizzato il match:
@@ -444,10 +486,12 @@ Una volta sincronizzato il match:
 
 ## Backup, import ed export
 
-Esporta spesso, soprattutto prima di aggiornare l'app o di importare dati grossi.
-
 - **Esporta match** → per salvare una singola partita su file
 - **Esporta database completo** → giocatrici, squadre e tutti i match in un unico backup
 - **Importa match** → per aggiungere una partita senza toccare il resto
 - **Importa database** → solo per sostituire o ripristinare l'intero archivio
 - **Esporta DataVolley** → per esportare i dati in formato compatibile con altri programmi
+
+Puoi importare anche da **URL**, sia per un singolo match sia per un database completo. Questa funzione serve quando il file è già pubblicato o condiviso tramite un link di download diretto.
+
+Il link deve essere raggiungibile dal browser e deve puntare a un file compatibile con l'importazione selezionata. Se il provider blocca il download diretto o non permette l'accesso via browser, l'importazione da URL può fallire: in quel caso usa l'importazione da file locale.
