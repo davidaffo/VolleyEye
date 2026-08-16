@@ -2,18 +2,18 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8" />
-  <title>Simple Volleyball Scout PWA</title>
+  <title>VolleyEye</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#111111" />
   <script>
-    window.__APP_CACHE_VERSION__ = "v373-8a32961";
+    window.__APP_CACHE_VERSION__ = "v375-882a16d";
     window.__IS_LOCALHOST_DEV__ =
       location.hostname === "localhost" ||
       location.hostname === "127.0.0.1" ||
       location.hostname === "::1";
     window.__APP_ASSET_SUFFIX__ = window.__IS_LOCALHOST_DEV__
       ? `?dev=${Date.now()}`
-      : `?v=v373-8a32961`;
+      : `?v=v375-882a16d`;
     if (location.protocol === "file:") {
       document.documentElement.dataset.fileOrigin = "true";
     }
@@ -27,6 +27,11 @@
     appleIcon.rel = "apple-touch-icon";
     appleIcon.href = `icons/icon-192.png${window.__APP_ASSET_SUFFIX__}`;
     document.head.appendChild(appleIcon);
+    const favicon = document.createElement("link");
+    favicon.rel = "icon";
+    favicon.type = "image/png";
+    favicon.href = `icons/icon-192.png${window.__APP_ASSET_SUFFIX__}`;
+    document.head.appendChild(favicon);
     if (location.protocol !== "file:") {
       const manifest = document.createElement("link");
       manifest.rel = "manifest";
@@ -44,7 +49,7 @@
     </div>
   </div>
   <div class="tabs-nav centered">
-    <h1 class="app-title">Simple Volleyball Scout PWA</h1>
+    <h1 class="app-title">VolleyEye</h1>
     <a class="manual-link-btn hidden" href="docs/markdown-viewer.html?doc=manual.md&title=Manuale">Manuale</a>
     <button class="tab-btn" data-tab-target="match">Gestione match</button>
     <button class="tab-btn active" data-tab-target="info">Impostazioni</button>
@@ -2278,7 +2283,7 @@
   <button id="floating-serve-error-btn" class="floating-serve-error-btn hidden" type="button" aria-label="Battuta errore">=</button>
   <footer class="app-footer" role="contentinfo">
     <div class="app-footer-meta">
-      <span><strong>Simple Volleyball Scout PWA</strong></span>
+      <span><strong>VolleyEye</strong></span>
       <span>Versione <span id="app-version-label">0.1.0</span></span>
       <span>Autore: Davide Daffonchio</span>
       <span>Licenza: GPL-3.0</span>
@@ -2296,7 +2301,7 @@
       </a>
       <a
         class="app-footer-github"
-        href="https://github.com/davidaffo/Simple-Volleyball-Scout-PWA"
+        href="https://github.com/davidaffo/VolleyEye"
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Apri repository GitHub"

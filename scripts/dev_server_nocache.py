@@ -37,7 +37,7 @@ class ReusableTCPServer(socketserver.TCPServer):
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Static dev server (no-cache) for Simple Volleyball Scout PWA")
+    parser = argparse.ArgumentParser(description="Static dev server (no-cache) for VolleyEye")
     parser.add_argument("--port", "-p", type=int, default=int(os.environ.get("PORT", "8000")))
     parser.add_argument("--host", default=os.environ.get("HOST", "127.0.0.1"))
     args = parser.parse_args()

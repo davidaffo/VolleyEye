@@ -1,8 +1,8 @@
-# Manuale · Simple Volleyball Scout PWA
+# Manuale · VolleyEye
 
 ## Cos'è e cosa fa
 
-Simple Volleyball Scout PWA è un'applicazione gratuita e open source per la rilevazione statistica delle partite di pallavolo. L'obiettivo è offrire le stesse funzionalità dei software professionali del settore, cercando di avvicinarsi il più possibile ai loro standard e formati.
+VolleyEye è un'applicazione gratuita e open source per la rilevazione statistica delle partite di pallavolo. L'obiettivo è offrire le stesse funzionalità dei software professionali del settore, cercando di avvicinarsi il più possibile ai loro standard e formati.
 
 Supporta la rilevazione sia in diretta che da video, utilizzabile tramite interfaccia grafica o tramite i codici standard inseriti da tastiera. I dati raccolti possono essere analizzati attraverso un'interfaccia dedicata, con supporto anche per i formati standard di altri programmi. È inoltre disponibile la funzionalità di sincronizzazione e analisi video.
 

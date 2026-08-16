@@ -1,6 +1,6 @@
 {
-  "name": "Simple Volleyball Scout PWA",
-  "short_name": "Simple Volley Scout",
+  "name": "VolleyEye",
+  "short_name": "VolleyEye",
   "id": "./",
   "start_url": ".",
   "scope": ".",

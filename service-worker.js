@@ -1,10 +1,10 @@
-const APP_CACHE_VERSION = "v373-8a32961";
+const APP_CACHE_VERSION = "v375-882a16d";
 const withVersion = asset => `${asset}?v=${encodeURIComponent(APP_CACHE_VERSION || "dev")}`;
 
 importScripts(withVersion("./js/app-version.js"));
 const CACHE_VERSION =
   (self.__APP_VERSION__ && self.__APP_VERSION__.cacheVersion) || "dev";
-const CACHE_NAME = `volley-scout-cache-${CACHE_VERSION}`;
+const CACHE_NAME = `volleyeye-cache-${CACHE_VERSION}`;
 const ASSETS = [
   "./",
   "./index.html",

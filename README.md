@@ -1,4 +1,4 @@
-# Simple Volleyball Scout PWA
+# VolleyEye
 
 Applicazione PWA per lo scouting della pallavolo, utilizzabile offline, con flusso di inserimento eventi in tempo reale e strumenti di analisi (anche su video). Ottimizzata anche per l'uso da smartphone.
 

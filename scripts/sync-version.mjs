@@ -37,7 +37,7 @@ const baseVersion =
   "0.0.0";
 const appName =
   (versionConfig && typeof versionConfig.appName === "string" && versionConfig.appName.trim()) ||
-  "Simple Volleyball Scout PWA";
+  "VolleyEye";
 const commitCount = Number(runGit("git rev-list --count HEAD", "0")) || 0;
 const commitHash = runGit("git rev-parse --short HEAD", "dev");
 const version = `${baseVersion}+${commitCount}.${commitHash}`;

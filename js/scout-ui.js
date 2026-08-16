@@ -5,7 +5,7 @@ function getEnabledSkills() {
   });
 }
 const APP_RESET_SIGNAL_KEY = "volleyScoutResetSignal";
-const APP_RESET_CHANNEL = "volley-scout-reset";
+const APP_RESET_CHANNEL = "volleyeye-reset";
 let resetSyncChannel = null;
 let lastHandledResetSignal = "";
 function navigateToResetBootstrap() {
@@ -21679,7 +21679,7 @@ async function openAnalysisPrintLayout() {
 function buildMatchExportPayload() {
   syncEventPlayerLinks(state.events || []);
   return {
-    app: "simple-volley-scout",
+    app: "volleyeye",
     version: 1,
     exportedAt: new Date().toISOString(),
     state: {
@@ -22654,13 +22654,13 @@ function buildDataVolleyDvwString() {
   sections.push("FILEFORMAT: 2.0");
   sections.push(`GENERATOR-DAY: ${formatDvDateTime(new Date())}`);
   sections.push("GENERATOR-IDP: DVW");
-  sections.push("GENERATOR-PRG: Simple Volleyball Scout PWA");
+  sections.push("GENERATOR-PRG: VolleyEye");
   sections.push(`GENERATOR-REL: ${window.__APP_VERSION__ && window.__APP_VERSION__.version ? window.__APP_VERSION__.version : "custom"}`);
   sections.push("GENERATOR-VER: Custom");
-  sections.push(`GENERATOR-NAM: ${sanitizeDvField(ourTeam.staff && ourTeam.staff.manager) || "Simple Volleyball Scout PWA"}`);
+  sections.push(`GENERATOR-NAM: ${sanitizeDvField(ourTeam.staff && ourTeam.staff.manager) || "VolleyEye"}`);
   sections.push(`LASTCHANGE-DAY: ${formatDvDateTime(new Date())}`);
   sections.push("LASTCHANGE-IDP: datavolley");
-  sections.push("LASTCHANGE-PRG: simple-volley-scout");
+  sections.push("LASTCHANGE-PRG: volleyeye");
   sections.push(`LASTCHANGE-REL: ${window.__APP_VERSION__ && window.__APP_VERSION__.version ? window.__APP_VERSION__.version : "custom"}`);
   sections.push("LASTCHANGE-VER: ");
   sections.push("LASTCHANGE-NAM: ");
@@ -24812,7 +24812,7 @@ function handleImportDatabaseFile(file) {
     try {
       const txt = (e.target && e.target.result) || "";
       const parsed = JSON.parse(txt);
-      if (parsed && parsed.app === "simple-volley-scout" && parsed.state) {
+      if (parsed && ["volleyeye", "simple-volley-scout"].includes(parsed.app) && parsed.state) {
         applyImportedDatabase(parsed);
       } else {
         applyImportedDatabase({ state: parsed });
@@ -24960,7 +24960,7 @@ async function importMatchFromUrl(url) {
 async function importDatabaseFromUrl(url) {
   try {
     const parsed = await fetchJsonFromUrl(url);
-    if (parsed && parsed.app === "simple-volley-scout" && parsed.state) {
+    if (parsed && ["volleyeye", "simple-volley-scout"].includes(parsed.app) && parsed.state) {
       applyImportedDatabase(parsed);
     } else {
       applyImportedDatabase({ state: parsed });
@@ -25195,7 +25195,7 @@ function buildAnalysisPdfLines() {
   const setsData = computeSetScores();
   const pointsSummary = computePointsSummary();
   const aggData = buildAggregatedDataForPdf();
-  lines.push("Simple Volleyball Scout - Analisi");
+  lines.push("VolleyEye - Analisi");
   const infoParts = [];
   if (matchInfo.opponent) infoParts.push("Avversario: " + matchInfo.opponent);
   if (matchInfo.category) infoParts.push("Categoria: " + matchInfo.category);

@@ -1,10 +1,10 @@
 # DataVolley Code Rules
 
 Riferimenti usati:
-- [resources/DataVolleyMedia_handbook.pdf](/home/davidaffo/Coding/Simple-Volleyball-Scout-PWA/resources/DataVolleyMedia_handbook.pdf)
-- [resources/Example file.csv](/home/davidaffo/Coding/Simple-Volleyball-Scout-PWA/resources/Example%20file.csv)
-- [resources/data volley example file.dvw](/home/davidaffo/Coding/Simple-Volleyball-Scout-PWA/resources/data%20volley%20example%20file.dvw)
-- corpus reale `.dvw` aggiuntivo in [resources](/home/davidaffo/Coding/Simple-Volleyball-Scout-PWA/resources)
+- [resources/DataVolleyMedia_handbook.pdf](../resources/DataVolleyMedia_handbook.pdf)
+- [resources/Example file.csv](../resources/Example%20file.csv)
+- [resources/data volley example file.dvw](../resources/data%20volley%20example%20file.dvw)
+- corpus reale `.dvw` aggiuntivo in [resources](../resources)
 
 Questo file raccoglie le regole operative del codice DataVolley per la modalita di inserimento scout via codici.
 Qui dentro distinguo:
@@ -17,7 +17,7 @@ Qui dentro distinguo:
 Panoramica attuale del corpus:
 
 - file `.dvw` analizzati: `23`
-- cartella: [resources](/home/davidaffo/Coding/Simple-Volleyball-Scout-PWA/resources)
+- cartella: [resources](../resources)
 
 Sezioni presenti in tutti i file del corpus:
 
