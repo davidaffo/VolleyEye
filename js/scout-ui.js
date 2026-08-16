@@ -22917,6 +22917,49 @@ function applyImportedMatch(nextState, options = {}) {
     alert("Match importato correttamente.");
   }
 }
+
+const DEFAULT_DEMO_MATCH_URL = "./match_demo.json";
+const DEFAULT_DEMO_MATCH_NAME = "Match demo - Aurora Volley - Riviera Volley";
+
+async function loadDefaultDemoMatch() {
+  try {
+    const response = await fetch(DEFAULT_DEMO_MATCH_URL, { cache: "no-cache" });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const payload = await response.json();
+    if (!payload || !payload.state) {
+      throw new Error("Payload demo non valido");
+    }
+    applyImportedMatch(payload.state, { silent: true });
+    state.selectedMatch = DEFAULT_DEMO_MATCH_NAME;
+    state.loadedMatchName = DEFAULT_DEMO_MATCH_NAME;
+    const savedPayload = Object.assign({}, payload, { name: DEFAULT_DEMO_MATCH_NAME });
+    state.savedMatches = state.savedMatches || {};
+    state.savedMatches[DEFAULT_DEMO_MATCH_NAME] = savedPayload;
+    if (typeof saveMatchToStorage === "function") {
+      saveMatchToStorage(DEFAULT_DEMO_MATCH_NAME, savedPayload);
+    }
+    if (typeof persistCurrentMatch === "function") {
+      persistCurrentMatch({ allowCreate: false });
+    }
+    if (typeof syncMatchesFromStorage === "function") {
+      syncMatchesFromStorage();
+    }
+    saveState({ persistLocal: true });
+    return true;
+  } catch (error) {
+    logError("Error loading default demo match", error);
+    return false;
+  }
+}
+function showDefaultDemoWelcomePopup() {
+  alert(
+    "Benvenuto in VolleyEye!\n\n" +
+      "È stato caricato un match demo con squadre e giocatrici fittizie, già pronto per essere provato e analizzato dalla schermata Analisi.\n\n" +
+      "I nomi sono puramente inventati; ogni riferimento a persone o cose reali è puramente casuale."
+  );
+}
 function applyImportedDatabase(nextState) {
   if (!nextState || !nextState.state) {
     alert("File database non valido.");
@@ -26649,17 +26692,39 @@ async function init() {
     }
   }
   let loadedFromIndexedDb = false;
+  let loadedFromLocalStorage = false;
+  let defaultDemoCreated = false;
   if (isExportAnalysisHtml && typeof window !== "undefined" && window.__exportedAnalysisState) {
     applyStateSnapshot(window.__exportedAnalysisState, { skipStorageSync: true });
   } else if (!isExportAnalysisHtml && !resetRequestedByUrl && !resetJustCompleted && typeof loadStateFromIndexedDb === "function") {
     loadedFromIndexedDb = await loadStateFromIndexedDb();
   }
   if (!isExportAnalysisHtml && !resetRequestedByUrl && !resetJustCompleted && !loadedFromIndexedDb) {
-    loadState();
+    loadedFromLocalStorage = loadState();
+  }
+  const hasStoredCollections =
+    (typeof listMatchesFromStorage === "function" && listMatchesFromStorage().length > 0) ||
+    (typeof listTeamsFromStorage === "function" && listTeamsFromStorage().length > 0);
+  const hasMatchLink = typeof readMatchLinkParam === "function" && !!readMatchLinkParam();
+  const hasPersistedData = loadedFromIndexedDb || loadedFromLocalStorage || hasStoredCollections || hasMatchLink;
+  if (!isExportAnalysisHtml && !hasPersistedData) {
+    defaultDemoCreated = await loadDefaultDemoMatch();
   }
   applyVideoLayoutWidths();
   if (!isExportAnalysisHtml && typeof syncMatchesFromStorage === "function") {
     syncMatchesFromStorage();
+  }
+  // La sincronizzazione legge lo storage dei match; ribadisci il demo appena
+  // creato per mantenerlo disponibile anche quando lo snapshot è stato scritto
+  // prima del primo render.
+  if (defaultDemoCreated && typeof getCurrentMatchPayload === "function") {
+    state.selectedMatch = DEFAULT_DEMO_MATCH_NAME;
+    state.loadedMatchName = DEFAULT_DEMO_MATCH_NAME;
+    state.savedMatches = state.savedMatches || {};
+    state.savedMatches[DEFAULT_DEMO_MATCH_NAME] = getCurrentMatchPayload(DEFAULT_DEMO_MATCH_NAME);
+    if (typeof saveMatchToStorage === "function") {
+      saveMatchToStorage(DEFAULT_DEMO_MATCH_NAME, state.savedMatches[DEFAULT_DEMO_MATCH_NAME]);
+    }
   }
   state.setResults = state.setResults || {};
   state.setStarts = state.setStarts || {};
@@ -28937,6 +29002,9 @@ async function init() {
     } else {
       alert("Match importato dal link.");
     }
+  }
+  if (defaultDemoCreated) {
+    showDefaultDemoWelcomePopup();
   }
 }
 document.addEventListener("DOMContentLoaded", init);

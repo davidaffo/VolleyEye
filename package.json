@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "version:sync": "node scripts/sync-version.mjs",
+    "dev": "npm run serve",
     "serve": "npm run version:sync && npx serve . --listen ${PORT:-3000}",
-    "serve:local": "npm run version:sync && python3 scripts/dev_server_nocache.py --port ${PORT:-8000}",
     "tunnel": "npm run version:sync && PORT=${PORT:-3000} bash serve-tunnel.sh"
   }
 }

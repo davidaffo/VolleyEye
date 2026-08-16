@@ -2745,7 +2745,15 @@ function migrateMatchesToPersistent(options = {}) {
   });
 }
 function syncMatchesFromStorage() {
-  state.savedMatches = loadMatchesMapFromStorage();
+  const storedMatches = loadMatchesMapFromStorage();
+  // Mantieni i match presenti nello snapshot quando lo storage dedicato non è
+  // ancora disponibile (ad esempio al primo avvio dopo il caricamento demo).
+  state.savedMatches =
+    Object.keys(storedMatches).length > 0
+      ? storedMatches
+      : state.savedMatches && typeof state.savedMatches === "object"
+        ? state.savedMatches
+        : {};
   const names = Object.keys(state.savedMatches || {});
   if (state.selectedMatch && !names.includes(state.selectedMatch)) {
     state.selectedMatch = "";
