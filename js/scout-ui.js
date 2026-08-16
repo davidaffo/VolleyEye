@@ -14047,6 +14047,9 @@ function syncFirstSkillToVideo() {
   });
   saveState({ persistLocal: true });
   renderVideoAnalysis();
+  if (typeof window !== "undefined" && window.trackVolleyEyeEventOnce) {
+    window.trackVolleyEyeEventOnce("video_sync_used");
+  }
 }
 function ensureScoreOverrides() {
   const normalized = normalizeScoreOverrides(state.scoreOverrides || {});
@@ -15247,6 +15250,16 @@ function addManualPoint(
     return;
   }
   cancelPartialSkillFlowForScope(scope);
+  if (
+    (!state.events || state.events.length === 0) &&
+    typeof window !== "undefined" &&
+    window.trackVolleyEyeEventOnce
+  ) {
+    window.trackVolleyEyeEventOnce("scout_started", {
+      scout_mode: state.predictiveSkillFlow ? "guided" : "manual",
+      team_scope: state.useOpponentTeam ? "both" : "our"
+    });
+  }
   state.freeballPending = false;
   const playerId = getPlayerIdForScope(scope, playerIdx, playerName);
   const event = buildBaseEventPayload({
@@ -15544,6 +15557,9 @@ function endMatch() {
     nextFinished: true,
     actionType: "match-end"
   });
+  if (typeof window !== "undefined" && window.trackVolleyEyeEventOnce) {
+    window.trackVolleyEyeEventOnce("match_completed", { set_count: current });
+  }
 }
 function renderScoreAndRotations(summary, teamScope = "our", options = {}) {
   const scoreSummary = summary || computePointsSummary(null, { teamScope, events: options.events });
@@ -21772,6 +21788,9 @@ async function exportMatchToFile() {
   const opponentSlug = safeMatchSlug();
   const blob = new Blob([json], { type: "application/json" });
   downloadBlob(blob, "match_" + opponentSlug + ".json");
+  if (typeof window !== "undefined" && window.trackVolleyEyeEventOnce) {
+    window.trackVolleyEyeEventOnce("match_exported", { export_format: "json" });
+  }
 }
 function padDv(value, size = 2) {
   const num = parseInt(value, 10);
@@ -22750,6 +22769,9 @@ async function exportDataVolleyToFile() {
   }
   const blob = new Blob([dvw], { type: "text/plain;charset=utf-8" });
   downloadBlob(blob, "match_" + safeMatchSlug() + ".dvw");
+  if (typeof window !== "undefined" && window.trackVolleyEyeEventOnce) {
+    window.trackVolleyEyeEventOnce("match_exported", { export_format: "datavolley" });
+  }
 }
 function encodePayloadForLink(payload) {
   try {
@@ -22888,6 +22910,9 @@ function applyImportedMatch(nextState, options = {}) {
   renderEventsLog();
   renderTeamsSelect();
   renderOpponentTeamsSelect();
+  if (typeof window !== "undefined" && window.trackVolleyEyeEventOnce) {
+    window.trackVolleyEyeEventOnce("match_imported");
+  }
   if (!silent) {
     alert("Match importato correttamente.");
   }
@@ -25312,6 +25337,9 @@ function exportAnalysisPdf() {
     alert("Nessun evento da esportare.");
     return;
   }
+  if (typeof window !== "undefined" && window.trackVolleyEyeEventOnce) {
+    window.trackVolleyEyeEventOnce("match_exported", { export_format: "pdf" });
+  }
   openAnalysisPrintLayout().catch(err => {
     console.error("Print layout failed", err);
     alert("Impossibile aprire il layout di stampa.");
@@ -25532,6 +25560,9 @@ async function exportAnalysisHtml() {
   if (!aggPanel) {
     alert("Pannello analisi non trovato.");
     return;
+  }
+  if (typeof window !== "undefined" && window.trackVolleyEyeEventOnce) {
+    window.trackVolleyEyeEventOnce("match_exported", { export_format: "html" });
   }
   const prevTab = activeTab;
   const prevAggTab = activeAggTab || "summary";
@@ -26333,6 +26364,9 @@ function setActiveTab(target) {
     resetAttackShortcutModals();
   }
   activeTab = target;
+  if (target === "aggregated" && typeof window !== "undefined" && window.trackVolleyEyeEventOnce) {
+    window.trackVolleyEyeEventOnce("analysis_opened");
+  }
   state.uiActiveTab = target;
   if (!isLoadingMatch) saveState();
   document.body.dataset.activeTab = target;
