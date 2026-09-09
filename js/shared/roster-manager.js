@@ -14,6 +14,9 @@
       renderLiberoTags,
       applyTextarea,
       allowCaptain = true,
+      canUpdateRoster = null,
+      sanitizeState = null,
+      onRenameReferences = null,
       liberoKey = "liberos",
       captainKey = "captains",
       playersKey = "players",
@@ -29,6 +32,10 @@
         captains = state[captainKey] || []
       } = options;
       const normalized = normalizePlayers(list || []);
+      if (typeof canUpdateRoster === "function" && !canUpdateRoster(normalized, options)) {
+        return false;
+      }
+      if (typeof options.beforeCommit === "function") options.beforeCommit();
       state[playersKey] = normalized;
       state[numbersKey] = buildNumbersForNames(normalized, playerNumbers, state[numbersKey] || {});
       const libSet = new Set(normalizePlayers(liberos));
@@ -38,10 +45,12 @@
           .filter(name => normalized.includes(name))
           .slice(0, 1);
       }
+      if (typeof sanitizeState === "function") sanitizeState();
       saveState();
       applyTextarea();
       renderList();
       renderLiberoTags();
+      return true;
     }
 
     function addPlayer(name) {
@@ -80,13 +89,22 @@
       }
       next[idx] = clean;
       const numbers = Object.assign({}, state[numbersKey] || {});
-      if (numbers[oldName]) {
+      if (Object.prototype.hasOwnProperty.call(numbers, oldName)) {
         numbers[clean] = numbers[oldName];
         delete numbers[oldName];
       }
       const liberos = (state[liberoKey] || []).map(n => (n === oldName ? clean : n));
       const captains = (state[captainKey] || []).map(n => (n === oldName ? clean : n));
-      updateRoster(next, { liberos, playerNumbers: numbers, captains });
+      updateRoster(next, {
+        liberos,
+        playerNumbers: numbers,
+        captains,
+        beforeCommit: () => {
+          if (typeof onRenameReferences === "function") {
+            onRenameReferences(oldName, clean, idx);
+          }
+        }
+      });
     }
 
     function handleNumberChange(name, rawNumber) {

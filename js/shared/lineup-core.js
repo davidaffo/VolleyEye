@@ -49,7 +49,16 @@
     if (!name) return shaped;
 
     const libSet = new Set(liberos);
-    const reserved = reserveNamesInCourt(name, shaped);
+    // Moving a libero already on court must restore the player it was replacing.
+    // Clearing only the libero name would leave a dangling `replaced` player in
+    // the old slot and that player would disappear from both court and bench.
+    const restored = shaped.map(slot => {
+      if (slot.main === name && libSet.has(name) && slot.replaced) {
+        return { main: slot.replaced, replaced: "" };
+      }
+      return slot;
+    });
+    const reserved = reserveNamesInCourt(name, restored);
     const slot = reserved[posIdx] || { main: "", replaced: "" };
     const prevMain = slot.main;
     const updated = Object.assign({}, slot);
@@ -69,6 +78,16 @@
   function swapCourtSlots(options) {
     const { court, fromIdx, toIdx } = options || {};
     const shaped = ensureCourtShapeFor(court);
+    if (
+      !Number.isInteger(fromIdx) ||
+      !Number.isInteger(toIdx) ||
+      fromIdx < 0 ||
+      toIdx < 0 ||
+      fromIdx >= shaped.length ||
+      toIdx >= shaped.length
+    ) {
+      return shaped;
+    }
     if (fromIdx === toIdx) return shaped;
     const next = cloneCourtLineup(shaped);
     const tmp = next[fromIdx];

@@ -1,4 +1,4 @@
-const APP_CACHE_VERSION = "v382-bbbdc9b";
+const APP_CACHE_VERSION = "v383-3b78db8";
 const withVersion = asset => `${asset}?v=${encodeURIComponent(APP_CACHE_VERSION || "dev")}`;
 
 importScripts(withVersion("./js/app-version.js"));
@@ -13,6 +13,7 @@ const ASSETS = [
   "./match_demo.json",
   withVersion("./js/app-version.js"),
   withVersion("./js/globals.js"),
+  withVersion("./js/shared/state-isolation.js"),
   withVersion("./js/shared/team-ui.js"),
   withVersion("./js/shared/lineup-core.js"),
   withVersion("./js/shared/auto-role.js"),
@@ -29,6 +30,10 @@ const ASSETS = [
   "./images/trajectory/attack_2_far.png",
   "./images/trajectory/attack_3_far.png",
   "./images/trajectory/attack_4_far.png",
+  "./images/trajectory/service_start_near.png",
+  "./images/trajectory/service_start_far.png",
+  "./images/trajectory/service_end_near.png",
+  "./images/trajectory/service_end_far.png",
   withVersion("./manifest.json"),
   withVersion("./icons/icon-192.png"),
   withVersion("./icons/icon-512.png"),
@@ -41,6 +46,7 @@ const NETWORK_FIRST_PATHS = new Set([
   "/manifest.json",
   "/js/app-version.js",
   "/js/globals.js",
+  "/js/shared/state-isolation.js",
   "/js/shared/team-ui.js",
   "/js/shared/lineup-core.js",
   "/js/shared/auto-role.js",
@@ -91,8 +97,10 @@ self.addEventListener("fetch", event => {
     event.respondWith(
       fetch(request)
         .then(response => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+          if (response && response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+          }
           return response;
         })
         .catch(() =>
@@ -119,8 +127,10 @@ self.addEventListener("fetch", event => {
     event.respondWith(
       fetch(request)
         .then(response => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+          if (response && response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+          }
           return response;
         })
         .catch(() => caches.match(request))
@@ -133,8 +143,10 @@ self.addEventListener("fetch", event => {
     caches.match(request).then(cached => {
       const fetchPromise = fetch(request)
         .then(response => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+          if (response && response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+          }
           return response;
         })
         .catch(() => cached);

@@ -35,8 +35,12 @@ const INTELLISCOUT_RECEIVE_ASSIGNMENTS = Object.freeze({
  */
 (function attachAutoRole(windowObj) {
   function createAutoRole(config) {
+    config = config || {};
     const baseRoles = config.baseRoles || ["P", "S1", "C2", "O", "S2", "C1"];
-    const frontRowIndexes = config.frontRowIndexes || new Set([1, 2, 3]);
+    const frontRowIndexes =
+      config.frontRowIndexes instanceof Set
+        ? config.frontRowIndexes
+        : new Set(config.frontRowIndexes || [1, 2, 3]);
     const ensureCourtShapeFor =
       config.ensureCourtShapeFor ||
       (court =>
@@ -67,7 +71,7 @@ const INTELLISCOUT_RECEIVE_ASSIGNMENTS = Object.freeze({
     }
 
     function buildP1AmericanReceive(lineup, rotation, enabled) {
-      if (rotation !== 1 || !enabled) return null;
+      if (clampRot(rotation) !== 1 || !enabled) return null;
       const roleItems = buildRoleItems(lineup, rotation);
       const opposite = roleItems.find(r => r.role === "O");
       const outsides = roleItems.filter(r => r.role === "S1" || r.role === "S2");

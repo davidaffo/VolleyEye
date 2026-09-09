@@ -252,15 +252,22 @@ function logError(context, err) {
 function pickImageFile(accept = "image/*") {
   return new Promise(resolve => {
     const input = document.createElement("input");
+    let settled = false;
+    const finish = file => {
+      if (settled) return;
+      settled = true;
+      resolve(file || null);
+    };
     input.type = "file";
     input.accept = accept;
     input.addEventListener(
       "change",
       () => {
-        resolve((input.files && input.files[0]) || null);
+        finish((input.files && input.files[0]) || null);
       },
       { once: true }
     );
+    input.addEventListener("cancel", () => finish(null), { once: true });
     input.click();
   });
 }
@@ -384,6 +391,9 @@ async function openPlayerPhotoEditor(sourceUrl, options = {}) {
   if (!elPlayerPhotoModal || !elPlayerPhotoStage || !elPlayerPhotoImage || !elPlayerPhotoZoom) {
     throw new Error("player-photo-modal-missing");
   }
+  if (typeof playerPhotoEditorState.resolve === "function") {
+    closePlayerPhotoEditor(null);
+  }
   const img = await loadImageElement(sourceUrl);
   playerPhotoEditorState.image = img;
   playerPhotoEditorState.sourceUrl = sourceUrl;
@@ -413,8 +423,13 @@ async function preparePlayerPhotoDataUrl(file, options = {}) {
     throw new Error("invalid-image");
   }
   const sourceUrl = URL.createObjectURL(file);
-  const edited = await openPlayerPhotoEditor(sourceUrl, options);
-  return edited || "";
+  try {
+    const edited = await openPlayerPhotoEditor(sourceUrl, options);
+    return edited || "";
+  } catch (error) {
+    URL.revokeObjectURL(sourceUrl);
+    throw error;
+  }
 }
 function handlePlayerPhotoPointerDown(ev) {
   if (!playerPhotoEditorState.image || !elPlayerPhotoStage || !(ev.target instanceof HTMLElement)) return;

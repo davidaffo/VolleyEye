@@ -13,6 +13,7 @@
       renderOpponentPlayersList,
       renderOpponentLiberoTags,
       applyOpponentPlayersFromStateToTextarea,
+      onRenameReferences,
       elNewOpponentPlayerInput,
       elOpponentPlayersInput
     } = deps || {};
@@ -31,6 +32,29 @@
         renderLiberoTags: renderOpponentLiberoTags,
         applyTextarea: applyOpponentPlayersFromStateToTextarea,
         allowCaptain: true,
+        canUpdateRoster: (nextPlayers, options = {}) => {
+          if (options.allowDuringMatch) return true;
+          const current = normalizePlayers(state.opponentPlayers || []);
+          const same =
+            current.length === nextPlayers.length &&
+            current.every((name, index) => name === nextPlayers[index]);
+          if (!same && Array.isArray(state.events) && state.events.length > 0) {
+            alert(
+              "Il roster avversario non può essere sostituito durante lo scout. Usa Modifica rapida per aggiungere o correggere giocatrici."
+            );
+            return false;
+          }
+          return true;
+        },
+        sanitizeState: () => {
+          if (
+            window.VolleyEyeStateIsolation &&
+            typeof window.VolleyEyeStateIsolation.sanitizeRosterScope === "function"
+          ) {
+            window.VolleyEyeStateIsolation.sanitizeRosterScope(state, "opponent");
+          }
+        },
+        onRenameReferences,
         liberoKey: "opponentLiberos",
         captainKey: "opponentCaptains",
         playersKey: "opponentPlayers",
@@ -38,8 +62,8 @@
       });
 
     function updateOpponentPlayersList(players, options = {}) {
-      if (!rosterManager) return;
-      rosterManager.updateRoster(players, options);
+      if (!rosterManager) return false;
+      return rosterManager.updateRoster(players, options);
     }
 
     function addOpponentPlayer(name) {
