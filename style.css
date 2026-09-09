@@ -408,6 +408,8 @@ body[data-theme="light"] .app-footer {
 .app-footer-links {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 0.55rem;
 }
 .app-footer-refresh {
@@ -488,6 +490,31 @@ body[data-theme="light"] .app-footer-refresh {
   background: #eff6ff;
   border-color: #93c5fd;
   color: #1d4ed8;
+}
+.app-footer-bug {
+  min-height: 2rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid #d97706;
+  background: #291708;
+  color: #fde68a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.84rem;
+  white-space: nowrap;
+}
+.app-footer-bug:hover {
+  border-color: #fbbf24;
+  color: #fef3c7;
+}
+body[data-theme="light"] .app-footer-bug {
+  background: #fffbeb;
+  border-color: #f59e0b;
+  color: #92400e;
 }
 .app-footer-sponsor {
   color: #fda4af;

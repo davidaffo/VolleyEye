@@ -26592,6 +26592,42 @@ function ensureBaseRotationDefault() {
     saveState();
   }
 }
+function initBugReportLink() {
+  const link = document.getElementById("btn-report-bug");
+  if (!link) return;
+  const versionMeta =
+    typeof window !== "undefined" && window.__APP_VERSION__ ? window.__APP_VERSION__ : null;
+  const version = versionMeta && versionMeta.version ? versionMeta.version : "non disponibile";
+  const page =
+    window.location.protocol === "file:"
+      ? "Esecuzione locale (file://)"
+      : `${window.location.origin}${window.location.pathname}`;
+  const body = [
+    "## Passaggi per riprodurre il problema",
+    "1. ",
+    "2. ",
+    "3. ",
+    "",
+    "## Cosa ti aspettavi accadesse",
+    "Descrivi il risultato che ti aspettavi.",
+    "",
+    "## Cosa invece è accaduto",
+    "Descrivi il risultato effettivamente osservato.",
+    "",
+    "## Informazioni tecniche",
+    `- Versione VolleyEye: ${version}`,
+    `- Pagina: ${page}`,
+    `- Browser: ${navigator.userAgent}`,
+    `- Lingua: ${navigator.language || "non disponibile"}`,
+    "",
+    "> Non allegare dati sensibili o informazioni personali del match."
+  ].join("\n");
+  const params = new URLSearchParams({
+    title: "[Bug] ",
+    body
+  });
+  link.href = `https://github.com/davidaffo/VolleyEye/issues/new?${params.toString()}`;
+}
 async function init() {
   isLoadingMatch = true;
   if (typeof window !== "undefined") {
@@ -26602,6 +26638,7 @@ async function init() {
     window.openMatchManagerModal = openMatchManagerModal;
     window.closeMatchManagerModal = closeMatchManagerModal;
   }
+  initBugReportLink();
   initTabs();
   initSwipeTabs();
   setupFocusGuards();

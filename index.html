@@ -26,14 +26,14 @@
     };
   </script>
   <script>
-    window.__APP_CACHE_VERSION__ = "v381-67a1971";
+    window.__APP_CACHE_VERSION__ = "v382-bbbdc9b";
     window.__IS_LOCALHOST_DEV__ =
       location.hostname === "localhost" ||
       location.hostname === "127.0.0.1" ||
       location.hostname === "::1";
     window.__APP_ASSET_SUFFIX__ = window.__IS_LOCALHOST_DEV__
       ? `?dev=${Date.now()}`
-      : `?v=v381-67a1971`;
+      : `?v=v382-bbbdc9b`;
     if (location.protocol === "file:") {
       document.documentElement.dataset.fileOrigin = "true";
     }
@@ -2318,6 +2318,17 @@
         title="Apri il manuale utente"
       >
         Manuale
+      </a>
+      <a
+        id="btn-report-bug"
+        class="app-footer-bug"
+        href="https://github.com/davidaffo/VolleyEye/issues/new"
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Apri una segnalazione bug su GitHub"
+      >
+        <span aria-hidden="true">🐞</span>
+        Segnala un bug
       </a>
       <a
         class="app-footer-github"
