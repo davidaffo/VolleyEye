@@ -108,27 +108,27 @@
     ],
     "opponentCourt": [
       {
-        "main": "",
+        "main": "Parisi Alice",
         "replaced": ""
       },
       {
-        "main": "",
+        "main": "Bassi Viola",
         "replaced": ""
       },
       {
-        "main": "",
+        "main": "Colombo Sara",
         "replaced": ""
       },
       {
-        "main": "",
+        "main": "Marini Alba",
         "replaced": ""
       },
       {
-        "main": "",
+        "main": "De Luca Emma",
         "replaced": ""
       },
       {
-        "main": "",
+        "main": "Orsi Giada",
         "replaced": ""
       }
     ],
@@ -153,27 +153,27 @@
     },
     "court": [
       {
-        "main": "Ferri Alma",
-        "replaced": "Marini Alba"
-      },
-      {
-        "main": "Orsi Giada",
+        "main": "Leoni Zoe",
         "replaced": ""
       },
       {
-        "main": "Caruso Marta",
+        "main": "Monti Elettra",
         "replaced": ""
       },
       {
-        "main": "Valenti Anna",
+        "main": "Fiore Lia",
         "replaced": ""
       },
       {
-        "main": "Parisi Alice",
+        "main": "Gallo Iris",
         "replaced": ""
       },
       {
-        "main": "Testa Sofia",
+        "main": "Neri Maia",
+        "replaced": ""
+      },
+      {
+        "main": "Conti Nora",
         "replaced": ""
       }
     ],
@@ -37081,27 +37081,27 @@
         "opponent": {
           "court": [
             {
-              "main": "",
+              "main": "Bassi Viola",
               "replaced": ""
             },
             {
-              "main": "",
+              "main": "Colombo Sara",
               "replaced": ""
             },
             {
-              "main": "",
+              "main": "Marini Alba",
               "replaced": ""
             },
             {
-              "main": "",
+              "main": "De Luca Emma",
               "replaced": ""
             },
             {
-              "main": "",
+              "main": "Orsi Giada",
               "replaced": ""
             },
             {
-              "main": "",
+              "main": "Parisi Alice",
               "replaced": ""
             }
           ],
@@ -37143,27 +37143,27 @@
         "opponent": {
           "court": [
             {
-              "main": "",
+              "main": "Orsi Giada",
               "replaced": ""
             },
             {
-              "main": "",
+              "main": "Parisi Alice",
               "replaced": ""
             },
             {
-              "main": "",
+              "main": "Bassi Viola",
               "replaced": ""
             },
             {
-              "main": "",
+              "main": "Colombo Sara",
               "replaced": ""
             },
             {
-              "main": "",
+              "main": "Marini Alba",
               "replaced": ""
             },
             {
-              "main": "",
+              "main": "De Luca Emma",
               "replaced": ""
             }
           ],
@@ -37205,27 +37205,27 @@
         "opponent": {
           "court": [
             {
-              "main": "",
+              "main": "Marini Alba",
               "replaced": ""
             },
             {
-              "main": "",
+              "main": "De Luca Emma",
               "replaced": ""
             },
             {
-              "main": "",
+              "main": "Orsi Giada",
               "replaced": ""
             },
             {
-              "main": "",
+              "main": "Parisi Alice",
               "replaced": ""
             },
             {
-              "main": "",
+              "main": "Bassi Viola",
               "replaced": ""
             },
             {
-              "main": "",
+              "main": "Colombo Sara",
               "replaced": ""
             }
           ],
@@ -37403,7 +37403,14 @@
             "out": false
           }
         ],
-        "defaultLineup": [],
+        "defaultLineup": [
+          "Marini Alba",
+          "De Luca Emma",
+          "Orsi Giada",
+          "Parisi Alice",
+          "Bassi Viola",
+          "Colombo Sara"
+        ],
         "defaultRotation": 1,
         "preferredLibero": "Mancini Irene"
       },
@@ -37573,7 +37580,14 @@
             "out": false
           }
         ],
-        "defaultLineup": [],
+        "defaultLineup": [
+          "Marini Alba",
+          "De Luca Emma",
+          "Orsi Giada",
+          "Parisi Alice",
+          "Bassi Viola",
+          "Colombo Sara"
+        ],
         "defaultRotation": 1,
         "preferredLibero": "Mancini Irene"
       },
@@ -38121,7 +38135,14 @@
             "out": false
           }
         ],
-        "defaultLineup": [],
+        "defaultLineup": [
+          "Marini Alba",
+          "De Luca Emma",
+          "Orsi Giada",
+          "Parisi Alice",
+          "Bassi Viola",
+          "Colombo Sara"
+        ],
         "defaultRotation": 1,
         "preferredLibero": "Mancini Irene"
       },
@@ -38291,7 +38312,14 @@
             "out": false
           }
         ],
-        "defaultLineup": [],
+        "defaultLineup": [
+          "Marini Alba",
+          "De Luca Emma",
+          "Orsi Giada",
+          "Parisi Alice",
+          "Bassi Viola",
+          "Colombo Sara"
+        ],
         "defaultRotation": 1,
         "preferredLibero": "Mancini Irene"
       },
@@ -38753,7 +38781,7 @@
     "freeballPending": false,
     "freeballPendingScope": "our",
     "flowTeamScope": "our",
-    "useOpponentTeam": false,
+    "useOpponentTeam": true,
     "videoFilterPresets": [],
     "courtViewMirrored": true,
     "courtSideSwapped": true,

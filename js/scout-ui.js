@@ -1727,6 +1727,16 @@ function applyNextSetDraft() {
   } else {
     state.isServing = !!nextSetDraft.isServing;
   }
+  state.flowTeamScope = state.isServing ? "our" : "opponent";
+  state.pendingServe = null;
+  state.forceSkillActive = false;
+  state.forceSkillScope = null;
+  state.skillFlowOverride = null;
+  state.opponentSkillFlowOverride = null;
+  if (typeof cancelPartialSkillFlowForScope === "function") {
+    cancelPartialSkillFlowForScope("our");
+    cancelPartialSkillFlowForScope("opponent");
+  }
   if (typeof enforceAutoLiberoForState === "function") {
     enforceAutoLiberoForState({ skipServerOnServe: true });
     if (state.useOpponentTeam && typeof enforceAutoLiberoForScope === "function") {
@@ -3224,7 +3234,7 @@ function computeTwoTeamFlowFromEvent(ev) {
       return { teamScope: scope, skillId: "attack" };
     case "attack": {
       if (ev.code === "/") {
-        return { teamScope: other, skillId: "defense" };
+        return { teamScope: other, skillId: "block" };
       }
       if (ev.code === "!") {
         return { teamScope: scope, skillId: "second" };
@@ -3351,7 +3361,9 @@ function getAutoFlowState() {
     };
   }
   const last = getLastFlowEvent(state.events || []);
-  let flowScope = state.flowTeamScope || (state.isServing ? "our" : "opponent");
+  // Senza eventi il servizio scelto a inizio set è l'unica fonte autorevole.
+  // flowTeamScope può provenire dal match o dal set precedente.
+  let flowScope = state.isServing ? "our" : "opponent";
   let nextSkill = "serve";
   if (last) {
     const next = computeTwoTeamFlowFromEvent(last);
@@ -3572,6 +3584,10 @@ function shouldShowNetBlockPromptForScope(scope = "our") {
       : state.useOpponentTeam
         ? getPredictedSkillIdForScope("our")
         : getPredictedSkillIdSingle();
+  // In doppia squadra lo slash d'attacco richiede già esplicitamente la
+  // valutazione del muro avversario: non va trasformato nel prompt opzionale
+  // "Muro" sopra una schermata di difesa.
+  if (state.useOpponentTeam && predicted === "block") return false;
   const canPromptFromFlow = predicted === "block" || predicted === "defense";
   if (!canPromptFromFlow) return false;
   if (!isSkillEnabledForScope("block", scope)) return false;
@@ -21871,6 +21887,11 @@ function buildMatchExportPayload() {
       video: state.video,
       pointRules: state.pointRules,
       autoRotate: state.autoRotate,
+      predictiveSkillFlow: state.predictiveSkillFlow !== false,
+      skillFlowOverride: state.skillFlowOverride,
+      pendingServe: state.pendingServe,
+      forceSkillActive: !!state.forceSkillActive,
+      forceSkillScope: state.forceSkillScope,
       autoLiberoBackline: state.autoLiberoBackline,
       autoLiberoRole: state.autoLiberoRole,
       liberoAutoMap: state.liberoAutoMap,
@@ -23096,6 +23117,12 @@ async function loadDefaultDemoMatch() {
     const payload = await response.json();
     if (!payload || !payload.state) {
       throw new Error("Payload demo non valido");
+    }
+    const demoTeams = payload.state.savedTeams || {};
+    for (const [teamName, teamPayload] of Object.entries(demoTeams)) {
+      if (!saveTeamToStorage(teamName, teamPayload)) {
+        throw new Error(`Impossibile archiviare la squadra demo: ${teamName}`);
+      }
     }
     applyImportedMatch(payload.state, { silent: true });
     state.selectedMatch = DEFAULT_DEMO_MATCH_NAME;
