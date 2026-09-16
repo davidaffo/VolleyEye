@@ -18564,7 +18564,7 @@ function renderDistributionGrid(targetEl, events, compareEvents = null) {
       label.textContent = "Z" + zoneNum;
       const main = document.createElement("div");
       main.className = "cell-main";
-      main.textContent = perc ? perc + "%" : "0%";
+      main.textContent = zoneTotal + " - " + perc + "%";
       if (comparePerc !== null && perc !== comparePerc) {
         main.classList.add("player-analysis-compare-value", perc > comparePerc ? "is-better" : "is-worse");
       }
