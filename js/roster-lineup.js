@@ -4784,7 +4784,9 @@ function normalizeMetricConfig(skillId, cfg) {
   const positive = uniq((cfg && cfg.positive) || def.positive || ["#", "+"]);
   const negative = uniq((cfg && cfg.negative) || def.negative || ["-"]);
   const neutral = RESULT_CODES.filter(code => !positive.includes(code) && !negative.includes(code));
-  const activeCodes = uniq((cfg && cfg.activeCodes) || def.activeCodes || RESULT_CODES);
+  const activeCodes = uniq((cfg && cfg.activeCodes) || def.activeCodes || RESULT_CODES).filter(
+    code => skillId !== "block" || code !== "!"
+  );
   const enabled = cfg && typeof cfg.enabled === "boolean" ? cfg.enabled : def.enabled !== false;
   return { positive, neutral, negative, activeCodes, enabled };
 }
@@ -6381,7 +6383,12 @@ function renderMetricsConfig() {
             rowMeta.key === "activeCodes"
               ? () => toggleActiveCode(skill.id, code)
               : () => toggleMetricAssignment(skill.id, rowMeta.key, code);
-          row.appendChild(buildMetricToggle(tone, active, code, handler));
+          const toggle = buildMetricToggle(tone, active, code, handler);
+          if (skill.id === "block" && code === "!" && rowMeta.key === "activeCodes") {
+            toggle.disabled = true;
+            toggle.title = "Non contemplato per il muro";
+          }
+          row.appendChild(toggle);
         });
       }
       return row;

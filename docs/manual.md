@@ -125,6 +125,30 @@ Il flusso si adatta all'esito di ogni azione.
 
 Soltanto alcuni eventi richiedono intervento manuale, ad esempio se dopo un appoggio per qualche motivo si genera una freeball. In quel caso esiste il tasto freeball, per far passare il flusso freeball ad una delle due squadre. La stessa cosa vale anche per gli errori che non sono contemplati dalle valutazioni dei fondamentali.
 
+### Significato delle valutazioni
+
+VolleyEye usa i sei codici di valutazione `#`, `+`, `!`, `-`, `/` e `=`. Il significato di ogni categoria è diverso a seconda del fondamentale considerato. Le impostazioni scout permettono di scegliere quali codici mostrare e quali considerare positivi, negativi o capaci di assegnare un punto; le descrizioni seguenti sono quelle del manuale di riferimento.
+
+| Fondamentale | `#` | `+` | `!` | `-` | `/` | `=` |
+| --- | --- | --- | --- | --- | --- | --- |
+| **Battuta** | Battuta che porta un punto diretto. | Battuta che limita anche una sola delle tre soluzioni d'attacco. Battuta che costringe gli avversari ad attaccare su palla alta oppure che costringe il palleggiatore avversario a palleggiare ad una mano o che permette il primo tempo solo per un'azione notevole del palleggiatore (es. palleggio in ginocchio o fuori dai tre metri). | Battuta con ricezione `!` quindi è una battuta positiva. | Battuta che viene ricevuta con precisione dagli avversari (es. se la ricezione arriva in posto quattro ed il palleggiatore è costretto a trasformare la veloce in veloce dietro viene inserita qui). | Battuta con ricezione che viene direttamente nel campo di chi ha servito anche dopo tre tocchi senza attacco. | Battuta che termina fuori o nella rete. |
+| **Ricezione / Freeball** | Ricezione che permette tutte le soluzioni di veloce e relative sovrapposizioni. | Ricezione che pur non essendo perfetta consente al palleggiatore di giocare tutte e quattro le soluzioni. Ricezione in posto 4 che obbliga al cambio di veloce o ricezione in posto 2 che ancora permette la veloce. | Ricezione negativa tra i due metri e mezzo ed i tre metri circa da rete o molto spostata verso due e quattro mai vicina a rete, in cui è ancora possibile servire un primo tempo forzato oppure una palla spinta. | Ricezione che costringe il palleggiatore ad alzare palla alta, oppure lo costringe ad una alzata ad una mano facile da servire al centrale ma non servibile in banda. Ricezione fuori dai tre metri. | Ricezione che va direttamente nell'altro campo. Ricezione che non permette di attaccare e genera una freeball. | Ricezione che causa un punto diretto per gli avversari. |
+| **Alzata** | Alzata che consente l'attacco. | Non contemplato. Conduce ad un attacco. | Non contemplato. Conduce ad un attacco. | Alzata imprecisa. | Alzata nel campo avversario. | Alzata che causa un punto diretto per gli avversari. |
+| **Attacco** | Attacco concluso a punto. | Attacco che va nel campo avversario e che consente alla squadra che ha attaccato di rigiocare la palla per un altro attacco (difesa avversaria nel proprio campo) o che viene rimandato nel proprio campo in modo facile da rigiocare. | Attacco giocato sul muro per permettere di rigiocare con un'altra azione di attacco. | Attacco difeso e rigiocato dagli avversari. Attacco murato con copertura che torna nel campo dell'avversario. | Attacco che gli avversari murano. | Attacco che termina fuori, in rete o in cui lo schiacciatore fa invasione. |
+| **Muro** | Muro con palla che finisce a terra nel campo avversario o comunque non permette il controllo della palla agli avversari. | Muro che toccando la palla consente una rigiocata della squadra in difesa (anche se la copertura avversaria rimanda il pallone) o comunque rende giocabile la palla anche se poi non viene effettivamente difesa. | Non contemplato. Conduce ad una difesa della squadra a muro. | Muro che viene nel proprio campo ma che non favorisce la difesa (tiene comunque la palla in gioco ma concedendo il primo attacco agli avversari). Muro che rimanda la palla nell'altro campo con copertura avversaria che consente agli altri di attaccare di nuovo. | Invasione a muro. | Muro che tocca la palla rendendola imprendibile. |
+| **Difesa** | Difesa su palla difficile che consente alla squadra di contrattaccare. | Difesa su palla facile che consente alla squadra di contrattaccare. | Copertura a buon fine. | Difesa con palla che ritorna nel campo degli avversari dopo più tocchi senza che la squadra in difesa possa contrattaccare in qualche modo (anche le coperture che tornano nell'altro campo vanno inserite qui). | Difesa con palla che ritorna nel campo degli avversari. | Difesa non tenuta. |
+
+I significati non formano una scala generica valida per tutte le skill: ogni simbolo deve essere letto nella riga del fondamentale corrispondente.
+
+### Inferenze automatiche in modalità doppia squadra
+
+Quando sono attive la doppia squadra e il flusso automatico, VolleyEye evita di chiedere due volte la valutazione della stessa azione vista dai due lati della rete. Registra entrambi gli eventi collegati, ma ricava automaticamente uno dei due voti:
+
+- **Battuta dalla ricezione avversaria**: dopo aver scelto battitore, tipo ed eventuale traiettoria, si valuta la ricezione avversaria. Il voto della battuta viene inferito così: ricezione `#` o `+` → battuta `-`; ricezione `!` → battuta `!`; ricezione `-` → battuta `+`; ricezione `/` → battuta `/`; ricezione `=` → battuta `#`.
+- **Attacco dal muro avversario**: durante la valutazione dell'attacco, `/` è inizialmente un segnale provvisorio che apre direttamente il muro avversario. Il voto dell'attacco viene poi inferito così: muro `#` → attacco `/`; muro `+` → attacco `-`; muro `-` → attacco `+`; muro `=` → attacco `#`. Il muro `!` non è contemplato e non viene mostrato. Con muro `/` l'invasione è già l'evento terminale che assegna il punto agli avversari, quindi il voto provvisorio dell'attacco viene rimosso per non conteggiare due volte lo stesso punto.
+
+Gli eventi inferiti sono collegati nel log e nelle analisi, ma un eventuale punto viene conteggiato una sola volta. Se il fondamentale da aprire automaticamente è disabilitato nelle impostazioni della relativa squadra, il flusso passa al successivo fondamentale disponibile.
+
 ### Inserimento in modalità manuale
 
 Se disattivi il flusso automatico, per ogni giocatrice scegli tu il fondamentale da valutare. Il programma ti chiederà comunque tipo di alzata, traiettoria e valutazione prima di chiudere l'evento. Questa modalità è più lenta ed è generalmente sconsigliata.
@@ -148,7 +172,7 @@ Puoi anche scegliere di non inserire la traiettoria premendo ESC o cliccando sul
 
 ### Gestione del muro
 
-In modalità automatica e con doppia squadra il muro si valuta solo se c'è stato effettivamente un tocco. Per segnalarlo, premi il tasto **/** (slash) durante la valutazione dell'attacco: si apre la valutazione del muro avversario, da cui il programma inferisce automaticamente la valutazione dell'attacco (ad esempio muro+ → attacco-).
+In modalità automatica e con doppia squadra il muro si valuta quando deve essere verificato l'esito del tocco. Per segnalarlo, premi il tasto **/** (slash) durante la valutazione dell'attacco: si apre direttamente la valutazione del muro avversario, da cui il programma inferisce automaticamente la valutazione dell'attacco (ad esempio muro `+` → attacco `-`). Il voto `!` non è disponibile per il muro perché non è contemplato; muro `/` indica invece un'invasione e muro `=` un mani-fuori.
 In questo caso quindi, il tasto **/** non corrisponde alla valutazione dell'attacco murato, ma attiva la valutazione del muro.
 In modalità squadra singola invece, non essendoci una squadra avversaria da cui inferire la valutazione del muro, nel momento in cui il flusso sarebbe nella squadra avversaria, oltre alla valutazione del fondamentale di difesa, c'è un tasto a rete per valutare l'eventuale muro.
 

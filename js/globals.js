@@ -45,7 +45,12 @@ const METRIC_DEFAULTS = {
   freeball: PASS_LIKE_METRIC_DEFAULT,
   defense: { positive: ["#", "+", "!"], negative: ["="], activeCodes: RESULT_CODES, enabled: true },
   attack: { positive: ["#"], negative: ["/", "="], activeCodes: RESULT_CODES, enabled: true },
-  block: { positive: ["#", "+"], negative: ["/", "="], activeCodes: RESULT_CODES, enabled: true },
+  block: {
+    positive: ["#", "+"],
+    negative: ["/", "="],
+    activeCodes: RESULT_CODES.filter(code => code !== "!"),
+    enabled: true
+  },
   second: { positive: ["#"], negative: ["/", "-", "="], activeCodes: RESULT_CODES, enabled: true }
 };
 const PERSISTENT_DB_NAME = "Data";

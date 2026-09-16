@@ -108,6 +108,42 @@ test("il muro previsto in doppia squadra non viene degradato a prompt sopra la d
   assert.equal(context.shouldShowNetBlockPromptForScope("opponent"), false);
 });
 
+test("la valutazione ! non è disponibile per il muro", () => {
+  const globals = readFileSync(new URL("../js/globals.js", import.meta.url), "utf8");
+  const roster = readFileSync(new URL("../js/roster-lineup.js", import.meta.url), "utf8");
+  const normalizeSource = roster.slice(
+    roster.indexOf("function normalizeMetricConfig"),
+    roster.indexOf("function sameCodeList")
+  );
+  const context = {
+    RESULT_CODES: ["#", "+", "!", "-", "/", "="],
+    allowedMetricCodes: new Set(["#", "+", "!", "-", "/", "="]),
+    METRIC_DEFAULTS: {
+      block: {
+        positive: ["#", "+"],
+        negative: ["/", "="],
+        activeCodes: ["#", "+", "-", "/", "="],
+        enabled: true
+      },
+      serve: { positive: ["#"], negative: ["="], activeCodes: ["#"], enabled: true }
+    }
+  };
+  vm.runInNewContext(normalizeSource, context);
+
+  const migrated = context.normalizeMetricConfig("block", {
+    positive: ["#", "+"],
+    negative: ["/", "="],
+    activeCodes: ["#", "+", "!", "-", "/", "="],
+    enabled: true
+  });
+  assert.deepEqual(Array.from(migrated.activeCodes), ["#", "+", "-", "/", "="]);
+  assert.match(globals, /activeCodes: RESULT_CODES\.filter\(code => code !== "!"\)/);
+  assert.doesNotMatch(
+    source.slice(source.indexOf("function getAttackCodeFromBlockCode"), source.indexOf("function resolveFlowSkillForScope")),
+    /"!"\s*:\s*"!"/
+  );
+});
+
 test("l'avvio del set riallinea il flusso e cancella selezioni transitorie", () => {
   const applyStart = source.slice(
     source.indexOf("function applyNextSetDraft"),
