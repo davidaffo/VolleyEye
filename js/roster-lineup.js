@@ -96,7 +96,6 @@ const applyPhasePermutation =
 window.buildAutoRolePermutation = buildAutoRolePermutation;
 window.applyPhasePermutation = applyPhasePermutation;
 const elEventsLog = document.getElementById("events-log");
-const elUndoLastSummary = document.getElementById("undo-last-summary");
 const elEventsLogSummary = document.getElementById("events-log-summary");
 const elBtnApplyPlayers = document.getElementById("btn-apply-players");
 const elBtnApplyOpponentPlayers = document.getElementById("btn-apply-opponent-players");
@@ -670,6 +669,7 @@ function buildCompactLocalStateSnapshot(snapshot) {
     matchFinished: !!snapshot.matchFinished,
     uiTopBarHidden: !!snapshot.uiTopBarHidden,
     uiScoutColumns: snapshot.uiScoutColumns || { left: 320, right: 300 },
+    uiScoutWidgetLayout: snapshot.uiScoutWidgetLayout || null,
     video: snapshot.video || { offsetSeconds: 0, fileName: "", youtubeId: "", youtubeUrl: "", lastPlaybackSeconds: 0 },
     players: Array.isArray(snapshot.players) ? snapshot.players : [],
     playerNumbers: snapshot.playerNumbers || {},

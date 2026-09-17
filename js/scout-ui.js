@@ -4248,26 +4248,254 @@ function forceNextSkill(skillId, scope = "our") {
   const toggle = document.getElementById("predictive-skill-toggle");
   if (toggle) toggle.checked = true;
 }
-let videoScoutHomeParent = null;
-let videoScoutHomeNextSibling = null;
-function relocateVideoScoutContainer() {
-  if (!elVideoScoutContainer) return;
-  if (!videoScoutHomeParent) {
-    videoScoutHomeParent = elVideoScoutContainer.parentElement;
-    videoScoutHomeNextSibling = elVideoScoutContainer.nextSibling;
+const SCOUT_WIDGET_IDS = ["video", "dvw", "events", "serve-trajectories"];
+const SCOUT_WIDGET_ZONE_IDS = ["center-top", "center-bottom", "right"];
+const SCOUT_WIDGET_LABELS = {
+  video: "Video scout",
+  dvw: "Codice DataVolley",
+  events: "Tabella eventi",
+  "serve-trajectories": "Traiettorie di battuta"
+};
+let activeScoutWidgetDrag = null;
+function getDefaultScoutWidgetLayout() {
+  return {
+    customized: false,
+    "center-top": state.useOpponentTeam ? [] : ["video"],
+    "center-bottom": [],
+    right: state.useOpponentTeam
+      ? ["video", "dvw", "events", "serve-trajectories"]
+      : ["dvw", "events", "serve-trajectories"]
+  };
+}
+function normalizeScoutWidgetLayout() {
+  const raw = state.uiScoutWidgetLayout && typeof state.uiScoutWidgetLayout === "object"
+    ? state.uiScoutWidgetLayout
+    : null;
+  if (!raw || raw.customized !== true) {
+    state.uiScoutWidgetLayout = getDefaultScoutWidgetLayout();
+    return state.uiScoutWidgetLayout;
   }
-  const logSection = document.querySelector('[data-log-section]');
-  if (state.useOpponentTeam && logSection) {
-    logSection.insertBefore(elVideoScoutContainer, logSection.firstChild);
-    return;
+  const normalized = { customized: true, "center-top": [], "center-bottom": [], right: [] };
+  const used = new Set();
+  SCOUT_WIDGET_ZONE_IDS.forEach(zoneId => {
+    const entries = Array.isArray(raw[zoneId]) ? raw[zoneId] : [];
+    entries.forEach(widgetId => {
+      if (!SCOUT_WIDGET_IDS.includes(widgetId) || used.has(widgetId)) return;
+      normalized[zoneId].push(widgetId);
+      used.add(widgetId);
+    });
+  });
+  SCOUT_WIDGET_IDS.forEach(widgetId => {
+    if (!used.has(widgetId)) normalized.right.push(widgetId);
+  });
+  state.uiScoutWidgetLayout = normalized;
+  return normalized;
+}
+function getScoutWidgetZone(zoneId) {
+  return document.querySelector(`[data-scout-widget-zone="${zoneId}"]`);
+}
+function applyScoutWidgetLayout() {
+  const layout = normalizeScoutWidgetLayout();
+  SCOUT_WIDGET_ZONE_IDS.forEach(zoneId => {
+    const zone = getScoutWidgetZone(zoneId);
+    if (!zone) return;
+    layout[zoneId].forEach(widgetId => {
+      const widget = document.querySelector(`[data-scout-widget="${widgetId}"]`);
+      if (widget) zone.appendChild(widget);
+    });
+  });
+}
+function saveScoutWidgetLayout() {
+  const layout = { customized: true, "center-top": [], "center-bottom": [], right: [] };
+  SCOUT_WIDGET_ZONE_IDS.forEach(zoneId => {
+    const zone = getScoutWidgetZone(zoneId);
+    if (!zone) return;
+    layout[zoneId] = Array.from(zone.querySelectorAll(":scope > [data-scout-widget]"))
+      .map(widget => widget.dataset.scoutWidget)
+      .filter(widgetId => SCOUT_WIDGET_IDS.includes(widgetId));
+  });
+  state.uiScoutWidgetLayout = layout;
+  saveState({ persistLocal: true });
+}
+function moveScoutWidgetInZone(widget, zone, clientY) {
+  if (!widget || !zone) return;
+  const siblings = Array.from(zone.querySelectorAll(":scope > [data-scout-widget]"))
+    .filter(candidate => candidate !== widget && !candidate.classList.contains("hidden"));
+  const before = siblings.find(candidate => {
+    const rect = candidate.getBoundingClientRect();
+    return clientY < rect.top + rect.height / 2;
+  });
+  zone.insertBefore(widget, before || null);
+  document.querySelectorAll("[data-scout-widget-zone]").forEach(candidate => {
+    candidate.classList.toggle("is-drop-target", candidate === zone);
+  });
+}
+function moveScoutWidgetAtPointer(widget, clientX, clientY) {
+  const target = document.elementFromPoint(clientX, clientY);
+  let zone = target && target.closest ? target.closest("[data-scout-widget-zone]") : null;
+  if (!zone && target && target.closest && target.closest(".scout-col-right")) {
+    zone = getScoutWidgetZone("right");
   }
-  if (videoScoutHomeParent) {
-    if (videoScoutHomeNextSibling && videoScoutHomeNextSibling.parentElement === videoScoutHomeParent) {
-      videoScoutHomeParent.insertBefore(elVideoScoutContainer, videoScoutHomeNextSibling);
-    } else {
-      videoScoutHomeParent.appendChild(elVideoScoutContainer);
+  if (!zone || !activeScoutWidgetDrag) return;
+  activeScoutWidgetDrag.pendingZone = zone;
+  activeScoutWidgetDrag.pendingClientY = clientY;
+  document.querySelectorAll("[data-scout-widget-zone]").forEach(candidate => {
+    candidate.classList.toggle("is-drop-target", candidate === zone);
+  });
+}
+function showScoutWidgetDragState(widget) {
+  widget.classList.add("is-dragging");
+  document.body.classList.add("scout-widget-dragging");
+  const ghost = document.createElement("div");
+  ghost.className = "scout-widget-drag-ghost";
+  ghost.textContent = SCOUT_WIDGET_LABELS[widget.dataset.scoutWidget] || "Pannello";
+  document.body.appendChild(ghost);
+  if (activeScoutWidgetDrag) activeScoutWidgetDrag.ghost = ghost;
+}
+function positionScoutWidgetDragGhost(clientX, clientY) {
+  const ghost = activeScoutWidgetDrag && activeScoutWidgetDrag.ghost;
+  if (!ghost) return;
+  ghost.style.transform = `translate3d(${Math.round(clientX + 12)}px, ${Math.round(clientY + 12)}px, 0)`;
+}
+function finishScoutWidgetDrag(cancelled = false) {
+  if (!activeScoutWidgetDrag) return;
+  const {
+    widget,
+    originParent,
+    originNextSibling,
+    pendingZone,
+    pendingClientY,
+    ghost,
+    handle,
+    pointerId,
+    moved
+  } = activeScoutWidgetDrag;
+  if (!cancelled && moved && pendingZone) {
+    moveScoutWidgetInZone(widget, pendingZone, pendingClientY);
+  }
+  if (cancelled && moved && originParent) {
+    originParent.insertBefore(
+      widget,
+      originNextSibling && originNextSibling.parentElement === originParent ? originNextSibling : null
+    );
+  }
+  widget.classList.remove("is-dragging");
+  if (ghost) ghost.remove();
+  if (handle && handle.releasePointerCapture && pointerId !== null && pointerId !== undefined) {
+    try {
+      handle.releasePointerCapture(pointerId);
+    } catch (_) {
+      // Il browser può aver già rilasciato la cattura al pointerup.
     }
   }
+  document.body.classList.remove("scout-widget-dragging");
+  document.querySelectorAll("[data-scout-widget-zone]").forEach(zone => {
+    zone.classList.remove("is-drop-target");
+  });
+  window.removeEventListener("pointermove", handleScoutWidgetPointerMove);
+  window.removeEventListener("pointerup", handleScoutWidgetPointerUp);
+  window.removeEventListener("pointercancel", handleScoutWidgetPointerCancel);
+  activeScoutWidgetDrag = null;
+  if (moved && !cancelled) saveScoutWidgetLayout();
+}
+function handleScoutWidgetPointerDown(event, widget) {
+  if (event.button !== undefined && event.button !== 0) return;
+  if (event.cancelable) event.preventDefault();
+  const handle = event.currentTarget;
+  activeScoutWidgetDrag = {
+    widget,
+    handle,
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    originParent: widget.parentElement,
+    originNextSibling: widget.nextElementSibling,
+    moved: false
+  };
+  if (handle.setPointerCapture) handle.setPointerCapture(event.pointerId);
+  window.addEventListener("pointermove", handleScoutWidgetPointerMove, { passive: false });
+  window.addEventListener("pointerup", handleScoutWidgetPointerUp);
+  window.addEventListener("pointercancel", handleScoutWidgetPointerCancel);
+}
+function handleScoutWidgetPointerMove(event) {
+  const session = activeScoutWidgetDrag;
+  if (!session || session.pointerId !== event.pointerId) return;
+  const distance = Math.hypot(event.clientX - session.startX, event.clientY - session.startY);
+  if (!session.moved && distance < 6) return;
+  if (event.cancelable) event.preventDefault();
+  if (!session.moved) {
+    session.moved = true;
+    showScoutWidgetDragState(session.widget);
+  }
+  positionScoutWidgetDragGhost(event.clientX, event.clientY);
+  moveScoutWidgetAtPointer(session.widget, event.clientX, event.clientY);
+}
+function handleScoutWidgetPointerUp() {
+  finishScoutWidgetDrag(false);
+}
+function handleScoutWidgetPointerCancel() {
+  finishScoutWidgetDrag(true);
+}
+function moveScoutWidgetWithKeyboard(event, widget) {
+  const zone = widget.parentElement;
+  if (!zone || !zone.matches("[data-scout-widget-zone]")) return;
+  const zoneId = zone.dataset.scoutWidgetZone;
+  const siblings = Array.from(zone.querySelectorAll(":scope > [data-scout-widget]"));
+  const index = siblings.indexOf(widget);
+  let destination = zone;
+  let before = null;
+  if (event.key === "ArrowUp") {
+    if (index > 0) before = siblings[index - 1];
+    else if (zoneId === "center-bottom") destination = getScoutWidgetZone("center-top");
+    else return;
+  } else if (event.key === "ArrowDown") {
+    if (index < siblings.length - 1) before = siblings[index + 1].nextElementSibling;
+    else if (zoneId === "center-top") destination = getScoutWidgetZone("center-bottom");
+    else return;
+  } else if (event.key === "ArrowLeft") {
+    if (zoneId === "center-top") return;
+    destination = getScoutWidgetZone("center-top");
+  } else if (event.key === "ArrowRight") {
+    if (zoneId === "right") return;
+    destination = getScoutWidgetZone("right");
+  } else {
+    return;
+  }
+  if (!destination) return;
+  event.preventDefault();
+  destination.insertBefore(widget, destination === zone ? before : null);
+  saveScoutWidgetLayout();
+  const handle = widget.querySelector(":scope > .scout-widget-handle");
+  if (handle) handle.focus();
+}
+function bindScoutWidgetLayout() {
+  applyScoutWidgetLayout();
+  document.querySelectorAll("[data-scout-widget]").forEach(widget => {
+    if (widget.querySelector(":scope > .scout-widget-handle")) return;
+    const widgetId = widget.dataset.scoutWidget;
+    const handle = document.createElement("button");
+    handle.type = "button";
+    handle.className = "scout-widget-handle";
+    handle.textContent = "⠿";
+    handle.draggable = false;
+    handle.title = "Trascina per spostare";
+    handle.setAttribute("aria-label", `Sposta ${SCOUT_WIDGET_LABELS[widgetId] || "pannello"}`);
+    handle.addEventListener("pointerdown", event => handleScoutWidgetPointerDown(event, widget));
+    handle.addEventListener("keydown", event => moveScoutWidgetWithKeyboard(event, widget));
+    widget.insertBefore(handle, widget.firstChild);
+  });
+  const reset = document.getElementById("btn-reset-scout-widgets");
+  if (reset && reset.dataset.layoutBound !== "true") {
+    reset.dataset.layoutBound = "true";
+    reset.addEventListener("click", () => {
+      state.uiScoutWidgetLayout = null;
+      applyScoutWidgetLayout();
+      saveState({ persistLocal: true });
+    });
+  }
+}
+function relocateVideoScoutContainer() {
+  applyScoutWidgetLayout();
 }
 function updateVideoScoutModeLayout() {
   if (!elVideoScoutContainer) return;
@@ -11550,13 +11778,11 @@ async function copyFfmpegFromSelection() {
 function renderEventsLog(options = {}) {
   const append = !!options.append;
   let summaryText = "Nessun evento";
-  let compactSummary = "";
   const suppressScroll = !!options.suppressScroll;
   if (!state.events || state.events.length === 0) {
     if (elEventsLog) elEventsLog.innerHTML = "";
     if (elEventsLog) elEventsLog.textContent = "Nessun evento ancora registrato.";
     if (elEventsLogSummary) elEventsLogSummary.textContent = summaryText;
-    if (elUndoLastSummary) elUndoLastSummary.textContent = "—";
     lastLogRenderedKey = null;
     updateLiveDvwMirror();
     return;
@@ -11575,11 +11801,6 @@ function renderEventsLog(options = {}) {
     const meta = SKILLS.find(s => s.id === ev.skillId);
     return meta ? meta.label : ev.skillId || "";
   };
-  const getEventShortLabel = ev => {
-    if (ev.actionType === "timeout") return "TO";
-    if (ev.actionType === "substitution") return "CH";
-    return getShortSkill(ev.skillId);
-  };
   const formatEv = ev => {
     const dateObj = new Date(ev.t);
     const timeStr = isNaN(dateObj.getTime())
@@ -11596,9 +11817,6 @@ function renderEventsLog(options = {}) {
     const scope = getTeamScopeFromEvent(ev);
     const numbers = getPlayerNumbersForScope(scope);
     const nameLabel = ev.playerName ? formatNameWithNumberFor(ev.playerName, numbers) : null;
-    const numRaw = ev.playerName ? numbers[ev.playerName] : null;
-    const num =
-      numRaw !== undefined && numRaw !== null && String(numRaw).trim() !== "" ? String(numRaw) : "";
     const leftText =
       "[S" +
       ev.set +
@@ -11609,21 +11827,10 @@ function renderEventsLog(options = {}) {
       " " +
       ev.code +
       (errorTypeLabel ? " · " + errorTypeLabel : "");
-    const shortSkill = getEventShortLabel(ev);
-    const initials = getInitials(ev.playerName);
-    const compact =
-      (num || initials || "#" + (typeof ev.playerIdx === "number" ? ev.playerIdx + 1 : "?")) +
-      " " +
-      shortSkill +
-      " " +
-      (ev.code || "") +
-      (errorTypeLabel ? " " + errorTypeLabel : "");
-    const compactClean = compact.trim();
-    return { leftText, timeStr, compact: compactClean };
+    return { leftText, timeStr };
   };
   const latestFmt = formatEv(latest);
   summaryText = latestFmt.leftText;
-  compactSummary = latestFmt.compact;
   const skillEvents = getVideoSkillEvents();
   const baseMs = getVideoBaseTimeMs(skillEvents);
   let didAppend = false;
@@ -11678,9 +11885,6 @@ function renderEventsLog(options = {}) {
   }
   if (elEventsLogSummary) {
     elEventsLogSummary.textContent = summaryText;
-  }
-  if (elUndoLastSummary) {
-    elUndoLastSummary.textContent = compactSummary || "—";
   }
   updateTeamCounters();
   renderLogServeTrajectories();
@@ -29282,6 +29486,7 @@ async function init() {
   bindVideoResizeHandle(elVideoAnalysisResizeHandle, "analysisHeight");
   bindVideoResizeHandle(elVideoScoutResizeHandle, "scoutHeight");
   bindScoutColumnResize();
+  bindScoutWidgetLayout();
   updateVideoScoutModeLayout();
   renderVideoAnalysis();
   attachModalCloseHandlers();

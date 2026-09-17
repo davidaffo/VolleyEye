@@ -26,14 +26,14 @@
     };
   </script>
   <script>
-    window.__APP_CACHE_VERSION__ = "v388-7d91641";
+    window.__APP_CACHE_VERSION__ = "v389-b2aba8c";
     window.__IS_LOCALHOST_DEV__ =
       location.hostname === "localhost" ||
       location.hostname === "127.0.0.1" ||
       location.hostname === "::1";
     window.__APP_ASSET_SUFFIX__ = window.__IS_LOCALHOST_DEV__
       ? `?dev=${Date.now()}`
-      : `?v=v388-7d91641`;
+      : `?v=v389-b2aba8c`;
     if (location.protocol === "file:") {
       document.documentElement.dataset.fileOrigin = "true";
     }
@@ -473,7 +473,8 @@
             </div>
           </div>
         </div>
-        <div id="video-scout-container" class="video-scout-container hidden">
+        <div id="scout-widgets-center-top" class="scout-widget-zone scout-widget-zone--center" data-scout-widget-zone="center-top">
+        <div id="video-scout-container" class="video-scout-container scout-widget hidden" data-scout-widget="video">
           <div class="video-scout-panel">
             <div class="video-player-wrap video-player-wrap--scout">
               <div class="video-media">
@@ -497,6 +498,7 @@
               ></button>
             </div>
           </div>
+        </div>
         </div>
         <div class="players-area" id="court-area">
           <div class="team-panel team-panel--far team-panel--opponent" data-team-panel="opponent">
@@ -726,6 +728,7 @@
             </div>
           </div>
         </div>
+        <div id="scout-widgets-center-bottom" class="scout-widget-zone scout-widget-zone--center" data-scout-widget-zone="center-bottom"></div>
       </div>
       <button
         id="scout-resize-right"
@@ -738,7 +741,9 @@
       ></button>
       <div class="section log-section scout-col-right" data-log-section data-scout-panel="log">
         <button class="drawer-close secondary small" type="button" data-close-drawer="log">Chiudi</button>
-        <div class="scout-dvw-bar">
+        <button id="btn-reset-scout-widgets" class="secondary small scout-widgets-reset" type="button">Ripristina disposizione</button>
+        <div id="scout-widgets-right" class="scout-widget-zone scout-widget-zone--right" data-scout-widget-zone="right">
+        <div class="scout-dvw-bar scout-widget" data-scout-widget="dvw">
           <div class="scout-dvw-bar__top">
             <div class="scout-dvw-bar__title-row">
               <label for="dvw-scout-input">Scout da codice DataVolley</label>
@@ -763,7 +768,7 @@
           <div id="dvw-scout-pending" class="scout-dvw-bar__pending" aria-live="polite"></div>
           <div id="dvw-scout-status" class="scout-dvw-bar__status" aria-live="polite">Pronto.</div>
         </div>
-        <div id="log-serve-trajectory" class="log-serve-trajectory">
+        <div id="log-serve-trajectory" class="log-serve-trajectory scout-widget" data-scout-widget="serve-trajectories">
           <div class="log-serve-trajectory__grid">
             <div class="trajectory-card serve-trajectory-card log-serve-card" id="log-serve-card-our" data-scope="our">
               <div class="log-serve-card__grid">
@@ -793,13 +798,10 @@
             </div>
           </div>
         </div>
-        <div id="events-log-summary" class="events-log-summary" aria-live="polite"></div>
-        <div id="events-log"></div>
-        <div class="card-inline log-undo">
-          <div class="undo-last-summary" aria-live="polite">
-            <span>Ultimo codice:</span>
-            <strong id="undo-last-summary">—</strong>
-          </div>
+        <div class="scout-widget scout-events-widget" data-scout-widget="events">
+          <div id="events-log-summary" class="events-log-summary" aria-live="polite"></div>
+          <div id="events-log"></div>
+        </div>
         </div>
       </div>
     </div>

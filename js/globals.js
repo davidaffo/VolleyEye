@@ -200,6 +200,7 @@ let state = {
     left: 320,
     right: 300
   },
+  uiScoutWidgetLayout: null,
   uiVideoAnalysisSort: {
     key: "",
     dir: ""
