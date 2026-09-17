@@ -26,14 +26,14 @@
     };
   </script>
   <script>
-    window.__APP_CACHE_VERSION__ = "v389-b2aba8c";
+    window.__APP_CACHE_VERSION__ = "v390-7764c98";
     window.__IS_LOCALHOST_DEV__ =
       location.hostname === "localhost" ||
       location.hostname === "127.0.0.1" ||
       location.hostname === "::1";
     window.__APP_ASSET_SUFFIX__ = window.__IS_LOCALHOST_DEV__
       ? `?dev=${Date.now()}`
-      : `?v=v389-b2aba8c`;
+      : `?v=v390-7764c98`;
     if (location.protocol === "file:") {
       document.documentElement.dataset.fileOrigin = "true";
     }
@@ -770,32 +770,8 @@
         </div>
         <div id="log-serve-trajectory" class="log-serve-trajectory scout-widget" data-scout-widget="serve-trajectories">
           <div class="log-serve-trajectory__grid">
-            <div class="trajectory-card serve-trajectory-card log-serve-card" id="log-serve-card-our" data-scope="our">
-              <div class="log-serve-card__grid">
-                <div class="log-serve-card__traj">
-                  <div class="trajectory-card__title">Battuta · <span id="log-serve-name-our">—</span></div>
-                  <canvas id="log-serve-canvas-our"></canvas>
-                  <div class="trajectory-card__empty">Nessuna traiettoria</div>
-                </div>
-                <div class="log-serve-card__stats">
-                  <div class="log-serve-card__stats-title">Dati battuta</div>
-                  <div class="log-serve-card__stats-grid" id="log-serve-stats-our"></div>
-                </div>
-              </div>
-            </div>
-            <div class="trajectory-card serve-trajectory-card log-serve-card" id="log-serve-card-opp" data-scope="opponent">
-              <div class="log-serve-card__grid">
-                <div class="log-serve-card__traj">
-                  <div class="trajectory-card__title">Battuta · <span id="log-serve-name-opp">—</span></div>
-                  <canvas id="log-serve-canvas-opp"></canvas>
-                  <div class="trajectory-card__empty">Nessuna traiettoria</div>
-                </div>
-                <div class="log-serve-card__stats">
-                  <div class="log-serve-card__stats-title">Dati battuta</div>
-                  <div class="log-serve-card__stats-grid" id="log-serve-stats-opp"></div>
-                </div>
-              </div>
-            </div>
+            <div class="trajectory-card serve-trajectory-card log-serve-card" id="log-serve-card-our" data-scope="our"></div>
+            <div class="trajectory-card serve-trajectory-card log-serve-card" id="log-serve-card-opp" data-scope="opponent"></div>
           </div>
         </div>
         <div class="scout-widget scout-events-widget" data-scout-widget="events">
@@ -1888,7 +1864,7 @@
       <div id="agg-skill-modal-body" class="skill-modal__body"></div>
     </div>
   </div>
-  <div id="base-modal" class="skill-modal hidden" role="dialog" aria-modal="true">
+  <div id="base-modal" class="skill-modal hidden force-popup" role="dialog" aria-modal="true">
     <div class="skill-modal__backdrop" data-close-base></div>
     <div class="skill-modal__content base-modal__content">
       <div class="skill-modal__head">
@@ -1909,7 +1885,7 @@
       </div>
     </div>
   </div>
-  <div id="attack-type-modal" class="skill-modal hidden" role="dialog" aria-modal="true">
+  <div id="attack-type-modal" class="skill-modal hidden force-popup" role="dialog" aria-modal="true">
     <div class="skill-modal__backdrop" data-close-attack-type></div>
     <div class="skill-modal__content base-modal__content">
       <div class="skill-modal__head">
@@ -1928,7 +1904,7 @@
       </div>
     </div>
   </div>
-  <div id="attack-setter-modal" class="skill-modal hidden" role="dialog" aria-modal="true">
+  <div id="attack-setter-modal" class="skill-modal hidden force-popup" role="dialog" aria-modal="true">
     <div class="skill-modal__backdrop" data-close-attack-setter></div>
     <div class="skill-modal__content base-modal__content">
       <div class="skill-modal__head">
@@ -1942,7 +1918,7 @@
       </div>
     </div>
   </div>
-  <div id="block-number-modal" class="skill-modal hidden" role="dialog" aria-modal="true">
+  <div id="block-number-modal" class="skill-modal hidden force-popup" role="dialog" aria-modal="true">
     <div class="skill-modal__backdrop" data-close-block-number></div>
     <div class="skill-modal__content base-modal__content">
       <div class="skill-modal__head">

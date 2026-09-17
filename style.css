@@ -1036,9 +1036,13 @@ body[data-theme="light"] .card-inline {
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 0.4rem;
 }
-.log-serve-card {
+.serve-trajectory-card.log-serve-card {
   min-height: 90px;
   padding: 0.16rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.35rem;
+  align-items: start;
 }
 .log-serve-card .trajectory-card__title {
   font-size: 0.7rem;
@@ -1047,41 +1051,41 @@ body[data-theme="light"] .card-inline {
 .log-serve-card canvas {
   min-height: 55px;
 }
-.log-serve-card__grid {
-  display: grid;
-  grid-template-columns: 50% 50%;
-  gap: 0.35rem;
-  align-items: start;
+.serve-trajectory-card__stats {
+  border-top: 1px solid var(--border-color, #2f2f2f);
+  margin-top: 0.35rem;
+  padding-top: 0.3rem;
 }
-.log-serve-card__traj {
-  position: relative;
+.log-serve-card .serve-trajectory-card__stats {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
 }
-.log-serve-card__stats-title {
+.log-serve-card .serve-trajectory-card__stats-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+.serve-trajectory-card__stats-title {
   font-size: 0.85rem;
   font-weight: 600;
   margin-bottom: 0.12rem;
   opacity: 0.85;
 }
-.log-serve-card__stats-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.12rem;
+.serve-trajectory-card__stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(48px, 1fr));
+  gap: 0.2rem 0.4rem;
   font-size: 0.9rem;
 }
-.log-serve-card__stat {
+.serve-trajectory-card__stat {
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
   white-space: nowrap;
 }
-.log-serve-card__stat strong {
+.serve-trajectory-card__stat strong {
   font-weight: 700;
-}
-.log-serve-card.empty .log-serve-card__traj .trajectory-card__empty {
-  opacity: 1;
-}
-.log-serve-card.empty .log-serve-card__traj canvas {
-  opacity: 0.35;
 }
 .score-card {
   background: #191919;
@@ -6547,6 +6551,9 @@ body[data-theme="light"] .player-analysis-compare-subsection {
   min-height: 150px;
   width: 100%;
 }
+.serve-trajectory-card__visual {
+  position: relative;
+}
 .traj-area-z4 { grid-area: z4; }
 .traj-area-z3 { grid-area: z3; }
 .traj-area-z2 { grid-area: z2; }
@@ -6590,6 +6597,12 @@ body[data-theme="light"] .player-analysis-compare-subsection {
   opacity: 1;
 }
 .trajectory-card.empty canvas {
+  opacity: 0.35;
+}
+.serve-trajectory-card__visual.empty .trajectory-card__empty {
+  opacity: 1;
+}
+.serve-trajectory-card__visual.empty canvas {
   opacity: 0.35;
 }
 .analysis-filters {

@@ -732,12 +732,6 @@ const elLineupPreferredLibero = document.getElementById("lineup-preferred-libero
 const elLogServeTrajectory = document.getElementById("log-serve-trajectory");
 const elLogServeCardOur = document.getElementById("log-serve-card-our");
 const elLogServeCardOpp = document.getElementById("log-serve-card-opp");
-const elLogServeCanvasOur = document.getElementById("log-serve-canvas-our");
-const elLogServeCanvasOpp = document.getElementById("log-serve-canvas-opp");
-const elLogServeNameOur = document.getElementById("log-serve-name-our");
-const elLogServeNameOpp = document.getElementById("log-serve-name-opp");
-const elLogServeStatsOur = document.getElementById("log-serve-stats-our");
-const elLogServeStatsOpp = document.getElementById("log-serve-stats-opp");
 const elServeTrajectoryLogToggleInline = document.getElementById("serve-trajectory-log-toggle-inline");
 const elServeTrajectoryLogToggleInlineOpp = document.getElementById("serve-trajectory-log-toggle-inline-opp");
 const elFloatingServeErrorBtn = document.getElementById("floating-serve-error-btn");
@@ -4630,6 +4624,25 @@ function resetAttackShortcutModals() {
   }
   setGlobalModalState(false);
 }
+function isAttackShortcutModalOpen(modal) {
+  return !!modal && !modal.classList.contains("hidden");
+}
+function toggleBaseModal() {
+  if (isAttackShortcutModalOpen(elBaseModal)) closeBaseModal();
+  else openBaseModal();
+}
+function toggleAttackSetterModal() {
+  if (isAttackShortcutModalOpen(elAttackSetterModal)) closeAttackSetterModal();
+  else openAttackSetterModal();
+}
+function toggleAttackTypeModal() {
+  if (isAttackShortcutModalOpen(elAttackTypeModal)) closeAttackTypeModal();
+  else openAttackTypeModal();
+}
+function toggleBlockNumberModal() {
+  if (isAttackShortcutModalOpen(elBlockNumberModal)) closeBlockNumberModal();
+  else openBlockNumberModal();
+}
 function openMatchManagerModal() {
   if (!elMatchManagerModal) return;
   elMatchManagerModal.classList.remove("hidden");
@@ -4655,11 +4668,17 @@ function getLastAttackEventForScope(scope) {
 }
 function applyBaseToTarget(baseValue) {
   const targetEvents = baseModalTargetEvents || [];
-  if (!targetEvents.length) return;
-  applyAttackFieldToEvents(targetEvents, ev => {
-    ev.base = baseValue || null;
-  });
-  closeBaseModal();
+  if (!targetEvents.length) {
+    closeBaseModal();
+    return;
+  }
+  try {
+    applyAttackFieldToEvents(targetEvents, ev => {
+      ev.base = baseValue || null;
+    });
+  } finally {
+    closeBaseModal();
+  }
 }
 function openBaseModal() {
   if (!elBaseModal) return;
@@ -4670,7 +4689,7 @@ function openBaseModal() {
   }
   baseModalTargetEvents = targetEvents;
   elBaseModal.classList.remove("hidden");
-  setGlobalModalState(true);
+  setGlobalModalState(true, { forcePopup: true });
 }
 function closeBaseModal() {
   resetAttackShortcutModals();
@@ -4724,20 +4743,29 @@ function renderSetterModalOptions(scope, setterIdx) {
 }
 function applySetterToTarget(setterIdx) {
   const targetEvents = setterModalTargetEvents || [];
-  if (!targetEvents.length) return;
+  if (!targetEvents.length) {
+    closeAttackSetterModal();
+    return;
+  }
   const scope = getSetterShortcutScope(targetEvents);
-  if (!scope) return;
+  if (!scope) {
+    closeAttackSetterModal();
+    return;
+  }
   const players = getPlayersForScope(scope) || [];
-  applyAttackFieldToEvents(targetEvents, ev => {
-    if (setterIdx === null || typeof setterIdx !== "number" || !players[setterIdx]) {
-      ev.setterIdx = null;
-      ev.setterName = null;
-    } else {
-      ev.setterIdx = setterIdx;
-      ev.setterName = players[setterIdx];
-    }
-  });
-  closeAttackSetterModal();
+  try {
+    applyAttackFieldToEvents(targetEvents, ev => {
+      if (setterIdx === null || typeof setterIdx !== "number" || !players[setterIdx]) {
+        ev.setterIdx = null;
+        ev.setterName = null;
+      } else {
+        ev.setterIdx = setterIdx;
+        ev.setterName = players[setterIdx];
+      }
+    });
+  } finally {
+    closeAttackSetterModal();
+  }
 }
 function openAttackSetterModal() {
   if (!elAttackSetterModal) return;
@@ -4756,18 +4784,24 @@ function openAttackSetterModal() {
   const setterIdx = typeof seed.setterIdx === "number" ? seed.setterIdx : null;
   renderSetterModalOptions(scope, setterIdx);
   elAttackSetterModal.classList.remove("hidden");
-  setGlobalModalState(true);
+  setGlobalModalState(true, { forcePopup: true });
 }
 function closeAttackSetterModal() {
   resetAttackShortcutModals();
 }
 function applyAttackTypeToTarget(value) {
   const targetEvents = attackTypeModalTargetEvents || [];
-  if (!targetEvents.length) return;
-  applyAttackFieldToEvents(targetEvents, ev => {
-    ev.attackType = value || null;
-  }, { shouldRecalc: false });
-  closeAttackTypeModal();
+  if (!targetEvents.length) {
+    closeAttackTypeModal();
+    return;
+  }
+  try {
+    applyAttackFieldToEvents(targetEvents, ev => {
+      ev.attackType = value || null;
+    }, { shouldRecalc: false });
+  } finally {
+    closeAttackTypeModal();
+  }
 }
 function openAttackTypeModal() {
   if (!elAttackTypeModal) return;
@@ -4790,20 +4824,26 @@ function openAttackTypeModal() {
     });
   }
   elAttackTypeModal.classList.remove("hidden");
-  setGlobalModalState(true);
+  setGlobalModalState(true, { forcePopup: true });
 }
 function closeAttackTypeModal() {
   resetAttackShortcutModals();
 }
 function applyBlockNumberToTarget(value) {
   const targetEvents = blockNumberModalTargetEvents || [];
-  if (!targetEvents.length) return;
-  applyAttackFieldToEvents(targetEvents, ev => {
-    ev.blockNumber = typeof value === "number" ? value : null;
-    ev.dv = normalizeDataVolleyEventMeta(ev.dv);
-    ev.dv.numPlayersNumeric = typeof value === "number" ? value : null;
-  }, { shouldRecalc: false });
-  closeBlockNumberModal();
+  if (!targetEvents.length) {
+    closeBlockNumberModal();
+    return;
+  }
+  try {
+    applyAttackFieldToEvents(targetEvents, ev => {
+      ev.blockNumber = typeof value === "number" ? value : null;
+      ev.dv = normalizeDataVolleyEventMeta(ev.dv);
+      ev.dv.numPlayersNumeric = typeof value === "number" ? value : null;
+    }, { shouldRecalc: false });
+  } finally {
+    closeBlockNumberModal();
+  }
 }
 function openBlockNumberModal() {
   if (!elBlockNumberModal) return;
@@ -4814,7 +4854,7 @@ function openBlockNumberModal() {
   }
   blockNumberModalTargetEvents = targetEvents;
   elBlockNumberModal.classList.remove("hidden");
-  setGlobalModalState(true);
+  setGlobalModalState(true, { forcePopup: true });
 }
 function closeBlockNumberModal() {
   resetAttackShortcutModals();
@@ -18553,29 +18593,20 @@ function renderServeTrajectoryGridForPlayer(targetGrid, playerIdx) {
   const players = getPlayersForScope(analysisScope);
   const numbers = getPlayerNumbersForScope(analysisScope);
   const card = document.createElement("div");
-  card.className = "trajectory-card serve-trajectory-card";
-  card.dataset.playerIdx = String(playerIdx);
-  const title = document.createElement("div");
-  title.className = "trajectory-card__title";
-  title.textContent =
+  targetGrid.appendChild(card);
+  const titleText =
     analysisScope === "opponent"
       ? formatNameWithNumberFor(players[playerIdx], numbers) || players[playerIdx] || "—"
       : formatNameWithNumber(players[playerIdx]) || players[playerIdx] || "—";
-  const canvas = document.createElement("canvas");
-  canvas.dataset.serveTrajCanvas = String(playerIdx);
-  const empty = document.createElement("div");
-  empty.className = "trajectory-card__empty";
-  empty.textContent = "Nessuna traiettoria";
-  card.appendChild(title);
-  card.appendChild(canvas);
-  card.appendChild(empty);
-  targetGrid.appendChild(card);
   const prefs = ensurePlayerAnalysisState();
   const isFarView = getAnalysisCourtSide(prefs.courtSideByScope[analysisScope]) === "far";
-  drawServeTrajectoryCanvas(canvas, card, events, {
+  renderServeTrajectoryCard(card, {
+    titleText,
+    events,
     scope: analysisScope,
     isFarServe: isFarView,
-    onImagesLoad: () => renderPlayerAnalysis()
+    onImagesLoad: () => renderPlayerAnalysis(),
+    playerIdx
   });
 }
 function syncPlayerSecondFilterState() {
@@ -19643,10 +19674,10 @@ function getServeTrajectoryEventsForServer(scope) {
   }
   return { events, serverName, eventSwap };
 }
-function drawServeTrajectoryCanvas(canvas, card, events, { scope, isFarServe, onImagesLoad } = {}) {
-  if (!canvas || !card) return;
-  const gapOverlapPx = 30;
-  const imgs = getServeTrajectoryImages(onImagesLoad || (() => renderLogServeTrajectories()));
+function drawServeTrajectoryCanvas(canvas, visual, events, { scope, isFarServe, onImagesLoad } = {}) {
+  if (!canvas || !visual) return;
+  const redraw = onImagesLoad || (() => renderLogServeTrajectories());
+  const imgs = getServeTrajectoryImages(redraw);
   const farFlag =
     typeof isFarServe === "boolean" ? isFarServe : scope ? isFarSideForScope(scope) : false;
   const startImg = imgs && (farFlag ? imgs.startFar : imgs.start);
@@ -19660,6 +19691,7 @@ function drawServeTrajectoryCanvas(canvas, card, events, { scope, isFarServe, on
     320;
   const startHeight = Math.max(80, Math.round(width * startRatio));
   const endHeight = Math.max(80, Math.round(width * endRatio));
+  const gapOverlapPx = Math.round(width / 9);
   const gapHeight = Math.max(0, startHeight - Math.round(startHeight / 9));
   const gapCut = Math.min(gapOverlapPx, Math.max(0, gapHeight - 1));
   const effectiveGap = Math.max(0, gapHeight - gapCut);
@@ -19668,25 +19700,20 @@ function drawServeTrajectoryCanvas(canvas, card, events, { scope, isFarServe, on
   canvas.height = height;
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, width, height);
-  const gapImg = getAttackEmptyImage(!farFlag, () => renderLogServeTrajectories());
+  const gapImg = getAttackEmptyImage(!farFlag, redraw);
   const overlap = gapCut;
   if (farFlag) {
-    if (startImg && startImg.complete && startImg.naturalWidth) {
-      ctx.drawImage(startImg, 0, 0, width, startHeight);
-    }
-    if (effectiveGap > 0) {
-      const gapStart = startHeight;
+    if (gapHeight > 0) {
+      const gapStart = startHeight - overlap;
       if (gapImg && gapImg.complete && gapImg.naturalWidth) {
-        const srcCut = Math.round((overlap / gapHeight) * gapImg.naturalHeight);
-        const srcY = Math.min(srcCut, gapImg.naturalHeight - 1);
-        const srcH = Math.max(1, gapImg.naturalHeight - srcY);
-        const destY = gapStart;
-        const destH = Math.max(1, effectiveGap);
-        ctx.drawImage(gapImg, 0, srcY, gapImg.naturalWidth, srcH, 0, destY, width, destH);
+        ctx.drawImage(gapImg, 0, 0, gapImg.naturalWidth, gapImg.naturalHeight, 0, gapStart, width, gapHeight);
       } else {
         ctx.fillStyle = "#ffb142";
-        ctx.fillRect(0, gapStart, width, Math.max(1, effectiveGap));
+        ctx.fillRect(0, gapStart, width, Math.max(1, gapHeight));
       }
+    }
+    if (startImg && startImg.complete && startImg.naturalWidth) {
+      ctx.drawImage(startImg, 0, 0, width, startHeight);
     }
     if (endImg && endImg.complete && endImg.naturalWidth) {
       ctx.drawImage(endImg, 0, startHeight + effectiveGap, width, endHeight);
@@ -19695,16 +19722,13 @@ function drawServeTrajectoryCanvas(canvas, card, events, { scope, isFarServe, on
     if (endImg && endImg.complete && endImg.naturalWidth) {
       ctx.drawImage(endImg, 0, 0, width, endHeight);
     }
-    if (effectiveGap > 0) {
+    if (gapHeight > 0) {
       const gapStart = endHeight;
       if (gapImg && gapImg.complete && gapImg.naturalWidth) {
-        const srcCut = Math.round((overlap / gapHeight) * gapImg.naturalHeight);
-        const srcH = Math.max(1, gapImg.naturalHeight - srcCut);
-        const destH = Math.max(1, effectiveGap);
-        ctx.drawImage(gapImg, 0, 0, gapImg.naturalWidth, srcH, 0, gapStart, width, destH);
+        ctx.drawImage(gapImg, 0, 0, gapImg.naturalWidth, gapImg.naturalHeight, 0, gapStart, width, gapHeight);
       } else {
         ctx.fillStyle = "#ffb142";
-        ctx.fillRect(0, gapStart, width, Math.max(1, effectiveGap));
+        ctx.fillRect(0, gapStart, width, Math.max(1, gapHeight));
       }
     }
     if (startImg && startImg.complete && startImg.naturalWidth) {
@@ -19721,10 +19745,10 @@ function drawServeTrajectoryCanvas(canvas, card, events, { scope, isFarServe, on
   ctx.stroke();
   ctx.setLineDash([]);
   if (!events || events.length === 0) {
-    card.classList.add("empty");
+    visual.classList.add("empty");
     return;
   }
-  card.classList.remove("empty");
+  visual.classList.remove("empty");
   events.forEach(ev => {
     const startRaw = ev.serveStart;
     const endRaw = ev.serveEnd;
@@ -19742,6 +19766,52 @@ function drawServeTrajectoryCanvas(canvas, card, events, { scope, isFarServe, on
     ctx.lineTo(ex, ey);
     ctx.stroke();
   });
+}
+function renderServeTrajectoryCard(
+  card,
+  { titleText, events, scope, isFarServe, onImagesLoad, playerIdx, stats } = {}
+) {
+  if (!card) return null;
+  card.classList.add("trajectory-card", "serve-trajectory-card");
+  card.innerHTML = "";
+  if (typeof playerIdx === "number") {
+    card.dataset.playerIdx = String(playerIdx);
+  } else {
+    delete card.dataset.playerIdx;
+  }
+  const visual = document.createElement("div");
+  visual.className = "serve-trajectory-card__visual";
+  const title = document.createElement("div");
+  title.className = "trajectory-card__title";
+  title.textContent = titleText || "—";
+  const canvas = document.createElement("canvas");
+  if (typeof playerIdx === "number") canvas.dataset.serveTrajCanvas = String(playerIdx);
+  const empty = document.createElement("div");
+  empty.className = "trajectory-card__empty";
+  empty.textContent = "Nessuna traiettoria";
+  visual.appendChild(title);
+  visual.appendChild(canvas);
+  visual.appendChild(empty);
+  card.appendChild(visual);
+  if (stats !== undefined) {
+    const statsWrap = document.createElement("div");
+    statsWrap.className = "serve-trajectory-card__stats";
+    const statsTitle = document.createElement("div");
+    statsTitle.className = "serve-trajectory-card__stats-title";
+    statsTitle.textContent = "Dati battuta";
+    const statsGrid = document.createElement("div");
+    statsGrid.className = "serve-trajectory-card__stats-grid";
+    statsWrap.appendChild(statsTitle);
+    statsWrap.appendChild(statsGrid);
+    card.appendChild(statsWrap);
+    renderServeStatsGrid(statsGrid, stats);
+  }
+  drawServeTrajectoryCanvas(canvas, visual, events || [], {
+    scope,
+    isFarServe,
+    onImagesLoad
+  });
+  return { canvas, visual };
 }
 function resolvePlayerIdxFromNameForScope(name, scope) {
   const players = getPlayersForScope(scope);
@@ -19778,7 +19848,7 @@ function renderServeStatsGrid(targetEl, stats) {
   targetEl.innerHTML = "";
   if (!stats) {
     const empty = document.createElement("div");
-    empty.className = "log-serve-card__stat";
+    empty.className = "serve-trajectory-card__stat";
     empty.textContent = "Nessun dato";
     targetEl.appendChild(empty);
     return;
@@ -19792,7 +19862,7 @@ function renderServeStatsGrid(targetEl, stats) {
   ];
   rows.forEach(row => {
     const item = document.createElement("div");
-    item.className = "log-serve-card__stat";
+    item.className = "serve-trajectory-card__stat";
     const label = document.createElement("span");
     label.textContent = row.label;
     const value = document.createElement("strong");
@@ -19849,29 +19919,30 @@ function renderLogServeTrajectories() {
   const showOpp = servingScope === "opponent" && state.useOpponentTeam && allowOpp;
   if (elLogServeCardOur) elLogServeCardOur.classList.toggle("hidden", !showOur);
   if (elLogServeCardOpp) elLogServeCardOpp.classList.toggle("hidden", !showOpp);
-  if (showOur && elLogServeCanvasOur && elLogServeCardOur) {
+  if (showOur && elLogServeCardOur) {
     const { events, serverName } = getServeTrajectoryEventsForServer("our");
-    if (elLogServeNameOur) {
-      elLogServeNameOur.textContent = serverName ? formatNameWithNumber(serverName) : "—";
-    }
-    drawServeTrajectoryCanvas(elLogServeCanvasOur, elLogServeCardOur, events, {
+    renderServeTrajectoryCard(elLogServeCardOur, {
+      titleText: `Battuta · ${serverName ? formatNameWithNumber(serverName) : "—"}`,
+      events,
       scope: "our",
-      isFarServe: isFarSideForScope("our")
+      isFarServe: isFarSideForScope("our"),
+      onImagesLoad: () => renderLogServeTrajectories(),
+      stats: getServeStatsForServer("our", serverName)
     });
-    renderServeStatsGrid(elLogServeStatsOur, getServeStatsForServer("our", serverName));
   }
-  if (showOpp && elLogServeCanvasOpp && elLogServeCardOpp) {
+  if (showOpp && elLogServeCardOpp) {
     const { events, serverName } = getServeTrajectoryEventsForServer("opponent");
-    if (elLogServeNameOpp) {
-      elLogServeNameOpp.textContent = serverName
-        ? formatNameWithNumberFor(serverName, getPlayerNumbersForScope("opponent"))
-        : "—";
-    }
-    drawServeTrajectoryCanvas(elLogServeCanvasOpp, elLogServeCardOpp, events, {
+    const formattedName = serverName
+      ? formatNameWithNumberFor(serverName, getPlayerNumbersForScope("opponent"))
+      : "—";
+    renderServeTrajectoryCard(elLogServeCardOpp, {
+      titleText: `Battuta · ${formattedName}`,
+      events,
       scope: "opponent",
-      isFarServe: isFarSideForScope("opponent")
+      isFarServe: isFarSideForScope("opponent"),
+      onImagesLoad: () => renderLogServeTrajectories(),
+      stats: getServeStatsForServer("opponent", serverName)
     });
-    renderServeStatsGrid(elLogServeStatsOpp, getServeStatsForServer("opponent", serverName));
   }
 }
 function initLogServeTrajectoryControls() {
@@ -20142,49 +20213,34 @@ function renderServeTrajectoryAnalysis() {
     ? sortPlayerIndexesByNumberForScope(selectedPlayers, analysisScope)
     : [];
   elServeTrajectoryGrid.innerHTML = "";
-  const cards = [];
-  playersToRender.forEach(playerIdx => {
-    const card = document.createElement("div");
-    card.className = "trajectory-card serve-trajectory-card";
-    card.dataset.playerIdx = String(playerIdx);
-    const title = document.createElement("div");
-    title.className = "trajectory-card__title";
-    title.textContent =
-      analysisScope === "opponent"
-        ? formatNameWithNumberFor(analysisPlayers[playerIdx], analysisNumbers) ||
-          analysisPlayers[playerIdx] ||
-          "—"
-        : formatNameWithNumber(analysisPlayers[playerIdx]) || analysisPlayers[playerIdx] || "—";
-    const canvas = document.createElement("canvas");
-    canvas.dataset.serveTrajCanvas = String(playerIdx);
-    const empty = document.createElement("div");
-    empty.className = "trajectory-card__empty";
-    empty.textContent = "Nessuna traiettoria";
-    card.appendChild(title);
-    card.appendChild(canvas);
-    card.appendChild(empty);
-    elServeTrajectoryGrid.appendChild(card);
-    cards.push({ card, canvas, playerIdx });
-  });
-  if (!cards.length) return;
   const grouped = {};
   events.forEach(ev => {
     if (typeof ev.playerIdx !== "number") return;
     if (!grouped[ev.playerIdx]) grouped[ev.playerIdx] = [];
     grouped[ev.playerIdx].push(ev);
   });
-  cards.forEach(({ card, canvas, playerIdx }) => {
+  playersToRender.forEach(playerIdx => {
     let list = grouped[playerIdx] || [];
     const lastEv = list.length ? list[list.length - 1] : null;
     const lastSwap = lastEv && typeof lastEv.courtSideSwapped === "boolean" ? lastEv.courtSideSwapped : null;
     if (lastSwap !== null) {
       list = list.filter(ev => ev && ev.courtSideSwapped === lastSwap);
     }
-    const farFlag = isFarView;
-    drawServeTrajectoryCanvas(canvas, card, list, {
+    const card = document.createElement("div");
+    elServeTrajectoryGrid.appendChild(card);
+    const titleText =
+      analysisScope === "opponent"
+        ? formatNameWithNumberFor(analysisPlayers[playerIdx], analysisNumbers) ||
+          analysisPlayers[playerIdx] ||
+          "—"
+        : formatNameWithNumber(analysisPlayers[playerIdx]) || analysisPlayers[playerIdx] || "—";
+    renderServeTrajectoryCard(card, {
+      titleText,
+      events: list,
       scope: analysisScope,
-      isFarServe: farFlag,
-      onImagesLoad: () => renderServeTrajectoryAnalysis()
+      isFarServe: isFarView,
+      onImagesLoad: () => renderServeTrajectoryAnalysis(),
+      playerIdx
     });
   });
 }
@@ -29209,16 +29265,16 @@ async function init() {
     });
   }
   if (elBtnAttackBase) {
-    elBtnAttackBase.addEventListener("click", openBaseModal);
+    elBtnAttackBase.addEventListener("click", toggleBaseModal);
   }
   if (elBtnAttackSetter) {
-    elBtnAttackSetter.addEventListener("click", openAttackSetterModal);
+    elBtnAttackSetter.addEventListener("click", toggleAttackSetterModal);
   }
   if (elBtnAttackType) {
-    elBtnAttackType.addEventListener("click", openAttackTypeModal);
+    elBtnAttackType.addEventListener("click", toggleAttackTypeModal);
   }
   if (elBtnBlockNumber) {
-    elBtnBlockNumber.addEventListener("click", openBlockNumberModal);
+    elBtnBlockNumber.addEventListener("click", toggleBlockNumberModal);
   }
   if (elBtnNetBlockPrompt) {
     elBtnNetBlockPrompt.addEventListener("click", triggerNetBlockPrompt);
@@ -29386,6 +29442,11 @@ async function init() {
     if (isEditingField(e.target)) return;
     closeCurrentEdit();
     if (!elBaseModal?.classList.contains("hidden")) {
+      if (e.key === "k" || e.key === "K") {
+        e.preventDefault();
+        closeBaseModal();
+        return;
+      }
       const mapped = BASE_KEY_MAP[String(e.key).toUpperCase()];
       if (mapped) {
         e.preventDefault();
@@ -29393,7 +29454,19 @@ async function init() {
       }
       return;
     }
+    if (!elAttackSetterModal?.classList.contains("hidden")) {
+      if (e.key === "a" || e.key === "A") {
+        e.preventDefault();
+        closeAttackSetterModal();
+      }
+      return;
+    }
     if (!elAttackTypeModal?.classList.contains("hidden")) {
+      if (e.key === "t" || e.key === "T") {
+        e.preventDefault();
+        closeAttackTypeModal();
+        return;
+      }
       const mapped = ATTACK_TYPE_KEY_MAP[String(e.key).toUpperCase()];
       if (mapped) {
         e.preventDefault();
@@ -29402,6 +29475,11 @@ async function init() {
       return;
     }
     if (!elBlockNumberModal?.classList.contains("hidden")) {
+      if (e.key === "n" || e.key === "N") {
+        e.preventDefault();
+        closeBlockNumberModal();
+        return;
+      }
       const mapped = BLOCK_NUMBER_KEY_MAP[String(e.key)];
       if (mapped !== undefined) {
         e.preventDefault();
@@ -29411,17 +29489,17 @@ async function init() {
     }
     if (e.key === "k" || e.key === "K") {
       e.preventDefault();
-      openBaseModal();
+      toggleBaseModal();
       return;
     }
     if (e.key === "a" || e.key === "A") {
       e.preventDefault();
-      openAttackSetterModal();
+      toggleAttackSetterModal();
       return;
     }
     if (e.key === "t" || e.key === "T") {
       e.preventDefault();
-      openAttackTypeModal();
+      toggleAttackTypeModal();
       return;
     }
     if (e.key === "n" || e.key === "N") {
@@ -29429,7 +29507,7 @@ async function init() {
       if (elBtnNetBlockPrompt && !elBtnNetBlockPrompt.classList.contains("hidden")) {
         triggerNetBlockPrompt();
       } else {
-        openBlockNumberModal();
+        toggleBlockNumberModal();
       }
       return;
     }
