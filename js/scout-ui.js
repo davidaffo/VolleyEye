@@ -3217,12 +3217,13 @@ function isSetterPlayer(playerIdx) {
   return isSetterPlayerForScope("our", playerIdx);
 }
 function getSetterFromCourtForScope(scope) {
-  if (typeof getRoleLabel !== "function") return { idx: null, name: null };
+  if (typeof getRoleLabelForRotation !== "function") return { idx: null, name: null };
   const court =
     scope === "opponent" ? getCourtShape(state.opponentCourt || []) : getCourtShape(state.court);
   const players = getPlayersForScope(scope);
+  const rotation = scope === "opponent" ? state.opponentRotation || 1 : state.rotation || 1;
   for (let i = 0; i < court.length; i += 1) {
-    const role = String(getRoleLabel(i + 1)).toUpperCase();
+    const role = String(getRoleLabelForRotation(i + 1, rotation)).toUpperCase();
     if (role !== "P") continue;
     const name = court[i] && court[i].main ? court[i].main : "";
     if (!name) continue;
