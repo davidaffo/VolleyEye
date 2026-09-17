@@ -837,17 +837,50 @@ function normalizePlayerNameCase(name) {
     )
     .join(" ");
 }
-function splitNameParts(fullName = "") {
-  const parts = (fullName || "").trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) {
-    return { lastName: "", firstName: "" };
-  }
-  const lastName = parts[0] || "";
-  const firstName = parts.slice(1).join(" ");
-  return { lastName, firstName };
-}
 function buildFullName(lastName = "", firstName = "") {
   return [lastName, firstName].map(s => (s || "").trim()).filter(Boolean).join(" ").trim();
+}
+function getStructuredPlayerNameParts(fullName = "", scope = "") {
+  const wanted = String(fullName || "").trim().replace(/\s+/g, " ").toLowerCase();
+  if (!wanted) return null;
+  const candidates = [];
+  if (teamManagerState && Array.isArray(teamManagerState.players)) {
+    candidates.push(...teamManagerState.players);
+  }
+  const scopes = scope ? [scope] : ["our", "opponent"];
+  scopes.forEach(targetScope => {
+    const teamName = targetScope === "opponent"
+      ? (state.selectedOpponentTeam || "").trim()
+      : ((state.selectedTeam || (state.match && state.match.teamName)) || "").trim();
+    if (!teamName) return;
+    const loader = targetScope === "opponent" ? loadOpponentTeamFromStorage : loadTeamFromStorage;
+    if (typeof loader !== "function") return;
+    const payload = loader(teamName);
+    if (payload && Array.isArray(payload.playersDetailed)) {
+      candidates.push(...payload.playersDetailed);
+    }
+  });
+  if (state.playersDb && typeof state.playersDb === "object") {
+    candidates.push(...Object.values(state.playersDb));
+  }
+  const player = candidates.find(entry => {
+    if (!entry || typeof entry !== "object") return false;
+    const canonical = buildFullName(entry.lastName, entry.firstName) || String(entry.name || "").trim();
+    return canonical.replace(/\s+/g, " ").toLowerCase() === wanted;
+  });
+  if (!player) return null;
+  const lastName = String(player.lastName || "").trim();
+  const firstName = String(player.firstName || "").trim();
+  if (!lastName && !firstName) return null;
+  return { lastName, firstName };
+}
+function formatStructuredPlayerName(fullName = "", scope = "") {
+  const raw = String(fullName || "").trim();
+  if (!raw) return "";
+  const parts = getStructuredPlayerNameParts(raw, scope);
+  if (!parts) return raw;
+  const initial = parts.firstName ? parts.firstName[0].toUpperCase() + "." : "";
+  return [parts.lastName, initial].filter(Boolean).join(" ").trim() || raw;
 }
 function enforceSingleCaptainFlag(players, preferredName = "") {
   if (!Array.isArray(players)) return [];
@@ -1258,16 +1291,7 @@ function isCaptain(name) {
 function formatNameWithNumber(name, options = {}) {
   const num = getPlayerNumber(name);
   const compactCourt = !!options.compactCourt;
-  const nameParts = splitNameParts(name);
-  const surname = nameParts.lastName || "";
-  const given = nameParts.firstName || "";
-  const initial = given ? given.trim()[0]?.toUpperCase() + "." : "";
-  let baseName = name || "";
-  if (surname && initial) {
-    baseName = `${surname} ${initial}`.trim();
-  } else if (surname) {
-    baseName = surname;
-  }
+  let baseName = formatStructuredPlayerName(name, "our");
   if (compactCourt) {
     baseName = baseName || name || "";
   }
@@ -1282,16 +1306,8 @@ function formatNameWithNumberFor(name, numbersMap = {}, options = {}) {
   if (!name) return "";
   const raw = numbersMap && numbersMap[name];
   const num = raw !== undefined && raw !== null && raw !== "" ? String(raw) : "";
-  const nameParts = splitNameParts(name);
-  const surname = nameParts.lastName || "";
-  const given = nameParts.firstName || "";
-  const initial = given ? given.trim()[0]?.toUpperCase() + "." : "";
-  let baseName = name || "";
-  if (surname && initial) {
-    baseName = `${surname} ${initial}`.trim();
-  } else if (surname) {
-    baseName = surname;
-  }
+  const scope = options.scope || (numbersMap === state.opponentPlayerNumbers ? "opponent" : "our");
+  let baseName = formatStructuredPlayerName(name, scope);
   if (options.compactCourt) {
     baseName = baseName || name || "";
   }
@@ -2522,12 +2538,11 @@ function generatePlayerId() {
 }
 function buildTemplatePlayersDetailed() {
   return (TEMPLATE_TEAM && Array.isArray(TEMPLATE_TEAM.players) ? TEMPLATE_TEAM.players : []).map((name, idx) => {
-    const parts = splitNameParts(name);
     return {
       id: typeof generatePlayerId === "function" ? generatePlayerId() : idx + "_" + name,
       name,
-      firstName: parts.firstName || "",
-      lastName: parts.lastName || name,
+      firstName: "",
+      lastName: name,
       number: String(idx + 1),
       role: TEMPLATE_TEAM.liberos.includes(name) ? "L" : "",
       isCaptain: idx === 0,
@@ -2553,7 +2568,7 @@ function normalizeTeamPayload(raw, fallbackName = "") {
       ? rawDefaultRotation
       : 1;
   const rawPreferredLibero = typeof raw.preferredLibero === "string" ? raw.preferredLibero : "";
-  if ((raw.version === 2 || raw.version === 3) && Array.isArray(raw.playersDetailed)) {
+  if (raw.version === 3 && Array.isArray(raw.playersDetailed)) {
     const seenNames = new Set();
     const seenIds = new Set();
     const rawLiberoKeys = new Set(
@@ -2562,17 +2577,16 @@ function normalizeTeamPayload(raw, fallbackName = "") {
     const playersDetailed = enforceSingleCaptainFlag(
       raw.playersDetailed.map(p => {
         p = p && typeof p === "object" ? p : {};
-        const cleanName = (p.name || buildFullName(p.lastName, p.firstName) || "")
-          .trim()
-          .replace(/\s+/g, " ");
-        const parts = splitNameParts(cleanName);
+        const firstName = String(p.firstName || "").trim().replace(/\s+/g, " ");
+        const lastName = String(p.lastName || "").trim().replace(/\s+/g, " ");
+        const cleanName = buildFullName(lastName, firstName);
         const candidateId = p.playerId || p.id || "";
         const playerId = isValidPlayerId(candidateId) ? candidateId : makeId();
         return {
           id: playerId,
           name: cleanName,
-          firstName: p.firstName || parts.firstName || "",
-          lastName: p.lastName || parts.lastName || "",
+          firstName,
+          lastName,
           codeOfficial: typeof p.codeOfficial === "string" ? p.codeOfficial.trim() : "",
           photo: typeof p.photo === "string" ? p.photo : "",
           number: p.number || "",
@@ -2617,7 +2631,7 @@ function normalizeTeamPayload(raw, fallbackName = "") {
     const preferredCanonical = canonicalNames.get(rawPreferredLibero.toLowerCase()) || "";
     const preferredLibero = liberos.includes(preferredCanonical) ? preferredCanonical : liberos[0] || "";
     return {
-      version: 2,
+      version: 3,
       name,
       staff,
       officialCode,
@@ -2632,52 +2646,7 @@ function normalizeTeamPayload(raw, fallbackName = "") {
       preferredLibero
     };
   }
-  const legacyPlayers = normalizePlayers(raw.players || []);
-  const canonicalNames = new Map(legacyPlayers.map(player => [player.toLowerCase(), player]));
-  const liberos = normalizePlayers(raw.liberos || [])
-    .map(player => canonicalNames.get(player.toLowerCase()) || "")
-    .filter(Boolean);
-  const captainKeys = new Set(
-    normalizePlayers(raw.captains || []).map(player => player.toLowerCase())
-  );
-  const numbers = {};
-  Object.entries(raw.numbers || {}).forEach(([player, number]) => {
-    const canonical = canonicalNames.get(String(player || "").trim().toLowerCase());
-    if (canonical) numbers[canonical] = number;
-  });
-  const playersDetailed = legacyPlayers.map(n => ({
-    id: makeId(),
-    name: n,
-    ...splitNameParts(n),
-    codeOfficial: "",
-    photo: "",
-    number: numbers[n] || "",
-    role: liberos.includes(n) ? "L" : "",
-    isCaptain: captainKeys.has(n.toLowerCase()),
-    out: false
-  }));
-  enforceSingleCaptainFlag(playersDetailed, (Array.isArray(raw.captains) && raw.captains[0]) || "");
-  const captains = playersDetailed.filter(player => player.isCaptain).map(player => player.name).slice(0, 1);
-  const defaultLineup = rawDefaultLineup
-    .map(player => canonicalNames.get(player.toLowerCase()) || "")
-    .filter(Boolean);
-  const preferredCanonical = canonicalNames.get(rawPreferredLibero.toLowerCase()) || "";
-  const preferredLibero = liberos.includes(preferredCanonical) ? preferredCanonical : liberos[0] || "";
-  return {
-    version: 2,
-    name,
-    staff,
-    officialCode,
-    officialId,
-    playersDetailed,
-    liberos,
-    numbers,
-    players: legacyPlayers,
-    captains,
-    defaultLineup,
-    defaultRotation,
-    preferredLibero
-  };
+  return null;
 }
 function loadTeamNormalized(name) {
   const raw = loadTeamFromStorage(name);
@@ -2689,11 +2658,10 @@ function compactTeamPayload(data, fallbackName = "") {
   const playersDetailed =
     normalized.playersDetailed && normalized.playersDetailed.length > 0
       ? normalized.playersDetailed.map(p => {
-          const parts = splitNameParts(p.name || buildFullName(p.lastName, p.firstName));
           return {
             id: p.id || generatePlayerId(),
-            firstName: p.firstName || parts.firstName || "",
-            lastName: p.lastName || parts.lastName || "",
+            firstName: String(p.firstName || "").trim(),
+            lastName: String(p.lastName || "").trim(),
             codeOfficial: p.codeOfficial || "",
             photo: typeof p.photo === "string" ? p.photo : "",
             number: p.number || "",
@@ -3174,10 +3142,13 @@ function getCurrentTeamPayload(name = "") {
       const previous = detailedByName.get(pName) || {};
       const hasCurrentNumber =
         state.playerNumbers && Object.prototype.hasOwnProperty.call(state.playerNumbers, pName);
+      const firstName = String(previous.firstName || "").trim();
+      const lastName = String(previous.lastName || "").trim() || (!firstName ? pName : "");
       return Object.assign({}, previous, {
         id: isValidPlayerId(previous.id) ? previous.id : generatePlayerId(),
-        name: pName,
-        ...splitNameParts(pName),
+        name: buildFullName(lastName, firstName) || pName,
+        firstName,
+        lastName,
         codeOfficial: typeof previous.codeOfficial === "string" ? previous.codeOfficial : "",
         number: hasCurrentNumber ? state.playerNumbers[pName] : previous.number || "",
         role: (state.liberos || []).includes(pName) ? "L" : "",
@@ -3203,7 +3174,7 @@ function getCurrentTeamPayload(name = "") {
   const players = playersDetailed.filter(p => !p.out).map(p => p.name);
   const captains = playersDetailed.filter(p => p.isCaptain && !p.out).map(p => p.name).slice(0, 1);
   return {
-    version: 2,
+    version: 3,
     name: safeName,
     staff,
     officialCode: existing?.officialCode || "",
@@ -3240,10 +3211,13 @@ function getCurrentOpponentPayload(name = "") {
       const currentNumber = Object.prototype.hasOwnProperty.call(numbers, p)
         ? numbers[p]
         : (prev && prev.number) || "";
+      const firstName = String((prev && prev.firstName) || "").trim();
+      const lastName = String((prev && prev.lastName) || "").trim() || (!firstName ? p : "");
       return Object.assign({}, prev || {}, {
         id: prev && isValidPlayerId(prev.id) ? prev.id : generatePlayerId(),
-        name: p,
-        ...splitNameParts(p),
+        name: buildFullName(lastName, firstName) || p,
+        firstName,
+        lastName,
         codeOfficial: prev && typeof prev.codeOfficial === "string" ? prev.codeOfficial : "",
         number: currentNumber,
         role: liberos.includes(p) ? "L" : "",
@@ -3258,7 +3232,7 @@ function getCurrentOpponentPayload(name = "") {
     );
   enforceSingleCaptainFlag(playersDetailed, captains[0] || "");
   return {
-    version: 2,
+    version: 3,
     name: safeName,
     staff: existing?.staff || Object.assign({}, DEFAULT_STAFF),
     officialCode: existing?.officialCode || "",
@@ -3932,12 +3906,15 @@ function parseDelimitedTeamText(text) {
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   if (lines.length === 0) return null;
   const players = [];
+  const playersDetailed = [];
   const numbers = {};
   const liberos = [];
   lines.forEach(rawLine => {
     let name = "";
     let number = "";
     let liberoFlag = "";
+    let lastName = "";
+    let firstName = "";
     const parts = rawLine.split(/[\t;,]+/).map(p => p.trim()).filter(Boolean);
     if (parts.length >= 2) {
       const isNumberFirst = /^[0-9]{1,3}$/.test(parts[0]);
@@ -3950,24 +3927,30 @@ function parseDelimitedTeamText(text) {
           liberoFlag = lastPart;
           tail = tail.slice(0, -1);
         }
-        name = tail.join(" ").trim();
+        lastName = tail[0] || "";
+        firstName = tail.slice(1).join(" ").trim();
+        name = buildFullName(lastName, firstName);
       } else if (isNumberSecond) {
         name = parts[0];
+        lastName = name;
         number = parts[1];
         liberoFlag = parts[2] || "";
       } else {
         name = parts.join(" ").trim();
+        lastName = name;
       }
     } else {
       let match = rawLine.match(/^([0-9]{1,3})\s+(.+?)(?:\s+([Ll]))?$/);
       if (match) {
         number = match[1].trim();
         name = match[2].trim();
+        lastName = name;
         liberoFlag = (match[3] || "").trim();
       } else {
         match = rawLine.match(/^(.+?)\s+([0-9]{1,3})(?:\s+([Ll]))?$/);
         if (match) {
           name = match[1].trim();
+          lastName = name;
           number = match[2].trim();
           liberoFlag = (match[3] || "").trim();
         }
@@ -3975,7 +3958,10 @@ function parseDelimitedTeamText(text) {
     }
     const cleanName = normalizePlayers([normalizePlayerNameCase(name)])[0];
     if (!cleanName) return;
+    const cleanLastName = normalizePlayerNameCase(lastName || cleanName);
+    const cleanFirstName = normalizePlayerNameCase(firstName);
     players.push(cleanName);
+    playersDetailed.push({ name: cleanName, lastName: cleanLastName, firstName: cleanFirstName });
     if (number && /^[0-9]{1,3}$/.test(number)) {
       numbers[cleanName] = number;
     }
@@ -3984,7 +3970,7 @@ function parseDelimitedTeamText(text) {
     }
   });
   if (players.length === 0) return null;
-  return { players, numbers, liberos };
+  return { players, playersDetailed, numbers, liberos };
 }
 function readCamp3FileAsArrayBuffer(file) {
   return new Promise((resolve, reject) => {
@@ -4106,16 +4092,16 @@ function parseCamp3RosterText(text) {
       if (flag.startsWith("L")) isLibero = true;
     }
     if (groups.length < 2) return;
-    const lastName = groups[0];
-    const firstName = groups.slice(1).join(" ");
+    const lastName = normalizePlayerNameCase(groups[0]);
+    const firstName = normalizePlayerNameCase(groups.slice(1).join(" "));
     const cleanName = normalizePlayers([normalizePlayerNameCase(buildFullName(lastName, firstName))])[0];
     if (!cleanName) return;
     seenNumbers.add(number);
     players.push({
       number,
       name: cleanName,
-      lastName: splitNameParts(cleanName).lastName,
-      firstName: splitNameParts(cleanName).firstName,
+      lastName,
+      firstName,
       role: isLibero ? "L" : "",
       isCaptain
     });
@@ -4127,12 +4113,10 @@ function findCamp3PlayerMatch(camp3Player, currentPlayers) {
   if (!wanted) return null;
   const exact = currentPlayers.find(player => (player.name || "").trim().toLowerCase() === wanted);
   if (exact) return exact;
-  const wantedParts = splitNameParts(camp3Player.name || "");
   return currentPlayers.find(player => {
-    const parts = splitNameParts(player.name || buildFullName(player.lastName, player.firstName));
     return (
-      (parts.lastName || "").trim().toLowerCase() === (wantedParts.lastName || "").trim().toLowerCase() &&
-      (parts.firstName || "").trim().toLowerCase() === (wantedParts.firstName || "").trim().toLowerCase()
+      String(player.lastName || "").trim().toLowerCase() === String(camp3Player.lastName || "").trim().toLowerCase() &&
+      String(player.firstName || "").trim().toLowerCase() === String(camp3Player.firstName || "").trim().toLowerCase()
     );
   }) || null;
 }
@@ -4153,8 +4137,8 @@ function createCamp3ReviewDraft(camp3Players) {
       enabled: true,
       matchId: match && match.id ? match.id : "",
       number: player.number || "",
-      lastName: player.lastName || splitNameParts(player.name || "").lastName || "",
-      firstName: player.firstName || splitNameParts(player.name || "").firstName || "",
+      lastName: String(player.lastName || "").trim() || (!player.firstName ? String(player.name || "").trim() : ""),
+      firstName: String(player.firstName || "").trim(),
       role: player.role === "L" ? "L" : "",
       isCaptain: !!player.isCaptain
     };
@@ -4211,12 +4195,11 @@ function buildCamp3ImportPlanFromDraft(draft) {
     const cleanNumber = String(row.number || "").trim();
     const fullName = normalizePlayers([normalizePlayerNameCase(buildFullName(row.lastName, row.firstName))])[0];
     if (!fullName) return;
-    const parts = splitNameParts(fullName);
     const camp3Player = {
       number: /^[0-9]{1,3}$/.test(cleanNumber) ? cleanNumber : "",
       name: fullName,
-      lastName: parts.lastName,
-      firstName: parts.firstName,
+      lastName: normalizePlayerNameCase(row.lastName || ""),
+      firstName: normalizePlayerNameCase(row.firstName || ""),
       role: row.role === "L" ? "L" : "",
       isCaptain: !!row.isCaptain
     };
@@ -5137,8 +5120,7 @@ function buildTeamManagerStateFromSource(source, scope = "our") {
   const playersDetailed =
     normalized && normalized.playersDetailed && normalized.playersDetailed.length > 0
       ? normalized.playersDetailed.map(p => {
-          const parts = splitNameParts(p.name || buildFullName(p.lastName, p.firstName));
-          const fullName = p.name || buildFullName(p.lastName, p.firstName);
+          const fullName = buildFullName(p.lastName, p.firstName);
           const isLib = sourceLiberos.includes(fullName) || p.role === "L";
           const fallbackNumber = baseNumbers[fullName] || (p.name && baseNumbers[p.name]) || "";
           const dbEntry =
@@ -5148,8 +5130,8 @@ function buildTeamManagerStateFromSource(source, scope = "our") {
             p,
             {
               id: isValidPlayerId(p.id) ? p.id : generatePlayerId(),
-              firstName: p.firstName || parts.firstName || "",
-              lastName: p.lastName || parts.lastName || "",
+              firstName: String(p.firstName || "").trim(),
+              lastName: String(p.lastName || "").trim(),
               name: fullName,
               role: isLib ? "L" : "",
               number: p.number || fallbackNumber,
@@ -5166,14 +5148,15 @@ function buildTeamManagerStateFromSource(source, scope = "our") {
           const db = Object.assign({}, state.playersDb || {});
           let dbChanged = false;
           const list = basePlayers.map(name => {
-            const parts = splitNameParts(name);
-            const match =
-              findPlayersDbMatchByName(parts.firstName, parts.lastName) || findPlayersDbMatchByFullName(name);
+            const match = findPlayersDbMatchByFullName(name);
             const id = match && match.id ? match.id : generatePlayerId();
+            const firstName = String((match && match.firstName) || "").trim();
+            const lastName = String((match && match.lastName) || "").trim() || (!firstName ? name : "");
             const player = {
               id,
-              name,
-              ...parts,
+              name: buildFullName(lastName, firstName) || name,
+              firstName,
+              lastName,
               photo: match && typeof match.photo === "string" ? match.photo : "",
               number: baseNumbers[name] || "",
               role: baseLiberos.includes(name) ? "L" : "",
@@ -5275,11 +5258,11 @@ function renderTeamManagerTable() {
     const lastNameInput = document.createElement("input");
     lastNameInput.type = "text";
     lastNameInput.placeholder = "Cognome";
-    lastNameInput.value = p.lastName || splitNameParts(p.name).lastName || "";
+    lastNameInput.value = p.lastName || (!p.firstName ? p.name : "") || "";
     const firstNameInput = document.createElement("input");
     firstNameInput.type = "text";
     firstNameInput.placeholder = "Nome";
-    firstNameInput.value = p.firstName || splitNameParts(p.name).firstName || "";
+    firstNameInput.value = p.firstName || "";
     const photoCell = document.createElement("div");
     photoCell.className = "team-manager-photo-cell";
     const photoPreview = document.createElement("button");
@@ -5471,16 +5454,7 @@ function formatDefaultLineupName(name, numbersMap, captainSet, options = {}) {
   if (!name) return "";
   const num = (numbersMap && numbersMap[name]) || "";
   const compactCourt = !!options.compactCourt;
-  const nameParts = splitNameParts(name);
-  const surname = nameParts.lastName || "";
-  const given = nameParts.firstName || "";
-  const initial = given ? given.trim()[0]?.toUpperCase() + "." : "";
-  let baseName = name || "";
-  if (surname && initial) {
-    baseName = `${surname} ${initial}`.trim();
-  } else if (surname) {
-    baseName = surname;
-  }
+  let baseName = formatStructuredPlayerName(name, teamManagerScope || "our");
   if (compactCourt) {
     baseName = baseName || name || "";
   }
@@ -5835,10 +5809,13 @@ function refreshTeamManagerPlayersFromState() {
   const prevMap = new Map((teamManagerState.players || []).map(p => [p.name, p]));
   const playersDetailed = basePlayers.map(name => {
     const prev = prevMap.get(name);
+    const firstName = String((prev && prev.firstName) || "").trim();
+    const lastName = String((prev && prev.lastName) || "").trim() || (!firstName ? name : "");
     return {
       id: prev && isValidPlayerId(prev.id) ? prev.id : generatePlayerId(),
-      name,
-      ...splitNameParts(name),
+      name: buildFullName(lastName, firstName) || name,
+      firstName,
+      lastName,
       number: baseNumbers[name] || "",
       role: baseLiberos.includes(name) ? "L" : "",
       isCaptain: captainSet.has(name),
@@ -5971,8 +5948,8 @@ function collectTeamManagerPayload() {
       .map(p => ({
         id: isValidPlayerId(p.id) ? p.id : generatePlayerId(),
         name: buildFullName(p.lastName, p.firstName) || p.name.trim(),
-        firstName: p.firstName || splitNameParts(p.name).firstName || "",
-        lastName: p.lastName || splitNameParts(p.name).lastName || "",
+        firstName: String(p.firstName || "").trim(),
+        lastName: String(p.lastName || "").trim() || (!p.firstName ? String(p.name || "").trim() : ""),
         codeOfficial: typeof p.codeOfficial === "string" ? p.codeOfficial.trim() : "",
         photo: typeof p.photo === "string" ? p.photo : "",
         number: p.number || "",

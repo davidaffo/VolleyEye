@@ -4125,8 +4125,7 @@ function relocateVideoScoutContainer() {
   }
   const logSection = document.querySelector('[data-log-section]');
   if (state.useOpponentTeam && logSection) {
-    const anchor = logSection.querySelector("#events-log-summary");
-    logSection.insertBefore(elVideoScoutContainer, anchor || logSection.firstChild);
+    logSection.insertBefore(elVideoScoutContainer, logSection.firstChild);
     return;
   }
   if (videoScoutHomeParent) {
@@ -6367,7 +6366,7 @@ function isTeamManagerPasteTarget() {
     !!teamManagerState
   );
 }
-function applyPlayersToTeamManagerDraft(names, numbers, liberos, mode = "append") {
+function applyPlayersToTeamManagerDraft(names, numbers, liberos, mode = "append", playersDetailed = []) {
   if (!isTeamManagerPasteTarget()) return false;
   const normalizedNames = normalizePlayers(names || []);
   const numberMap = numbers && typeof numbers === "object" ? numbers : {};
@@ -6376,12 +6375,21 @@ function applyPlayersToTeamManagerDraft(names, numbers, liberos, mode = "append"
   const existingByName = new Map(
     existing.map(player => [String(player.name || "").trim().toLowerCase(), player])
   );
+  const importedByName = new Map(
+    (playersDetailed || []).map(player => [String(player.name || "").trim().toLowerCase(), player])
+  );
   const buildPlayer = name => {
     const previous = existingByName.get(name.toLowerCase()) || null;
     const dbEntry =
       (typeof findPlayersDbMatchByFullName === "function" && findPlayersDbMatchByFullName(name)) ||
       null;
-    const parts = splitNameParts(name);
+    const imported = importedByName.get(name.toLowerCase()) || null;
+    const firstName = String(
+      (imported && imported.firstName) || (previous && previous.firstName) || (dbEntry && dbEntry.firstName) || ""
+    ).trim();
+    const lastName = String(
+      (imported && imported.lastName) || (previous && previous.lastName) || (dbEntry && dbEntry.lastName) || ""
+    ).trim() || (!firstName ? name : "");
     const hasImportedNumber = Object.prototype.hasOwnProperty.call(numberMap, name);
     return Object.assign({}, previous || {}, {
       id:
@@ -6389,8 +6397,8 @@ function applyPlayersToTeamManagerDraft(names, numbers, liberos, mode = "append"
         (dbEntry && isValidPlayerId(dbEntry.id) && dbEntry.id) ||
         generatePlayerId(),
       name,
-      firstName: parts.firstName || "",
-      lastName: parts.lastName || name,
+      firstName,
+      lastName,
       number: hasImportedNumber
         ? String(numberMap[name])
         : previous && previous.number
@@ -6476,9 +6484,7 @@ function applyPlayersFromTextarea(options = {}) {
     const replacements = new Map();
     let matchCount = 0;
     appendPlayers.forEach(name => {
-      const parts = splitNameParts(name);
-      const match =
-        findPlayersDbMatchByName(parts.firstName, parts.lastName) || findPlayersDbMatchByFullName(name);
+      const match = findPlayersDbMatchByFullName(name);
       if (match && match.name) {
         matchCount += 1;
         const mapped = String(match.name || "").trim();
@@ -6520,7 +6526,8 @@ function applyPlayersFromTextarea(options = {}) {
       appendPlayersFinal,
       dbMatchResult.numbers || {},
       dbMatchResult.liberos || [],
-      mode
+      mode,
+      parsed?.playersDetailed || []
     );
   }
   if (isReplace) {
@@ -7582,96 +7589,10 @@ function syncRosterFromSelectedTeamIfNeeded() {
   let currentPlayers = normalizePlayers(state.players || []);
   const rosterNumbers =
     typeof normalizeNumbersMap === "function" ? normalizeNumbersMap(roster.numbers || {}) : roster.numbers || {};
-  const rosterLookup = new Map(rosterPlayers.map(name => [name.toLowerCase(), name]));
   const hasRoster = rosterPlayers.length > 0;
-  const isEditDistanceAtMostOne = (a, b) => {
-    if (a === b) return true;
-    const lenA = a.length;
-    const lenB = b.length;
-    if (Math.abs(lenA - lenB) > 1) return false;
-    let i = 0;
-    let j = 0;
-    let edits = 0;
-    while (i < lenA && j < lenB) {
-      if (a[i] === b[j]) {
-        i += 1;
-        j += 1;
-        continue;
-      }
-      edits += 1;
-      if (edits > 1) return false;
-      if (lenA > lenB) {
-        i += 1;
-      } else if (lenB > lenA) {
-        j += 1;
-      } else {
-        i += 1;
-        j += 1;
-      }
-    }
-    return true;
-  };
-  const findRosterTypoMatch = name => {
-    const parts = typeof splitNameParts === "function" ? splitNameParts(name) : { lastName: "", firstName: "" };
-    const last = (parts.lastName || "").toLowerCase();
-    const first = (parts.firstName || "").toLowerCase();
-    if (!last || !first) return null;
-    let match = null;
-    rosterPlayers.forEach(rosterName => {
-      if (match) return;
-      const rosterParts = splitNameParts(rosterName);
-      const rosterLast = (rosterParts.lastName || "").toLowerCase();
-      const rosterFirst = (rosterParts.firstName || "").toLowerCase();
-      if (rosterFirst !== first) return;
-      if (isEditDistanceAtMostOne(last, rosterLast)) {
-        match = rosterName;
-      }
-    });
-    return match;
-  };
-  const mapRosterNameToCurrent = rosterName => {
-    const match = findRosterTypoMatch(rosterName);
-    if (!match) return rosterName;
-    const currentMatch = currentPlayers.find(current => current.toLowerCase() === match.toLowerCase());
-    return currentMatch || rosterName;
-  };
-  if (hasRoster && Array.isArray(state.players)) {
-    const replacements = [];
-    state.players.forEach((name, idx) => {
-      const lower = String(name || "").toLowerCase();
-      if (rosterLookup.has(lower)) return;
-      const match = findRosterTypoMatch(name);
-      if (!match) return;
-      replacements.push({ idx, oldName: name, newName: match });
-    });
-    if (replacements.length > 0) {
-      replacements.forEach(({ idx, oldName, newName }) => {
-        state.players[idx] = newName;
-        const numbers = state.playerNumbers || {};
-        const rosterNum = rosterNumbers[newName];
-        if (Object.prototype.hasOwnProperty.call(numbers, oldName)) {
-          const oldNum = numbers[oldName];
-          if (rosterNum) {
-            numbers[newName] = rosterNum;
-          } else if (!numbers[newName]) {
-            numbers[newName] = oldNum;
-          }
-          delete numbers[oldName];
-          state.playerNumbers = numbers;
-        }
-        if (typeof replacePlayerNameEverywhere === "function") {
-          replacePlayerNameEverywhere(oldName, newName, idx);
-        }
-      });
-      currentPlayers = normalizePlayers(state.players || []);
-      cleanLiberos();
-      saveState();
-    }
-  }
-  const missing = rosterPlayers.filter(name => {
-    const mapped = mapRosterNameToCurrent(name);
-    return !currentPlayers.some(current => current.toLowerCase() === mapped.toLowerCase());
-  });
+  const missing = hasRoster
+    ? rosterPlayers.filter(name => !currentPlayers.some(current => current.toLowerCase() === name.toLowerCase()))
+    : [];
   if (!missing.length) return false;
   rosterSyncInProgress = true;
   const mergedPlayers = currentPlayers.concat(missing);
@@ -11164,11 +11085,7 @@ function buildVideoOverlayLinesForEvent(ev) {
   const scope = getTeamScopeFromEvent(ev);
   const numbers = getPlayerNumbersForScope(scope);
   const rawName = ev.playerName || "";
-  const nameParts = splitNameParts(rawName);
-  const fullName =
-    nameParts.lastName || nameParts.firstName
-      ? [nameParts.lastName, nameParts.firstName].filter(Boolean).join(" ")
-      : rawName || "—";
+  const fullName = rawName || "—";
   const numValue = rawName && numbers ? numbers[rawName] : "";
   const playerLine = numValue ? `${numValue} - ${fullName}` : fullName;
   const skillLabel = (SKILLS.find(s => s.id === ev.skillId) || {}).label || ev.skillId || "";
@@ -20093,13 +20010,9 @@ function getMatchSheetEventColor(code, variant = "attack") {
 function abbreviateMatchSheetName(name = "") {
   const raw = String(name || "").trim();
   if (!raw) return "";
-  const nameParts = typeof splitNameParts === "function"
-    ? splitNameParts(raw)
-    : { lastName: raw.split(/\s+/)[0] || "", firstName: raw.split(/\s+/).slice(1).join(" ") };
-  const surname = String(nameParts.lastName || "").trim();
-  const given = String(nameParts.firstName || "").trim();
-  const initial = given ? `${given[0].toUpperCase()}.` : "";
-  return `${surname}${initial ? ` ${initial}` : ""}`.trim().slice(0, 16);
+  return typeof formatStructuredPlayerName === "function"
+    ? formatStructuredPlayerName(raw)
+    : raw;
 }
 function getMatchSheetDefenseArrow(zone) {
   const target = MATCH_SHEET_FAR_COURT_ZONES[zone] || { x: 50, y: 76 };
@@ -22001,16 +21914,6 @@ function buildDvTeamCode(name = "", fallback = "TM") {
   if (cleaned) return cleaned.slice(0, 4);
   return fallback;
 }
-function splitDvName(name = "") {
-  const cleaned = sanitizeDvField(name);
-  if (!cleaned) return { lastName: "", firstName: "" };
-  const parts = cleaned.split(/\s+/).filter(Boolean);
-  if (parts.length <= 1) return { lastName: cleaned.toUpperCase(), firstName: "" };
-  return {
-    lastName: parts.slice(0, -1).join(" ").toUpperCase(),
-    firstName: parts.slice(-1).join(" ").toUpperCase()
-  };
-}
 function formatDvDate(value) {
   if (!value) return "";
   const date = new Date(value);
@@ -22769,7 +22672,8 @@ function buildDataVolleyPlayersRows(teamPayload, sideFlag, setNumbers, scope) {
       player,
       idx
     );
-    const nameParts = splitDvName(player.name);
+    const lastName = sanitizeDvField(player.lastName).toUpperCase();
+    const firstName = sanitizeDvField(player.firstName).toUpperCase();
     const playerState = perSetMap.get(player.name);
     const setCols = Array.from({ length: 5 }, (_, setIdx) => {
       const setNum = setIdx + 1;
@@ -22784,8 +22688,8 @@ function buildDataVolleyPlayersRows(teamPayload, sideFlag, setNumbers, scope) {
         "",
         "",
         dvCode,
-        nameParts.lastName,
-        nameParts.firstName,
+        lastName,
+        firstName,
         "",
         player.role === "L" ? "L" : "",
         player.isCaptain ? "1" : "",
@@ -27396,12 +27300,16 @@ async function init() {
       }
       const clone = JSON.parse(JSON.stringify(teamManagerState.players || []));
       teamManagerState.players = clone.map(p =>
-        Object.assign({}, p, {
-          id: typeof generatePlayerId === "function" ? generatePlayerId() : Date.now() + "_" + Math.random(),
-          name: (p.name || "").trim() + " (dup)",
-          firstName: p.firstName || splitNameParts(p.name || "").firstName || "",
-          lastName: p.lastName || splitNameParts(p.name || "").lastName || ""
-        })
+        (() => {
+          const firstName = String(p.firstName || "").trim();
+          const lastName = (String(p.lastName || "").trim() || (!firstName ? String(p.name || "").trim() : "")) + " (dup)";
+          return Object.assign({}, p, {
+            id: typeof generatePlayerId === "function" ? generatePlayerId() : Date.now() + "_" + Math.random(),
+            name: buildFullName(lastName, firstName),
+            firstName,
+            lastName
+          });
+        })()
       );
       renderTeamManagerTable();
     });
@@ -27412,12 +27320,11 @@ async function init() {
         typeof buildTemplatePlayersDetailed === "function"
           ? buildTemplatePlayersDetailed()
           : TEMPLATE_TEAM.players.map((name, idx) => {
-              const parts = splitNameParts(name);
               return {
                 id: typeof generatePlayerId === "function" ? generatePlayerId() : idx + "_" + name,
                 name,
-                firstName: parts.firstName || "",
-                lastName: parts.lastName || name,
+                firstName: "",
+                lastName: name,
                 number: String(idx + 1),
                 role: TEMPLATE_TEAM.liberos.includes(name) ? "L" : "",
                 isCaptain: idx === 0,
