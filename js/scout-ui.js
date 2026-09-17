@@ -432,7 +432,11 @@ const VIDEO_LAYOUT_LIMITS = {
   analysisHeight: { min: 220, max: 1200 },
   scoutHeight: { min: 200, max: 1200 }
 };
+const SCOUT_COLUMN_DEFAULTS = { left: 320, right: 300 };
+const SCOUT_COLUMN_LIMITS = { left: 160, center: 300, right: 160 };
 let activeVideoResizeSession = null;
+let activeScoutColumnResizeSession = null;
+let scoutGridResizeObserver = null;
 function applyTopBarVisibility() {
   const hidden = !!state.uiTopBarHidden;
   document.body.classList.toggle("top-bar-hidden", hidden);
@@ -540,6 +544,132 @@ function bindVideoResizeHandle(handle, kind) {
     if (event.cancelable) event.preventDefault();
     setVideoLayoutWidth(kind, VIDEO_LAYOUT_DEFAULTS[kind], true);
   });
+}
+function ensureScoutColumnState() {
+  const current = state.uiScoutColumns && typeof state.uiScoutColumns === "object"
+    ? state.uiScoutColumns
+    : {};
+  current.left = Number.isFinite(current.left) && current.left > 0
+    ? current.left
+    : SCOUT_COLUMN_DEFAULTS.left;
+  current.right = Number.isFinite(current.right) && current.right > 0
+    ? current.right
+    : SCOUT_COLUMN_DEFAULTS.right;
+  state.uiScoutColumns = current;
+  return current;
+}
+function getScoutColumnAvailableWidth() {
+  if (!elScoutGrid) return 0;
+  const styles = window.getComputedStyle(elScoutGrid);
+  const gap = parseFloat(styles.columnGap) || 0;
+  const handlesWidth = [elScoutResizeLeft, elScoutResizeRight]
+    .reduce((total, handle) => total + (handle ? handle.offsetWidth : 0), 0);
+  return Math.max(0, elScoutGrid.clientWidth - handlesWidth - gap * 4);
+}
+function resolveScoutColumnWidths(preferredSide = "") {
+  const current = ensureScoutColumnState();
+  const available = getScoutColumnAvailableWidth();
+  const maxSides = Math.max(
+    SCOUT_COLUMN_LIMITS.left + SCOUT_COLUMN_LIMITS.right,
+    available - SCOUT_COLUMN_LIMITS.center
+  );
+  let left = Math.max(SCOUT_COLUMN_LIMITS.left, Math.round(current.left));
+  let right = Math.max(SCOUT_COLUMN_LIMITS.right, Math.round(current.right));
+  if (left + right > maxSides) {
+    if (preferredSide === "left") {
+      left = Math.max(SCOUT_COLUMN_LIMITS.left, maxSides - right);
+    } else if (preferredSide === "right") {
+      right = Math.max(SCOUT_COLUMN_LIMITS.right, maxSides - left);
+    } else {
+      const leftFlexible = left - SCOUT_COLUMN_LIMITS.left;
+      const rightFlexible = right - SCOUT_COLUMN_LIMITS.right;
+      const flexibleTotal = leftFlexible + rightFlexible;
+      const targetFlexible = Math.max(0, maxSides - SCOUT_COLUMN_LIMITS.left - SCOUT_COLUMN_LIMITS.right);
+      const ratio = flexibleTotal > 0 ? Math.min(1, targetFlexible / flexibleTotal) : 0;
+      left = SCOUT_COLUMN_LIMITS.left + Math.round(leftFlexible * ratio);
+      right = SCOUT_COLUMN_LIMITS.right + Math.round(rightFlexible * ratio);
+    }
+  }
+  return { left, right };
+}
+function applyScoutColumnLayout(preferredSide = "") {
+  if (
+    !elScoutGrid ||
+    elScoutGrid.clientWidth <= 0 ||
+    window.matchMedia("(max-width: 900px)").matches
+  ) return;
+  const widths = resolveScoutColumnWidths(preferredSide);
+  elScoutGrid.style.setProperty("--scout-left-width", `${widths.left}px`);
+  elScoutGrid.style.setProperty("--scout-right-width", `${widths.right}px`);
+  if (elScoutResizeLeft) elScoutResizeLeft.setAttribute("aria-valuenow", String(widths.left));
+  if (elScoutResizeRight) elScoutResizeRight.setAttribute("aria-valuenow", String(widths.right));
+}
+function setScoutColumnWidth(side, width, persist = true) {
+  const current = ensureScoutColumnState();
+  current[side] = Math.max(SCOUT_COLUMN_LIMITS[side], Math.round(width));
+  const resolved = resolveScoutColumnWidths(side);
+  current[side] = resolved[side];
+  applyScoutColumnLayout(side);
+  if (persist) saveState({ persistLocal: true });
+}
+function stopScoutColumnResize() {
+  if (!activeScoutColumnResizeSession) return;
+  const { side, currentWidth, onMove, onUp } = activeScoutColumnResizeSession;
+  activeScoutColumnResizeSession = null;
+  document.body.classList.remove("scout-columns-resizing");
+  window.removeEventListener("pointermove", onMove);
+  window.removeEventListener("pointerup", onUp);
+  window.removeEventListener("pointercancel", onUp);
+  setScoutColumnWidth(side, currentWidth, true);
+}
+function startScoutColumnResize(event, side) {
+  if (window.matchMedia("(max-width: 900px)").matches) return;
+  if (event.cancelable) event.preventDefault();
+  const startX = event.clientX;
+  const startWidth = resolveScoutColumnWidths(side)[side];
+  const onMove = moveEvent => {
+    if (!activeScoutColumnResizeSession) return;
+    const delta = moveEvent.clientX - startX;
+    const nextWidth = startWidth + (side === "left" ? delta : -delta);
+    activeScoutColumnResizeSession.currentWidth = nextWidth;
+    setScoutColumnWidth(side, nextWidth, false);
+  };
+  const onUp = () => stopScoutColumnResize();
+  activeScoutColumnResizeSession = { side, currentWidth: startWidth, onMove, onUp };
+  document.body.classList.add("scout-columns-resizing");
+  window.addEventListener("pointermove", onMove);
+  window.addEventListener("pointerup", onUp);
+  window.addEventListener("pointercancel", onUp);
+}
+function bindScoutColumnResizeHandle(handle, side) {
+  if (!handle || handle.dataset.resizeBound === "true") return;
+  handle.dataset.resizeBound = "true";
+  handle.addEventListener("pointerdown", event => startScoutColumnResize(event, side));
+  handle.addEventListener("dblclick", event => {
+    if (event.cancelable) event.preventDefault();
+    state.uiScoutColumns = { ...SCOUT_COLUMN_DEFAULTS };
+    applyScoutColumnLayout();
+    saveState({ persistLocal: true });
+  });
+  handle.addEventListener("keydown", event => {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    const direction = event.key === "ArrowRight" ? 1 : -1;
+    const delta = side === "left" ? direction * 16 : direction * -16;
+    setScoutColumnWidth(side, ensureScoutColumnState()[side] + delta, true);
+  });
+}
+function bindScoutColumnResize() {
+  bindScoutColumnResizeHandle(elScoutResizeLeft, "left");
+  bindScoutColumnResizeHandle(elScoutResizeRight, "right");
+  if (!scoutGridResizeObserver && elScoutGrid && typeof ResizeObserver === "function") {
+    scoutGridResizeObserver = new ResizeObserver(() => applyScoutColumnLayout());
+    scoutGridResizeObserver.observe(elScoutGrid);
+  }
+  if (elScoutGrid && elScoutGrid.dataset.windowResizeBound !== "true") {
+    elScoutGrid.dataset.windowResizeBound = "true";
+    window.addEventListener("resize", () => applyScoutColumnLayout());
+  }
 }
 function getAttackMetaForPlayer(scope, playerIdx) {
   const scopedKey = scope + ":" + playerIdx;
@@ -681,6 +811,9 @@ const elBtnFixVideoScore = document.getElementById("btn-fix-video-score");
 const elBtnVideoAddEvent = document.getElementById("btn-video-add-event");
 const elVideoAnalysisResizeHandle = document.getElementById("video-analysis-resize-handle");
 const elVideoScoutResizeHandle = document.getElementById("video-scout-resize-handle");
+const elScoutGrid = document.querySelector(".scout-grid");
+const elScoutResizeLeft = document.getElementById("scout-resize-left");
+const elScoutResizeRight = document.getElementById("scout-resize-right");
 const elVideoScoreModal = document.getElementById("video-score-modal");
 const elVideoScoreClose = document.getElementById("video-score-close");
 const elVideoScoreCancel = document.getElementById("video-score-cancel");
@@ -26603,6 +26736,9 @@ function setActiveTab(target) {
   if (target === "scout" && shouldOpenNextSetModal()) {
     openNextSetModal(state.currentSet || 1);
   }
+  if (target === "scout") {
+    requestAnimationFrame(() => applyScoutColumnLayout());
+  }
 }
 function initTabs() {
   if (!tabButtons || !tabPanels) return;
@@ -26887,6 +27023,7 @@ async function init() {
     defaultDemoCreated = await loadDefaultDemoMatch();
   }
   applyVideoLayoutWidths();
+  applyScoutColumnLayout();
   if (!isExportAnalysisHtml && typeof syncMatchesFromStorage === "function") {
     syncMatchesFromStorage();
   }
@@ -29144,6 +29281,7 @@ async function init() {
   startVideoPlaybackSnapshotTimer();
   bindVideoResizeHandle(elVideoAnalysisResizeHandle, "analysisHeight");
   bindVideoResizeHandle(elVideoScoutResizeHandle, "scoutHeight");
+  bindScoutColumnResize();
   updateVideoScoutModeLayout();
   renderVideoAnalysis();
   attachModalCloseHandlers();

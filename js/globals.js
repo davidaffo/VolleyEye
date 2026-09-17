@@ -196,6 +196,10 @@ let state = {
     analysisHeight: 320,
     scoutHeight: 320
   },
+  uiScoutColumns: {
+    left: 320,
+    right: 300
+  },
   uiVideoAnalysisSort: {
     key: "",
     dir: ""

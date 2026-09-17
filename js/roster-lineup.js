@@ -669,6 +669,7 @@ function buildCompactLocalStateSnapshot(snapshot) {
     useOpponentTeam: !!snapshot.useOpponentTeam,
     matchFinished: !!snapshot.matchFinished,
     uiTopBarHidden: !!snapshot.uiTopBarHidden,
+    uiScoutColumns: snapshot.uiScoutColumns || { left: 320, right: 300 },
     video: snapshot.video || { offsetSeconds: 0, fileName: "", youtubeId: "", youtubeUrl: "", lastPlaybackSeconds: 0 },
     players: Array.isArray(snapshot.players) ? snapshot.players : [],
     playerNumbers: snapshot.playerNumbers || {},

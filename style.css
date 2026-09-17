@@ -2287,11 +2287,55 @@ body[data-theme="light"] .rotation-number {
 }
 .scout-grid {
   display: grid;
-  grid-template-columns: minmax(300px, 0.9fr) minmax(460px, 1.6fr) minmax(260px, 0.9fr);
-  gap: 0.65rem;
+  grid-template-columns:
+    minmax(0, var(--scout-left-width, 320px))
+    10px
+    minmax(0, 1fr)
+    10px
+    minmax(0, var(--scout-right-width, 300px));
+  gap: 0.35rem;
   align-items: start;
   width: 100%;
   margin-top: 0.35rem;
+}
+.scout-grid > .section {
+  min-width: 0;
+  container-type: inline-size;
+}
+.scout-column-resizer {
+  align-self: stretch;
+  position: relative;
+  min-width: 10px;
+  width: 10px;
+  min-height: 14rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: col-resize;
+  touch-action: none;
+}
+.scout-column-resizer::before {
+  content: "";
+  position: absolute;
+  inset: 0 3px;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--border-color, #334155) 76%, transparent);
+  transition: inset 0.15s ease, background 0.15s ease;
+}
+.scout-column-resizer:hover::before,
+.scout-column-resizer:focus-visible::before,
+body.scout-columns-resizing .scout-column-resizer::before {
+  inset-inline: 2px;
+  background: #3b82f6;
+}
+.scout-column-resizer:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+body.scout-columns-resizing {
+  cursor: col-resize;
+  user-select: none;
 }
 .scout-dvw-bar {
   margin-bottom: 0.65rem;
@@ -8718,6 +8762,9 @@ body[data-theme="light"] .floating-actions__block {
   .scout-grid {
     display: block;
   }
+  .scout-column-resizer {
+    display: none;
+  }
   .scout-mobile-bar {
     display: flex;
   }
@@ -8772,6 +8819,9 @@ body[data-theme="light"] .floating-actions__block {
 
 body.force-mobile .scout-grid {
   display: block;
+}
+body.force-mobile .scout-column-resizer {
+  display: none;
 }
 body.force-mobile .topbar-toggle-btn {
   display: none !important;
@@ -8899,21 +8949,19 @@ body.force-mobile .attack-trajectory-stage {
 .scout-live .sl-toolbar .sl-action-row {
   grid-column: 2;
   grid-row: 1;
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: max-content;
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.16rem;
   align-items: center;
-  white-space: nowrap;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 .scout-live .sl-toolbar .sl-action-row > button,
 .scout-live .sl-toolbar .sl-action-row > .score-actions-inline > button,
 .scout-live .sl-toolbar .sl-action-row > .freeball-actions-inline > button {
-  inline-size: clamp(var(--sl-btn-w-min), 5.4vw, var(--sl-btn-w-max));
-  min-inline-size: clamp(var(--sl-btn-w-min), 5.4vw, var(--sl-btn-w-max));
-  max-inline-size: clamp(var(--sl-btn-w-min), 5.4vw, var(--sl-btn-w-max));
+  inline-size: auto;
+  min-inline-size: 0;
+  max-inline-size: 100%;
   block-size: var(--sl-btn-h);
   min-block-size: var(--sl-btn-h);
   padding: 0.2rem 0.3rem;
@@ -8922,16 +8970,13 @@ body.force-mobile .attack-trajectory-stage {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  flex: 1 1 var(--sl-btn-w-min);
 }
 .scout-live .sl-toolbar .sl-action-row > .score-actions-inline,
 .scout-live .sl-toolbar .sl-action-row > .freeball-actions-inline {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  gap: 0.16rem;
-  width: auto !important;
-  min-width: 0;
-  flex: 0 0 auto !important;
+  display: contents;
 }
 .scout-live .sl-toolbar .sl-team-controls {
   grid-column: 1 / -1;
@@ -8971,6 +9016,18 @@ body.force-mobile .attack-trajectory-stage {
 .scout-live .log-section .card-inline {
   border-radius: 0.6rem;
 }
+.scout-live .court-layout {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.scout-live button,
+.scout-live input,
+.scout-live select {
+  min-width: 0;
+  max-width: 100%;
+}
+.scout-live button {
+  overflow-wrap: anywhere;
+}
 @media (max-width: 1350px) {
   .scout-live .sl-toolbar {
     grid-template-columns: minmax(160px, 200px) minmax(0, 1fr);
@@ -8989,6 +9046,43 @@ body.force-mobile .attack-trajectory-stage {
   .scout-live .sl-toolbar .sl-action-row,
   .scout-live .sl-toolbar .sl-team-controls {
     grid-column: 1;
+  }
+}
+@container (max-width: 620px) {
+  .scout-live .sl-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .scout-live .sl-toolbar .court-rotation-block,
+  .scout-live .sl-toolbar .sl-action-row,
+  .scout-live .sl-toolbar .sl-team-controls {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .scout-live .sl-toolbar .rotation-controls {
+    justify-content: center;
+  }
+}
+@container (max-width: 420px) {
+  .scout-live .score-top-row,
+  .scout-live .score-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .scout-live .score-center {
+    grid-row: 1;
+  }
+  .scout-live .score-top-action,
+  .scout-live .score-set-select {
+    width: 100%;
+  }
+  .scout-live .scout-dvw-bar__top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .scout-live .scout-dvw-bar__controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .scout-live .scout-dvw-bar__controls input {
+    grid-column: 1 / -1;
   }
 }
 
