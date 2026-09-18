@@ -739,6 +739,7 @@ const elLiveSetScore = document.getElementById("live-set-score");
 const elAggSetScore = document.getElementById("agg-set-score");
 const elNextSetInline = document.getElementById("next-set-inline");
 const elNextSetClose = document.getElementById("next-set-close");
+const elNextSetLineups = document.getElementById("next-set-lineups");
 const elNextSetBlockOur = document.getElementById("next-set-block-our");
 const elNextSetBlockOpp = document.getElementById("next-set-block-opp");
 const elNextSetTeamOur = document.getElementById("next-set-team-our");
@@ -1757,11 +1758,11 @@ function openNextSetModal(setNum) {
   }
   if (elNextSetServeOur) elNextSetServeOur.checked = !!nextSetDraft.isServing;
   if (elNextSetServeOpp) elNextSetServeOpp.checked = !nextSetDraft.isServing;
+  if (elNextSetLineups) {
+    elNextSetLineups.classList.toggle("next-set-lineups--double", !!state.useOpponentTeam);
+  }
   if (elNextSetBlockOpp) {
-    elNextSetBlockOpp.classList.remove("hidden");
-    elNextSetBlockOpp
-      .querySelectorAll("#next-set-default-opp, #next-set-court-opp, .next-set-bench, .next-set-libero")
-      .forEach(node => node.classList.toggle("hidden", !state.useOpponentTeam));
+    elNextSetBlockOpp.classList.toggle("hidden", !state.useOpponentTeam);
   }
   const isFirstSet = nextSetDraft.setNum === 1;
   if (elNextSetSwapRow) elNextSetSwapRow.classList.toggle("hidden", isFirstSet);
@@ -23405,6 +23406,119 @@ function applyImportedMatch(nextState, options = {}) {
 
 const DEFAULT_DEMO_MATCH_URL = "./match_demo.json";
 const DEFAULT_DEMO_MATCH_NAME = "Match demo - Aurora Volley - Riviera Volley";
+const DEFAULT_DEMO_TEAM_NAMES = ["Aurora Volley Demo", "Riviera Volley Demo"];
+const DEFAULT_DEMO_PREFERENCE_KEY = "volleyeye-default-demo-preference";
+
+function getDefaultDemoPreference() {
+  try {
+    return localStorage.getItem(DEFAULT_DEMO_PREFERENCE_KEY) || "";
+  } catch (_) {
+    return "";
+  }
+}
+function setDefaultDemoPreference(value) {
+  try {
+    localStorage.setItem(DEFAULT_DEMO_PREFERENCE_KEY, value);
+  } catch (_) {
+    // La preferenza non è essenziale per la cancellazione corrente.
+  }
+}
+function clearActiveDefaultDemoMatch() {
+  const currentName = String(state.loadedMatchName || state.selectedMatch || "").trim();
+  if (currentName !== DEFAULT_DEMO_MATCH_NAME) return false;
+  state.selectedMatch = "";
+  state.loadedMatchName = "";
+  if (DEFAULT_DEMO_TEAM_NAMES.includes(state.selectedTeam)) {
+    state.selectedTeam = "";
+    state.players = [];
+    state.playerNumbers = {};
+    state.liberos = [];
+    state.captains = [];
+    state.stats = {};
+    state.court = Array.from({ length: 6 }, () => ({ main: "", replaced: "" }));
+    state.autoRoleBaseCourt = [];
+    state.liberoAutoMap = {};
+    state.preferredLibero = "";
+  }
+  if (DEFAULT_DEMO_TEAM_NAMES.includes(state.selectedOpponentTeam)) {
+    const emptyOpponentCourt = Array.from({ length: 6 }, () => ({ main: "", replaced: "" }));
+    state.selectedOpponentTeam = "";
+    state.useOpponentTeam = false;
+    state.opponentPlayers = [];
+    state.opponentPlayerNumbers = {};
+    state.opponentLiberos = [];
+    state.opponentCaptains = [];
+    state.opponentStats = {};
+    state.opponentCourt = emptyOpponentCourt;
+    state.opponentAutoRoleBaseCourt = [];
+    state.opponentLiberoAutoMap = {};
+    state.opponentPreferredLibero = "";
+    if (typeof updateOpponentAutoRoleBaseCourtCache === "function") {
+      updateOpponentAutoRoleBaseCourtCache(emptyOpponentCourt);
+    }
+  }
+  resetMatchState({ skipMatchesRender: true });
+  return true;
+}
+function removeDefaultDemoPlayersFromDatabase(demoTeams) {
+  if (typeof loadPlayersDbFromStorage !== "function" || typeof savePlayersDbToStorage !== "function") return;
+  const candidateIds = new Set();
+  demoTeams.forEach(team => {
+    (team && Array.isArray(team.playersDetailed) ? team.playersDetailed : []).forEach(player => {
+      if (player && player.id) candidateIds.add(player.id);
+    });
+  });
+  const remainingIds = new Set();
+  const remainingTeams = typeof loadTeamsMapFromStorage === "function" ? loadTeamsMapFromStorage() : {};
+  Object.values(remainingTeams || {}).forEach(team => {
+    (team && Array.isArray(team.playersDetailed) ? team.playersDetailed : []).forEach(player => {
+      if (player && player.id) remainingIds.add(player.id);
+    });
+  });
+  const playersDb = loadPlayersDbFromStorage();
+  candidateIds.forEach(id => {
+    if (!remainingIds.has(id)) delete playersDb[id];
+  });
+  savePlayersDbToStorage(playersDb);
+  state.playersDb = cloneIsolationData(playersDb);
+}
+function removeDefaultDemoData({ askConfirmation = true, showResult = true } = {}) {
+  if (
+    askConfirmation &&
+    !confirm("Eliminare il match demo, le squadre demo e le relative giocatrici non usate da altre squadre?")
+  ) {
+    return false;
+  }
+  const demoTeams = DEFAULT_DEMO_TEAM_NAMES
+    .map(name => (typeof loadTeamFromStorage === "function" ? loadTeamFromStorage(name) : null))
+    .filter(Boolean);
+  if (typeof deleteMatchFromStorage === "function") deleteMatchFromStorage(DEFAULT_DEMO_MATCH_NAME);
+  DEFAULT_DEMO_TEAM_NAMES.forEach(name => {
+    if (typeof deleteTeamFromStorage === "function") deleteTeamFromStorage(name);
+  });
+  if (state.savedMatches) delete state.savedMatches[DEFAULT_DEMO_MATCH_NAME];
+  if (state.savedTeams) DEFAULT_DEMO_TEAM_NAMES.forEach(name => delete state.savedTeams[name]);
+  if (state.savedOpponentTeams) DEFAULT_DEMO_TEAM_NAMES.forEach(name => delete state.savedOpponentTeams[name]);
+  removeDefaultDemoPlayersFromDatabase(demoTeams);
+  const clearedActiveDemo = clearActiveDefaultDemoMatch();
+  setDefaultDemoPreference("removed");
+  if (typeof syncTeamsFromStorage === "function") syncTeamsFromStorage();
+  if (typeof syncOpponentTeamsFromStorage === "function") syncOpponentTeamsFromStorage();
+  if (typeof syncMatchesFromStorage === "function") syncMatchesFromStorage();
+  saveState({ persistLocal: true, skipMatchPersist: true });
+  renderTeamsSelect();
+  renderOpponentTeamsSelect();
+  renderMatchesSelect();
+  if (clearedActiveDemo) {
+    applyPlayersFromStateToTextarea();
+    applyOpponentPlayersFromStateToTextarea();
+    renderPlayers();
+    renderBenchChips();
+    renderLineupChips();
+  }
+  if (showResult) alert("Dati demo eliminati.");
+  return true;
+}
 
 async function loadDefaultDemoMatch() {
   try {
@@ -23444,12 +23558,43 @@ async function loadDefaultDemoMatch() {
     return false;
   }
 }
-function showDefaultDemoWelcomePopup() {
-  alert(
-    "Benvenuto in VolleyEye!\n\n" +
-      "È stato caricato un match demo con squadre e giocatrici fittizie, già pronto per essere provato e analizzato dalla schermata Analisi.\n\n" +
-      "I nomi sono puramente inventati; ogni riferimento a persone o cose reali è puramente casuale."
-  );
+function askDefaultDemoChoice() {
+  return new Promise(resolve => {
+    const modal = document.createElement("div");
+    modal.className = "skill-modal force-popup";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.innerHTML =
+      '<div class="skill-modal__backdrop"></div>' +
+      '<div class="skill-modal__content">' +
+        '<div class="skill-modal__head"><h3>Squadre demo</h3></div>' +
+        '<div class="skill-modal__body">' +
+          '<p>VolleyEye ha caricato un match e due squadre dimostrative. Vuoi conservarli per provare il programma?</p>' +
+          '<p class="section-note">I nomi sono inventati. Se scegli di non usarli, tutti i dati demo verranno eliminati.</p>' +
+          '<div class="controls-row">' +
+            '<button type="button" data-demo-choice="keep">Usa le demo</button>' +
+            '<button type="button" class="danger" data-demo-choice="remove">Non usare ed elimina</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    const finish = choice => {
+      modal.remove();
+      setGlobalModalState(false);
+      resolve(choice);
+    };
+    modal.querySelector('[data-demo-choice="keep"]').addEventListener("click", () => finish("keep"));
+    modal.querySelector('[data-demo-choice="remove"]').addEventListener("click", () => finish("remove"));
+    document.body.appendChild(modal);
+    setGlobalModalState(true, { forcePopup: true });
+  });
+}
+async function showDefaultDemoWelcomePopup() {
+  const choice = await askDefaultDemoChoice();
+  if (choice === "remove") {
+    removeDefaultDemoData({ askConfirmation: false, showResult: false });
+    return;
+  }
+  setDefaultDemoPreference("keep");
 }
 function applyImportedDatabase(nextState) {
   if (!nextState || !nextState.state) {
@@ -27280,7 +27425,7 @@ async function init() {
     (typeof listTeamsFromStorage === "function" && listTeamsFromStorage().length > 0);
   const hasMatchLink = typeof readMatchLinkParam === "function" && !!readMatchLinkParam();
   const hasPersistedData = loadedFromIndexedDb || loadedFromLocalStorage || hasStoredCollections || hasMatchLink;
-  if (!isExportAnalysisHtml && !hasPersistedData) {
+  if (!isExportAnalysisHtml && !hasPersistedData && getDefaultDemoPreference() !== "removed") {
     defaultDemoCreated = await loadDefaultDemoMatch();
   }
   applyVideoLayoutWidths();
@@ -28901,6 +29046,12 @@ async function init() {
       resetAppData();
     });
   }
+  if (elBtnDeleteDemoData) {
+    elBtnDeleteDemoData.addEventListener("click", e => {
+      if (e) e.preventDefault();
+      removeDefaultDemoData();
+    });
+  }
   const elBtnForceRefreshApp = document.getElementById("btn-force-refresh-app");
   if (elBtnForceRefreshApp) {
     elBtnForceRefreshApp.addEventListener("click", forceRefreshAppAssets);
@@ -29588,7 +29739,7 @@ async function init() {
     }
   }
   if (defaultDemoCreated) {
-    showDefaultDemoWelcomePopup();
+    await showDefaultDemoWelcomePopup();
   }
 }
 document.addEventListener("DOMContentLoaded", init);

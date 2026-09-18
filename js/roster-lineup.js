@@ -116,6 +116,7 @@ const elOpponentLiberoTags = document.getElementById("opponent-libero-tags");
 const elBtnExportPdf = document.getElementById("btn-export-pdf");
 const elBtnExportHtml = document.getElementById("btn-export-html");
 const elBtnResetMatch = document.getElementById("btn-reset-match");
+const elBtnDeleteDemoData = document.getElementById("btn-delete-demo-data");
 const elBtnResetApp = document.getElementById("btn-reset-app");
 const elBtnExportMatch = document.getElementById("btn-export-match");
 const elBtnExportDvw = document.getElementById("btn-export-dvw");
@@ -2957,43 +2958,80 @@ function syncMatchesFromStorage() {
     state.loadedMatchName = "";
   }
 }
-function renderTeamsSelect() {
-  if (!elTeamsSelect) return;
+function getMatchArchiveLabel(name, payload, allNames = []) {
+  const displayName =
+    payload && payload.state && payload.state.match
+      ? buildMatchDisplayName(payload.state.match)
+      : name;
+  const duplicateNames = allNames.filter(otherName => {
+    const otherPayload = state.savedMatches && state.savedMatches[otherName];
+    const otherDisplayName =
+      otherPayload && otherPayload.state && otherPayload.state.match
+        ? buildMatchDisplayName(otherPayload.state.match)
+        : otherName;
+    return otherDisplayName === displayName;
+  });
+  if (duplicateNames.length < 2) return displayName || name;
+  return `${displayName || name} (${duplicateNames.indexOf(name) + 1})`;
+}
+function getArchivedTeamNames() {
   syncTeamsFromStorage();
-  const names = Object.keys(state.savedTeams || {});
-  const prev = (state.match && state.match.teamName) || elTeamsSelect.value || state.selectedTeam || "";
-  elTeamsSelect.innerHTML = "";
+  return Object.keys(state.savedTeams || {});
+}
+function buildArchivedTeamOptions(names, unavailableName = "") {
+  return names.map(name => ({
+    value: name,
+    label: name === unavailableName ? `${name} (squadra principale)` : name,
+    disabled: name === unavailableName
+  }));
+}
+function renderArchivedTeamsSelect(select, options = {}) {
+  const names = getArchivedTeamNames();
+  const selectedName = options.selectedName || "";
+  const teamOptions = buildArchivedTeamOptions(names, options.unavailableName || "");
+  select.innerHTML = "";
   if (names.length === 0) {
     const placeholder = document.createElement("option");
-    placeholder.value = prev;
-    placeholder.textContent = prev ? `${prev} (non in archivio)` : "Nessuna squadra salvata";
+    placeholder.value = selectedName;
+    placeholder.textContent = selectedName ? `${selectedName} (non in archivio)` : options.emptyLabel;
     placeholder.disabled = true;
     placeholder.selected = true;
-    elTeamsSelect.appendChild(placeholder);
-    elTeamsSelect.disabled = true;
-  } else {
-    elTeamsSelect.disabled = false;
-    if (!prev) {
-      const placeholder = document.createElement("option");
-      placeholder.value = "";
-      placeholder.textContent = "Seleziona squadra";
-      placeholder.selected = true;
-      elTeamsSelect.appendChild(placeholder);
-    } else if (!names.includes(prev)) {
-      const missing = document.createElement("option");
-      missing.value = prev;
-      missing.textContent = `${prev} (non in archivio)`;
-      missing.selected = true;
-      elTeamsSelect.appendChild(missing);
-    }
-    names.forEach(name => {
-      const opt = document.createElement("option");
-      opt.value = name;
-      opt.textContent = name;
-      elTeamsSelect.appendChild(opt);
-    });
-    elTeamsSelect.value = prev || "";
+    select.appendChild(placeholder);
+    select.disabled = true;
+    return names;
   }
+  select.disabled = false;
+  if (!selectedName) {
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = options.placeholderLabel;
+    placeholder.selected = true;
+    select.appendChild(placeholder);
+  } else if (!names.includes(selectedName)) {
+    const missing = document.createElement("option");
+    missing.value = selectedName;
+    missing.textContent = `${selectedName} (non in archivio)`;
+    missing.selected = true;
+    select.appendChild(missing);
+  }
+  teamOptions.forEach(teamOption => {
+    const option = document.createElement("option");
+    option.value = teamOption.value;
+    option.textContent = teamOption.label;
+    option.disabled = teamOption.disabled;
+    select.appendChild(option);
+  });
+  select.value = selectedName;
+  return names;
+}
+function renderTeamsSelect() {
+  if (!elTeamsSelect) return;
+  const prev = (state.match && state.match.teamName) || elTeamsSelect.value || state.selectedTeam || "";
+  const names = renderArchivedTeamsSelect(elTeamsSelect, {
+    selectedName: prev,
+    emptyLabel: "Nessuna squadra salvata",
+    placeholderLabel: "Seleziona squadra"
+  });
   const emptyHint = document.getElementById("teams-empty-hint");
   if (emptyHint) {
     emptyHint.classList.toggle("hidden", names.length > 0);
@@ -3002,42 +3040,14 @@ function renderTeamsSelect() {
 }
 function renderOpponentTeamsSelect() {
   if (!elOpponentTeamsSelect) return;
-  syncOpponentTeamsFromStorage();
-  const names = Object.keys(state.savedTeams || {});
-  const prev = elOpponentTeamsSelect.value || state.selectedOpponentTeam || "";
-  elOpponentTeamsSelect.innerHTML = "";
-  const available = names.filter(name => name !== state.selectedTeam);
-  if (available.length === 0) {
-    const placeholder = document.createElement("option");
-    placeholder.value = "";
-    placeholder.textContent = "Nessuna squadra disponibile";
-    placeholder.disabled = true;
-    placeholder.selected = true;
-    elOpponentTeamsSelect.appendChild(placeholder);
-    elOpponentTeamsSelect.disabled = true;
-  } else {
-    elOpponentTeamsSelect.disabled = false;
-    if (!prev) {
-      const placeholder = document.createElement("option");
-      placeholder.value = "";
-      placeholder.textContent = "Seleziona avversaria";
-      placeholder.selected = true;
-      elOpponentTeamsSelect.appendChild(placeholder);
-    } else if (!available.includes(prev)) {
-      const missing = document.createElement("option");
-      missing.value = prev;
-      missing.textContent = `${prev} (non in archivio)`;
-      missing.selected = true;
-      elOpponentTeamsSelect.appendChild(missing);
-    }
-    available.forEach(name => {
-      const opt = document.createElement("option");
-      opt.value = name;
-      opt.textContent = name;
-      elOpponentTeamsSelect.appendChild(opt);
-    });
-    elOpponentTeamsSelect.value = prev || "";
-  }
+  const previousSelection = elOpponentTeamsSelect.value || state.selectedOpponentTeam || "";
+  const selectedName = previousSelection === state.selectedTeam ? "" : previousSelection;
+  renderArchivedTeamsSelect(elOpponentTeamsSelect, {
+    selectedName,
+    emptyLabel: "Nessuna squadra salvata",
+    placeholderLabel: "Seleziona avversaria",
+    unavailableName: state.selectedTeam || ""
+  });
   updateOpponentTeamButtonsState();
 }
 function hasMatchDataForReset() {
@@ -3077,10 +3087,7 @@ function renderMatchesSelect() {
   elSavedMatchesSelect.appendChild(placeholder);
   names.forEach(name => {
     const payload = state.savedMatches && state.savedMatches[name];
-    const label =
-      payload && payload.state && payload.state.match
-        ? buildMatchDisplayName(payload.state.match)
-        : name;
+    const label = getMatchArchiveLabel(name, payload, names);
     const opt = document.createElement("option");
     opt.value = name;
     opt.textContent = label || name;
@@ -3110,10 +3117,7 @@ function renderMatchesList(names, selected) {
   }
   names.forEach(name => {
     const payload = state.savedMatches && state.savedMatches[name];
-    const label =
-      payload && payload.state && payload.state.match
-        ? buildMatchDisplayName(payload.state.match)
-        : name;
+    const label = getMatchArchiveLabel(name, payload, names);
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "match-list-item match-list-open" + (name === selected ? " active" : "");
@@ -3437,6 +3441,36 @@ function loadSelectedMatch() {
     }
   }
 }
+function pauseAndPersistCurrentMatch() {
+  const currentName = (state.loadedMatchName || state.selectedMatch || "").trim();
+  const hasCurrentMatch = !!currentName || (Array.isArray(state.events) && state.events.length > 0);
+  if (!hasCurrentMatch) return true;
+  const previousLoadedMatchName = state.loadedMatchName || "";
+  const previousSelectedMatch = state.selectedMatch || "";
+  const previousSavedMatches = cloneIsolationData(state.savedMatches || {});
+  const previousFinished = !!state.matchFinished;
+  const previousSkillClock =
+    typeof snapshotSkillClock === "function" ? snapshotSkillClock() : null;
+  const previousVideoClock =
+    typeof snapshotVideoClock === "function" ? snapshotVideoClock() : null;
+  if (typeof pauseSkillClock === "function") pauseSkillClock();
+  if (typeof pauseVideoClock === "function") pauseVideoClock();
+  state.matchFinished = true;
+  const stored = persistCurrentMatch({ allowCreate: true });
+  if (stored) return true;
+  state.loadedMatchName = previousLoadedMatchName;
+  state.selectedMatch = previousSelectedMatch;
+  state.savedMatches = previousSavedMatches;
+  state.matchFinished = previousFinished;
+  if (previousSkillClock && typeof restoreSkillClock === "function") {
+    restoreSkillClock(previousSkillClock);
+  }
+  if (previousVideoClock && typeof restoreVideoClock === "function") {
+    restoreVideoClock(previousVideoClock);
+  }
+  if (typeof updateMatchStatusUI === "function") updateMatchStatusUI();
+  return false;
+}
 function createNewMatchFromPrompt() {
   const currentOpponent =
     state.useOpponentTeam && state.selectedOpponentTeam
@@ -3452,10 +3486,11 @@ function createNewMatchFromPrompt() {
   const ok =
     !state.events || state.events.length === 0
       ? true
-      : confirm("Creare un nuovo match? I dati correnti verranno azzerati.");
+      : confirm("Il match attuale verrà messo in pausa e salvato in archivio. Creare il nuovo match?");
   if (!ok) return false;
-  if (!isLoadingMatch && (state.loadedMatchName || "").trim()) {
-    persistCurrentMatch({ allowCreate: false });
+  if (!isLoadingMatch && !pauseAndPersistCurrentMatch()) {
+    alert("Impossibile salvare il match attuale. Il nuovo match non è stato creato.");
+    return false;
   }
   const keepSelectedOpponent =
     !!state.selectedOpponentTeam &&
@@ -4974,9 +5009,23 @@ function writeStateToIndexedDb(snapshot) {
     });
   });
 }
+function makeUniqueMatchName(baseName, existingNames = []) {
+  const base = String(baseName || "Match").trim() || "Match";
+  const used = new Set(existingNames.map(name => String(name || "").trim()).filter(Boolean));
+  if (!used.has(base)) return base;
+  let suffix = 2;
+  while (used.has(`${base} (${suffix})`)) suffix += 1;
+  return `${base} (${suffix})`;
+}
 function generateMatchName(base = "") {
   if (base) return base;
-  return buildMatchDisplayName(state.match);
+  const existingNames = Array.from(
+    new Set([
+      ...Object.keys(state.savedMatches || {}),
+      ...listMatchesFromStorage()
+    ])
+  );
+  return makeUniqueMatchName(buildMatchDisplayName(state.match), existingNames);
 }
 function persistCurrentMatch(options = {}) {
   const { allowCreate = true } = options || {};

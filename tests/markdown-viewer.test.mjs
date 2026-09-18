@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 
 const viewer = readFileSync(new URL("../docs/markdown-viewer.html", import.meta.url), "utf8");
@@ -7,7 +7,8 @@ const manual = readFileSync(new URL("../docs/manual.md", import.meta.url), "utf8
 const serviceWorker = readFileSync(new URL("../service-worker.js", import.meta.url), "utf8");
 
 test("il viewer usa marked con supporto GFM anziché un parser Markdown artigianale", () => {
-  assert.match(viewer, /marked\/lib\/marked\.umd\.js/);
+  assert.match(viewer, /\.\.\/js\/vendor\/marked\.umd\.js/);
+  assert.doesNotMatch(viewer, /node_modules/);
   assert.match(viewer, /window\.marked\.parse\(md, \{ gfm: true, breaks: false \}\)/);
   assert.match(viewer, /querySelectorAll\("table"\)/);
   assert.doesNotMatch(viewer, /function applyInlineMarkdown/);
@@ -16,7 +17,10 @@ test("il viewer usa marked con supporto GFM anziché un parser Markdown artigian
 test("manuale, viewer e parser sono disponibili anche offline", () => {
   assert.match(serviceWorker, /\.\/docs\/manual\.md/);
   assert.match(serviceWorker, /\.\/docs\/markdown-viewer\.html/);
-  assert.match(serviceWorker, /\.\/node_modules\/marked\/lib\/marked\.umd\.js/);
+  assert.match(serviceWorker, /\.\/js\/vendor\/marked\.umd\.js/);
+  assert.doesNotMatch(serviceWorker, /node_modules\/marked/);
+  assert.equal(existsSync(new URL("../js/vendor/marked.umd.js", import.meta.url)), true);
+  assert.equal(existsSync(new URL("../js/vendor/marked.LICENSE", import.meta.url)), true);
 });
 
 test("la tabella dei voti ha le righe vuote richieste dal Markdown", () => {

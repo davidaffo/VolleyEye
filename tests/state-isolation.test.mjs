@@ -142,6 +142,9 @@ test("i confini applicativi non reintroducono sincronizzazioni implicite", () =>
   assert.doesNotMatch(teamSelectRenderBody, /state\.selectedTeam\s*=/);
   assert.doesNotMatch(teamSelectRenderBody, /state\.match\.teamName\s*=/);
   assert.doesNotMatch(opponentSelectRenderBody, /state\.selectedOpponentTeam\s*=/);
+  assert.match(teamSelectRenderBody, /renderArchivedTeamsSelect\s*\(/);
+  assert.match(opponentSelectRenderBody, /renderArchivedTeamsSelect\s*\(/);
+  assert.doesNotMatch(opponentSelectRenderBody, /\.filter\s*\(.*state\.selectedTeam/);
   assert.match(roster, /teamManagerStorageOnly\s*=\s*true/);
   assert.match(roster, /players:\s*\[\],\s*\n\s*defaultLineup:\s*\[\]/);
   assert.match(roster, /applyLiveOpponentTeamManagerPayload/);
@@ -156,4 +159,16 @@ test("i confini applicativi non reintroducono sincronizzazioni implicite", () =>
   assert.match(scout, /merged\.setResults\s*=\s*nextState\.setResults[\s\S]*?\?\s*nextState\.setResults\s*:\s*\{\}/);
   assert.match(scout, /merged\.opponentCourt\s*=\s*Array\.isArray\(nextState\.opponentCourt\)/);
   assert.doesNotMatch(scout, /merged\.selectedTeam\s*=\s*nextState\.selectedTeam\s*\|\|\s*state\.selectedTeam/);
+});
+
+test("l'elenco avversarie conserva tutte le squadre e disabilita solo quella principale", () => {
+  const roster = readFileSync(new URL("../js/roster-lineup.js", import.meta.url), "utf8");
+  const start = roster.indexOf("function buildArchivedTeamOptions(");
+  const end = roster.indexOf("function renderArchivedTeamsSelect(", start);
+  const selectContext = {};
+  vm.runInNewContext(`${roster.slice(start, end)}; this.buildOptions = buildArchivedTeamOptions;`, selectContext);
+  const options = plain(selectContext.buildOptions(["Volley Blu", "Volley Rossa", "Volley Verde"], "Volley Blu"));
+  assert.deepEqual(options.map(option => option.value), ["Volley Blu", "Volley Rossa", "Volley Verde"]);
+  assert.deepEqual(options.map(option => option.disabled), [true, false, false]);
+  assert.equal(options[0].label, "Volley Blu (squadra principale)");
 });

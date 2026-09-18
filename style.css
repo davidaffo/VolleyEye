@@ -1552,6 +1552,10 @@ body[data-theme="light"] .settings-modal__content {
   display: grid;
   gap: 0.6rem;
 }
+.next-set-lineups.next-set-lineups--double {
+  grid-template-columns: repeat(auto-fit, minmax(min(390px, 100%), 1fr));
+  align-items: start;
+}
 .next-set-lineup-block {
   display: grid;
   gap: 0.45rem;
@@ -2812,17 +2816,24 @@ body.scout-widget-dragging [data-scout-widget-zone="right"]:empty::before {
   position: absolute;
   inset: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 1rem;
   background: rgba(10, 12, 20, 0.6);
   z-index: 6;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
 }
 .next-set-inline.hidden {
   display: none;
 }
 .next-set-inline__card {
-  width: min(520px, 95%);
+  width: min(1040px, 100%);
+  max-height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  box-sizing: border-box;
   background: #0b111a;
   color: #e2e8f0;
   border: 1px solid #334155;

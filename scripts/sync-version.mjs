@@ -31,6 +31,9 @@ const pkg = JSON.parse(readFileSync(packagePath, "utf8"));
 const versionConfig = existsSync(versionConfigPath)
   ? JSON.parse(readFileSync(versionConfigPath, "utf8"))
   : {};
+const previousMeta = existsSync(versionJsonPath)
+  ? JSON.parse(readFileSync(versionJsonPath, "utf8"))
+  : null;
 const baseVersion =
   (versionConfig && typeof versionConfig.baseVersion === "string" && versionConfig.baseVersion.trim()) ||
   pkg.version ||
@@ -42,7 +45,10 @@ const commitCount = Number(runGit("git rev-list --count HEAD", "0")) || 0;
 const commitHash = runGit("git rev-parse --short HEAD", "dev");
 const version = `${baseVersion}+${commitCount}.${commitHash}`;
 const cacheVersion = `v${commitCount}-${commitHash}`;
-const buildDate = new Date().toISOString();
+const buildDate =
+  previousMeta && previousMeta.version === version && previousMeta.buildDate
+    ? previousMeta.buildDate
+    : new Date().toISOString();
 
 const meta = {
   appName,

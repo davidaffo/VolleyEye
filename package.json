@@ -7,8 +7,8 @@
     "test": "node --test --test-isolation=none tests/*.test.mjs",
     "version:sync": "node scripts/sync-version.mjs",
     "dev": "npm run serve",
-    "serve": "npm run version:sync && npx serve . --listen ${PORT:-3000}",
-    "tunnel": "npm run version:sync && PORT=${PORT:-3000} bash serve-tunnel.sh"
+    "serve": "npx serve . --listen ${PORT:-3000}",
+    "tunnel": "PORT=${PORT:-3000} bash serve-tunnel.sh"
   },
   "dependencies": {
     "marked": "^18.0.13"
