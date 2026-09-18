@@ -33,7 +33,7 @@ const POINT_RULE_DEFAULTS = {
   serve: { for: ["#"], against: ["="] },
   pass: PASS_LIKE_POINT_RULE_DEFAULT,
   freeball: PASS_LIKE_POINT_RULE_DEFAULT,
-  defense: { for: [], against: ["=", "/"] },
+  defense: { for: [], against: ["="] },
   attack: { for: ["#"], against: ["=", "/"] },
   block: { for: ["#"], against: ["/", "="] },
   second: { for: [], against: ["=", "/"] },
