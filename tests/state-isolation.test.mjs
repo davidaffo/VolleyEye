@@ -172,3 +172,14 @@ test("l'elenco avversarie conserva tutte le squadre e disabilita solo quella pri
   assert.deepEqual(options.map(option => option.disabled), [true, false, false]);
   assert.equal(options[0].label, "Volley Blu (squadra principale)");
 });
+
+test("i selettori non costruiscono squadre fantasma assenti dall'archivio", () => {
+  const roster = readFileSync(new URL("../js/roster-lineup.js", import.meta.url), "utf8");
+  const renderer = roster.slice(
+    roster.indexOf("function renderArchivedTeamsSelect"),
+    roster.indexOf("function renderTeamsSelect")
+  );
+  assert.doesNotMatch(renderer, /non in archivio/);
+  assert.doesNotMatch(renderer, /createElement\("option"\)[\s\S]*missing/);
+  assert.match(renderer, /teamOptions\.some\(option => option\.value === requestedName && !option\.disabled\)/);
+});

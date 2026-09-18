@@ -23426,39 +23426,50 @@ function setDefaultDemoPreference(value) {
 function clearActiveDefaultDemoMatch() {
   const currentName = String(state.loadedMatchName || state.selectedMatch || "").trim();
   if (currentName !== DEFAULT_DEMO_MATCH_NAME) return false;
+  const emptyCourt = () => Array.from({ length: 6 }, () => ({ main: "", replaced: "" }));
   state.selectedMatch = "";
   state.loadedMatchName = "";
-  if (DEFAULT_DEMO_TEAM_NAMES.includes(state.selectedTeam)) {
-    state.selectedTeam = "";
-    state.players = [];
-    state.playerNumbers = {};
-    state.liberos = [];
-    state.captains = [];
-    state.stats = {};
-    state.court = Array.from({ length: 6 }, () => ({ main: "", replaced: "" }));
-    state.autoRoleBaseCourt = [];
-    state.liberoAutoMap = {};
-    state.preferredLibero = "";
-  }
-  if (DEFAULT_DEMO_TEAM_NAMES.includes(state.selectedOpponentTeam)) {
-    const emptyOpponentCourt = Array.from({ length: 6 }, () => ({ main: "", replaced: "" }));
-    state.selectedOpponentTeam = "";
-    state.useOpponentTeam = false;
-    state.opponentPlayers = [];
-    state.opponentPlayerNumbers = {};
-    state.opponentLiberos = [];
-    state.opponentCaptains = [];
-    state.opponentStats = {};
-    state.opponentCourt = emptyOpponentCourt;
-    state.opponentAutoRoleBaseCourt = [];
-    state.opponentLiberoAutoMap = {};
-    state.opponentPreferredLibero = "";
-    if (typeof updateOpponentAutoRoleBaseCourtCache === "function") {
-      updateOpponentAutoRoleBaseCourtCache(emptyOpponentCourt);
-    }
+  state.selectedTeam = "";
+  state.players = [];
+  state.playerNumbers = {};
+  state.liberos = [];
+  state.captains = [];
+  state.stats = {};
+  state.court = emptyCourt();
+  state.autoRoleBaseCourt = [];
+  state.liberoAutoMap = {};
+  state.preferredLibero = "";
+  state.selectedOpponentTeam = "";
+  state.useOpponentTeam = false;
+  state.opponentPlayers = [];
+  state.opponentPlayerNumbers = {};
+  state.opponentLiberos = [];
+  state.opponentCaptains = [];
+  state.opponentStats = {};
+  state.opponentCourt = emptyCourt();
+  state.opponentAutoRoleBaseCourt = [];
+  state.opponentLiberoAutoMap = {};
+  state.opponentPreferredLibero = "";
+  state.match = {};
+  if (typeof updateOpponentAutoRoleBaseCourtCache === "function") {
+    updateOpponentAutoRoleBaseCourtCache(state.opponentCourt);
   }
   resetMatchState({ skipMatchesRender: true });
   return true;
+}
+function hasDefaultDemoData() {
+  const hasDemoMatch =
+    typeof loadMatchFromStorage === "function" && !!loadMatchFromStorage(DEFAULT_DEMO_MATCH_NAME);
+  const hasDemoTeam = DEFAULT_DEMO_TEAM_NAMES.some(name =>
+    typeof loadTeamFromStorage === "function" && !!loadTeamFromStorage(name)
+  );
+  return hasDemoMatch || hasDemoTeam;
+}
+function updateDefaultDemoDeleteButtonVisibility() {
+  if (!elBtnDeleteDemoData) return;
+  const visible = getDefaultDemoPreference() !== "removed" && hasDefaultDemoData();
+  elBtnDeleteDemoData.classList.toggle("hidden", !visible);
+  elBtnDeleteDemoData.disabled = !visible;
 }
 function removeDefaultDemoPlayersFromDatabase(demoTeams) {
   if (typeof loadPlayersDbFromStorage !== "function" || typeof savePlayersDbToStorage !== "function") return;
@@ -23509,6 +23520,7 @@ function removeDefaultDemoData({ askConfirmation = true, showResult = true } = {
   renderTeamsSelect();
   renderOpponentTeamsSelect();
   renderMatchesSelect();
+  updateDefaultDemoDeleteButtonVisibility();
   if (clearedActiveDemo) {
     applyPlayersFromStateToTextarea();
     applyOpponentPlayersFromStateToTextarea();
@@ -23531,7 +23543,11 @@ async function loadDefaultDemoMatch() {
       throw new Error("Payload demo non valido");
     }
     const demoTeams = payload.state.savedTeams || {};
-    for (const [teamName, teamPayload] of Object.entries(demoTeams)) {
+    for (const teamName of DEFAULT_DEMO_TEAM_NAMES) {
+      const teamPayload = demoTeams[teamName];
+      if (!teamPayload) {
+        throw new Error(`Squadra demo mancante: ${teamName}`);
+      }
       if (!saveTeamToStorage(teamName, teamPayload)) {
         throw new Error(`Impossibile archiviare la squadra demo: ${teamName}`);
       }
@@ -23539,7 +23555,7 @@ async function loadDefaultDemoMatch() {
     applyImportedMatch(payload.state, { silent: true });
     state.selectedMatch = DEFAULT_DEMO_MATCH_NAME;
     state.loadedMatchName = DEFAULT_DEMO_MATCH_NAME;
-    const savedPayload = Object.assign({}, payload, { name: DEFAULT_DEMO_MATCH_NAME });
+    const savedPayload = getCurrentMatchPayload(DEFAULT_DEMO_MATCH_NAME);
     state.savedMatches = state.savedMatches || {};
     state.savedMatches[DEFAULT_DEMO_MATCH_NAME] = cloneIsolationData(savedPayload);
     if (typeof saveMatchToStorage === "function") {
@@ -29051,6 +29067,7 @@ async function init() {
       if (e) e.preventDefault();
       removeDefaultDemoData();
     });
+    updateDefaultDemoDeleteButtonVisibility();
   }
   const elBtnForceRefreshApp = document.getElementById("btn-force-refresh-app");
   if (elBtnForceRefreshApp) {

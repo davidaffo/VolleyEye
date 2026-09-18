@@ -2987,13 +2987,16 @@ function buildArchivedTeamOptions(names, unavailableName = "") {
 }
 function renderArchivedTeamsSelect(select, options = {}) {
   const names = getArchivedTeamNames();
-  const selectedName = options.selectedName || "";
   const teamOptions = buildArchivedTeamOptions(names, options.unavailableName || "");
+  const requestedName = options.selectedName || "";
+  const selectedName = teamOptions.some(option => option.value === requestedName && !option.disabled)
+    ? requestedName
+    : "";
   select.innerHTML = "";
   if (names.length === 0) {
     const placeholder = document.createElement("option");
-    placeholder.value = selectedName;
-    placeholder.textContent = selectedName ? `${selectedName} (non in archivio)` : options.emptyLabel;
+    placeholder.value = "";
+    placeholder.textContent = options.emptyLabel;
     placeholder.disabled = true;
     placeholder.selected = true;
     select.appendChild(placeholder);
@@ -3007,12 +3010,6 @@ function renderArchivedTeamsSelect(select, options = {}) {
     placeholder.textContent = options.placeholderLabel;
     placeholder.selected = true;
     select.appendChild(placeholder);
-  } else if (!names.includes(selectedName)) {
-    const missing = document.createElement("option");
-    missing.value = selectedName;
-    missing.textContent = `${selectedName} (non in archivio)`;
-    missing.selected = true;
-    select.appendChild(missing);
   }
   teamOptions.forEach(teamOption => {
     const option = document.createElement("option");

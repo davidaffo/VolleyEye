@@ -63,7 +63,8 @@ test("il caricamento iniziale salva le squadre demo prima di applicare il match"
     source.indexOf("async function loadDefaultDemoMatch"),
     source.indexOf("function showDefaultDemoWelcomePopup")
   );
-  assert.match(loader, /Object\.entries\(demoTeams\)/);
+  assert.match(loader, /for \(const teamName of DEFAULT_DEMO_TEAM_NAMES\)/);
+  assert.doesNotMatch(loader, /Object\.entries\(demoTeams\)/);
   assert.match(loader, /saveTeamToStorage\(teamName, teamPayload\)/);
   assert.ok(loader.indexOf("saveTeamToStorage") < loader.indexOf("applyImportedMatch"));
 });
@@ -88,8 +89,62 @@ test("la gestione dati espone il comando dedicato per cancellare le demo", () =>
     source.indexOf("async function loadDefaultDemoMatch")
   );
   assert.match(remover, /deleteMatchFromStorage\(DEFAULT_DEMO_MATCH_NAME\)/);
+  assert.match(remover, /DEFAULT_DEMO_TEAM_NAMES\.forEach/);
   assert.match(remover, /deleteTeamFromStorage\(name\)/);
   assert.match(remover, /setDefaultDemoPreference\("removed"\)/);
+  assert.match(remover, /updateDefaultDemoDeleteButtonVisibility\(\)/);
+});
+
+test("il pacchetto demo contiene soltanto le due squadre utilizzate", () => {
+  assert.deepEqual(Object.keys(state.savedTeams || {}).sort(), [state.selectedOpponentTeam, state.selectedTeam].sort());
+  assert.deepEqual(Object.keys(state.savedOpponentTeams || {}).sort(), [state.selectedOpponentTeam, state.selectedTeam].sort());
+});
+
+test("la pulizia del match demo non lascia riferimenti a squadre eliminate", () => {
+  const start = source.indexOf("function clearActiveDefaultDemoMatch");
+  const end = source.indexOf("function removeDefaultDemoPlayersFromDatabase", start);
+  const context = {
+    state: {
+      selectedMatch: "Match demo - Aurora Volley - Riviera Volley",
+      loadedMatchName: "Match demo - Aurora Volley - Riviera Volley",
+      selectedTeam: "Aurora Volley Demo",
+      selectedOpponentTeam: "Riviera Volley Demo",
+      useOpponentTeam: true,
+      players: ["Demo Uno"],
+      opponentPlayers: ["Demo Due"],
+      match: { teamName: "Aurora Volley Demo", opponent: "Riviera Volley Demo" }
+    },
+    DEFAULT_DEMO_MATCH_NAME: "Match demo - Aurora Volley - Riviera Volley",
+    Array,
+    String,
+    updateOpponentAutoRoleBaseCourtCache: () => {},
+    resetMatchState: () => {
+      context.state.match = {
+        teamName: context.state.selectedTeam || context.state.match.teamName || "",
+        opponent: ""
+      };
+    }
+  };
+  vm.runInNewContext(source.slice(start, end), context);
+  assert.equal(context.clearActiveDefaultDemoMatch(), true);
+  assert.equal(context.state.selectedTeam, "");
+  assert.equal(context.state.selectedOpponentTeam, "");
+  assert.equal(context.state.match.teamName, "");
+  assert.equal(context.state.useOpponentTeam, false);
+  assert.equal(context.state.players.length, 0);
+  assert.equal(context.state.opponentPlayers.length, 0);
+});
+
+test("il tasto di cancellazione sparisce quando i dati demo non esistono", () => {
+  assert.match(html, /id="btn-delete-demo-data"[^>]*class="[^"]*hidden/);
+  const visibility = source.slice(
+    source.indexOf("function hasDefaultDemoData"),
+    source.indexOf("function removeDefaultDemoPlayersFromDatabase")
+  );
+  assert.match(visibility, /getDefaultDemoPreference\(\) !== "removed"/);
+  assert.match(visibility, /hasDefaultDemoData\(\)/);
+  assert.match(visibility, /classList\.toggle\("hidden", !visible\)/);
+  assert.match(source, /updateDefaultDemoDeleteButtonVisibility\(\);/);
 });
 
 test("cancellare le demo conserva le giocatrici referenziate da altre squadre", () => {
