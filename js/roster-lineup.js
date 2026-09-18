@@ -3393,14 +3393,6 @@ function loadSelectedMatch() {
   }
   const name = elSavedMatchesSelect.value;
   if (!name) {
-    const ok =
-      !state.events || state.events.length === 0
-        ? true
-        : confirm("Creare un nuovo match? I dati correnti verranno azzerati.");
-    if (!ok) {
-      renderMatchesSelect();
-      return;
-    }
     state.selectedMatch = "";
     state.loadedMatchName = "";
     resetMatchState({ skipMatchesRender: true });
