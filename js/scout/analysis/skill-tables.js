@@ -820,6 +820,7 @@ function renderPlayerAnalysisTable() {
     const blockPointCount = countPointsForSkill(blockCounts, "block");
     return {
       playerIdx,
+      photo: getPlayerPhotoForScope(analysisScope, name),
       name:
         analysisScope === "opponent"
           ? formatNameWithNumberFor(name, numbers)
@@ -1013,9 +1014,7 @@ function renderPlayerAnalysisTable() {
   const renderCompareCard = (snapshot, otherSnapshot, cardClass) => {
     const card = document.createElement("div");
     card.className = `player-analysis-compare-card ${cardClass}`;
-    const title = document.createElement("h3");
-    title.textContent = snapshot.name;
-    card.appendChild(title);
+    card.appendChild(createPlayerAnalysisIdentity(snapshot.name, snapshot.photo, { compact: true }));
     const table = document.createElement("table");
     table.className = "player-analysis-compare-table";
     snapshot.metrics.forEach((section, sectionIdx) => {
@@ -1104,6 +1103,31 @@ function updatePlayerAnalysisVisibility() {
     elPlayerAnalysisSecond.classList.toggle("hidden", !prefs.showSecond);
   }
 }
+function createPlayerAnalysisIdentity(displayName, photo, options = {}) {
+  const identity = document.createElement("div");
+  identity.className = "player-analysis-identity" + (options.compact ? " is-compact" : "");
+  if (photo) {
+    const avatar = document.createElement("img");
+    avatar.className = "player-analysis-identity__avatar";
+    avatar.src = photo;
+    avatar.alt = `Foto di ${displayName}`;
+    identity.appendChild(avatar);
+  }
+  const text = document.createElement("div");
+  text.className = "player-analysis-identity__text";
+  if (options.badge) {
+    const badge = document.createElement("div");
+    badge.className = "player-analysis-hero-card__badge";
+    badge.textContent = options.badge;
+    text.appendChild(badge);
+  }
+  const title = document.createElement("h3");
+  title.className = "player-analysis-hero-card__title";
+  title.textContent = displayName;
+  text.appendChild(title);
+  identity.appendChild(text);
+  return identity;
+}
 function renderPlayerAnalysisHero() {
   if (!elPlayerAnalysisHero) return;
   const analysisScope = getAnalysisTeamScope();
@@ -1133,20 +1157,7 @@ function renderPlayerAnalysisHero() {
   elPlayerAnalysisHero.innerHTML = "";
   const card = document.createElement("div");
   card.className = "player-analysis-hero-card" + (photo ? " has-photo" : "");
-  if (photo) {
-    card.style.setProperty("--player-analysis-photo-image", `url(${JSON.stringify(photo)})`);
-  }
-  const content = document.createElement("div");
-  content.className = "player-analysis-hero-card__content";
-  const badge = document.createElement("div");
-  badge.className = "player-analysis-hero-card__badge";
-  badge.textContent = sideLabel;
-  const title = document.createElement("h3");
-  title.className = "player-analysis-hero-card__title";
-  title.textContent = displayName;
-  content.appendChild(badge);
-  content.appendChild(title);
-  card.appendChild(content);
+  card.appendChild(createPlayerAnalysisIdentity(displayName, photo, { badge: sideLabel }));
   elPlayerAnalysisHero.appendChild(card);
 }
 function renderPlayerAnalysis() {

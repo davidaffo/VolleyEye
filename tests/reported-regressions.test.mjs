@@ -294,7 +294,7 @@ test("campi squadra, foto e ruoli hanno gli stili richiesti", () => {
   assert.match(css, /background-size:\s*contain/);
   assert.match(css, /\.court-card \.event-btn,[\s\S]*?background:\s*rgba\(15, 23, 42, 0\.32\)/);
   assert.match(css, /\.court-card \.skill-picker-btn\.skill-attack\s*\{[\s\S]*?38%, transparent/);
-  assert.match(css, /\.player-analysis-hero-card\.has-photo::before[\s\S]*?border-radius:\s*50%/);
+  assert.match(css, /\.player-analysis-identity__avatar\s*\{[\s\S]*?border-radius:\s*50%/);
 });
 
 test("il renderer del campo risolve il roster nello scope prima di calcolare l'alzatrice", () => {
@@ -346,4 +346,14 @@ test("le formazioni usano i numeri del proprio roster e sezioni blu e rossa", ()
   assert.match(css, /#next-set-block-our\s*\{[\s\S]*?background:\s*rgba\(30, 64, 175/);
   assert.match(css, /#next-set-block-opp\s*\{[\s\S]*?background:\s*rgba\(153, 27, 27/);
   assert.match(css, /\.next-set-lineups\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2/);
+});
+
+test("l'avatar precede il nome e viene riutilizzato nel confronto giocatrici", () => {
+  const analysis = readFileSync(new URL("../js/scout/analysis/skill-tables.js", import.meta.url), "utf8");
+  const identity = extract(analysis, "function createPlayerAnalysisIdentity", "function renderPlayerAnalysisHero");
+  assert.ok(identity.indexOf("identity.appendChild(avatar)") < identity.indexOf("identity.appendChild(text)"));
+  assert.match(analysis, /photo:\s*getPlayerPhotoForScope\(analysisScope, name\)/);
+  assert.match(analysis, /renderCompareCard[\s\S]*?createPlayerAnalysisIdentity\(snapshot\.name, snapshot\.photo/);
+  assert.match(css, /\.player-analysis-identity\s*\{[\s\S]*?display:\s*flex/);
+  assert.match(css, /\.player-analysis-identity\.is-compact \.player-analysis-identity__avatar/);
 });
