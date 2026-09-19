@@ -1,11 +1,11 @@
 (function attachAppVersion(root) {
   root.__APP_VERSION__ = {
   "appName": "VolleyEye",
-  "baseVersion": "0.16.40",
-  "version": "0.16.40+399.7b265c5",
-  "commitCount": 399,
-  "commitHash": "7b265c5",
-  "cacheVersion": "v0.16.40-399-7b265c5",
-  "buildDate": "2026-09-19T17:48:57.068Z"
+  "baseVersion": "0.17.0",
+  "version": "0.17.0+400.04ede47",
+  "commitCount": 400,
+  "commitHash": "04ede47",
+  "cacheVersion": "v0.17.0-400-04ede47",
+  "buildDate": "2026-09-19T17:50:18.814Z"
 };
 })(typeof self !== "undefined" ? self : window);
