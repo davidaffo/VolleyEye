@@ -19,9 +19,10 @@
     } = deps || {};
 
     const rosterManager =
-      window.RosterManager &&
-      typeof window.RosterManager.createRosterManager === "function" &&
-      window.RosterManager.createRosterManager({
+      window.VolleyEye &&
+      window.VolleyEye.roster &&
+      typeof window.VolleyEye.roster.createRosterManager === "function" &&
+      window.VolleyEye.roster.createRosterManager({
         state,
         saveState,
         normalizePlayers,
@@ -48,10 +49,11 @@
         },
         sanitizeState: () => {
           if (
-            window.VolleyEyeStateIsolation &&
-            typeof window.VolleyEyeStateIsolation.sanitizeRosterScope === "function"
+            window.VolleyEye &&
+            window.VolleyEye.stateIsolation &&
+            typeof window.VolleyEye.stateIsolation.sanitizeRosterScope === "function"
           ) {
-            window.VolleyEyeStateIsolation.sanitizeRosterScope(state, "opponent");
+            window.VolleyEye.stateIsolation.sanitizeRosterScope(state, "opponent");
           }
         },
         onRenameReferences,
@@ -115,5 +117,5 @@
     };
   }
 
-  windowObj.OpponentSettings = { createOpponentSettings };
+  windowObj.VolleyEye.opponentSettings = Object.freeze({ createOpponentSettings });
 })(typeof window !== "undefined" ? window : self);

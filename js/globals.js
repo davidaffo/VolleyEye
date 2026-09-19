@@ -525,10 +525,6 @@ if (elPlayerPhotoModal && !elPlayerPhotoModal._playerPhotoBound) {
   });
   elPlayerPhotoModal._playerPhotoBound = true;
 }
-window.pickImageFile = pickImageFile;
-window.preparePlayerPhotoDataUrl = preparePlayerPhotoDataUrl;
-window.openPlayerPhotoEditor = openPlayerPhotoEditor;
-window.PLAYER_PHOTO_REMOVE_RESULT = PLAYER_PHOTO_REMOVE_RESULT;
 const elOpponent = document.getElementById("match-opponent");
 const elCategory = document.getElementById("match-category");
 const elDate = document.getElementById("match-date");

@@ -157,5 +157,5 @@
     };
   }
 
-  windowObj.RosterManager = { createRosterManager };
+  windowObj.VolleyEye.roster = Object.freeze({ createRosterManager });
 })(typeof window !== "undefined" ? window : self);

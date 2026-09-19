@@ -1,0 +1,163 @@
+@media (min-width: 700px) {
+  body {
+    padding: 0.8rem;
+  }
+  .section {
+    padding: 0.6rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .topbar-toggle-btn {
+    display: none !important;
+  }
+  .tabs-nav {
+    display: none;
+  }
+  .tabs-dots {
+    display: inline-flex;
+    top: 0.5rem;
+    bottom: auto;
+  }
+  .attack-trajectory-content {
+    width: 100vw;
+    height: 100svh;
+    max-height: 100svh;
+  }
+  .attack-trajectory-stage {
+    min-height: 0;
+  }
+  .scout-grid {
+    display: block;
+  }
+  .scout-column-resizer {
+    display: none;
+  }
+  .scout-mobile-bar {
+    display: flex;
+  }
+  .drawer-backdrop {
+    display: block;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  body.drawer-menu-open .drawer-backdrop,
+  body.drawer-log-open .drawer-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .scout-col-left,
+  .scout-col-right {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: min(88vw, 360px);
+    overflow-y: auto;
+    z-index: 50;
+    transform: translateX(-105%);
+    transition: transform 0.2s ease;
+  }
+  .scout-col-right {
+    right: 0;
+    left: auto;
+    transform: translateX(105%);
+  }
+  body.drawer-menu-open .scout-col-left {
+    transform: translateX(0);
+  }
+  body.drawer-log-open .scout-col-right {
+    transform: translateX(0);
+  }
+  .drawer-close {
+    display: inline-flex;
+  }
+  .scout-col-center {
+    width: 100%;
+  }
+  .players-area {
+    gap: 0.45rem;
+  }
+  #players-container,
+  #opponent-players-container {
+    min-height: 0;
+    align-items: start;
+  }
+}
+
+body.force-mobile .scout-grid {
+  display: block;
+}
+body.force-mobile .scout-column-resizer {
+  display: none;
+}
+body.force-mobile .topbar-toggle-btn {
+  display: none !important;
+}
+body.force-mobile .tabs-nav {
+  display: none;
+}
+body.force-mobile .tabs-dots {
+  display: inline-flex;
+  top: 0.5rem;
+  bottom: auto;
+}
+body.force-mobile .scout-mobile-bar {
+  display: flex;
+}
+body.force-mobile .drawer-backdrop {
+  display: block;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+body.force-mobile.drawer-menu-open .drawer-backdrop,
+body.force-mobile.drawer-log-open .drawer-backdrop {
+  opacity: 1;
+  pointer-events: auto;
+}
+body.force-mobile .scout-col-left,
+body.force-mobile .scout-col-right {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: min(88vw, 360px);
+  overflow-y: auto;
+  z-index: 50;
+  transform: translateX(-105%);
+  transition: transform 0.2s ease;
+}
+body.force-mobile .scout-col-right {
+  right: 0;
+  left: auto;
+  transform: translateX(105%);
+}
+body.force-mobile.drawer-menu-open .scout-col-left {
+  transform: translateX(0);
+}
+body.force-mobile.drawer-log-open .scout-col-right {
+  transform: translateX(0);
+}
+body.force-mobile .drawer-close {
+  display: inline-flex;
+}
+body.force-mobile .scout-col-center {
+  width: 100%;
+}
+body.force-mobile .players-area {
+  gap: 0.45rem;
+}
+body.force-mobile #players-container,
+body.force-mobile #opponent-players-container {
+  min-height: 0;
+  align-items: start;
+}
+body.force-mobile .attack-trajectory-content {
+  width: 100vw;
+  height: 100svh;
+  max-height: 100svh;
+}
+body.force-mobile .attack-trajectory-stage {
+  min-height: 0;
+}
+

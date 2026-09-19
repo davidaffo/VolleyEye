@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
+import { readScoutSource } from "./helpers/scout-source.mjs";
+import { readRosterSource } from "./helpers/roster-source.mjs";
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
 test("tutti gli asset delle traiettorie usati a runtime esistono e sono disponibili offline", () => {
-  const scout = read("js/scout-ui.js");
+  const scout = readScoutSource();
   const worker = read("service-worker.js");
   const assets = new Set(
     [...scout.matchAll(/["'`](images\/trajectory\/[^"'`]+\.png)["'`]/g)].map(match => match[1])
@@ -24,7 +26,7 @@ test("il service worker non memorizza risposte HTTP fallite", () => {
 });
 
 test("il payload squadra compatto ricostruisce i numeri dai dettagli", () => {
-  const roster = read("js/roster-lineup.js");
+  const roster = readRosterSource();
   const normalizeBlock = roster.slice(
     roster.indexOf("function normalizeTeamPayload"),
     roster.indexOf("function loadTeamNormalized")
@@ -48,7 +50,7 @@ test("il payload squadra compatto ricostruisce i numeri dai dettagli", () => {
 });
 
 test("rinominare una giocatrice non modifica eventi dell'altra squadra", () => {
-  const roster = read("js/roster-lineup.js");
+  const roster = readRosterSource();
   const ourRename = roster.slice(
     roster.indexOf("function replacePlayerNameEverywhere"),
     roster.indexOf("function replacePlayerNameInLineup")
@@ -66,8 +68,8 @@ test("rinominare una giocatrice non modifica eventi dell'altra squadra", () => {
 });
 
 test("reset e cambio match eliminano ogni riferimento al vecchio video", () => {
-  const roster = read("js/roster-lineup.js");
-  const scout = read("js/scout-ui.js");
+  const roster = readRosterSource();
+  const scout = readScoutSource();
   const resetRoster = roster.slice(roster.indexOf("function resetMatchState"), roster.indexOf("function renameSelectedTeam"));
   const resetScout = scout.slice(scout.indexOf("function resetMatch()"), scout.indexOf("function deleteIndexedDbByName"));
   for (const block of [resetRoster, resetScout]) {
@@ -79,7 +81,7 @@ test("reset e cambio match eliminano ogni riferimento al vecchio video", () => {
 });
 
 test("l'annullamento del cambio set ripristina anche orologi e stato controlli", () => {
-  const scout = read("js/scout-ui.js");
+  const scout = readScoutSource();
   const undo = scout.slice(scout.indexOf("function undoLastEvent"), scout.indexOf("function deleteEventByKey"));
   const structural = undo.slice(undo.indexOf('if (ev.actionType === "set-change"'), undo.indexOf("if (ev && ev.autoRotationDirection)"));
   assert.match(structural, /restoreSkillClock/);
@@ -89,7 +91,7 @@ test("l'annullamento del cambio set ripristina anche orologi e stato controlli",
 });
 
 test("timeout, cambi e annullamento rispettano lo scope della squadra", () => {
-  const scout = read("js/scout-ui.js");
+  const scout = readScoutSource();
   assert.match(
     scout,
     /recordSetAction\("timeout",\s*\{[^}]*code:\s*"TOA"[^}]*teamScope:\s*"opponent"/
@@ -105,7 +107,7 @@ test("timeout, cambi e annullamento rispettano lo scope della squadra", () => {
 });
 
 test("l'import database segnala i salvataggi parziali senza doppio messaggio di successo", () => {
-  const scout = read("js/scout-ui.js");
+  const scout = readScoutSource();
   const applyImport = scout.slice(
     scout.indexOf("function applyImportedDatabase"),
     scout.indexOf("function buildUniqueImportedMatchName")
@@ -124,7 +126,7 @@ test("l'import database segnala i salvataggi parziali senza doppio messaggio di 
 });
 
 test("l'import DataVolley usa formazione e rotazioni finali senza archiviare squadre", () => {
-  const scout = read("js/scout-ui.js");
+  const scout = readScoutSource();
   const parser = scout.slice(
     scout.indexOf("function parseDataVolleyDvwToMatchState"),
     scout.indexOf("function handleImportMatchFile")

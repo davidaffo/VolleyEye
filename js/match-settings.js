@@ -77,5 +77,5 @@
     };
   }
 
-  windowObj.createMatchSettings = createMatchSettings;
+  windowObj.VolleyEye.matchSettings = Object.freeze({ createMatchSettings });
 })(typeof window !== "undefined" ? window : self);

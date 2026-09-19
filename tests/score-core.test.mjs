@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
+import { readScoutSource } from "./helpers/scout-source.mjs";
 
-const source = readFileSync(new URL("../js/scout-ui.js", import.meta.url), "utf8");
+const source = readScoutSource();
 const valueHelper = source.slice(
   source.indexOf("function getEventPointValue"),
   source.indexOf("function isOpponentErrorPoint")

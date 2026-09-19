@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
+import { readScoutSource } from "./helpers/scout-source.mjs";
 
-const source = readFileSync(new URL("../js/scout-ui.js", import.meta.url), "utf8");
+const source = readScoutSource();
 const start = source.indexOf("function getSetterFromCourtForScope");
 const end = source.indexOf("function getSetterFromCourt()", start);
 assert.ok(start >= 0 && end > start, "risoluzione dell'alzatrice non trovata");

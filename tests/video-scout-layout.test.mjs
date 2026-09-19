@@ -2,11 +2,14 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
+import { readScoutSource } from "./helpers/scout-source.mjs";
+import { readStyleSource } from "./helpers/style-source.mjs";
+import { readRosterSource } from "./helpers/roster-source.mjs";
 
-const source = readFileSync(new URL("../js/scout-ui.js", import.meta.url), "utf8");
+const source = readScoutSource();
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
-const css = readFileSync(new URL("../style.css", import.meta.url), "utf8");
-const rosterSource = readFileSync(new URL("../js/roster-lineup.js", import.meta.url), "utf8");
+const css = readStyleSource();
+const rosterSource = readRosterSource();
 
 function loadLayoutState(state) {
   const start = source.indexOf("const SCOUT_WIDGET_IDS");

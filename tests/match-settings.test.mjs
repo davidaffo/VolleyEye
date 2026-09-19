@@ -7,6 +7,10 @@ const context = {};
 context.self = context;
 context.window = context;
 vm.runInNewContext(
+  readFileSync(new URL("../js/shared/namespace.js", import.meta.url), "utf8"),
+  context
+);
+vm.runInNewContext(
   readFileSync(new URL("../js/match-settings.js", import.meta.url), "utf8"),
   context
 );
@@ -35,7 +39,7 @@ function setup(overrides = {}) {
     elPlayersInput: field(""),
     elOpponentPlayersInput: field("")
   };
-  const api = context.createMatchSettings({
+  const api = context.VolleyEye.matchSettings.createMatchSettings({
     state,
     getTodayIso: () => "2026-09-09",
     ensureMatchDefaults: () => {

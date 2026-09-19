@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { readScoutSource } from "./helpers/scout-source.mjs";
+import { readStyleSource } from "./helpers/style-source.mjs";
 
-const css = readFileSync(new URL("../style.css", import.meta.url), "utf8");
-const scout = readFileSync(new URL("../js/scout-ui.js", import.meta.url), "utf8");
+const css = readStyleSource();
+const scout = readScoutSource();
 
 test("la preparazione del set non viene centrata fuori dal contenitore", () => {
   const overlay = css.slice(

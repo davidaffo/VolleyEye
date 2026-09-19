@@ -2,12 +2,18 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
+import { readScoutSource } from "./helpers/scout-source.mjs";
+import { readRosterSource } from "./helpers/roster-source.mjs";
 
 const isolationSource = readFileSync(new URL("../js/shared/state-isolation.js", import.meta.url), "utf8");
 const context = { structuredClone };
 context.self = context;
+vm.runInNewContext(
+  readFileSync(new URL("../js/shared/namespace.js", import.meta.url), "utf8"),
+  context
+);
 vm.runInNewContext(isolationSource, context);
-const isolation = context.VolleyEyeStateIsolation;
+const isolation = context.VolleyEye.stateIsolation;
 const plain = value => JSON.parse(JSON.stringify(value));
 
 test("cloneData separa completamente snapshot e stato vivo", () => {
@@ -117,8 +123,8 @@ test("sanitizeRosterScope impedisce duplicati e coppie autoreferenziali in campo
 });
 
 test("i confini applicativi non reintroducono sincronizzazioni implicite", () => {
-  const scout = readFileSync(new URL("../js/scout-ui.js", import.meta.url), "utf8");
-  const roster = readFileSync(new URL("../js/roster-lineup.js", import.meta.url), "utf8");
+  const scout = readScoutSource();
+  const roster = readRosterSource();
   const index = readFileSync(new URL("../index.html", import.meta.url), "utf8");
   const serviceWorker = readFileSync(new URL("../service-worker.js", import.meta.url), "utf8");
   const renderPlayersBody = scout.slice(
@@ -150,6 +156,7 @@ test("i confini applicativi non reintroducono sincronizzazioni implicite", () =>
   assert.match(roster, /applyLiveOpponentTeamManagerPayload/);
   assert.match(roster, /applyLiveTeamManagerPayload\(payload, liveCurrentPayload\)/);
   assert.match(roster, /applyLiveOpponentTeamManagerPayload\(payload, liveCurrentPayload\)/);
+  assert.ok(index.indexOf("js/shared/namespace.js") < index.indexOf("js/shared/state-isolation.js"));
   assert.ok(index.indexOf("js/shared/state-isolation.js") < index.indexOf("js/roster-lineup.js"));
   assert.match(serviceWorker, /js\/shared\/state-isolation\.js/);
   assert.doesNotMatch(
@@ -162,7 +169,7 @@ test("i confini applicativi non reintroducono sincronizzazioni implicite", () =>
 });
 
 test("l'elenco avversarie conserva tutte le squadre e disabilita solo quella principale", () => {
-  const roster = readFileSync(new URL("../js/roster-lineup.js", import.meta.url), "utf8");
+  const roster = readRosterSource();
   const start = roster.indexOf("function buildArchivedTeamOptions(");
   const end = roster.indexOf("function renderArchivedTeamsSelect(", start);
   const selectContext = {};
@@ -174,7 +181,7 @@ test("l'elenco avversarie conserva tutte le squadre e disabilita solo quella pri
 });
 
 test("i selettori non costruiscono squadre fantasma assenti dall'archivio", () => {
-  const roster = readFileSync(new URL("../js/roster-lineup.js", import.meta.url), "utf8");
+  const roster = readRosterSource();
   const renderer = roster.slice(
     roster.indexOf("function renderArchivedTeamsSelect"),
     roster.indexOf("function renderTeamsSelect")

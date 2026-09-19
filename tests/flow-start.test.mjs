@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
+import { readScoutSource } from "./helpers/scout-source.mjs";
+import { readRosterSource } from "./helpers/roster-source.mjs";
 
-const source = readFileSync(new URL("../js/scout-ui.js", import.meta.url), "utf8");
+const source = readScoutSource();
 const autoFlowSource = source.slice(
   source.indexOf("function getAutoFlowState"),
   source.indexOf("function getMobileActiveScope")
@@ -110,7 +112,7 @@ test("il muro previsto in doppia squadra non viene degradato a prompt sopra la d
 
 test("la valutazione ! non è disponibile per il muro", () => {
   const globals = readFileSync(new URL("../js/globals.js", import.meta.url), "utf8");
-  const roster = readFileSync(new URL("../js/roster-lineup.js", import.meta.url), "utf8");
+  const roster = readRosterSource();
   const normalizeSource = roster.slice(
     roster.indexOf("function normalizeMetricConfig"),
     roster.indexOf("function sameCodeList")
@@ -156,7 +158,7 @@ test("l'avvio del set riallinea il flusso e cancella selezioni transitorie", () 
 });
 
 test("il reset e il salvataggio conservano le premesse del flusso automatico", () => {
-  const roster = readFileSync(new URL("../js/roster-lineup.js", import.meta.url), "utf8");
+  const roster = readRosterSource();
   const reset = roster.slice(
     roster.indexOf("function resetMatchState"),
     roster.indexOf("function renameSelectedTeam")

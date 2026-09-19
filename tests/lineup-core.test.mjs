@@ -7,6 +7,10 @@ const context = {};
 context.self = context;
 context.window = context;
 vm.runInNewContext(
+  readFileSync(new URL("../js/shared/namespace.js", import.meta.url), "utf8"),
+  context
+);
+vm.runInNewContext(
   readFileSync(new URL("../js/shared/lineup-core.js", import.meta.url), "utf8"),
   context
 );
@@ -15,7 +19,7 @@ vm.runInNewContext(
   context
 );
 
-const core = context.LineupCore;
+const core = context.VolleyEye.lineup;
 const plain = value => JSON.parse(JSON.stringify(value));
 const court = (...names) =>
   Array.from({ length: 6 }, (_, index) => ({ main: names[index] || "", replaced: "" }));
@@ -88,7 +92,7 @@ test("lo scambio valido mantiene tutti e sei i giocatori", () => {
 });
 
 test("auto-role limita la rotazione all'intervallo 1-6", () => {
-  const autoRole = context.AutoRole.createAutoRole({});
+  const autoRole = context.VolleyEye.autoRole.createAutoRole({});
   const base = court("A", "B", "C", "D", "E", "F");
   const low = autoRole.buildAutoRolePermutation({ baseLineup: base, rotation: -20, phase: "receive" });
   const high = autoRole.buildAutoRolePermutation({ baseLineup: base, rotation: 99, phase: "receive" });
@@ -99,8 +103,8 @@ test("auto-role limita la rotazione all'intervallo 1-6", () => {
 });
 
 test("auto-role accetta configurazione omessa, array front-row e rotazioni serializzate", () => {
-  assert.doesNotThrow(() => context.AutoRole.createAutoRole());
-  const autoRole = context.AutoRole.createAutoRole({ frontRowIndexes: [1, 2, 3] });
+  assert.doesNotThrow(() => context.VolleyEye.autoRole.createAutoRole());
+  const autoRole = context.VolleyEye.autoRole.createAutoRole({ frontRowIndexes: [1, 2, 3] });
   const next = autoRole.buildAutoRolePermutation({
     baseLineup: court("A", "B", "C", "D", "E", "F"),
     rotation: "1",
@@ -112,7 +116,7 @@ test("auto-role accetta configurazione omessa, array front-row e rotazioni seria
 });
 
 test("auto-role non muta la formazione di partenza", () => {
-  const autoRole = context.AutoRole.createAutoRole({});
+  const autoRole = context.VolleyEye.autoRole.createAutoRole({});
   const base = court("A", "B", "C", "D", "E", "F");
   const before = plain(base);
   autoRole.applyPhasePermutation({ lineup: base, rotation: 4, phase: "attack", isServing: true });
@@ -120,7 +124,7 @@ test("auto-role non muta la formazione di partenza", () => {
 });
 
 test("un libero permutato in prima linea viene scambiato col sostituito", () => {
-  const autoRole = context.AutoRole.createAutoRole({});
+  const autoRole = context.VolleyEye.autoRole.createAutoRole({});
   const base = court("A", "L", "C", "D", "E", "F");
   base[1].replaced = "B";
   const next = autoRole.applyPhasePermutation({

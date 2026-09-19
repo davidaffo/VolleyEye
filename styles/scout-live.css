@@ -1,0 +1,193 @@
+/* Scout Live component layer (scoped) */
+.scout-live {
+  --sl-gap: 0.35rem;
+  --sl-btn-h: 2rem;
+  --sl-btn-w-min: 4.6rem;
+  --sl-btn-w-max: 5.35rem;
+  --sl-btn-fs: 0.82rem;
+  --sl-btn-radius: 0.42rem;
+}
+.scout-live .section {
+  border-radius: 0.7rem;
+}
+.scout-live button.small,
+.scout-live .file-btn {
+  min-height: var(--sl-btn-h);
+  font-size: var(--sl-btn-fs);
+  border-radius: var(--sl-btn-radius);
+}
+.scout-live .set-bottom-actions,
+.scout-live .score-actions-set {
+  gap: var(--sl-gap);
+}
+.scout-live .scout-col-left .rotation-toggles {
+  display: grid;
+  gap: 0.2rem;
+}
+.scout-live .scout-col-left .rotation-toggles br {
+  display: none;
+}
+.scout-live .scout-col-left .auto-rotate-toggle {
+  margin-top: 0;
+  line-height: 1.12;
+}
+.scout-live .scout-col-left .team-panel {
+  gap: 0.2rem;
+}
+.scout-live .scout-col-left .court-actions-bar.team-panel {
+  gap: 0.35rem;
+  padding: 0.42rem 0.55rem;
+}
+.scout-live .scout-col-left .team-timeout-block {
+  gap: 0.22rem;
+}
+.scout-live .sl-toolbar {
+  display: grid;
+  grid-template-columns: minmax(170px, 210px) minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 0.4rem;
+  align-items: start;
+}
+.scout-live .sl-toolbar .court-rotation-block {
+  grid-column: 1;
+}
+.scout-live .sl-toolbar .sl-action-row {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.16rem;
+  align-items: center;
+  min-width: 0;
+  overflow: visible;
+}
+.scout-live .sl-toolbar .sl-action-row > button,
+.scout-live .sl-toolbar .sl-action-row > .score-actions-inline > button,
+.scout-live .sl-toolbar .sl-action-row > .freeball-actions-inline > button {
+  inline-size: auto;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  block-size: var(--sl-btn-h);
+  min-block-size: var(--sl-btn-h);
+  padding: 0.2rem 0.3rem;
+  font-size: var(--sl-btn-fs);
+  line-height: 1.05;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  flex: 1 1 var(--sl-btn-w-min);
+}
+.scout-live .sl-toolbar .sl-action-row > .score-actions-inline,
+.scout-live .sl-toolbar .sl-action-row > .freeball-actions-inline {
+  display: contents;
+}
+.scout-live .sl-toolbar .sl-team-controls {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sl-gap);
+  width: 100%;
+}
+.scout-live .sl-toolbar .sl-team-controls .libero-inline {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+.scout-live .sl-toolbar .sl-team-controls .skill-flow-panel {
+  flex: 1 1 200px;
+  min-width: 0;
+  margin-top: 0;
+}
+.scout-live .sl-toolbar .skill-flow-grid.skill-flow-inline {
+  flex-wrap: wrap;
+}
+.scout-live .court-net-divider {
+  gap: 0.35rem;
+}
+.scout-live .net-actions-default {
+  gap: 0.25rem;
+}
+.scout-live .net-action-btn {
+  min-height: var(--sl-btn-h);
+  font-size: 0.8rem;
+  border-radius: var(--sl-btn-radius);
+}
+.scout-live #btn-undo {
+  min-width: 8.6rem;
+}
+.scout-live .log-section .card-inline {
+  border-radius: 0.6rem;
+}
+.scout-live .court-layout {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.scout-live button,
+.scout-live input,
+.scout-live select {
+  min-width: 0;
+  max-width: 100%;
+}
+.scout-live button {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 1350px) {
+  .scout-live .sl-toolbar {
+    grid-template-columns: minmax(160px, 200px) minmax(0, 1fr);
+  }
+}
+@media (max-width: 760px) {
+  .scout-live {
+    --sl-btn-w-min: 4.4rem;
+    --sl-btn-w-max: 5rem;
+    --sl-btn-fs: 0.78rem;
+  }
+  .scout-live .sl-toolbar {
+    grid-template-columns: 1fr;
+  }
+  .scout-live .sl-toolbar .court-rotation-block,
+  .scout-live .sl-toolbar .sl-action-row,
+  .scout-live .sl-toolbar .sl-team-controls {
+    grid-column: 1;
+  }
+}
+@container (max-width: 620px) {
+  .scout-live .sl-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .scout-live .sl-toolbar .court-rotation-block,
+  .scout-live .sl-toolbar .sl-action-row,
+  .scout-live .sl-toolbar .sl-team-controls {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .scout-live .sl-toolbar .rotation-controls {
+    justify-content: center;
+  }
+}
+@container (max-width: 420px) {
+  .scout-live .score-top-row,
+  .scout-live .score-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .scout-live .score-center {
+    grid-row: 1;
+  }
+  .scout-live .score-top-action,
+  .scout-live .score-set-select {
+    width: 100%;
+  }
+  .scout-live .scout-dvw-bar__top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .scout-live .scout-dvw-bar__controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .scout-live .scout-dvw-bar__controls input {
+    grid-column: 1 / -1;
+  }
+}
+

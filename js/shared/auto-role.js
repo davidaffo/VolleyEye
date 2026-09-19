@@ -207,5 +207,5 @@ const INTELLISCOUT_RECEIVE_ASSIGNMENTS = Object.freeze({
     };
   }
 
-  windowObj.AutoRole = { createAutoRole };
+  windowObj.VolleyEye.autoRole = Object.freeze({ createAutoRole });
 })(typeof window !== "undefined" ? window : self);

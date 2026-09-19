@@ -142,10 +142,10 @@
     return state;
   }
 
-  root.VolleyEyeStateIsolation = {
+  root.VolleyEye.stateIsolation = Object.freeze({
     cloneData,
     cloneRecord,
     sameNormalizedList,
     sanitizeRosterScope
-  };
+  });
 })(typeof window !== "undefined" ? window : self);

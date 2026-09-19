@@ -114,7 +114,7 @@
     return next;
   }
 
-  windowObj.LineupCore = {
+  windowObj.VolleyEye.lineup = Object.freeze({
     ensureCourtShapeFor,
     cloneCourtLineup,
     reserveNamesInCourt,
@@ -122,5 +122,5 @@
     setPlayerOnCourt,
     swapCourtSlots,
     clearCourtSlot
-  };
+  });
 })(typeof window !== "undefined" ? window : self);

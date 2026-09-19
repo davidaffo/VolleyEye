@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
+import { readRosterSource } from "./helpers/roster-source.mjs";
 
-const source = readFileSync(new URL("../js/roster-lineup.js", import.meta.url), "utf8");
+const source = readRosterSource();
 const helpers = source.slice(
   source.indexOf("function normalizePlayers"),
   source.indexOf("function replacePlayerNameEverywhere")

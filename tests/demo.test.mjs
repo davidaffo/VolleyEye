@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
+import { readScoutSource } from "./helpers/scout-source.mjs";
 
 const demo = JSON.parse(readFileSync(new URL("../match_demo.json", import.meta.url), "utf8"));
 const state = demo.state;
-const source = readFileSync(new URL("../js/scout-ui.js", import.meta.url), "utf8");
+const source = readScoutSource();
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 
 const playerName = player => [player.lastName, player.firstName].filter(Boolean).join(" ").trim();

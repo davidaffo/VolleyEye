@@ -8,6 +8,10 @@ context.self = context;
 context.window = context;
 context.alert = message => context.alerts.push(message);
 vm.runInNewContext(
+  readFileSync(new URL("../js/shared/namespace.js", import.meta.url), "utf8"),
+  context
+);
+vm.runInNewContext(
   readFileSync(new URL("../js/shared/state-isolation.js", import.meta.url), "utf8"),
   context
 );
@@ -21,7 +25,7 @@ const buildNumbersForNames = (names, provided = {}, fallback = {}) =>
   Object.fromEntries(names.map(name => [name, provided[name] ?? fallback[name] ?? ""]));
 
 function createGuardedManager(state, options = {}) {
-  return context.RosterManager.createRosterManager({
+  return context.VolleyEye.roster.createRosterManager({
     state,
     saveState: () => {},
     normalizePlayers,
@@ -35,7 +39,7 @@ function createGuardedManager(state, options = {}) {
       const changed = state.players.length !== next.length || state.players.some((name, i) => name !== next[i]);
       return !(changed && state.events.length > 0);
     },
-    sanitizeState: () => context.VolleyEyeStateIsolation.sanitizeRosterScope(state, "our"),
+    sanitizeState: () => context.VolleyEye.stateIsolation.sanitizeRosterScope(state, "our"),
     onRenameReferences: options.onRenameReferences || null
   });
 }

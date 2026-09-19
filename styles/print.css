@@ -1,0 +1,206 @@
+@media print {
+  @page { size: A4 landscape; margin: 10mm; }
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    font-size: 11px;
+    padding: 0.4rem;
+  }
+  .tabs-nav,
+  .tabs-dots,
+  .floating-actions-modal,
+  .skill-modal,
+  .skill-modal {
+    display: none !important;
+  }
+  .controls-row,
+  button,
+  select,
+  input,
+  textarea {
+    display: none !important;
+  }
+  .tab-panel {
+    display: none !important;
+    padding-top: 0;
+  }
+  .tab-panel[data-tab="aggregated"] {
+    display: block !important;
+  }
+  .section {
+    background: #ffffff !important;
+    border-color: #d6d6d6 !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+  }
+  .score-card,
+  .score-card.wide {
+    background: #ffffff !important;
+    border-color: #dfe3eb !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+  }
+  .agg-table,
+  .rotation-table {
+    table-layout: fixed;
+    width: 100%;
+  }
+  .agg-table th,
+  .agg-table td,
+  .rotation-table th,
+  .rotation-table td {
+    word-break: break-word;
+    white-space: normal;
+    padding: 3px 4px !important;
+    font-size: 10px;
+  }
+  .table-wrapper,
+  .rotation-wrapper,
+  .score-summary {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .agg-subpanel.active {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .trajectory-layout,
+  .serve-trajectory-layout,
+  .trajectory-grid,
+  .serve-trajectory-grid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  body[data-agg-tab="trajectory"],
+  body[data-agg-tab="second"],
+  body[data-agg-tab="video"] {
+    zoom: 0.90;
+  }
+  body[data-agg-tab="serve"] {
+    zoom: 0.70;
+  }
+  body[data-agg-tab="match-sheet"] {
+    zoom: 1;
+    padding: 0;
+  }
+  .agg-subpanel[data-agg-tab="trajectory"],
+  .agg-subpanel[data-agg-tab="serve"],
+  .agg-subpanel[data-agg-tab="second"],
+  .agg-subpanel[data-agg-tab="video"],
+  .agg-subpanel[data-agg-tab="match-sheet"] {
+    font-size: 10px;
+    transform: none;
+    width: auto;
+    height: auto;
+  }
+  .agg-subpanel[data-agg-tab="match-sheet"] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .match-sheet-panel {
+    overflow: visible;
+  }
+  .match-sheet-page {
+    width: 277mm;
+    min-height: 190mm;
+    max-height: 190mm;
+    padding: 4mm;
+    border: 0 !important;
+    border-radius: 0;
+    box-shadow: none !important;
+  }
+  .match-sheet-header {
+    padding-bottom: 2mm;
+  }
+  .match-sheet-section {
+    margin-top: 2.2mm;
+  }
+  .match-sheet-section--with-label {
+    grid-template-columns: 6mm minmax(0, 1fr);
+    gap: 1.4mm;
+  }
+  .match-sheet-section h3 {
+    margin-bottom: 1.2mm;
+    font-size: 7pt;
+  }
+  .match-sheet-section--with-label > h3 {
+    margin: 0;
+    padding: 1mm 0;
+    font-size: 6pt;
+  }
+  .match-sheet-player-grid {
+    gap: 1.2mm;
+  }
+  .match-sheet-player-matrix {
+    grid-template-columns: 5mm minmax(0, 1fr);
+    gap: 1.2mm;
+  }
+  .match-sheet-player-row-labels {
+    grid-template-rows: 5mm 1fr 1fr;
+  }
+  .match-sheet-player-row-labels span {
+    font-size: 5pt;
+  }
+  .match-sheet-player__head {
+    min-height: 5mm;
+    font-size: 5.5pt;
+    padding: 0.8mm 1mm;
+  }
+  .match-sheet-court {
+    padding: 0.6mm 0.8mm 0.7mm;
+  }
+  .match-sheet-court__title {
+    font-size: 5pt;
+  }
+  .match-sheet-court-grid {
+    gap: 1.4mm;
+  }
+  .match-sheet-notes {
+    grid-template-columns: 24mm 1fr;
+    gap: 1.4mm;
+    margin-top: 1mm;
+  }
+  .match-sheet-notes textarea {
+    display: none !important;
+  }
+  .match-sheet-court .match-sheet-notes {
+    margin-top: 0.6mm;
+  }
+  .match-sheet-notes-print {
+    display: block;
+  }
+  .match-sheet-notes label {
+    font-size: 5.5pt;
+  }
+  .match-sheet-note-line {
+    min-height: 4mm;
+    font-size: 5.5pt;
+    line-height: 4mm;
+  }
+  .agg-subpanel[data-agg-tab="trajectory"] .trajectory-grid,
+  .agg-subpanel[data-agg-tab="serve"] .trajectory-grid,
+  .agg-subpanel[data-agg-tab="serve"] .serve-trajectory-grid,
+  .agg-subpanel[data-agg-tab="second"] .second-layout,
+  .agg-subpanel[data-agg-tab="video"] .video-analysis__grid {
+    gap: 0.3rem;
+  }
+  .agg-subpanel[data-agg-tab="trajectory"] .trajectory-card,
+  .agg-subpanel[data-agg-tab="serve"] .trajectory-card {
+    min-height: 90px;
+  }
+}
+#paste-players-modal {
+  z-index: 3100 !important;
+}
+#paste-players-modal .settings-modal__content {
+  z-index: 1;
+}
+#paste-players-modal .settings-modal__content {
+  width: min(680px, calc(100% - 1.5rem));
+  max-height: min(92vh, 820px);
+}
+#paste-players-modal #players-input {
+  min-height: 260px;
+}

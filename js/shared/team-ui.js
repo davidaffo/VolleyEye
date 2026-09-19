@@ -3,9 +3,9 @@
  * This is shared between our roster and the (future) opponent roster to avoid duplication.
  */
 (function attachTeamUi(windowObj) {
-  const TeamUI = {
+  const teamUi = Object.freeze({
     renderTeamPills
-  };
+  });
 
   /**
    * @param {Object} options
@@ -167,5 +167,5 @@
     });
   }
 
-  windowObj.TeamUI = TeamUI;
+  windowObj.VolleyEye.teamUi = teamUi;
 })(window);

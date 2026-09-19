@@ -2,11 +2,14 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
+import { readScoutSource } from "./helpers/scout-source.mjs";
+import { readStyleSource } from "./helpers/style-source.mjs";
+import { readRosterSource } from "./helpers/roster-source.mjs";
 
-const scoutSource = fs.readFileSync(new URL("../js/scout-ui.js", import.meta.url), "utf8");
+const scoutSource = readScoutSource();
 const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
-const css = fs.readFileSync(new URL("../style.css", import.meta.url), "utf8");
-const rosterSource = fs.readFileSync(new URL("../js/roster-lineup.js", import.meta.url), "utf8");
+const css = readStyleSource();
+const rosterSource = readRosterSource();
 
 function loadColumnLayout(gridWidth = 1200) {
   const start = scoutSource.indexOf("function ensureScoutColumnState");
