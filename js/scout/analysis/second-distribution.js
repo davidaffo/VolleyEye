@@ -225,12 +225,14 @@ function getFilteredSecondEvents() {
   });
 }
 function getFilteredAttacksForSecondDistribution() {
-  return getFilteredSecondEvents().filter(ev => {
+  const all = getFilteredSecondEvents();
+  const filtered = all.filter(ev => {
     const setType = normalizeSetTypeValue(
       ev.setType || (ev.combination && ev.combination.set_type) || (ev.combination && ev.combination.setType)
     );
     return !(setType && setType.toLowerCase() === "damp");
   });
+  return attachDampCountsByRotation(filtered, all);
 }
 function renderSecondTable() {
   if (!elAggSecondBody) return;

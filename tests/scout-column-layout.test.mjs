@@ -24,16 +24,16 @@ function loadColumnLayout(gridWidth = 1200) {
     addEventListener() {}
   });
   const context = {
-    SCOUT_COLUMN_DEFAULTS: { left: 320, right: 300 },
-    SCOUT_COLUMN_LIMITS: { left: 160, center: 300, right: 160 },
+    SCOUT_COLUMN_FIXED_LEFT: 280,
+    SCOUT_COLUMN_DEFAULTS: { right: 380 },
+    SCOUT_COLUMN_LIMITS: { center: 300, right: 240 },
     activeScoutColumnResizeSession: null,
     scoutGridResizeObserver: null,
-    state: { uiScoutColumns: { left: 320, right: 300 } },
+    state: { uiScoutColumns: { left: 640, right: 300 } },
     elScoutGrid: {
       clientWidth: gridWidth,
       style: { setProperty(name, value) { properties.set(name, value); } }
     },
-    elScoutResizeLeft: makeHandle(),
     elScoutResizeRight: makeHandle(),
     window: {
       getComputedStyle: () => ({ columnGap: "5px" }),
@@ -51,26 +51,26 @@ function loadColumnLayout(gridWidth = 1200) {
   return { context, properties };
 }
 
-test("lo scout live espone due separatori accessibili tra le tre colonne", () => {
-  assert.match(html, /id="scout-resize-left"[\s\S]*role="separator"/);
+test("lo scout live lascia fissa la colonna sinistra ed espone solo il separatore destro", () => {
+  assert.doesNotMatch(html, /id="scout-resize-left"/);
   assert.match(html, /id="scout-resize-right"[\s\S]*role="separator"/);
-  assert.match(css, /grid-template-columns:[\s\S]*--scout-left-width[\s\S]*--scout-right-width/);
+  assert.match(css, /grid-template-columns:\s*280px[\s\S]*--scout-right-width, 380px/);
 });
 
 test("il ridimensionamento conserva sempre lo spazio minimo della colonna centrale", () => {
   const { context, properties } = loadColumnLayout(1200);
-  context.setScoutColumnWidth("left", 1000, false);
-  assert.equal(context.state.uiScoutColumns.left, 560);
-  assert.equal(properties.get("--scout-left-width"), "560px");
-  assert.equal(properties.get("--scout-right-width"), "300px");
+  context.setScoutColumnWidth("right", 1000, false);
+  assert.equal(context.state.uiScoutColumns.right, 595);
+  assert.equal(properties.get("--scout-right-width"), "595px");
 });
 
-test("su finestre strette le colonne vengono ridotte proporzionalmente senza overflow", () => {
-  const { context } = loadColumnLayout(720);
+test("la colonna sinistra ignora le vecchie larghezze e la destra si adatta allo spazio", () => {
+  const { context } = loadColumnLayout(960);
   const widths = context.resolveScoutColumnWidths();
-  assert.equal(widths.left + widths.right, 380);
-  assert.ok(widths.left >= 160);
-  assert.ok(widths.right >= 160);
+  assert.equal(widths.left, 280);
+  assert.equal(widths.right, 355);
+  assert.equal(context.state.uiScoutColumns.right, 380);
+  assert.deepEqual(Object.keys(context.state.uiScoutColumns), ["right"]);
 });
 
 test("i controlli interni si adattano alla colonna e non vengono più tagliati", () => {
@@ -81,5 +81,5 @@ test("i controlli interni si adattano alla colonna e non vengono più tagliati",
 });
 
 test("le larghezze delle colonne sono incluse nello snapshot locale", () => {
-  assert.match(rosterSource, /uiScoutColumns:\s*snapshot\.uiScoutColumns/);
+  assert.match(rosterSource, /uiScoutColumns:\s*\{ right:\s*Number\(snapshot\.uiScoutColumns/);
 });

@@ -29,6 +29,9 @@
       padding: 24px;
     }
     .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
       display: flex;
       justify-content: space-between;
       gap: 16px;
@@ -251,7 +254,6 @@
       </div>
       <div class="topbar__actions">
         <a class="btn secondary" href="../index.html">Torna all'app</a>
-        <a class="btn" id="source-link" href="manual.md">Apri Markdown</a>
       </div>
     </div>
     <div class="layout">
@@ -331,7 +333,6 @@
       const doc = params.get("doc") || "manual.md";
       const title = params.get("title") || "Manuale";
       document.getElementById("viewer-title").textContent = title;
-      document.getElementById("source-link").href = doc;
 
       try {
         const response = await fetch(doc);

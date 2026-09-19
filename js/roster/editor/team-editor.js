@@ -987,7 +987,7 @@ function saveTeamManagerPayload(options = {}) {
     return;
   }
   const isOpponent = teamManagerScope === "opponent";
-  if (!liveEditMode && !storageOnly && hasMatchDataForReset()) {
+  if (!liveEditMode && !storageOnly && hasMatchDataForReset() && !state.matchFinished) {
     alert(
       "Durante lo scout usa Modifica rapida. La gestione completa della squadra resta disponibile dall'archivio e non modifica il match."
     );
@@ -1005,7 +1005,7 @@ function saveTeamManagerPayload(options = {}) {
       isOpponent ? "opponent" : "our",
       liveCurrentPayload
     );
-    if (removed.length > 0) {
+    if (removed.length > 0 && !state.matchFinished) {
       alert("Durante la partita non puoi rimuovere giocatrici dal roster rapido.");
       return;
     }
@@ -1028,6 +1028,7 @@ function saveTeamManagerPayload(options = {}) {
       }
       syncOpponentTeamsFromStorage();
       state.selectedOpponentTeam = nextName;
+      renderTeamsSelect();
       renderOpponentTeamsSelect();
       if (state.useOpponentTeam || !state.match.opponent || state.match.opponent === previousName) {
         state.match.opponent = nextName;
@@ -1048,6 +1049,7 @@ function saveTeamManagerPayload(options = {}) {
         state.selectedTeam = nextName;
       }
       renderTeamsSelect();
+      renderOpponentTeamsSelect();
       if (typeof renderTeamsManagerList === "function") {
         teamsManagerSelectedName = nextName;
         renderTeamsManagerList();

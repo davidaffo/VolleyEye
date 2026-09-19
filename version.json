@@ -1,9 +1,9 @@
 {
   "appName": "VolleyEye",
-  "baseVersion": "0.16.31",
-  "version": "0.16.31+397.e1767d7",
-  "commitCount": 397,
-  "commitHash": "e1767d7",
-  "cacheVersion": "v397-e1767d7",
-  "buildDate": "2026-09-19T16:17:06.891Z"
+  "baseVersion": "0.16.39",
+  "version": "0.16.39+398.63d4a39",
+  "commitCount": 398,
+  "commitHash": "63d4a39",
+  "cacheVersion": "v0.16.39-398-63d4a39",
+  "buildDate": "2026-09-19T17:42:15.906Z"
 }

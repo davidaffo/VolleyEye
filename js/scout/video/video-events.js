@@ -392,6 +392,8 @@ function correctVideoScoresFromSelection(startHome, startAway) {
   let currentSet = null;
   let homeScore = Math.max(0, home);
   let awayScore = Math.max(0, away);
+  const eventOrder = new Map((state.events || []).map((event, index) => [event, index]));
+  rows.sort((a, b) => (eventOrder.get(a.ev) ?? Number.MAX_SAFE_INTEGER) - (eventOrder.get(b.ev) ?? Number.MAX_SAFE_INTEGER));
   rows.forEach(row => {
     const ev = row.ev;
     if (!ev) return;
@@ -412,6 +414,7 @@ function correctVideoScoresFromSelection(startHome, startAway) {
       awayScore += getEventPointValue(ev);
     }
   });
+  saveState({ persistLocal: true });
   refreshAfterVideoEdit(false);
   renderEventsLog({ suppressScroll: true });
   updateVideoAnalysisOverlay();

@@ -157,6 +157,7 @@ function renderSetterModalOptions(scope, setterIdx) {
     });
   }
   const numbers = getPlayerNumbersForScope(scope);
+  const liberoSet = new Set(getLiberosForScope(scope));
   elAttackSetterModalGrid.innerHTML = "";
   const emptyBtn = document.createElement("button");
   emptyBtn.type = "button";
@@ -169,6 +170,8 @@ function renderSetterModalOptions(scope, setterIdx) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "base-modal-btn";
+    if (liberoSet.has(name)) btn.classList.add("player-role-libero");
+    if (isSetterPlayerForScope(scope, idx)) btn.classList.add("player-role-setter");
     btn.dataset.setterIndex = String(idx);
     const label =
       scope === "opponent" ? formatNameWithNumberFor(name, numbers) : formatNameWithNumber(name);
@@ -897,10 +900,9 @@ const elAttackSetterModalGrid = document.getElementById("attack-setter-modal-gri
 const elBlockNumberModal = document.getElementById("block-number-modal");
 const elBlockNumberModalClose = document.getElementById("block-number-modal-close");
 const elBlockNumberModalGrid = document.getElementById("block-number-modal-grid");
-const LOCAL_VIDEO_CACHE = "volley-video-cache";
-const LOCAL_VIDEO_REQUEST = "/__local-video__";
 const LOCAL_VIDEO_DB = "volley-video-db";
 const LOCAL_VIDEO_STORE = "videos";
+const LOCAL_VIDEO_HANDLE_KEY = "current-handle";
 const TAB_ORDER = ["match", "info", "scout", "aggregated", "video"];
 let dvwScoutPendingTokens = [];
 function buildReceiveDisplayMapping(court, rotation, scope = "our") {

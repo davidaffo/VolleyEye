@@ -68,8 +68,11 @@ function ensurePointRulesDefaults() {
         state.pointRules[skill.id] = normalizePointRule(skill.id, POINT_RULE_DEFAULTS.pass);
       }
     }
+    if (skill.id === "defense") {
+      state.pointRules[skill.id].against = state.pointRules[skill.id].against.filter(code => code !== "/");
+    }
     if (
-      (skill.id === "defense" || skill.id === "second") &&
+      skill.id === "second" &&
       Array.isArray(state.pointRules[skill.id].against) &&
       state.pointRules[skill.id].against.length === 1 &&
       state.pointRules[skill.id].against[0] === "="

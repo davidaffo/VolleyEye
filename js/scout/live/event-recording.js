@@ -209,6 +209,7 @@ async function handleEventClick(
       return false;
     }
   }
+  const actionSnapshot = captureScoutActionSnapshot();
   state.freeballPending = false;
   state.freeballPendingScope = scope;
   if (scope === "opponent") {
@@ -285,6 +286,7 @@ async function handleEventClick(
     videoTime: selectionVideoTime,
     teamScope: scope
   });
+  attachScoutActionSnapshot(event, actionSnapshot);
   if (inferredServeEvent) {
     linkEvents(inferredServeEvent, event, "serve-pass");
   } else if (skillId === "pass" && state.useOpponentTeam) {

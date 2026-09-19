@@ -161,7 +161,9 @@ function renderNextSetLineup(scope, courtEl, benchEl) {
     body.className = "slot-body";
     const nameLabel = document.createElement("div");
     nameLabel.className = "slot-name";
-    nameLabel.textContent = slot.main ? formatLineupModalName(slot.main, { compactCourt: true }) : "Trascina qui";
+    nameLabel.textContent = slot.main
+      ? formatLineupModalName(slot.main, { compactCourt: true, scope })
+      : "Trascina qui";
     body.appendChild(nameLabel);
     card.appendChild(body);
     courtEl.appendChild(card);
@@ -214,7 +216,7 @@ function renderNextSetLineup(scope, courtEl, benchEl) {
         { passive: false }
       );
       const span = document.createElement("span");
-      span.textContent = formatLineupModalName(name, { compactCourt: true });
+      span.textContent = formatLineupModalName(name, { compactCourt: true, scope });
       chip.appendChild(span);
       benchEl.appendChild(chip);
     });
@@ -376,6 +378,15 @@ function getPreviousSetStart(scope, setNum) {
     rotation: typeof entry.rotation === "number" ? entry.rotation : 1
   };
 }
+function getMatchInitialSetStart(scope = "our") {
+  const firstSet = state.setStarts && state.setStarts[1];
+  const entry = firstSet && (scope === "opponent" ? firstSet.opponent : firstSet.our);
+  if (!entry || !Array.isArray(entry.court)) return null;
+  return {
+    court: cloneCourt(entry.court),
+    rotation: typeof entry.rotation === "number" ? entry.rotation : 1
+  };
+}
 function computeSetWinner(setNum) {
   if (!setNum) return null;
   const summary = computePointsSummary(setNum, { teamScope: "our" });
@@ -418,15 +429,18 @@ function getDerivedServeForSetStart(setNum) {
 }
 function buildNextSetDraft(setNum) {
   const nextSet = Math.min(5, Math.max(1, setNum || 1));
-  const useDefaults = nextSet === 1;
-  const defaultsOur = useDefaults ? getDefaultSetStartForScope("our") : null;
-  const defaultsOpp = useDefaults ? getDefaultSetStartForScope("opponent") : null;
+  const defaultsOur = getDefaultSetStartForScope("our");
+  const defaultsOpp = getDefaultSetStartForScope("opponent");
+  const initialOur = getMatchInitialSetStart("our");
+  const initialOpp = getMatchInitialSetStart("opponent");
   const savedStart = state.setStarts && state.setStarts[nextSet] ? state.setStarts[nextSet] : null;
   const savedOur = savedStart && savedStart.our ? savedStart.our : null;
   const savedOpp = savedStart && savedStart.opponent ? savedStart.opponent : null;
   const baseOurCourt =
     savedOur && savedOur.court
       ? cloneCourt(savedOur.court)
+      : initialOur && initialOur.court
+      ? cloneCourt(initialOur.court)
       : defaultsOur && defaultsOur.court
       ? cloneCourt(defaultsOur.court)
       : typeof removeLiberosAndRestoreForScope === "function"
@@ -435,6 +449,8 @@ function buildNextSetDraft(setNum) {
   const baseOppCourt =
     savedOpp && savedOpp.court
       ? cloneCourt(savedOpp.court)
+      : initialOpp && initialOpp.court
+      ? cloneCourt(initialOpp.court)
       : defaultsOpp && defaultsOpp.court
       ? cloneCourt(defaultsOpp.court)
       : typeof removeLiberosAndRestoreForScope === "function"
@@ -445,7 +461,9 @@ function buildNextSetDraft(setNum) {
     rotation:
       savedOur && typeof savedOur.rotation === "number"
         ? savedOur.rotation
-        : defaultsOur && defaultsOur.rotation
+        : initialOur && initialOur.rotation
+          ? initialOur.rotation
+          : defaultsOur && defaultsOur.rotation
           ? defaultsOur.rotation
           : state.rotation || 1
   };
@@ -454,7 +472,9 @@ function buildNextSetDraft(setNum) {
     rotation:
       savedOpp && typeof savedOpp.rotation === "number"
         ? savedOpp.rotation
-        : defaultsOpp && defaultsOpp.rotation
+        : initialOpp && initialOpp.rotation
+          ? initialOpp.rotation
+          : defaultsOpp && defaultsOpp.rotation
           ? defaultsOpp.rotation
           : state.opponentRotation || 1
   };

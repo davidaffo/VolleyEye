@@ -272,7 +272,10 @@ function applyLiveTeamManagerPayload(payload, currentPayloadOverride = null) {
   const nextIds = new Set(nextDetailed.map(player => player.id).filter(Boolean));
   const hasStableIdOverlap = currentDetailed.some(player => player.id && nextIds.has(player.id));
   const removed = currentDetailed.filter(player => player.id && !nextIds.has(player.id));
-  if ((hasStableIdOverlap && removed.length > 0) || (!hasStableIdOverlap && nextDetailed.length < currentDetailed.length)) {
+  if (
+    !state.matchFinished &&
+    ((hasStableIdOverlap && removed.length > 0) || (!hasStableIdOverlap && nextDetailed.length < currentDetailed.length))
+  ) {
     alert("Durante la partita non puoi rimuovere giocatrici dal roster rapido.");
     return false;
   }

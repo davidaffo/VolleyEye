@@ -26,14 +26,14 @@
     };
   </script>
   <script>
-    window.__APP_CACHE_VERSION__ = "v397-e1767d7";
+    window.__APP_CACHE_VERSION__ = "v0.16.39-398-63d4a39";
     window.__IS_LOCALHOST_DEV__ =
       location.hostname === "localhost" ||
       location.hostname === "127.0.0.1" ||
       location.hostname === "::1";
     window.__APP_ASSET_SUFFIX__ = window.__IS_LOCALHOST_DEV__
       ? `?dev=${Date.now()}`
-      : `?v=v397-e1767d7`;
+      : `?v=v0.16.39-398-63d4a39`;
     if (location.protocol === "file:") {
       document.documentElement.dataset.fileOrigin = "true";
     }
@@ -85,7 +85,7 @@
   </div>
   <div class="tabs-nav centered">
     <h1 class="app-title">VolleyEye</h1>
-    <a class="manual-link-btn hidden" href="docs/markdown-viewer.html?doc=manual.md&title=Manuale">Manuale</a>
+    <a class="manual-link-btn hidden" href="docs/markdown-viewer.html?doc=manual.md&title=Manuale" target="_blank" rel="noopener">Manuale</a>
     <button class="tab-btn" data-tab-target="match">Gestione match</button>
     <button class="tab-btn active" data-tab-target="info">Impostazioni</button>
     <button class="tab-btn" data-tab-target="scout">Scout live</button>
@@ -370,7 +370,7 @@
             </div>
             <div id="video-scout-controls" class="video-scout-controls hidden">
               <div class="video-scout-actions">
-                <label class="file-btn" for="video-file-input-scout">Carica video</label>
+                <label id="video-file-picker-scout" class="file-btn" for="video-file-input-scout">Carica video</label>
                 <input id="video-file-input-scout" type="file" accept="video/*" hidden />
                 <div class="youtube-input">
                   <input id="youtube-url-input-scout" type="url" placeholder="https://youtu.be/..." />
@@ -463,15 +463,6 @@
             </div>
         </div>
       </div>
-      <button
-        id="scout-resize-left"
-        class="scout-column-resizer"
-        type="button"
-        role="separator"
-        aria-orientation="vertical"
-        aria-label="Ridimensiona colonna partita"
-        title="Trascina per ridimensionare. Doppio clic per ripristinare."
-      ></button>
       <div class="section scout-col-center" data-scout-panel="team">
         <div class="set-type-wrapper">
           <div class="set-type-shortcuts set-type-inline" id="set-type-shortcuts" style="display: none">
@@ -550,7 +541,7 @@
                         <option value="">Nessuno</option>
                         <option value="P">P</option>
                         <option value="S">S</option>
-                        <option value="C">C</option>
+                        <option value="C" selected>C</option>
                         <option value="O">O</option>
                       </select>
                     </label>
@@ -624,7 +615,7 @@
                         <option value="">Nessuno</option>
                         <option value="P">P</option>
                         <option value="S">S</option>
-                        <option value="C">C</option>
+                        <option value="C" selected>C</option>
                         <option value="O">O</option>
                       </select>
                     </label>
@@ -1584,7 +1575,7 @@
         </div>
         <div class="video-player-wrap video-player-wrap--analysis">
           <div class="video-analysis__actions">
-            <label class="file-btn" for="video-file-input">Carica video</label>
+            <label id="video-file-picker" class="file-btn" for="video-file-input">Carica video</label>
             <input id="video-file-input" type="file" accept="video/*" hidden />
             <button id="btn-clear-video" class="danger" type="button">Rimuovi video</button>
             <button id="btn-sync-first-skill" class="secondary">Sincronizza prima skill</button>
@@ -2214,7 +2205,7 @@
               <option value="">Nessuno</option>
               <option value="P">P</option>
               <option value="S">S</option>
-              <option value="C">C</option>
+              <option value="C" selected>C</option>
               <option value="O">O</option>
             </select>
             <button type="button" id="btn-swap-libero-settings" class="small secondary">Cambia libero</button>
@@ -2327,6 +2318,8 @@
       <a
         class="app-footer-manual"
         href="docs/markdown-viewer.html?doc=manual.md&title=Manuale"
+        target="_blank"
+        rel="noopener"
         title="Apri il manuale utente"
       >
         Manuale

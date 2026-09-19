@@ -98,6 +98,13 @@ function cloneIsolationData(value) {
   }
   return value === undefined || value === null ? value : JSON.parse(JSON.stringify(value));
 }
+function normalizeAutoLiberoRolePreference(value, defaultVersion = AUTO_LIBERO_ROLE_DEFAULT_VERSION) {
+  const isLegacyDefault = Number(defaultVersion || 0) < AUTO_LIBERO_ROLE_DEFAULT_VERSION;
+  if (typeof value !== "string" || (isLegacyDefault && value === "")) {
+    return "C";
+  }
+  return AUTO_LIBERO_ROLE_OPTIONS.includes(value) ? value : "C";
+}
 function sanitizeRosterIsolation(scope = "our") {
   if (
     typeof window !== "undefined" &&
@@ -147,8 +154,14 @@ function applyStateSnapshot(parsed, options = {}) {
   state.useOpponentTeam = !!parsed.useOpponentTeam;
   state.videoScoutMode = !!parsed.videoScoutMode;
   state.videoPlayByPlay = !!parsed.videoPlayByPlay;
+  state.defaultSetType = parsed.defaultSetType || "";
   state.nextSetType = parsed.nextSetType || "";
   state.videoFilterPresets = normalizeVideoFilterPresets(parsed.videoFilterPresets || state.videoFilterPresets || []);
+  state.uiPlayerAnalysis = Object.assign({}, state.uiPlayerAnalysis || {}, asRecord(parsed.uiPlayerAnalysis));
+  state.uiVideoLayout = Object.assign({}, state.uiVideoLayout || {}, asRecord(parsed.uiVideoLayout));
+  state.uiScoutColumns = Object.assign({}, state.uiScoutColumns || {}, asRecord(parsed.uiScoutColumns));
+  state.uiScoutWidgetLayout = parsed.uiScoutWidgetLayout || null;
+  state.uiVideoAnalysisSort = Object.assign({}, state.uiVideoAnalysisSort || {}, asRecord(parsed.uiVideoAnalysisSort));
   state.uiTopBarHidden = !!parsed.uiTopBarHidden;
   state.forceMobileLayout = !!parsed.forceMobileLayout;
   state.liberos = Array.isArray(parsed.liberos)
@@ -184,10 +197,10 @@ function applyStateSnapshot(parsed, options = {}) {
   state.opponentServeTrajectoryEnabled = parsed.opponentServeTrajectoryEnabled !== false;
   state.opponentSetTypePromptEnabled = parsed.opponentSetTypePromptEnabled !== false;
   state.opponentAutoLiberoBackline = parsed.opponentAutoLiberoBackline !== false;
-  const parsedOppLiberoRole = typeof parsed.opponentAutoLiberoRole === "string" ? parsed.opponentAutoLiberoRole : "";
-  state.opponentAutoLiberoRole = AUTO_LIBERO_ROLE_OPTIONS.includes(parsedOppLiberoRole)
-    ? parsedOppLiberoRole
-    : "";
+  state.opponentAutoLiberoRole = normalizeAutoLiberoRolePreference(
+    parsed.opponentAutoLiberoRole,
+    parsed.autoLiberoRoleDefaultVersion
+  );
   state.opponentLiberoAutoMap = asRecord(parsed.opponentLiberoAutoMap);
   state.opponentPreferredLibero = typeof parsed.opponentPreferredLibero === "string" ? parsed.opponentPreferredLibero : "";
   state.opponentSkillFlowOverride = parsed.opponentSkillFlowOverride || null;
@@ -246,10 +259,11 @@ function applyStateSnapshot(parsed, options = {}) {
   }
   state.autoRotate = parsed.autoRotate !== false;
   state.autoLiberoBackline = parsed.autoLiberoBackline !== false;
-  const parsedLiberoRole = typeof parsed.autoLiberoRole === "string" ? parsed.autoLiberoRole : "";
-  state.autoLiberoRole = AUTO_LIBERO_ROLE_OPTIONS.includes(parsedLiberoRole)
-    ? parsedLiberoRole
-    : "";
+  state.autoLiberoRole = normalizeAutoLiberoRolePreference(
+    parsed.autoLiberoRole,
+    parsed.autoLiberoRoleDefaultVersion
+  );
+  state.autoLiberoRoleDefaultVersion = AUTO_LIBERO_ROLE_DEFAULT_VERSION;
   state.preferredLibero = typeof parsed.preferredLibero === "string" ? parsed.preferredLibero : "";
   state.autoRoleP1American = !!parsed.autoRoleP1American;
   state.courtViewMirrored = !!parsed.courtViewMirrored;
@@ -332,23 +346,40 @@ function buildCompactLocalStateSnapshot(snapshot) {
     selectedMatch: snapshot.selectedMatch || "",
     selectedTeam: snapshot.selectedTeam || "",
     selectedOpponentTeam: snapshot.selectedOpponentTeam || "",
+    loadedMatchName: snapshot.loadedMatchName || snapshot.selectedMatch || "",
     currentSet: snapshot.currentSet || 1,
     rotation: snapshot.rotation || 1,
     opponentRotation: snapshot.opponentRotation || 1,
     courtSideSwapped: !!snapshot.courtSideSwapped,
     useOpponentTeam: !!snapshot.useOpponentTeam,
     matchFinished: !!snapshot.matchFinished,
+    autoRolePositioning: snapshot.autoRolePositioning !== false,
+    uiActiveTab: snapshot.uiActiveTab || "info",
+    uiAggTab: snapshot.uiAggTab || "summary",
     uiTopBarHidden: !!snapshot.uiTopBarHidden,
-    uiScoutColumns: snapshot.uiScoutColumns || { left: 320, right: 300 },
+    forceMobileLayout: !!snapshot.forceMobileLayout,
+    uiScoutColumns: { right: Number(snapshot.uiScoutColumns && snapshot.uiScoutColumns.right) || 380 },
     uiScoutWidgetLayout: snapshot.uiScoutWidgetLayout || null,
+    uiPlayerAnalysis: snapshot.uiPlayerAnalysis || null,
+    uiVideoLayout: snapshot.uiVideoLayout || null,
+    uiVideoAnalysisSort: snapshot.uiVideoAnalysisSort || null,
     video: snapshot.video || { offsetSeconds: 0, fileName: "", youtubeId: "", youtubeUrl: "", lastPlaybackSeconds: 0 },
     players: Array.isArray(snapshot.players) ? snapshot.players : [],
     playerNumbers: snapshot.playerNumbers || {},
     liberos: Array.isArray(snapshot.liberos) ? snapshot.liberos : [],
+    liberoAutoMap: snapshot.liberoAutoMap || {},
+    autoLiberoBackline: snapshot.autoLiberoBackline !== false,
+    autoLiberoRole: snapshot.autoLiberoRole || "",
+    autoLiberoRoleDefaultVersion: AUTO_LIBERO_ROLE_DEFAULT_VERSION,
+    preferredLibero: snapshot.preferredLibero || "",
     captains: Array.isArray(snapshot.captains) ? snapshot.captains.slice(0, 1) : [],
     opponentPlayers: Array.isArray(snapshot.opponentPlayers) ? snapshot.opponentPlayers : [],
     opponentPlayerNumbers: snapshot.opponentPlayerNumbers || {},
     opponentLiberos: Array.isArray(snapshot.opponentLiberos) ? snapshot.opponentLiberos : [],
+    opponentLiberoAutoMap: snapshot.opponentLiberoAutoMap || {},
+    opponentAutoLiberoBackline: snapshot.opponentAutoLiberoBackline !== false,
+    opponentAutoLiberoRole: snapshot.opponentAutoLiberoRole || "",
+    opponentPreferredLibero: snapshot.opponentPreferredLibero || "",
     opponentCaptains: Array.isArray(snapshot.opponentCaptains) ? snapshot.opponentCaptains.slice(0, 1) : [],
     events: Array.isArray(snapshot.events) ? snapshot.events : [],
     stats: snapshot.stats || {},
@@ -357,18 +388,37 @@ function buildCompactLocalStateSnapshot(snapshot) {
     opponentCourt: Array.isArray(snapshot.opponentCourt) ? snapshot.opponentCourt : [],
     autoRoleBaseCourt: Array.isArray(snapshot.autoRoleBaseCourt) ? snapshot.autoRoleBaseCourt : [],
     opponentAutoRoleBaseCourt: Array.isArray(snapshot.opponentAutoRoleBaseCourt) ? snapshot.opponentAutoRoleBaseCourt : [],
+    autoRoleP1American: !!snapshot.autoRoleP1American,
+    opponentAutoRoleP1American: !!snapshot.opponentAutoRoleP1American,
     isServing: !!snapshot.isServing,
     autoRotate: snapshot.autoRotate !== false,
     autoRotatePending: !!snapshot.autoRotatePending,
     opponentAutoRotatePending: !!snapshot.opponentAutoRotatePending,
     predictiveSkillFlow: snapshot.predictiveSkillFlow !== false,
+    attackTrajectoryEnabled: snapshot.attackTrajectoryEnabled !== false,
+    attackTrajectorySimplified: snapshot.attackTrajectorySimplified !== false,
+    serveTrajectoryEnabled: snapshot.serveTrajectoryEnabled !== false,
+    opponentAttackTrajectoryEnabled: snapshot.opponentAttackTrajectoryEnabled !== false,
+    opponentServeTrajectoryEnabled: snapshot.opponentServeTrajectoryEnabled !== false,
+    setTypePromptEnabled: snapshot.setTypePromptEnabled !== false,
+    opponentSetTypePromptEnabled: snapshot.opponentSetTypePromptEnabled !== false,
+    showServeTrajectoryLogOur: snapshot.showServeTrajectoryLogOur !== false,
+    showServeTrajectoryLogOpp: snapshot.showServeTrajectoryLogOpp !== false,
+    videoScoutMode: !!snapshot.videoScoutMode,
+    videoPlayByPlay: !!snapshot.videoPlayByPlay,
+    defaultSetType: snapshot.defaultSetType || "",
+    nextSetType: snapshot.nextSetType || "",
+    videoFilterPresets: snapshot.videoFilterPresets || [],
     skillFlowOverride: snapshot.skillFlowOverride || null,
     opponentSkillFlowOverride: snapshot.opponentSkillFlowOverride || null,
     flowTeamScope: snapshot.flowTeamScope || "our",
     forceSkillActive: !!snapshot.forceSkillActive,
     forceSkillScope: snapshot.forceSkillScope || null,
+    pendingServe: snapshot.pendingServe || null,
     freeballPending: !!snapshot.freeballPending,
     freeballPendingScope: snapshot.freeballPendingScope || "our",
+    opponentSkillConfig: snapshot.opponentSkillConfig || {},
+    skillClock: snapshot.skillClock || null,
     metricsConfig: snapshot.metricsConfig || {},
     pointRules: snapshot.pointRules || {},
     savedTeams: snapshot.savedTeams || {},
@@ -434,8 +484,10 @@ function saveState(options = {}) {
     }
     const snapshot = buildCompactLocalStateSnapshot(state) || state;
     writeStateToIndexedDb(snapshot);
-    const shouldPersistLocal = persistLocal || typeof indexedDB === "undefined";
-    if (shouldPersistLocal) {
+    // La copia compatta entra in localStorage e deve essere sincrona: affidarsi
+    // soltanto alla scrittura asincrona su IndexedDB perde le ultime modifiche
+    // quando l'utente ricarica subito la pagina.
+    {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
       } catch (localErr) {

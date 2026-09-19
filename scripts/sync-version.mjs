@@ -44,7 +44,7 @@ const appName =
 const commitCount = Number(runGit("git rev-list --count HEAD", "0")) || 0;
 const commitHash = runGit("git rev-parse --short HEAD", "dev");
 const version = `${baseVersion}+${commitCount}.${commitHash}`;
-const cacheVersion = `v${commitCount}-${commitHash}`;
+const cacheVersion = `v${baseVersion.replace(/[^0-9A-Za-z.-]/g, "-")}-${commitCount}-${commitHash}`;
 const buildDate =
   previousMeta && previousMeta.version === version && previousMeta.buildDate
     ? previousMeta.buildDate

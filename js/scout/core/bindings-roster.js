@@ -570,6 +570,7 @@ function bindRosterAndArchiveControls() {
       }
       if (typeof syncTeamsFromStorage === "function") syncTeamsFromStorage();
       if (typeof renderTeamsSelect === "function") renderTeamsSelect();
+      if (typeof renderOpponentTeamsSelect === "function") renderOpponentTeamsSelect();
       teamsManagerSelectedName = newName;
       renderTeamsManagerList();
     });

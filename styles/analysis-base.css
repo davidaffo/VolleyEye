@@ -166,7 +166,7 @@ body[data-theme="light"] .player-card {
     var(--player-photo-image);
   background-position: center;
   background-repeat: no-repeat;
-  background-size: cover;
+  background-size: contain;
   z-index: 0;
 }
 .court-card.has-player-photo .court-role-tag,
@@ -178,19 +178,19 @@ body[data-theme="light"] .player-card {
 .court-card .event-btn,
 .court-card .libero-return-btn,
 .court-card .clear-slot {
-  background: rgba(15, 23, 42, 0.18) !important;
+  background: rgba(15, 23, 42, 0.32) !important;
 }
 .court-card .player-skill-cancel {
   background: rgba(220, 38, 38, 0.72) !important;
 }
 .court-card .event-btn.code-positive {
-  background: rgba(22, 101, 52, 0.28) !important;
+  background: rgba(22, 101, 52, 0.4) !important;
 }
 .court-card .event-btn.code-neutral {
-  background: rgba(202, 138, 4, 0.28) !important;
+  background: rgba(202, 138, 4, 0.4) !important;
 }
 .court-card .event-btn.code-negative {
-  background: rgba(185, 28, 28, 0.28) !important;
+  background: rgba(185, 28, 28, 0.4) !important;
 }
 .court-card .event-btn.block-confirm-skip {
   background: rgba(55, 65, 81, 0.34) !important;
@@ -199,37 +199,37 @@ body[data-theme="light"] .player-card {
   background: rgba(22, 163, 74, 0.34) !important;
 }
 .court-card .skill-picker-btn.skill-serve {
-  background: color-mix(in srgb, var(--skill-serve-bg, #1b5e20) 26%, transparent) !important;
+  background: color-mix(in srgb, var(--skill-serve-bg, #1b5e20) 38%, transparent) !important;
   color: var(--skill-serve-text, #d1fae5) !important;
   border-color: color-mix(in srgb, var(--skill-serve-bg, #1b5e20) 88%, #ffffff 12%) !important;
 }
 .court-card .skill-picker-btn.skill-pass {
-  background: color-mix(in srgb, var(--skill-pass-bg, #f9a825) 26%, transparent) !important;
+  background: color-mix(in srgb, var(--skill-pass-bg, #f9a825) 38%, transparent) !important;
   color: var(--skill-pass-text, #ffffff) !important;
   border-color: color-mix(in srgb, var(--skill-pass-bg, #f9a825) 88%, #ffffff 12%) !important;
 }
 .court-card .skill-picker-btn.skill-freeball {
-  background: color-mix(in srgb, var(--skill-freeball-bg, #c026d3) 26%, transparent) !important;
+  background: color-mix(in srgb, var(--skill-freeball-bg, #c026d3) 38%, transparent) !important;
   color: var(--skill-freeball-text, #fdf4ff) !important;
   border-color: color-mix(in srgb, var(--skill-freeball-bg, #c026d3) 88%, #ffffff 12%) !important;
 }
 .court-card .skill-picker-btn.skill-attack {
-  background: color-mix(in srgb, var(--skill-attack-bg, #b71c1c) 26%, transparent) !important;
+  background: color-mix(in srgb, var(--skill-attack-bg, #b71c1c) 38%, transparent) !important;
   color: var(--skill-attack-text, #ffe4e6) !important;
   border-color: color-mix(in srgb, var(--skill-attack-bg, #b71c1c) 88%, #ffffff 12%) !important;
 }
 .court-card .skill-picker-btn.skill-defense {
-  background: color-mix(in srgb, var(--skill-defense-bg, #546e7a) 26%, transparent) !important;
+  background: color-mix(in srgb, var(--skill-defense-bg, #546e7a) 38%, transparent) !important;
   color: var(--skill-defense-text, #e2e8f0) !important;
   border-color: color-mix(in srgb, var(--skill-defense-bg, #546e7a) 88%, #ffffff 12%) !important;
 }
 .court-card .skill-picker-btn.skill-block {
-  background: color-mix(in srgb, var(--skill-block-bg, #4a148c) 26%, transparent) !important;
+  background: color-mix(in srgb, var(--skill-block-bg, #4a148c) 38%, transparent) !important;
   color: var(--skill-block-text, #ede9fe) !important;
   border-color: color-mix(in srgb, var(--skill-block-bg, #4a148c) 88%, #ffffff 12%) !important;
 }
 .court-card .skill-picker-btn.skill-second {
-  background: color-mix(in srgb, var(--skill-second-bg, #00838f) 26%, transparent) !important;
+  background: color-mix(in srgb, var(--skill-second-bg, #00838f) 38%, transparent) !important;
   color: var(--skill-second-text, #ccfbf1) !important;
   border-color: color-mix(in srgb, var(--skill-second-bg, #00838f) 88%, #ffffff 12%) !important;
 }
@@ -237,34 +237,34 @@ body[data-theme="light"] .player-card {
 .court-card .event-btn:hover,
 .court-card .libero-return-btn:hover,
 .court-card .clear-slot:hover {
-  background: rgba(37, 99, 235, 0.28) !important;
+  background: rgba(37, 99, 235, 0.42) !important;
 }
 .court-card .skill-picker-btn.skill-serve:hover {
-  background: color-mix(in srgb, var(--skill-serve-bg, #1b5e20) 38%, transparent) !important;
+  background: color-mix(in srgb, var(--skill-serve-bg, #1b5e20) 50%, transparent) !important;
   color: var(--skill-serve-text, #d1fae5) !important;
 }
 .court-card .skill-picker-btn.skill-pass:hover {
-  background: color-mix(in srgb, var(--skill-pass-bg, #f9a825) 38%, transparent) !important;
+  background: color-mix(in srgb, var(--skill-pass-bg, #f9a825) 50%, transparent) !important;
   color: var(--skill-pass-text, #ffffff) !important;
 }
 .court-card .skill-picker-btn.skill-freeball:hover {
-  background: color-mix(in srgb, var(--skill-freeball-bg, #c026d3) 38%, transparent) !important;
+  background: color-mix(in srgb, var(--skill-freeball-bg, #c026d3) 50%, transparent) !important;
   color: var(--skill-freeball-text, #fdf4ff) !important;
 }
 .court-card .skill-picker-btn.skill-attack:hover {
-  background: color-mix(in srgb, var(--skill-attack-bg, #b71c1c) 38%, transparent) !important;
+  background: color-mix(in srgb, var(--skill-attack-bg, #b71c1c) 50%, transparent) !important;
   color: var(--skill-attack-text, #ffe4e6) !important;
 }
 .court-card .skill-picker-btn.skill-defense:hover {
-  background: color-mix(in srgb, var(--skill-defense-bg, #546e7a) 38%, transparent) !important;
+  background: color-mix(in srgb, var(--skill-defense-bg, #546e7a) 50%, transparent) !important;
   color: var(--skill-defense-text, #e2e8f0) !important;
 }
 .court-card .skill-picker-btn.skill-block:hover {
-  background: color-mix(in srgb, var(--skill-block-bg, #4a148c) 38%, transparent) !important;
+  background: color-mix(in srgb, var(--skill-block-bg, #4a148c) 50%, transparent) !important;
   color: var(--skill-block-text, #ede9fe) !important;
 }
 .court-card .skill-picker-btn.skill-second:hover {
-  background: color-mix(in srgb, var(--skill-second-bg, #00838f) 38%, transparent) !important;
+  background: color-mix(in srgb, var(--skill-second-bg, #00838f) 50%, transparent) !important;
   color: var(--skill-second-text, #ccfbf1) !important;
 }
 .court-card > * {
@@ -323,19 +323,19 @@ body[data-theme="light"] .court-card .skill-picker-btn,
 body[data-theme="light"] .court-card .event-btn,
 body[data-theme="light"] .court-card .libero-return-btn,
 body[data-theme="light"] .court-card .clear-slot {
-  background: rgba(255, 255, 255, 0.22) !important;
+  background: rgba(255, 255, 255, 0.38) !important;
 }
 body[data-theme="light"] .court-card .player-skill-cancel {
   background: rgba(220, 38, 38, 0.78) !important;
 }
 body[data-theme="light"] .court-card .event-btn.code-positive {
-  background: rgba(34, 197, 94, 0.18) !important;
+  background: rgba(34, 197, 94, 0.32) !important;
 }
 body[data-theme="light"] .court-card .event-btn.code-neutral {
-  background: rgba(234, 179, 8, 0.18) !important;
+  background: rgba(234, 179, 8, 0.32) !important;
 }
 body[data-theme="light"] .court-card .event-btn.code-negative {
-  background: rgba(239, 68, 68, 0.18) !important;
+  background: rgba(239, 68, 68, 0.32) !important;
 }
 body[data-theme="light"] .court-card .event-btn.block-confirm-skip {
   background: rgba(148, 163, 184, 0.24) !important;
@@ -347,7 +347,7 @@ body[data-theme="light"] .court-card .skill-picker-btn:hover,
 body[data-theme="light"] .court-card .event-btn:hover,
 body[data-theme="light"] .court-card .libero-return-btn:hover,
 body[data-theme="light"] .court-card .clear-slot:hover {
-  background: rgba(37, 99, 235, 0.16) !important;
+  background: rgba(37, 99, 235, 0.28) !important;
 }
 .court-card.compact-card {
   min-height: 0;
@@ -485,6 +485,27 @@ body[data-theme="light"] .court-card.libero-card {
   background: #daf5e7;
   border-color: #22c55e;
   color: #065f46;
+}
+.court-card.setter-card {
+  background: #332b08;
+  border-color: #eab308;
+  color: #fef9c3;
+}
+body[data-theme="light"] .court-card.setter-card {
+  background: #fef9c3;
+  border-color: #eab308;
+  color: #713f12;
+}
+.court-setter-pill,
+.base-modal-btn.player-role-setter {
+  background: #422006 !important;
+  border-color: #eab308 !important;
+  color: #fef9c3 !important;
+}
+.base-modal-btn.player-role-libero {
+  background: #0b2a2a !important;
+  border-color: #1c9999 !important;
+  color: #d1fae5 !important;
 }
 .court-libero-pill {
   font-size: 0.75rem;

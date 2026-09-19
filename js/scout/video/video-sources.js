@@ -380,13 +380,9 @@ function clearLoadedVideo() {
 }
 async function clearCachedLocalVideo() {
   try {
-    if ("caches" in window) {
-      const cache = await caches.open(LOCAL_VIDEO_CACHE);
-      await cache.delete(LOCAL_VIDEO_REQUEST);
-    }
-    await clearVideoBlobFromDb();
+    await clearStoredLocalVideoReference();
   } catch (_) {
-    // ignore cache errors
+    // ignore storage errors
   }
 }
 function openVideoDb() {
@@ -395,79 +391,120 @@ function openVideoDb() {
       reject(new Error("indexedDB-unavailable"));
       return;
     }
-    const request = indexedDB.open(LOCAL_VIDEO_DB, 1);
+    const request = indexedDB.open(LOCAL_VIDEO_DB, 2);
     request.onupgradeneeded = () => {
       const db = request.result;
       if (!db.objectStoreNames.contains(LOCAL_VIDEO_STORE)) {
         db.createObjectStore(LOCAL_VIDEO_STORE);
+      } else {
+        request.transaction.objectStore(LOCAL_VIDEO_STORE).clear();
       }
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error || new Error("indexedDB-open-failed"));
   });
 }
-async function saveVideoBlobToDb(file) {
-  if (!file) return;
+async function saveVideoFileHandleToDb(handle) {
+  if (!handle) return;
   try {
     const db = await openVideoDb();
     await new Promise((resolve, reject) => {
       const tx = db.transaction(LOCAL_VIDEO_STORE, "readwrite");
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error || new Error("indexedDB-write-failed"));
-      tx.objectStore(LOCAL_VIDEO_STORE).put(file, "current");
+      const store = tx.objectStore(LOCAL_VIDEO_STORE);
+      store.put(handle, LOCAL_VIDEO_HANDLE_KEY);
     });
     db.close();
   } catch (_) {
     // ignore indexedDB errors
   }
 }
-async function loadVideoBlobFromDb() {
+async function loadVideoFileHandleFromDb() {
   try {
     const db = await openVideoDb();
-    const blob = await new Promise((resolve, reject) => {
+    const handle = await new Promise((resolve, reject) => {
       const tx = db.transaction(LOCAL_VIDEO_STORE, "readonly");
-      const req = tx.objectStore(LOCAL_VIDEO_STORE).get("current");
+      const req = tx.objectStore(LOCAL_VIDEO_STORE).get(LOCAL_VIDEO_HANDLE_KEY);
       req.onsuccess = () => resolve(req.result || null);
       req.onerror = () => reject(req.error || new Error("indexedDB-read-failed"));
     });
     db.close();
-    return blob || null;
+    return handle || null;
   } catch (_) {
     return null;
   }
 }
-async function clearVideoBlobFromDb() {
+async function clearStoredLocalVideoReference() {
   try {
     const db = await openVideoDb();
     await new Promise((resolve, reject) => {
       const tx = db.transaction(LOCAL_VIDEO_STORE, "readwrite");
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error || new Error("indexedDB-clear-failed"));
-      tx.objectStore(LOCAL_VIDEO_STORE).delete("current");
+      const store = tx.objectStore(LOCAL_VIDEO_STORE);
+      store.delete(LOCAL_VIDEO_HANDLE_KEY);
     });
     db.close();
   } catch (_) {
     // ignore indexedDB errors
   }
 }
-async function persistLocalVideo(file) {
-  if (!file) return;
-  try {
-    // Non persistere più il blob completo del video: occupa troppo storage.
-    // Manteniamo solo la sessione corrente via objectURL.
-    await clearCachedLocalVideo();
-  } catch (_) {
-    // ignore cache errors
-  }
+async function persistLocalVideoReference(handle = null) {
+  await clearStoredLocalVideoReference();
+  if (handle) await saveVideoFileHandleToDb(handle);
 }
-async function restoreCachedLocalVideo() {
+async function getFileFromStoredVideoHandle({ requestPermission = false } = {}) {
+  const handle = await loadVideoFileHandleFromDb();
+  if (!handle || typeof handle.getFile !== "function") return null;
+  let permission = "granted";
+  if (typeof handle.queryPermission === "function") {
+    permission = await handle.queryPermission({ mode: "read" });
+  }
+  if (permission !== "granted" && requestPermission && typeof handle.requestPermission === "function") {
+    permission = await handle.requestPermission({ mode: "read" });
+  }
+  if (permission !== "granted") return null;
+  const file = await handle.getFile();
+  return { file, handle };
+}
+async function restoreCachedLocalVideo(options = {}) {
   if (!elAnalysisVideo && !elAnalysisVideoScout) return;
   if (state.video && state.video.youtubeId) return;
   try {
-    // Pulizia di eventuale storage legacy (vecchie versioni che salvavano i blob).
-    await clearCachedLocalVideo();
+    const stored = await getFileFromStoredVideoHandle(options);
+    if (!stored) return false;
+    handleVideoFileChange(stored.file, { fileHandle: stored.handle, restoring: true });
+    return true;
   } catch (_) {
-    // ignore cache errors
+    return false;
+  }
+}
+async function openLocalVideoPicker(inputEl) {
+  if (typeof window.showOpenFilePicker !== "function") {
+    if (inputEl) inputEl.click();
+    return;
+  }
+  if (!videoObjectUrl && state.video && state.video.fileName) {
+    const restored = await restoreCachedLocalVideo({ requestPermission: true });
+    if (restored) return;
+  }
+  try {
+    const handles = await window.showOpenFilePicker({
+      multiple: false,
+      types: [
+        {
+          description: "Video",
+          accept: { "video/*": [".mp4", ".webm", ".mov", ".mkv", ".m4v"] }
+        }
+      ]
+    });
+    const handle = handles && handles[0];
+    if (!handle) return;
+    const file = await handle.getFile();
+    handleVideoFileChange(file, { fileHandle: handle });
+  } catch (error) {
+    if (!error || error.name !== "AbortError") console.error("Video picker error", error);
   }
 }
 function restoreYoutubeFromState() {

@@ -344,13 +344,13 @@ function getAutoFlowState() {
       skillId: "pass"
     };
   }
-  if (state.skillFlowOverride) {
+  if (state.forceSkillActive && state.forceSkillScope === "our" && state.skillFlowOverride) {
     return {
       teamScope: "our",
       skillId: resolveFlowSkillForScope("our", state.skillFlowOverride)
     };
   }
-  if (state.opponentSkillFlowOverride) {
+  if (state.forceSkillActive && state.forceSkillScope === "opponent" && state.opponentSkillFlowOverride) {
     return {
       teamScope: "opponent",
       skillId: resolveFlowSkillForScope("opponent", state.opponentSkillFlowOverride)
@@ -501,12 +501,6 @@ function getPredictedSkillIdForScope(scope) {
   ) {
     return resolveFlowSkillForScope(scope, "pass");
   }
-  if (scope === "opponent" && state.useOpponentTeam && state.predictiveSkillFlow) {
-    const last = getLastFlowEvent(state.events || []);
-    if (last && last.skillId === "serve" && getTeamScopeFromEvent(last) === scope && last.code === "=") {
-      return resolveFlowSkillForScope(scope, "serve");
-    }
-  }
   const enabledSkills = getEnabledSkillsForScope(scope);
   if (enabledSkills.length === 0) return null;
   const flowNext = skillId => {
@@ -540,7 +534,9 @@ function getPredictedSkillIdForScope(scope) {
   };
   const override =
     scope === "opponent" ? state.opponentSkillFlowOverride : state.skillFlowOverride;
-  if (override) return resolveEnabledSkill(override);
+  if (state.forceSkillActive && state.forceSkillScope === scope && override) {
+    return resolveEnabledSkill(override);
+  }
   if (state.freeballPending && state.freeballPendingScope === scope) {
     return resolveEnabledSkill(getFreeballStartSkill(scope));
   }
@@ -557,6 +553,7 @@ function getPredictedSkillIdForScope(scope) {
     nextSkill = flowScope === "our" ? "serve" : "serve";
   }
   if (flowScope !== scope) return null;
+  if (override) nextSkill = override;
   return resolveEnabledSkill(nextSkill) || null;
 }
 function getPredictedSkillId() {

@@ -53,8 +53,15 @@ function applyImportedMatch(nextState, options = {}) {
     nextState.opponentStats && typeof nextState.opponentStats === "object" ? nextState.opponentStats : {};
   merged.liberoAutoMap = nextState.liberoAutoMap || {};
   merged.autoLiberoBackline = nextState.autoLiberoBackline !== false;
-  merged.autoLiberoRole =
-    typeof nextState.autoLiberoRole === "string" ? nextState.autoLiberoRole : state.autoLiberoRole || "";
+  merged.autoLiberoRole = normalizeAutoLiberoRolePreference(
+    nextState.autoLiberoRole,
+    nextState.autoLiberoRoleDefaultVersion
+  );
+  merged.opponentAutoLiberoRole = normalizeAutoLiberoRolePreference(
+    nextState.opponentAutoLiberoRole,
+    nextState.autoLiberoRoleDefaultVersion
+  );
+  merged.autoLiberoRoleDefaultVersion = AUTO_LIBERO_ROLE_DEFAULT_VERSION;
   merged.preferredLibero = typeof nextState.preferredLibero === "string" ? nextState.preferredLibero : "";
   merged.court = Array.isArray(nextState.court)
     ? nextState.court

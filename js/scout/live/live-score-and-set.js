@@ -217,7 +217,13 @@ function addManualPoint(
     alert("Partita in pausa. Riprendi per continuare lo scout.");
     return;
   }
-  cancelPartialSkillFlowForScope(scope);
+  const actionSnapshot = captureScoutActionSnapshot();
+  // Punto/errore manuale è un confine di azione: qualsiasi popup o selezione
+  // parziale di entrambe le squadre non deve influenzare il rally successivo.
+  cancelPartialSkillFlowForScope("our");
+  if (state.useOpponentTeam) cancelPartialSkillFlowForScope("opponent");
+  state.forceSkillActive = false;
+  state.forceSkillScope = null;
   if (
     (!state.events || state.events.length === 0) &&
     typeof window !== "undefined" &&
@@ -241,12 +247,23 @@ function addManualPoint(
     errorType: errorType || null,
     teamScope: scope
   });
+  attachScoutActionSnapshot(event, actionSnapshot);
   clearReceiveContext(scope);
   state.events.push(event);
   handleAutoRotationFromEvent(event, scope);
+  const scoringScope = direction === "for" ? scope : getOppositeScope(scope);
+  state.pendingServe = null;
+  state.freeballPending = false;
+  state.freeballPendingScope = scoringScope;
+  state.isServing = scoringScope === "our";
   if (state.useOpponentTeam) {
-    const nextFlow = computeTwoTeamFlowFromEvent(event);
-    state.flowTeamScope = nextFlow.teamScope;
+    state.flowTeamScope = scoringScope;
+    state.skillFlowOverride = scoringScope === "our" ? "serve" : null;
+    state.opponentSkillFlowOverride = scoringScope === "opponent" ? "serve" : null;
+  } else {
+    state.flowTeamScope = "our";
+    state.skillFlowOverride = scoringScope === "our" ? "serve" : "pass";
+    state.opponentSkillFlowOverride = null;
   }
   saveState({ persistLocal: true });
   renderEventsLog();
@@ -285,14 +302,9 @@ function handleTeamPoint(scope = "our") {
 }
 function handleOpponentErrorPoint() {
   state.skillFlowOverride = null;
-  const scope = state.useOpponentTeam ? "opponent" : "our";
+  const scope = "our";
   const label = state.useOpponentTeam ? getTeamNameForScope("opponent") : "Avversaria";
   addManualPoint("for", 1, "opp-error", null, label, null, scope);
-  if (!state.useOpponentTeam && state.predictiveSkillFlow) {
-    forceNextSkill("serve", "our");
-  } else {
-    updateNextSkillIndicator(getPredictedSkillIdForScope("opponent"));
-  }
 }
 function addPlayerError(playerIdx, playerName, errorType = null, scope = "our") {
   if (state.matchFinished) {
@@ -316,12 +328,7 @@ function handleOpponentPoint() {
   state.skillFlowOverride = null;
   const scope = state.useOpponentTeam ? "opponent" : "our";
   const label = state.useOpponentTeam ? getTeamNameForScope("opponent") : "Avversaria";
-  addManualPoint("against", 1, "opp-point", null, label, null, scope);
-  if (!state.useOpponentTeam && state.predictiveSkillFlow) {
-    forceNextSkill("pass", "our");
-  } else {
-    updateNextSkillIndicator(getPredictedSkillIdForScope("opponent"));
-  }
+  addManualPoint(state.useOpponentTeam ? "for" : "against", 1, "opp-point", null, label, null, scope);
 }
 function handleOpponentFreeballSingle() {
   if (state.useOpponentTeam) return;
@@ -428,6 +435,7 @@ function recordSetAction(actionType, payload) {
   state.events.push(event);
 }
 function applySetChange(nextSet, options = {}) {
+  const actionSnapshot = captureScoutActionSnapshot();
   const {
     prevSet = state.currentSet || 1,
     prevFinished = !!state.matchFinished,
@@ -481,6 +489,7 @@ function applySetChange(nextSet, options = {}) {
     prevSetStarts,
     nextSetStarts
   });
+  attachScoutActionSnapshot(state.events[state.events.length - 1], actionSnapshot);
   saveState({ persistLocal: true });
   renderEventsLog();
   renderLiveScore();

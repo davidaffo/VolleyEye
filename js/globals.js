@@ -62,6 +62,7 @@ const PLAYER_STORE_NAME = "Players";
 const PLAYER_PREFIX = PERSISTENT_DB_NAME + "/" + PLAYER_STORE_NAME;
 const MATCH_STORE_NAME = "Matches";
 const MATCH_PREFIX = PERSISTENT_DB_NAME + "/" + MATCH_STORE_NAME + "/";
+const AUTO_LIBERO_ROLE_DEFAULT_VERSION = 1;
 const TEMPLATE_TEAM = {
   players: [
     "Palleggiatore 1",
@@ -111,7 +112,8 @@ let state = {
   rotation: 1,
   liberos: [],
   liberoAutoMap: {},
-  autoLiberoRole: "",
+  autoLiberoRole: "C",
+  autoLiberoRoleDefaultVersion: AUTO_LIBERO_ROLE_DEFAULT_VERSION,
   preferredLibero: "",
   playersDb: {},
   savedTeams: {},
@@ -132,7 +134,7 @@ let state = {
   opponentServeTrajectoryEnabled: true,
   opponentSetTypePromptEnabled: true,
   opponentAutoLiberoBackline: true,
-  opponentAutoLiberoRole: "",
+  opponentAutoLiberoRole: "C",
   opponentLiberoAutoMap: {},
   opponentPreferredLibero: "",
   opponentSkillFlowOverride: null,
@@ -197,8 +199,7 @@ let state = {
     scoutHeight: 320
   },
   uiScoutColumns: {
-    left: 320,
-    right: 300
+    right: 380
   },
   uiScoutWidgetLayout: null,
   uiVideoAnalysisSort: {

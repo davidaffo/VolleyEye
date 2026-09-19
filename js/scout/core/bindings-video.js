@@ -27,6 +27,13 @@ function bindVideoControls() {
       }
     });
   }
+  const videoPicker = document.getElementById("video-file-picker");
+  if (videoPicker && typeof window.showOpenFilePicker === "function") {
+    videoPicker.addEventListener("click", event => {
+      event.preventDefault();
+      openLocalVideoPicker(elVideoFileInput);
+    });
+  }
   if (elVideoFileInputScout) {
     elVideoFileInputScout.addEventListener("change", e => {
       const input = e.target;
@@ -37,6 +44,13 @@ function bindVideoControls() {
       if (input) {
         input.value = "";
       }
+    });
+  }
+  const videoPickerScout = document.getElementById("video-file-picker-scout");
+  if (videoPickerScout && typeof window.showOpenFilePicker === "function") {
+    videoPickerScout.addEventListener("click", event => {
+      event.preventDefault();
+      openLocalVideoPicker(elVideoFileInputScout);
     });
   }
   if (elBtnSyncFirstSkill) {

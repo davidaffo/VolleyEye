@@ -24,6 +24,10 @@ function renderAggregatedTable() {
     aggTableView.mode === "summary";
   if (table) {
     table.classList.toggle("agg-table--double", showBothTeams);
+    const freeballVisible = showBothTeams
+      ? isSkillEnabledForScope("freeball", "our") || isSkillEnabledForScope("freeball", "opponent")
+      : isSkillEnabledForScope("freeball", analysisScope);
+    table.classList.toggle("agg-table--hide-freeball", !freeballVisible);
   }
   const summaryAll = computePointsSummary(null, { teamScope: analysisScope, events: analysisEvents });
   if (isAggSubtabVisible("skill-charts")) {
@@ -63,6 +67,7 @@ function renderAggregatedTable() {
         }
         return;
       }
+      if (!isSkillEnabledForScope(ev.skillId, getTeamScopeFromEvent(ev))) return;
       const bucket = totalsBySkill[ev.skillId];
       if (!bucket || !ev.code) return;
       bucket[ev.code] = (bucket[ev.code] || 0) + 1;
@@ -289,6 +294,7 @@ function renderAggregatedTable() {
       if (!ev || ev.skillId === "manual" || ev.actionType === "timeout" || ev.actionType === "substitution") {
         return;
       }
+      if (!isSkillEnabledForScope(ev.skillId, getTeamScopeFromEvent(ev))) return;
       if (typeof ev.playerIdx !== "number" || !analysisPlayers[ev.playerIdx]) return;
       if (!statsByPlayer[ev.playerIdx]) {
         statsByPlayer[ev.playerIdx] = {};

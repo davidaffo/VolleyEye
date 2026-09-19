@@ -146,6 +146,7 @@ function saveCurrentTeam() {
   state.selectedTeam = name;
   saveState();
   renderTeamsSelect();
+  renderOpponentTeamsSelect();
   alert("Squadra salvata: " + name);
 }
 function saveCurrentOpponentTeam() {
@@ -179,6 +180,7 @@ function saveCurrentOpponentTeam() {
     applyMatchInfoToUI();
   }
   saveState();
+  renderTeamsSelect();
   renderOpponentTeamsSelect();
   alert((existing ? "Avversaria sovrascritta: " : "Avversaria salvata: ") + name);
 }
@@ -191,6 +193,7 @@ function deleteSelectedTeam() {
   deleteTeamFromStorage(name);
   syncTeamsFromStorage();
   renderTeamsSelect();
+  renderOpponentTeamsSelect();
   refreshTeamManagerFromSelection();
 }
 function duplicateSelectedTeam() {
@@ -223,6 +226,7 @@ function duplicateSelectedTeam() {
   }
   syncTeamsFromStorage();
   renderTeamsSelect();
+  renderOpponentTeamsSelect();
   alert("Copia salvata nell'archivio: " + newName);
 }
 function deleteSelectedOpponentTeam() {
@@ -233,6 +237,7 @@ function deleteSelectedOpponentTeam() {
   if (!ok) return;
   deleteOpponentTeamFromStorage(name);
   syncOpponentTeamsFromStorage();
+  renderTeamsSelect();
   renderOpponentTeamsSelect();
 }
 function getCurrentMatchPayload(name = "") {
@@ -580,6 +585,7 @@ function renameSelectedTeam() {
   syncTeamsFromStorage();
   state.selectedTeam = newName;
   renderTeamsSelect();
+  renderOpponentTeamsSelect();
   refreshTeamManagerFromSelection();
   alert("Squadra rinominata in \"" + newName + "\".");
 }
@@ -676,6 +682,7 @@ function renameSelectedOpponentTeam() {
   renameTeamReferencesAcrossSavedMatches(oldName, newName, "opponent");
   syncOpponentTeamsFromStorage();
   state.selectedOpponentTeam = newName;
+  renderTeamsSelect();
   renderOpponentTeamsSelect();
   alert("Avversaria rinominata in \"" + newName + "\".");
 }
@@ -742,6 +749,7 @@ function applyImportedTeamData(data) {
     }
     syncTeamsFromStorage();
     renderTeamsSelect();
+    renderOpponentTeamsSelect();
   }
   saveState();
   renderLiberoTags();
@@ -780,6 +788,7 @@ function applyImportedOpponentTeamData(data) {
       alert("Roster avversario importato, ma non archiviato: spazio del browser insufficiente.");
     }
     syncOpponentTeamsFromStorage();
+    renderTeamsSelect();
     renderOpponentTeamsSelect();
     if (!state.match.opponent) {
       state.match.opponent = state.selectedOpponentTeam;

@@ -108,7 +108,8 @@ function createPlayerSelect(ev, onDone, options = {}) {
 }
 function createSkillSelect(ev, onDone) {
   const select = document.createElement("select");
-  SKILLS.forEach(skill => {
+  const skillOptions = SKILLS.concat([{ id: "manual", label: "Manuale" }]);
+  skillOptions.forEach(skill => {
     const opt = document.createElement("option");
     opt.value = skill.id;
     opt.textContent = skill.label;
@@ -117,7 +118,9 @@ function createSkillSelect(ev, onDone) {
   select.value = ev.skillId || SKILLS[0]?.id || "";
   select.addEventListener("change", () => {
     if (select.value) {
+      markVideoUndoCapture(select);
       ev.skillId = select.value;
+      if (ev.skillId !== "manual") ev.pointDirection = null;
       refreshAfterVideoEdit(true);
     }
   });
@@ -127,18 +130,44 @@ function createSkillSelect(ev, onDone) {
   });
   return select;
 }
+function syncManualEventPointDirection(ev) {
+  if (!ev || ev.skillId !== "manual") return;
+  const scope = getTeamScopeFromEvent(ev);
+  switch (ev.code) {
+    case "for":
+      ev.pointDirection = "for";
+      break;
+    case "against":
+    case "error":
+    case "team-error":
+      ev.pointDirection = "against";
+      break;
+    case "opp-point":
+      ev.pointDirection = scope === "opponent" ? "for" : "against";
+      break;
+    case "opp-error":
+      ev.pointDirection = scope === "opponent" ? "against" : "for";
+      break;
+    default:
+      ev.pointDirection = null;
+  }
+}
 function createCodeSelect(ev, onDone) {
   const select = document.createElement("select");
-  RESULT_CODES.forEach(code => {
+  const codes = ev.skillId === "manual"
+    ? ["for", "against", "error", "team-error", "opp-point", "opp-error", "freeball"]
+    : RESULT_CODES;
+  codes.forEach(code => {
     const opt = document.createElement("option");
     opt.value = code;
     opt.textContent = code;
     select.appendChild(opt);
   });
-  select.value = ev.code || RESULT_CODES[0];
+  select.value = ev.code || codes[0];
   select.addEventListener("change", () => {
     markVideoUndoCapture(select);
     ev.code = select.value;
+    syncManualEventPointDirection(ev);
     refreshAfterVideoEdit(true);
   });
   select.addEventListener("blur", () => {
@@ -146,6 +175,96 @@ function createCodeSelect(ev, onDone) {
     renderVideoAnalysis();
   });
   return select;
+}
+function createEventTeamSelect(ev, onDone) {
+  const select = document.createElement("select");
+  [
+    { value: "our", label: state.selectedTeam || "Squadra" },
+    { value: "opponent", label: state.selectedOpponentTeam || "Avversaria" }
+  ].forEach(item => {
+    const option = document.createElement("option");
+    option.value = item.value;
+    option.textContent = item.label;
+    select.appendChild(option);
+  });
+  select.value = getTeamScopeFromEvent(ev);
+  select.addEventListener("change", () => {
+    markVideoUndoCapture(select);
+    const scope = select.value === "opponent" ? "opponent" : "our";
+    ev.team = scope;
+    ev.teamName = getTeamNameForScope(scope);
+    ev.playerIdx = null;
+    ev.playerId = null;
+    ev.playerName = null;
+    ev.setterIdx = null;
+    ev.setterName = null;
+    syncManualEventPointDirection(ev);
+    refreshAfterVideoEdit(true);
+  });
+  select.addEventListener("blur", () => {
+    if (typeof onDone === "function") onDone();
+    renderVideoAnalysis();
+  });
+  return select;
+}
+function createRelatedEventsInput(ev, onDone) {
+  const input = document.createElement("input");
+  input.type = "text";
+  input.value = Array.isArray(ev.relatedEvents) ? ev.relatedEvents.join(" ") : "";
+  const commit = () => {
+    markVideoUndoCapture(input);
+    ev.relatedEvents = String(input.value || "")
+      .split(/[\s,;]+/)
+      .map(value => value.trim())
+      .filter(Boolean)
+      .map(value => (/^\d+$/.test(value) ? Number(value) : value));
+    refreshAfterVideoEdit(true);
+  };
+  input.addEventListener("change", commit);
+  input.addEventListener("blur", () => {
+    if (typeof onDone === "function") onDone();
+    renderVideoAnalysis();
+    renderEventsLog();
+  });
+  return input;
+}
+function createErrorTypeSelect(ev, onDone) {
+  const select = document.createElement("select");
+  const empty = document.createElement("option");
+  empty.value = "";
+  empty.textContent = "—";
+  select.appendChild(empty);
+  ERROR_TYPES.forEach(item => {
+    const option = document.createElement("option");
+    option.value = item.id;
+    option.textContent = item.label;
+    select.appendChild(option);
+  });
+  select.value = ev.errorType || "";
+  select.addEventListener("change", () => {
+    markVideoUndoCapture(select);
+    ev.errorType = select.value || null;
+    refreshAfterVideoEdit(true);
+  });
+  select.addEventListener("blur", () => {
+    if (typeof onDone === "function") onDone();
+    renderVideoAnalysis();
+  });
+  return select;
+}
+function createBooleanInput(ev, field, onDone) {
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.checked = !!ev[field];
+  checkbox.addEventListener("change", () => {
+    markVideoUndoCapture(checkbox);
+    ev[field] = checkbox.checked;
+    refreshAfterVideoEdit(true);
+  });
+  checkbox.addEventListener("blur", () => {
+    if (typeof onDone === "function") onDone();
+  });
+  return checkbox;
 }
 function createNumberSelect(ev, field, min, max, onDone) {
   const select = document.createElement("select");
@@ -705,7 +824,13 @@ function renderEventTableRows(target, events, options = {}) {
       rowCheckbox = chk;
     }
     const cells = [
-      ...(showIndex ? [{ text: ev.eventId != null ? String(ev.eventId) : "" }] : []),
+      ...(showIndex
+        ? [{
+            text: ev.eventId != null ? String(ev.eventId) : "",
+            editable: td =>
+              makeEditableCell(td, "ID evento", done => createNumberInput(ev, "eventId", 1, undefined, done), editGuard)
+          }]
+        : []),
       ...(showVideoTime
         ? [
             {
@@ -720,9 +845,18 @@ function renderEventTableRows(target, events, options = {}) {
         text: ev.set || "1",
         editable: td => makeEditableCell(td, "Set", done => createNumberSelect(ev, "set", 1, 5, done), editGuard)
       },
-      { text: valueToString(ev.homeScore) },
-      { text: valueToString(ev.visitorScore) },
-      { text: resolveTeamLabel() },
+      {
+        text: valueToString(ev.homeScore),
+        editable: td => makeEditableCell(td, "Punteggio nostro", done => createNumberInput(ev, "homeScore", 0, undefined, done), editGuard)
+      },
+      {
+        text: valueToString(ev.visitorScore),
+        editable: td => makeEditableCell(td, "Punteggio avversario", done => createNumberInput(ev, "visitorScore", 0, undefined, done), editGuard)
+      },
+      {
+        text: resolveTeamLabel(),
+        editable: td => makeEditableCell(td, "Squadra", done => createEventTeamSelect(ev, done), editGuard)
+      },
       {
         text: (() => {
           const scope = getTeamScopeFromEvent(ev);
@@ -761,14 +895,21 @@ function renderEventTableRows(target, events, options = {}) {
         text: ev.code || "",
         editable: td => makeEditableCell(td, "Codice", done => createCodeSelect(ev, done), editGuard)
       },
-      { text: formatRelatedEvents() },
+      {
+        text: formatRelatedEvents(),
+        editable: td => makeEditableCell(td, "Eventi collegati", done => createRelatedEventsInput(ev, done), editGuard)
+      },
       {
         text:
           ev.errorType && (ev.code === "error" || ev.code === "team-error")
             ? getErrorTypeLabel(ev.errorType)
-            : ""
+            : "",
+        editable: td => makeEditableCell(td, "Tipo errore", done => createErrorTypeSelect(ev, done), editGuard)
       },
-      { text: ev.skillId === "attack" && ev.fromFreeball ? "FB" : "" },
+      {
+        text: ev.skillId === "attack" && ev.fromFreeball ? "FB" : "",
+        editable: td => makeEditableCell(td, "Attacco da freeball", done => createBooleanInput(ev, "fromFreeball", done), editGuard)
+      },
       {
         text: zoneDisplay ? String(zoneDisplay) : "",
         editable: td => makeEditableCell(td, "Zona", done => createNumberSelect(ev, "zone", 1, 6, done), editGuard)

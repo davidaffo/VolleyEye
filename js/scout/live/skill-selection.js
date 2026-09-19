@@ -78,7 +78,15 @@ function syncLineupPreferredLiberoSelect() {
   }
 }
 function formatLineupModalName(name, options = {}) {
-  return formatNameWithNumber(name, options);
+  const scope = options.scope === "opponent" ? "opponent" : lineupModalScope;
+  const numbersMap = getPlayerNumbersForScope(scope);
+  const captains = scope === "opponent" ? state.opponentCaptains || [] : state.captains || [];
+  const captainSet = new Set(captains.map(captain => captain.toLowerCase()));
+  return formatNameWithNumberFor(
+    name,
+    numbersMap,
+    Object.assign({}, options, { scope, captainSet })
+  );
 }
 function getBenchForLineupWithRoster(court, rosterNames, liberos, numbersMap) {
   const libSet = new Set(liberos || []);

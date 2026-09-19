@@ -706,6 +706,7 @@ function renderTeamCourtCards(options = {}) {
     allowSkills = true
   } = options;
   if (!container) return;
+  const players = getPlayersForScope(scope);
   const renderOrder = [3, 2, 1, 4, 5, 0];
   const map = displayCourt || court.map((slot, idx) => ({ slot, idx }));
   const errorPickModeActive = isErrorPickModeForScope(scope);
@@ -751,8 +752,12 @@ function renderTeamCourtCards(options = {}) {
     card.className = "player-card court-card pos-" + (idx + 1);
     const playerPhoto = activeName ? getPlayerPhotoForScope(scope, activeName) : "";
     const isLibSlot = libSet.has(effectiveSlot.main);
+    const activePlayerIdx = activeName ? players.indexOf(activeName) : -1;
+    const isSetterSlot = activePlayerIdx >= 0 && isSetterPlayerForScope(scope, activePlayerIdx);
     if (isLibSlot) {
       card.classList.add("libero-card");
+    } else if (isSetterSlot) {
+      card.classList.add("setter-card");
     }
     card.dataset.posNumber = String(idx + 1);
     card.dataset.posIndex = String(posIdx);
@@ -784,8 +789,9 @@ function renderTeamCourtCards(options = {}) {
     posLabel.textContent = "Pos " + (idx + 1);
     const tagLibero = document.createElement("span");
     tagLibero.className = "court-libero-pill";
-    tagLibero.textContent = "L";
-    tagLibero.style.visibility = isLibSlot ? "visible" : "hidden";
+    tagLibero.textContent = isLibSlot ? "L" : "P";
+    tagLibero.classList.toggle("court-setter-pill", !isLibSlot && isSetterSlot);
+    tagLibero.style.visibility = isLibSlot || isSetterSlot ? "visible" : "hidden";
     tagBar.appendChild(posLabel);
     tagBar.appendChild(tagLibero);
     if (allowReturn && isLibSlot && effectiveSlot.replaced) {
@@ -852,7 +858,6 @@ function renderTeamCourtCards(options = {}) {
     }
 
     if (allowSkills && activeName && (scope === "our" || scope === "opponent")) {
-      const players = getPlayersForScope(scope);
       const playerIdx = players.findIndex(p => p === activeName);
       if (playerIdx === -1) {
         container.appendChild(card);

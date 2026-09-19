@@ -147,13 +147,30 @@ function getFilteredPlayerSecondEventsForPlayer(playerIdx) {
     return true;
   });
 }
+function attachDampCountsByRotation(filteredEvents, allEvents) {
+  const dampByRotation = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, all: 0 };
+  (allEvents || []).forEach(ev => {
+    const setType = normalizeSetTypeValue(
+      ev.setType || (ev.combination && ev.combination.set_type) || (ev.combination && ev.combination.setType)
+    );
+    if (!setType || setType.toLowerCase() !== "damp") return;
+    const rotation = ev.rotation && ev.rotation >= 1 && ev.rotation <= 6 ? ev.rotation : 1;
+    dampByRotation[rotation] += 1;
+    dampByRotation.all += 1;
+  });
+  filteredEvents.dampCount = dampByRotation.all;
+  filteredEvents.dampByRotation = dampByRotation;
+  return filteredEvents;
+}
 function getFilteredPlayerAttacksForSecondDistribution(playerIdx = getPlayerAnalysisPlayerIdx()) {
-  return getFilteredPlayerSecondEventsForPlayer(playerIdx).filter(ev => {
+  const all = getFilteredPlayerSecondEventsForPlayer(playerIdx);
+  const filtered = all.filter(ev => {
     const setType = normalizeSetTypeValue(
       ev.setType || (ev.combination && ev.combination.set_type) || (ev.combination && ev.combination.setType)
     );
     return !(setType && setType.toLowerCase() === "damp");
   });
+  return attachDampCountsByRotation(filtered, all);
 }
 function renderDistributionGrid(targetEl, events, compareEvents = null) {
   if (!targetEl) return;
@@ -161,6 +178,12 @@ function renderDistributionGrid(targetEl, events, compareEvents = null) {
   const dist = computeAttackDistribution(events);
   const compareDist = Array.isArray(compareEvents) ? computeAttackDistribution(compareEvents) : null;
   targetEl.classList.add("distribution-grid", "distribution-grid-layout");
+  const legend = document.createElement("div");
+  legend.className = "distribution-legend";
+  legend.innerHTML =
+    '<span><i class="distribution-legend__volume"></i> area più servita</span>' +
+    '<span><i class="distribution-legend__eff"></i> zona più efficiente</span>';
+  targetEl.appendChild(legend);
   const layout = [
     { key: 4, area: "r4" },
     { key: 3, area: "r3" },
@@ -192,9 +215,15 @@ function renderDistributionGrid(targetEl, events, compareEvents = null) {
     const card = document.createElement("div");
     card.className = "distribution-card";
     card.style.gridArea = item.area;
+    const titleRow = document.createElement("div");
+    titleRow.className = "distribution-card__title-row";
     const title = document.createElement("h4");
     title.textContent = rot === "all" ? "Tutte le rotazioni" : "P" + rot;
-    card.appendChild(title);
+    const dampCount = document.createElement("span");
+    dampCount.className = "distribution-card__damp";
+    dampCount.textContent = `Damp ${Number(events && events.dampByRotation && events.dampByRotation[rot]) || 0}`;
+    titleRow.append(title, dampCount);
+    card.appendChild(titleRow);
     const court = document.createElement("div");
     court.className = "distribution-court";
     let bestVolumeZone = null;

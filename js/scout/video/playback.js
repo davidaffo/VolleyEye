@@ -407,8 +407,9 @@ function seekVideoToTime(seconds, options = {}) {
     // ignore errors when seeking
   }
 }
-function handleVideoFileChange(file) {
+function handleVideoFileChange(file, options = {}) {
   if (!file || (!elAnalysisVideo && !elAnalysisVideoScout)) return;
+  const { fileHandle = null, restoring = false } = options || {};
   clearYoutubeSource();
   try {
     if (videoObjectUrl) {
@@ -425,7 +426,7 @@ function handleVideoFileChange(file) {
   if (elAnalysisVideoScout) {
     elAnalysisVideoScout.src = url;
   }
-  persistLocalVideo(file);
+  if (!restoring) persistLocalVideoReference(fileHandle);
   state.video = state.video || {
     offsetSeconds: 0,
     fileName: "",
@@ -436,7 +437,23 @@ function handleVideoFileChange(file) {
   state.video.fileName = file.name || "video";
   state.video.youtubeId = "";
   state.video.youtubeUrl = "";
-  state.video.lastPlaybackSeconds = 0;
+  if (!restoring) state.video.lastPlaybackSeconds = 0;
+  state.video.fileReferenceMode = fileHandle ? "handle" : "manual";
+  if (restoring) {
+    const seconds = Number(state.video.lastPlaybackSeconds);
+    [elAnalysisVideo, elAnalysisVideoScout].filter(Boolean).forEach(video => {
+      const restoreTime = () => {
+        if (!Number.isFinite(seconds) || seconds <= 0) return;
+        try {
+          video.currentTime = seconds;
+        } catch (_) {
+          // ignore seek errors until metadata is ready
+        }
+      };
+      if (video.readyState >= 1) restoreTime();
+      else video.addEventListener("loadedmetadata", restoreTime, { once: true });
+    });
+  }
   saveState();
   renderYoutubePlayer(0);
   renderYoutubePlayerScout(0);

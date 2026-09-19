@@ -197,12 +197,48 @@ async function forceRefreshAppAssets() {
   url.searchParams.set("_", bust);
   window.location.replace(url.toString());
 }
+function captureScoutActionSnapshot() {
+  const clone = window.VolleyEye && window.VolleyEye.stateIsolation
+    ? window.VolleyEye.stateIsolation.cloneData
+    : value => JSON.parse(JSON.stringify(value));
+  return clone(state);
+}
+function attachScoutActionSnapshot(event, snapshot) {
+  if (!event || !snapshot) return event;
+  Object.defineProperty(event, "__undoSnapshot", {
+    value: snapshot,
+    enumerable: false,
+    configurable: true
+  });
+  return event;
+}
+function restoreScoutActionSnapshot(snapshot) {
+  if (!snapshot || typeof snapshot !== "object") return false;
+  Object.keys(state).forEach(key => delete state[key]);
+  Object.assign(state, snapshot);
+  if (typeof resetSetTypeState === "function") resetSetTypeState();
+  saveState({ persistLocal: true });
+  recalcAllStatsAndUpdateUI();
+  renderEventsLog();
+  renderPlayers();
+  renderBenchChips();
+  renderLiberoChipsInline();
+  renderLineupChips();
+  updateRotationDisplay();
+  renderLiveScore();
+  updateSetScoreDisplays();
+  return true;
+}
 function undoLastEvent() {
   if (!state.events || state.events.length === 0) {
     alert("Non ci sono eventi da annullare.");
     return;
   }
-  const ev = state.events.pop();
+  const ev = state.events[state.events.length - 1];
+  if (ev && ev.__undoSnapshot && restoreScoutActionSnapshot(ev.__undoSnapshot)) {
+    return;
+  }
+  state.events.pop();
   if (!ev) {
     saveState();
     recalcAllStatsAndUpdateUI();
