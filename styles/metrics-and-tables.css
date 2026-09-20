@@ -928,6 +928,11 @@ body[data-theme="light"] .video-filters-panel {
 .video-filter-preset-card:hover {
   border-color: #3b82f6;
 }
+.video-filter-preset-card.active {
+  border-color: #3b82f6;
+  background: #172554;
+  box-shadow: inset 3px 0 0 #60a5fa;
+}
 .video-filter-preset-card.dragging {
   opacity: 0.55;
 }
@@ -1003,6 +1008,11 @@ body[data-theme="light"] .video-filter-preset-card {
 }
 body[data-theme="light"] .video-filter-preset-card:hover {
   border-color: #2563eb;
+}
+body[data-theme="light"] .video-filter-preset-card.active {
+  background: #dbeafe;
+  border-color: #2563eb;
+  box-shadow: inset 3px 0 0 #2563eb;
 }
 body[data-theme="light"] .video-filter-preset-rename {
   background: #eef2ff;

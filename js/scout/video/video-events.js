@@ -585,21 +585,65 @@ function stripFileExtension(name) {
   if (idx > 0) return base.slice(0, idx);
   return base;
 }
-function buildFfmpegConcatCommand(segments, inputName, outputName) {
+function sanitizeVideoOutputBase(name) {
+  return String(name || "")
+    .trim()
+    .replace(/[\\/:*?"<>|]+/g, "-")
+    .replace(/\s+/g, " ")
+    .replace(/^\.+|\.+$/g, "")
+    .slice(0, 120);
+}
+function buildFfmpegConcatCommand(segments, inputName, outputName, encoder = "cpu") {
   if (!segments || !segments.length) return "";
+  const useGpu = encoder === "gpu";
   const trims = segments
     .map((seg, idx) => {
-      const start = seg.start.toFixed(2);
-      const end = seg.end.toFixed(2);
+      const start = seg.start.toFixed(3);
+      const end = seg.end.toFixed(3);
       const overlay = buildFfmpegOverlayFilter(seg.overlayLines || []);
       return `[0:v]trim=start=${start}:end=${end},setpts=PTS-STARTPTS${overlay}[v${idx}];` +
         `[0:a]atrim=start=${start}:end=${end},asetpts=PTS-STARTPTS[a${idx}]`;
     })
     .join(";");
-  const concat = segments.map((_, idx) => `[v${idx}][a${idx}]`).join("") + `concat=n=${segments.length}:v=1:a=1[outv][outa]`;
+  const concatOutput = useGpu
+    ? "[outv_raw][outa];[outv_raw]format=nv12,hwupload[outv]"
+    : "[outv][outa]";
+  const concat = segments.map((_, idx) => `[v${idx}][a${idx}]`).join("") +
+    `concat=n=${segments.length}:v=1:a=1${concatOutput}`;
   const input = inputName || "input.mp4";
   const output = outputName || "output.mp4";
-  return `ffmpeg -i "${input}" -filter_complex "${trims};${concat}" -map "[outv]" -map "[outa]" -c:v libx264 -c:a aac "${output}"`;
+  const deviceArgs = useGpu ? " -vaapi_device /dev/dri/renderD128" : "";
+  const videoEncoder = useGpu
+    ? "-c:v h264_vaapi -rc_mode CQP -qp 18 -quality 8 -profile:v high"
+    : "-c:v libx264 -preset ultrafast -crf 18 -pix_fmt yuv420p";
+  return `ffmpeg -hide_banner${deviceArgs} -i "${input}" -filter_complex "${trims};${concat}" ` +
+    `-map "[outv]" -map "[outa]" ${videoEncoder} -c:a aac -b:a 192k "${output}"`;
+}
+function chooseFfmpegEncoder() {
+  const modal = document.getElementById("ffmpeg-encoder-modal");
+  const gpuButton = document.getElementById("ffmpeg-copy-gpu");
+  const cpuButton = document.getElementById("ffmpeg-copy-cpu");
+  if (!modal || !gpuButton || !cpuButton) return Promise.resolve("cpu");
+  return new Promise(resolve => {
+    let settled = false;
+    const finish = choice => {
+      if (settled) return;
+      settled = true;
+      modal.classList.add("hidden");
+      setModalOpenState(false);
+      resolve(choice);
+    };
+    modal.querySelectorAll("[data-close-ffmpeg-encoder]").forEach(button => {
+      button.onclick = () => finish(null);
+    });
+    const closeButton = document.getElementById("ffmpeg-encoder-close");
+    if (closeButton) closeButton.onclick = () => finish(null);
+    gpuButton.onclick = () => finish("gpu");
+    cpuButton.onclick = () => finish("cpu");
+    modal.classList.remove("hidden");
+    setModalOpenState(true);
+    gpuButton.focus();
+  });
 }
 async function copyFfmpegFromSelection() {
   const segments = buildSelectedSegments();
@@ -614,11 +658,17 @@ async function copyFfmpegFromSelection() {
   }
   const ext = getFileExtension(inputName);
   const defaultBase = stripFileExtension(inputName) || "output";
-  const outputBase = prompt("Nome file output (senza estensione):", defaultBase + "_clip");
+  const presetName = typeof getActiveVideoFilterPresetName === "function"
+    ? getActiveVideoFilterPresetName()
+    : "";
+  const suggestedBase = sanitizeVideoOutputBase(presetName) || (defaultBase + "_clip");
+  const outputBase = prompt("Nome file output (senza estensione):", suggestedBase);
   if (!outputBase) return;
-  const sanitizedBase = stripFileExtension(outputBase.trim()) || "output";
+  const sanitizedBase = sanitizeVideoOutputBase(stripFileExtension(outputBase.trim())) || "output";
   const outputName = sanitizedBase + ext;
-  const cmd = buildFfmpegConcatCommand(segments, inputName, outputName);
+  const encoder = await chooseFfmpegEncoder();
+  if (!encoder) return;
+  const cmd = buildFfmpegConcatCommand(segments, inputName, outputName, encoder);
   try {
     await navigator.clipboard.writeText(cmd);
   } catch (_) {
@@ -629,7 +679,11 @@ async function copyFfmpegFromSelection() {
     document.execCommand("copy");
     ta.remove();
   }
-  alert("Comando ffmpeg copiato negli appunti.");
+  alert(
+    encoder === "gpu"
+      ? "Comando ffmpeg GPU con overlay copiato. La codifica userà VAAPI."
+      : "Comando ffmpeg CPU con overlay copiato. La codifica userà il preset ultrafast."
+  );
 }
 function renderEventsLog(options = {}) {
   const append = !!options.append;

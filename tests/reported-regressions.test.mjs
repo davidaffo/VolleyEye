@@ -213,6 +213,35 @@ test("la correzione punteggio video segue l'ordine reale degli eventi e viene sa
   assert.match(correction, /saveState\(\{ persistLocal: true \}\)/);
 });
 
+test("il taglia e cuci ffmpeg offre CPU e GPU conservando gli overlay", () => {
+  const events = readFileSync(new URL("../js/scout/video/video-events.js", import.meta.url), "utf8");
+  const command = extract(events, "function buildFfmpegConcatCommand", "async function copyFfmpegFromSelection");
+  assert.match(command, /filter_complex/);
+  assert.match(command, /buildFfmpegOverlayFilter/);
+  assert.match(command, /-c:v libx264 -preset ultrafast -crf 18/);
+  assert.match(command, /-vaapi_device \/dev\/dri\/renderD128/);
+  assert.match(command, /format=nv12,hwupload/);
+  assert.match(command, /-c:v h264_vaapi/);
+  assert.doesNotMatch(command, /-c copy|mktemp -d/);
+});
+
+test("il dialogo ffmpeg permette di copiare il comando CPU o GPU", () => {
+  const index = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  assert.match(index, /id="ffmpeg-encoder-modal"/);
+  assert.match(index, /id="ffmpeg-copy-gpu"/);
+  assert.match(index, /id="ffmpeg-copy-cpu"/);
+});
+
+test("il nome output ffmpeg usa il preset video attivo", () => {
+  const events = readFileSync(new URL("../js/scout/video/video-events.js", import.meta.url), "utf8");
+  const filters = readFileSync(new URL("../js/scout/analysis/analysis-filters.js", import.meta.url), "utf8");
+  const copy = extract(events, "async function copyFfmpegFromSelection", "function renderEventsLog");
+  assert.match(copy, /getActiveVideoFilterPresetName\(\)/);
+  assert.match(copy, /sanitizeVideoOutputBase\(presetName\)/);
+  assert.match(filters, /activeVideoFilterPresetId = entry\.id/);
+  assert.match(filters, /function getActiveVideoFilterPresetName\(\)/);
+});
+
 test("una partita in pausa o conclusa non blocca più la modifica squadra", () => {
   const editor = readFileSync(new URL("../js/roster/editor/team-editor.js", import.meta.url), "utf8");
   const players = readFileSync(new URL("../js/roster/core/player-model.js", import.meta.url), "utf8");

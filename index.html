@@ -1544,7 +1544,6 @@
         <div class="video-analysis__head">
           <div>
             <h2>Analisi video</h2>
-            <p class="section-note">Carica un video e sincronizza le skill registrate per saltare al momento corretto.</p>
           </div>
         </div>
         <div class="video-analysis__actions">
@@ -1552,7 +1551,7 @@
           <input id="video-file-input" type="file" accept="video/*" hidden />
           <button id="btn-clear-video" class="danger" type="button">Rimuovi video</button>
           <button id="btn-sync-first-skill" class="secondary">Sincronizza prima skill</button>
-          <button id="btn-copy-ffmpeg" class="secondary">Copia ffmpeg (selezione)</button>
+          <button id="btn-copy-ffmpeg" class="secondary">Copia ffmpeg veloce + overlay</button>
           <label class="auto-rotate-toggle">
             <input type="checkbox" id="video-playbyplay-toggle" />
             Play by play
@@ -2328,6 +2327,23 @@
         <div class="offset-actions">
           <button id="skill-duration-apply" class="small">Applica</button>
           <button class="small secondary" data-close-skill-duration>Annulla</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="ffmpeg-encoder-modal" class="settings-modal hidden" role="dialog" aria-modal="true" aria-labelledby="ffmpeg-encoder-title">
+    <div class="settings-modal__backdrop" data-close-ffmpeg-encoder></div>
+    <div class="settings-modal__content">
+      <div class="settings-modal__head">
+        <h3 id="ffmpeg-encoder-title">Copia comando ffmpeg</h3>
+        <button id="ffmpeg-encoder-close" class="pill-remove" type="button" aria-label="Chiudi">✕</button>
+      </div>
+      <div class="settings-modal__body">
+        <p class="section-note">Entrambi i comandi mantengono tagli e overlay. La GPU VAAPI riduce drasticamente il carico sulla CPU.</p>
+        <div class="offset-actions">
+          <button id="ffmpeg-copy-gpu" type="button">Copia GPU (consigliato)</button>
+          <button id="ffmpeg-copy-cpu" class="secondary" type="button">Copia CPU</button>
+          <button class="secondary" type="button" data-close-ffmpeg-encoder>Annulla</button>
         </div>
       </div>
     </div>

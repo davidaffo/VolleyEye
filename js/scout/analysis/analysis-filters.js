@@ -926,6 +926,7 @@ const videoFilterState = {
   serveTypes: new Set(),
   attackTypes: new Set()
 };
+let activeVideoFilterPresetId = null;
 const TRAJECTORY_BG_BY_ZONE = {
   1: "images/trajectory/attack_2_near.png",
   2: "images/trajectory/attack_2_near.png",
@@ -1025,6 +1026,7 @@ function handleServeTrajectoryFilterChange() {
   renderServeTrajectoryAnalysis();
 }
 function handleVideoFilterChange() {
+  activeVideoFilterPresetId = null;
   syncVideoFilterState();
   renderVideoAnalysis();
 }
@@ -1059,6 +1061,7 @@ function resetServeTrajectoryFilters() {
   renderServeTrajectoryAnalysis();
 }
 function resetVideoFilters() {
+  activeVideoFilterPresetId = null;
   videoFilterState.teams.clear();
   videoFilterState.players.clear();
   videoFilterState.setters.clear();
@@ -1111,6 +1114,11 @@ function ensureVideoFilterPresetsState() {
     state.videoFilterPresets = [];
   }
   return state.videoFilterPresets;
+}
+function getActiveVideoFilterPresetName() {
+  if (!activeVideoFilterPresetId) return "";
+  const activePreset = ensureVideoFilterPresetsState().find(entry => entry.id === activeVideoFilterPresetId);
+  return activePreset ? String(activePreset.name || "").trim() : "";
 }
 function listFromSet(setObj, { asNumber = false } = {}) {
   const arr = Array.from(setObj || []);
@@ -1216,6 +1224,7 @@ function renderVideoFilterPresets() {
   presets.forEach(entry => {
     const card = document.createElement("div");
     card.className = "video-filter-preset-card";
+    card.classList.toggle("active", entry.id === activeVideoFilterPresetId);
     card.tabIndex = 0;
     card.setAttribute("role", "button");
     card.draggable = true;
@@ -1279,6 +1288,7 @@ function renderVideoFilterPresets() {
     removeBtn.addEventListener("click", ev => {
       ev.preventDefault();
       ev.stopPropagation();
+      if (activeVideoFilterPresetId === entry.id) activeVideoFilterPresetId = null;
       state.videoFilterPresets = presets.filter(p => p.id !== entry.id);
       saveState({ persistLocal: true });
       renderVideoFilterPresets();
@@ -1289,6 +1299,7 @@ function renderVideoFilterPresets() {
     card.appendChild(removeBtn);
     card.addEventListener("click", () => {
       if (card.classList.contains("editing")) return;
+      activeVideoFilterPresetId = entry.id;
       applyVideoFilterSnapshot(entry.filters || {});
       renderVideoAnalysis();
       saveState({ persistLocal: true });
@@ -1297,6 +1308,7 @@ function renderVideoFilterPresets() {
       if (card.classList.contains("editing")) return;
       if (ev.key !== "Enter" && ev.key !== " ") return;
       ev.preventDefault();
+      activeVideoFilterPresetId = entry.id;
       applyVideoFilterSnapshot(entry.filters || {});
       renderVideoAnalysis();
       saveState({ persistLocal: true });
