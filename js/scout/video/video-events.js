@@ -601,23 +601,22 @@ function buildFfmpegConcatCommand(segments, inputName, outputName, encoder = "cp
       const start = seg.start.toFixed(3);
       const end = seg.end.toFixed(3);
       const overlay = buildFfmpegOverlayFilter(seg.overlayLines || []);
-      return `[0:v]trim=start=${start}:end=${end},setpts=PTS-STARTPTS${overlay}[v${idx}];` +
-        `[0:a]atrim=start=${start}:end=${end},asetpts=PTS-STARTPTS[a${idx}]`;
+      return `[0:v]trim=start=${start}:end=${end},setpts=PTS-STARTPTS${overlay}[v${idx}]`;
     })
     .join(";");
   const concatOutput = useGpu
-    ? "[outv_raw][outa];[outv_raw]format=nv12,hwupload[outv]"
-    : "[outv][outa]";
-  const concat = segments.map((_, idx) => `[v${idx}][a${idx}]`).join("") +
-    `concat=n=${segments.length}:v=1:a=1${concatOutput}`;
+    ? "[outv_raw];[outv_raw]format=nv12,hwupload[outv]"
+    : "[outv]";
+  const concat = segments.map((_, idx) => `[v${idx}]`).join("") +
+    `concat=n=${segments.length}:v=1:a=0${concatOutput}`;
   const input = inputName || "input.mp4";
   const output = outputName || "output.mp4";
   const deviceArgs = useGpu ? " -vaapi_device /dev/dri/renderD128" : "";
   const videoEncoder = useGpu
-    ? "-c:v h264_vaapi -rc_mode CQP -qp 18 -quality 8 -profile:v high"
-    : "-c:v libx264 -preset ultrafast -crf 18 -pix_fmt yuv420p";
+    ? "-c:v h264_vaapi -rc_mode CQP -qp 24 -quality 8 -profile:v high"
+    : "-c:v libx264 -preset ultrafast -crf 24 -pix_fmt yuv420p";
   return `ffmpeg -hide_banner${deviceArgs} -i "${input}" -filter_complex "${trims};${concat}" ` +
-    `-map "[outv]" -map "[outa]" ${videoEncoder} -c:a aac -b:a 192k "${output}"`;
+    `-map "[outv]" -an ${videoEncoder} "${output}"`;
 }
 function chooseFfmpegEncoder() {
   const modal = document.getElementById("ffmpeg-encoder-modal");

@@ -218,10 +218,14 @@ test("il taglia e cuci ffmpeg offre CPU e GPU conservando gli overlay", () => {
   const command = extract(events, "function buildFfmpegConcatCommand", "async function copyFfmpegFromSelection");
   assert.match(command, /filter_complex/);
   assert.match(command, /buildFfmpegOverlayFilter/);
-  assert.match(command, /-c:v libx264 -preset ultrafast -crf 18/);
+  assert.match(command, /-c:v libx264 -preset ultrafast -crf 24/);
   assert.match(command, /-vaapi_device \/dev\/dri\/renderD128/);
   assert.match(command, /format=nv12,hwupload/);
   assert.match(command, /-c:v h264_vaapi/);
+  assert.match(command, /-rc_mode CQP -qp 24/);
+  assert.match(command, /concat=n=\$\{segments\.length\}:v=1:a=0/);
+  assert.match(command, /-map "\[outv\]" -an/);
+  assert.doesNotMatch(command, /atrim|-c:a|\[outa\]/);
   assert.doesNotMatch(command, /-c copy|mktemp -d/);
 });
 
