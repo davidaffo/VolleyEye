@@ -437,6 +437,76 @@ const SCOUT_COLUMN_LIMITS = { center: 300, right: 240 };
 let activeVideoResizeSession = null;
 let activeScoutColumnResizeSession = null;
 let scoutGridResizeObserver = null;
+let viewportLayoutFrame = null;
+let viewportLayoutSettleTimer = null;
+let viewportResizeBound = false;
+let lastViewportCompactMode = null;
+let lastCourtPlacementMode = null;
+function isCompactViewportLayout() {
+  return !!state.forceMobileLayout || window.matchMedia("(max-width: 900px)").matches;
+}
+function flushViewportLayoutUpdate({ settled = false } = {}) {
+  viewportLayoutFrame = null;
+  const compactMode = isCompactViewportLayout();
+  const compactModeChanged =
+    lastViewportCompactMode !== null && compactMode !== lastViewportCompactMode;
+  lastViewportCompactMode = compactMode;
+  applyVideoLayoutWidths();
+  applyScoutColumnLayout();
+  const courtPlacementMode = typeof isDesktopCourtModalLayout === "function"
+    ? isDesktopCourtModalLayout()
+    : null;
+  if (courtPlacementMode !== lastCourtPlacementMode) {
+    lastCourtPlacementMode = courtPlacementMode;
+    if (typeof updateCourtModalPlacement === "function") updateCourtModalPlacement();
+  }
+  if (
+    typeof elAttackTrajectoryModal !== "undefined" &&
+    elAttackTrajectoryModal &&
+    !elAttackTrajectoryModal.classList.contains("hidden") &&
+    typeof resizeTrajectoryCanvas === "function"
+  ) {
+    resizeTrajectoryCanvas();
+  }
+  if (
+    typeof elPlayerPhotoModal !== "undefined" &&
+    elPlayerPhotoModal &&
+    !elPlayerPhotoModal.classList.contains("hidden") &&
+    typeof renderPlayerPhotoEditor === "function"
+  ) {
+    renderPlayerPhotoEditor();
+  }
+  if (compactModeChanged && typeof renderPlayers === "function") {
+    renderPlayers();
+  }
+  if (settled) {
+    // A final pass catches the last browser reflow without rebuilding the court.
+    applyVideoLayoutWidths();
+    applyScoutColumnLayout();
+  }
+}
+function scheduleViewportLayoutUpdate() {
+  if (viewportLayoutFrame === null) {
+    viewportLayoutFrame = requestAnimationFrame(() => flushViewportLayoutUpdate());
+  }
+  if (viewportLayoutSettleTimer !== null) clearTimeout(viewportLayoutSettleTimer);
+  viewportLayoutSettleTimer = setTimeout(() => {
+    viewportLayoutSettleTimer = null;
+    if (viewportLayoutFrame !== null) {
+      cancelAnimationFrame(viewportLayoutFrame);
+      viewportLayoutFrame = null;
+    }
+    flushViewportLayoutUpdate({ settled: true });
+  }, 120);
+}
+function bindViewportResizeUpdates() {
+  if (viewportResizeBound) return;
+  viewportResizeBound = true;
+  lastViewportCompactMode = isCompactViewportLayout();
+  lastCourtPlacementMode =
+    typeof isDesktopCourtModalLayout === "function" ? isDesktopCourtModalLayout() : null;
+  window.addEventListener("resize", scheduleViewportLayoutUpdate, { passive: true });
+}
 function applyTopBarVisibility() {
   const hidden = !!state.uiTopBarHidden;
   document.body.classList.toggle("top-bar-hidden", hidden);
@@ -483,14 +553,20 @@ function clampVideoLayoutSize(kind, size) {
 function applyVideoLayoutWidths() {
   ensureVideoLayoutState();
   const root = document.documentElement;
-  root.style.setProperty(
-    "--video-panel-height",
-    `${clampVideoLayoutSize("analysisHeight", state.uiVideoLayout.analysisHeight)}px`
-  );
-  root.style.setProperty(
-    "--video-scout-height",
-    `${clampVideoLayoutSize("scoutHeight", state.uiVideoLayout.scoutHeight)}px`
-  );
+  const analysisHeight = `${clampVideoLayoutSize("analysisHeight", state.uiVideoLayout.analysisHeight)}px`;
+  const scoutHeight = `${clampVideoLayoutSize("scoutHeight", state.uiVideoLayout.scoutHeight)}px`;
+  if (
+    typeof root.style.getPropertyValue !== "function" ||
+    root.style.getPropertyValue("--video-panel-height") !== analysisHeight
+  ) {
+    root.style.setProperty("--video-panel-height", analysisHeight);
+  }
+  if (
+    typeof root.style.getPropertyValue !== "function" ||
+    root.style.getPropertyValue("--video-scout-height") !== scoutHeight
+  ) {
+    root.style.setProperty("--video-scout-height", scoutHeight);
+  }
 }
 function setVideoLayoutWidth(kind, width, persist = true) {
   ensureVideoLayoutState();
@@ -588,6 +664,9 @@ function applyScoutColumnLayout() {
     window.matchMedia("(max-width: 900px)").matches
   ) return;
   const widths = resolveScoutColumnWidths();
+  const layoutKey = `${elScoutGrid.clientWidth}:${widths.right}`;
+  if (layoutKey === elScoutGrid.__volleyEyeColumnLayoutKey) return;
+  elScoutGrid.__volleyEyeColumnLayoutKey = layoutKey;
   elScoutGrid.style.setProperty("--scout-right-width", `${widths.right}px`);
   if (elScoutResizeRight) elScoutResizeRight.setAttribute("aria-valuenow", String(widths.right));
 }
@@ -651,13 +730,10 @@ function bindScoutColumnResizeHandle(handle, side) {
 function bindScoutColumnResize() {
   bindScoutColumnResizeHandle(elScoutResizeRight, "right");
   if (!scoutGridResizeObserver && elScoutGrid && typeof ResizeObserver === "function") {
-    scoutGridResizeObserver = new ResizeObserver(() => applyScoutColumnLayout());
+    scoutGridResizeObserver = new ResizeObserver(() => scheduleViewportLayoutUpdate());
     scoutGridResizeObserver.observe(elScoutGrid);
   }
-  if (elScoutGrid && elScoutGrid.dataset.windowResizeBound !== "true") {
-    elScoutGrid.dataset.windowResizeBound = "true";
-    window.addEventListener("resize", () => applyScoutColumnLayout());
-  }
+  bindViewportResizeUpdates();
 }
 function getAttackMetaForPlayer(scope, playerIdx) {
   const scopedKey = scope + ":" + playerIdx;

@@ -19,6 +19,27 @@
     top: 0.5rem;
     bottom: auto;
   }
+  body[data-match-session="true"] {
+    padding-top: 4.4rem;
+  }
+  body[data-match-session="true"]::before {
+    content: attr(data-match-label);
+    position: fixed;
+    top: 2.55rem;
+    left: 0.75rem;
+    right: 0.75rem;
+    z-index: 33;
+    overflow: hidden;
+    color: var(--text-color, #e8e8e8);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    text-align: center;
+    white-space: nowrap;
+  }
+  body.top-bar-hidden .tabs-dots {
+    display: inline-flex !important;
+  }
   .attack-trajectory-content {
     width: 100vw;
     height: 100svh;
@@ -85,6 +106,13 @@
   }
 }
 
+@media (max-width: 640px) {
+  .global-settings-grid,
+  .new-match-setup-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 body.force-mobile .scout-grid {
   display: block;
 }
@@ -101,6 +129,27 @@ body.force-mobile .tabs-dots {
   display: inline-flex;
   top: 0.5rem;
   bottom: auto;
+}
+body.force-mobile[data-match-session="true"] {
+  padding-top: 4.4rem;
+}
+body.force-mobile[data-match-session="true"]::before {
+  content: attr(data-match-label);
+  position: fixed;
+  top: 2.55rem;
+  left: 0.75rem;
+  right: 0.75rem;
+  z-index: 33;
+  overflow: hidden;
+  color: var(--text-color, #e8e8e8);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body.force-mobile.top-bar-hidden .tabs-dots {
+  display: inline-flex !important;
 }
 body.force-mobile .scout-mobile-bar {
   display: flex;
@@ -160,4 +209,3 @@ body.force-mobile .attack-trajectory-content {
 body.force-mobile .attack-trajectory-stage {
   min-height: 0;
 }
-

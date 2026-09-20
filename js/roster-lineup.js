@@ -183,8 +183,7 @@ if (elDefaultLineupRotateCcw) {
 const elBtnExportDb = document.getElementById("btn-export-db");
 const elBtnImportDb = document.getElementById("btn-import-db");
 const elDbFileInput = document.getElementById("db-file-input");
-const elImportJsonUrl = document.getElementById("import-json-url");
-const elBtnImportMatchUrl = document.getElementById("btn-import-match-url");
+const elImportDbUrl = document.getElementById("import-db-url");
 const elBtnImportDbUrl = document.getElementById("btn-import-db-url");
 const elBtnUndo = document.getElementById("btn-undo");
 const elBtnOpenSettings = document.getElementById("btn-open-settings");
@@ -329,5 +328,5 @@ let autoRoleRotationApplied = null;
 let autoRoleBaseCourt = null;
 let autoRoleRenderedCourt = null;
 let opponentAutoRoleBaseCourt = null;
-let activeTab = "info";
+let activeTab = "match";
 let activeAggTab = "summary";

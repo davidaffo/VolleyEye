@@ -411,14 +411,9 @@ function bindRosterAndArchiveControls() {
       if (file) handleImportDatabaseFile(file);
     });
   }
-  if (elBtnImportMatchUrl && elImportJsonUrl) {
-    elBtnImportMatchUrl.addEventListener("click", () => {
-      importMatchFromUrl(elImportJsonUrl.value || "");
-    });
-  }
-  if (elBtnImportDbUrl && elImportJsonUrl) {
+  if (elBtnImportDbUrl && elImportDbUrl) {
     elBtnImportDbUrl.addEventListener("click", () => {
-      importDatabaseFromUrl(elImportJsonUrl.value || "");
+      importDatabaseFromUrl(elImportDbUrl.value || "");
     });
   }
   if (elBtnOpenMatchManager) {
@@ -621,10 +616,14 @@ function bindRosterAndArchiveControls() {
         elSavedMatchesSelect.value = name;
       }
       state.selectedMatch = name;
-      if (typeof renderMatchesList === "function") {
-        renderMatchesList(Object.keys(state.savedMatches || {}), name);
+      if (typeof loadSelectedMatch === "function") {
+        loadSelectedMatch();
+      } else {
+        if (typeof renderMatchesList === "function") {
+          renderMatchesList(Object.keys(state.savedMatches || {}), name);
+        }
+        updateMatchButtonsState();
       }
-      updateMatchButtonsState();
     });
   }
   if (elBtnSaveMatchInfo) {
@@ -668,11 +667,62 @@ function bindRosterAndArchiveControls() {
       loadSelectedMatch();
     });
   }
-  if (elBtnLoadMatch) {
-    elBtnLoadMatch.addEventListener("click", () => {
-      loadSelectedMatch();
+  const newMatchModal = document.getElementById("new-match-modal");
+  const newMatchTeam = document.getElementById("new-match-team");
+  const newMatchConfirm = document.getElementById("new-match-confirm");
+  if (newMatchModal) {
+    newMatchModal.addEventListener("click", e => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (target.dataset.closeNewMatch !== undefined || target.id === "new-match-close") {
+        if (typeof closeNewMatchModal === "function") closeNewMatchModal();
+      }
+    });
+    newMatchModal.querySelectorAll('input[name="new-match-mode"]').forEach(input => {
+      input.addEventListener("change", () => {
+        if (typeof updateNewMatchModeUI === "function") updateNewMatchModeUI();
+      });
     });
   }
+  if (newMatchTeam) {
+    newMatchTeam.addEventListener("change", () => {
+      if (typeof populateNewMatchTeamSelects === "function") populateNewMatchTeamSelects();
+    });
+  }
+  if (newMatchConfirm) {
+    newMatchConfirm.addEventListener("click", () => {
+      const selectedMode = document.querySelector('input[name="new-match-mode"]:checked');
+      const created = typeof createNewMatchFromSetup === "function" && createNewMatchFromSetup({
+        teamName: (document.getElementById("new-match-team") || {}).value || "",
+        mode: selectedMode ? selectedMode.value : "single",
+        opponentTeam: (document.getElementById("new-match-opponent-team") || {}).value || "",
+        opponentManual: (document.getElementById("new-match-opponent-name") || {}).value || ""
+      });
+      if (created && typeof closeNewMatchModal === "function") closeNewMatchModal();
+    });
+  }
+  const newMatchManageTeams = document.getElementById("new-match-manage-teams");
+  if (newMatchManageTeams) {
+    newMatchManageTeams.addEventListener("click", () => {
+      if (typeof closeNewMatchModal === "function") closeNewMatchModal();
+      if (typeof setActiveTab === "function") setActiveTab("info");
+      if (typeof openTeamsManagerModal === "function") openTeamsManagerModal();
+    });
+  }
+  if (elBtnLoadMatch) {
+    elBtnLoadMatch.addEventListener("click", () => {
+      if (typeof enterSelectedMatch === "function") {
+        enterSelectedMatch();
+      } else {
+        loadSelectedMatch();
+      }
+    });
+  }
+  document.querySelectorAll("[data-exit-match]").forEach(exitButton => {
+    exitButton.addEventListener("click", () => {
+      if (typeof exitCurrentMatch === "function") exitCurrentMatch();
+    });
+  });
   if (elTeamsSelect) {
     elTeamsSelect.addEventListener("change", handleTeamSelectChange);
   }

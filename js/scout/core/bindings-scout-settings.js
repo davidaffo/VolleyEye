@@ -1,7 +1,5 @@
 function bindScoutSettingsControls() {
-  window.addEventListener("resize", () => {
-    updateCourtModalPlacement();
-  });
+  if (typeof bindViewportResizeUpdates === "function") bindViewportResizeUpdates();
   if (elBtnRotateCw) {
     elBtnRotateCw.addEventListener("click", () => rotateCourt("cw"));
   }
@@ -752,7 +750,6 @@ function bindScoutSettingsControls() {
     if (elAttackTrajectoryImage) {
       elAttackTrajectoryImage.addEventListener("load", resizeTrajectoryCanvas);
     }
-    window.addEventListener("resize", resizeTrajectoryCanvas);
     [elAttackTrajectoryClose, elAttackTrajectoryModal.querySelector("[data-close-trajectory]")].forEach(btn => {
       if (btn) btn.addEventListener("click", handleCloseTrajectory);
     });

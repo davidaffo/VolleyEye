@@ -565,9 +565,9 @@ function importTeamFromFile(file) {
   };
   reader.readAsText(file);
 }
-function handleTeamSelectChange() {
-  if (!elTeamsSelect) return;
-  const selected = elTeamsSelect.value;
+function handleTeamSelectChange(selectedOverride = "") {
+  if (!elTeamsSelect && !selectedOverride) return;
+  const selected = selectedOverride || elTeamsSelect.value;
   if (!selected) {
     updateTeamButtonsState();
     return;
@@ -613,12 +613,12 @@ function handleTeamSelectChange() {
   renderLiberoChipsInline();
   refreshTeamManagerFromSelection();
 }
-function handleOpponentTeamSelectChange() {
-  if (!elOpponentTeamsSelect) return;
-  const selected = elOpponentTeamsSelect.value;
+function handleOpponentTeamSelectChange(selectedOverride = "") {
+  if (!elOpponentTeamsSelect && !selectedOverride) return;
+  const selected = selectedOverride || elOpponentTeamsSelect.value;
   if (selected && selected === state.selectedTeam) {
     alert("Non puoi selezionare la stessa squadra come avversaria.");
-    elOpponentTeamsSelect.value = "";
+    if (elOpponentTeamsSelect) elOpponentTeamsSelect.value = "";
     state.selectedOpponentTeam = "";
     return;
   }

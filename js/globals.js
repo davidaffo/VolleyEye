@@ -206,6 +206,8 @@ let state = {
     key: "",
     dir: ""
   },
+  uiMatchSessionActive: false,
+  uiActiveTab: "match",
   uiTopBarHidden: false
 };
 function canUseShare() {
@@ -473,11 +475,6 @@ function handlePlayerPhotoPointerUp(ev) {
     elPlayerPhotoStage.classList.remove("dragging");
   }
 }
-window.addEventListener("resize", () => {
-  if (elPlayerPhotoModal && !elPlayerPhotoModal.classList.contains("hidden")) {
-    renderPlayerPhotoEditor();
-  }
-});
 if (elPlayerPhotoStage && !elPlayerPhotoStage._playerPhotoBound) {
   elPlayerPhotoStage.addEventListener("pointerdown", handlePlayerPhotoPointerDown);
   elPlayerPhotoStage.addEventListener("pointermove", handlePlayerPhotoPointerMove);

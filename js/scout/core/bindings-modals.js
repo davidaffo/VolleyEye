@@ -160,10 +160,7 @@ function bindModalAndGlobalControls() {
       }
     });
   }
-  window.addEventListener("resize", () => {
-    applyVideoLayoutWidths();
-    renderPlayers();
-  });
+  if (typeof bindViewportResizeUpdates === "function") bindViewportResizeUpdates();
   document.addEventListener("keydown", e => {
     if (e.key === "Escape") {
       stopPointPickMode();

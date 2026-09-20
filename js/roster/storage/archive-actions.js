@@ -341,18 +341,98 @@ function pauseAndPersistCurrentMatch() {
   if (typeof updateMatchStatusUI === "function") updateMatchStatusUI();
   return false;
 }
+function updateNewMatchModeUI() {
+  const mode = document.querySelector('input[name="new-match-mode"]:checked');
+  const isDouble = !!mode && mode.value === "double";
+  const manualField = document.getElementById("new-match-opponent-name-field");
+  const teamField = document.getElementById("new-match-opponent-team-field");
+  if (manualField) manualField.classList.toggle("hidden", isDouble);
+  if (teamField) teamField.classList.toggle("hidden", !isDouble);
+}
+function populateNewMatchTeamSelects() {
+  const homeSelect = document.getElementById("new-match-team");
+  const opponentSelect = document.getElementById("new-match-opponent-team");
+  const emptyHint = document.getElementById("new-match-empty-teams");
+  const confirmButton = document.getElementById("new-match-confirm");
+  if (!homeSelect || !opponentSelect) return;
+  const names = typeof listTeamsFromStorage === "function" ? listTeamsFromStorage() : [];
+  const previousHome = homeSelect.value || state.selectedTeam || "";
+  const selectedHome = names.includes(previousHome) ? previousHome : names[0] || "";
+  const fill = (select, placeholder, unavailable = "", selected = "") => {
+    select.innerHTML = "";
+    const first = document.createElement("option");
+    first.value = "";
+    first.textContent = placeholder;
+    select.appendChild(first);
+    names.forEach(name => {
+      const option = document.createElement("option");
+      option.value = name;
+      option.textContent = name;
+      option.disabled = name === unavailable;
+      select.appendChild(option);
+    });
+    select.value = names.includes(selected) && selected !== unavailable ? selected : "";
+    select.disabled = names.length === 0;
+  };
+  fill(homeSelect, "Seleziona squadra", "", selectedHome);
+  const previousOpponent = opponentSelect.value || state.selectedOpponentTeam || "";
+  fill(opponentSelect, "Seleziona avversaria", selectedHome, previousOpponent);
+  if (!opponentSelect.value) {
+    opponentSelect.value = names.find(name => name !== selectedHome) || "";
+  }
+  if (emptyHint) emptyHint.classList.toggle("hidden", names.length > 0);
+  if (confirmButton) confirmButton.disabled = names.length === 0;
+}
+function openNewMatchModal() {
+  const modal = document.getElementById("new-match-modal");
+  if (!modal) return false;
+  populateNewMatchTeamSelects();
+  const manualOpponent = document.getElementById("new-match-opponent-name");
+  if (manualOpponent) {
+    manualOpponent.value = state.useOpponentTeam ? "" : (state.match && state.match.opponentManual) || "";
+  }
+  const desiredMode = state.useOpponentTeam ? "double" : "single";
+  const mode = modal.querySelector(`input[name="new-match-mode"][value="${desiredMode}"]`);
+  if (mode) mode.checked = true;
+  updateNewMatchModeUI();
+  modal.classList.remove("hidden");
+  if (typeof setGlobalModalState === "function") setGlobalModalState(true);
+  return true;
+}
+function closeNewMatchModal() {
+  const modal = document.getElementById("new-match-modal");
+  if (modal) modal.classList.add("hidden");
+  if (typeof setGlobalModalState === "function") setGlobalModalState(false);
+}
 function createNewMatchFromPrompt() {
-  const currentOpponent =
-    state.useOpponentTeam && state.selectedOpponentTeam
-      ? state.selectedOpponentTeam
-      : (state.match && state.match.opponent) || "";
-  const opponentName = prompt("Avversario del nuovo match:", currentOpponent || "");
-  if (opponentName === null) return false;
-  const opponent = opponentName.trim();
-  if (!opponent) {
-    alert("Inserisci un avversario per creare il nuovo match.");
+  return openNewMatchModal();
+}
+function createNewMatchFromSetup(setup = {}) {
+  const teamName = String(setup.teamName || "").trim();
+  const useOpponentTeam = setup.mode === "double";
+  const opponentTeam = String(setup.opponentTeam || "").trim();
+  const opponentManual = String(setup.opponentManual || "").trim();
+  if (!teamName) {
+    alert("Seleziona la squadra principale.");
     return false;
   }
+  if (typeof loadTeamFromStorage === "function" && !loadTeamFromStorage(teamName)) {
+    alert("La squadra principale non è più disponibile nell'archivio.");
+    return false;
+  }
+  if (useOpponentTeam && (!opponentTeam || opponentTeam === teamName)) {
+    alert("Seleziona una squadra avversaria diversa dalla squadra principale.");
+    return false;
+  }
+  if (useOpponentTeam && typeof loadOpponentTeamFromStorage === "function" && !loadOpponentTeamFromStorage(opponentTeam)) {
+    alert("La squadra avversaria non è più disponibile nell'archivio.");
+    return false;
+  }
+  if (!useOpponentTeam && !opponentManual) {
+    alert("Inserisci il nome dell'avversario.");
+    return false;
+  }
+  const opponent = useOpponentTeam ? opponentTeam : opponentManual;
   const ok =
     !state.events || state.events.length === 0
       ? true
@@ -362,24 +442,23 @@ function createNewMatchFromPrompt() {
     alert("Impossibile salvare il match attuale. Il nuovo match non è stato creato.");
     return false;
   }
-  const keepSelectedOpponent =
-    !!state.selectedOpponentTeam &&
-    state.selectedOpponentTeam.localeCompare(opponent, "it", { sensitivity: "base" }) === 0;
   state.selectedMatch = "";
   state.loadedMatchName = "";
   resetMatchState({ skipMatchesRender: true });
-  if (!keepSelectedOpponent) {
-    state.selectedOpponentTeam = "";
-    state.useOpponentTeam = false;
-    state.opponentPlayers = [];
-    state.opponentPlayerNumbers = {};
-    state.opponentLiberos = [];
-    state.opponentCaptains = [];
-    state.opponentStats = {};
-    state.opponentCourt = Array.from({ length: 6 }, () => ({ main: "", replaced: "" }));
-    state.opponentAutoRoleBaseCourt = [];
-    state.opponentLiberoAutoMap = {};
-    state.opponentPreferredLibero = "";
+  state.opponentPlayers = [];
+  state.opponentPlayerNumbers = {};
+  state.opponentLiberos = [];
+  state.opponentCaptains = [];
+  state.opponentStats = {};
+  state.opponentCourt = Array.from({ length: 6 }, () => ({ main: "", replaced: "" }));
+  state.opponentAutoRoleBaseCourt = [];
+  state.opponentLiberoAutoMap = {};
+  state.opponentPreferredLibero = "";
+  state.selectedOpponentTeam = "";
+  state.useOpponentTeam = useOpponentTeam;
+  if (typeof handleTeamSelectChange === "function") handleTeamSelectChange(teamName);
+  if (useOpponentTeam && typeof handleOpponentTeamSelectChange === "function") {
+    handleOpponentTeamSelectChange(opponentTeam);
   }
   state.setResults = {};
   state.setStarts = {};
@@ -391,10 +470,10 @@ function createNewMatchFromPrompt() {
   }
   state.match = Object.assign({}, state.match || {}, {
     opponent,
-    opponentManual: opponent,
-    date: (state.match && state.match.date) || getTodayIso(),
+    opponentManual: useOpponentTeam ? "" : opponentManual,
+    date: getTodayIso(),
     matchType: (state.match && state.match.matchType) || "amichevole",
-    teamName: state.selectedTeam || (state.match && state.match.teamName) || ""
+    teamName
   });
   state.selectedMatch = generateMatchName();
   state.loadedMatchName = state.selectedMatch;
@@ -405,6 +484,7 @@ function createNewMatchFromPrompt() {
   if (typeof renderMatchSummary === "function") {
     renderMatchSummary();
   }
+  if (typeof syncOpponentSettingsUI === "function") syncOpponentSettingsUI();
   return true;
 }
 function deleteSelectedMatch() {

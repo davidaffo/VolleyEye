@@ -236,23 +236,6 @@ function buildImportUrlCandidates(parsedUrl) {
 
   return candidates;
 }
-async function importMatchFromUrl(url) {
-  try {
-    const parsed = await fetchJsonFromUrl(url);
-    const nextState = parsed && parsed.state ? parsed.state : parsed;
-    const importedBaseName =
-      (parsed && typeof parsed.name === "string" && parsed.name.trim()) ||
-      (typeof buildMatchDisplayName === "function" ? buildMatchDisplayName((nextState && nextState.match) || {}) : "") ||
-      "Match importato";
-    importMatchStateAsNew(nextState, { baseName: importedBaseName });
-    if (elImportJsonUrl) elImportJsonUrl.value = "";
-  } catch (err) {
-    console.error("Import match URL error", err);
-    alert(
-      "Errore import URL match. Verifica che il link sia pubblico e che il provider consenta il download via browser/CORS."
-    );
-  }
-}
 async function importDatabaseFromUrl(url) {
   try {
     const parsed = await fetchJsonFromUrl(url);
@@ -262,7 +245,7 @@ async function importDatabaseFromUrl(url) {
     } else {
       imported = applyImportedDatabase({ state: parsed });
     }
-    if (imported && elImportJsonUrl) elImportJsonUrl.value = "";
+    if (imported && elImportDbUrl) elImportDbUrl.value = "";
   } catch (err) {
     console.error("Import database URL error", err);
     alert(

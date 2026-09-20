@@ -138,7 +138,8 @@ async function initializeApplicationState() {
   }
   state.setResults = state.setResults || {};
   state.setStarts = state.setStarts || {};
-  setActiveTab(state.uiActiveTab || activeTab || "info");
+  syncMatchSessionUI();
+  setActiveTab(state.uiActiveTab || activeTab || "match");
   setActiveAggTab(state.uiAggTab || activeAggTab || "summary");
   ensureBaseRotationDefault();
   const linkImport = maybeImportMatchFromUrl();

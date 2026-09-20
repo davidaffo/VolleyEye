@@ -651,14 +651,22 @@ function setActiveTab(target) {
   if (!target) return;
   const isExportAnalysisHtml =
     typeof window !== "undefined" && !!window.__EXPORT_ANALYSIS_HTML__;
+  const isGlobalTarget = target === "info";
+  const isLobbyTarget = target === "match";
+  const sessionActive = !!(state && state.uiMatchSessionActive && hasUsableMatch());
   if (
     !isExportAnalysisHtml &&
-    target !== "match" &&
+    !isGlobalTarget &&
+    !isLobbyTarget &&
     typeof window !== "undefined" &&
     typeof hasUsableMatch === "function" &&
     !hasUsableMatch()
   ) {
     target = "match";
+  }
+  if (!isExportAnalysisHtml && !isGlobalTarget) {
+    if (sessionActive && isLobbyTarget) target = "scout";
+    if (!sessionActive && !isLobbyTarget) target = "match";
   }
   const prevTab = activeTab;
   if (prevTab === "video" && target !== "video") {
@@ -674,6 +682,7 @@ function setActiveTab(target) {
   if (document && document.documentElement) {
     document.documentElement.dataset.activeTab = target;
   }
+  syncMatchSessionUI();
   tabButtons.forEach(btn => {
     btn.classList.toggle("active", btn.dataset.tabTarget === target);
   });
@@ -733,7 +742,7 @@ function initTabs() {
       const target = btn.dataset.tabTarget;
       if (target) {
         if (
-          target !== "match" &&
+          !["match", "info"].includes(target) &&
           typeof window !== "undefined" &&
           typeof hasUsableMatch === "function" &&
           !hasUsableMatch()
@@ -746,7 +755,48 @@ function initTabs() {
       }
     });
   });
-  setActiveTab("info");
+  setActiveTab("match");
+}
+
+function syncMatchSessionUI() {
+  const active = !!(state && state.uiMatchSessionActive && hasUsableMatch());
+  if (state) state.uiMatchSessionActive = active;
+  if (document && document.body) {
+    document.body.dataset.matchSession = active ? "true" : "false";
+  }
+  if (document && document.documentElement) {
+    document.documentElement.dataset.matchSession = active ? "true" : "false";
+  }
+  const label = document.getElementById("active-match-name");
+  if (label) {
+    const displayName = typeof buildMatchDisplayName === "function" ? buildMatchDisplayName(state.match || {}) : "";
+    label.textContent = displayName || state.loadedMatchName || state.selectedMatch || "Partita";
+    if (document && document.body) document.body.dataset.matchLabel = label.textContent;
+  }
+}
+
+function enterSelectedMatch() {
+  if (!elSavedMatchesSelect || !elSavedMatchesSelect.value) return false;
+  loadSelectedMatch();
+  if (!hasUsableMatch()) return false;
+  state.uiMatchSessionActive = true;
+  syncMatchSessionUI();
+  setActiveTab("scout");
+  saveState({ persistLocal: true });
+  return true;
+}
+
+function exitCurrentMatch() {
+  if (!state || !state.uiMatchSessionActive) return;
+  if (typeof pauseSkillClock === "function") pauseSkillClock();
+  if (typeof pauseVideoClock === "function") pauseVideoClock();
+  if (typeof persistCurrentMatch === "function") persistCurrentMatch({ allowCreate: false });
+  state.uiMatchSessionActive = false;
+  document.body.classList.remove("drawer-menu-open", "drawer-log-open");
+  syncMatchSessionUI();
+  setActiveTab("match");
+  if (typeof renderMatchesSelect === "function") renderMatchesSelect();
+  saveState({ persistLocal: true, skipMatchPersist: true });
 }
 function initSwipeTabs() {
   if (!("ontouchstart" in window)) return;
@@ -761,7 +811,7 @@ function initSwipeTabs() {
   const maxOffset = 35;
   const maxTime = 600;
   const swipeZoneRatio = 0.25;
-  const tabsOrder = ["match", "info", "scout", "aggregated", "video", "training"];
+  const tabsOrder = ["match", "info", "scout", "aggregated", "video"];
   const onStart = e => {
     if (!e.touches || e.touches.length === 0) {
       startedInSwipeZone = false;

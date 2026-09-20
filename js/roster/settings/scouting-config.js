@@ -158,6 +158,7 @@ function hasUsableMatch() {
 }
 function applyMatchRequirementLock() {
   const hasMatches = hasUsableMatch();
+  if (!hasMatches) state.uiMatchSessionActive = false;
   if (document && document.body) {
     document.body.dataset.noMatch = hasMatches ? "false" : "true";
   }
@@ -166,10 +167,11 @@ function applyMatchRequirementLock() {
       const target = btn && btn.dataset ? btn.dataset.tabTarget : "";
       if (!target) return;
       btn.disabled = false;
-      btn.dataset.noMatchLocked = !hasMatches && target !== "match" ? "true" : "false";
+      btn.dataset.noMatchLocked = !hasMatches && !["match", "info"].includes(target) ? "true" : "false";
     });
   }
-  if (!hasMatches && typeof setActiveTab === "function" && activeTab !== "match") {
+  if (typeof syncMatchSessionUI === "function") syncMatchSessionUI();
+  if (!hasMatches && typeof setActiveTab === "function" && !["match", "info"].includes(activeTab)) {
     setActiveTab("match");
   }
 }

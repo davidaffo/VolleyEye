@@ -1305,3 +1305,93 @@ body[data-theme="light"] .court-net-divider::after {
 .base-modal__content {
   max-width: 360px;
 }
+/* Application shell and match creation flow */
+.app-shell-nav { min-height: 2.8rem; }
+.match-session-only { display: none !important; }
+body[data-match-session="true"] .match-session-only { display: inline-flex !important; }
+body[data-match-session="true"] .lobby-only { display: none !important; }
+.match-session-identity {
+  min-width: 0;
+  flex: 0 1 18rem;
+  flex-direction: column;
+  gap: 0.05rem;
+  padding: 0.25rem 0.65rem;
+  border-left: 1px solid #334155;
+  line-height: 1.15;
+}
+.match-session-identity__label,
+.match-lobby-eyebrow {
+  color: #94a3b8;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.match-session-identity strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.match-session-exit { flex: 0 0 auto; white-space: nowrap; }
+.mobile-match-exit {
+  width: 1.7rem;
+  height: 1.7rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 999px;
+  background: #7f1d1d;
+  border: 1px solid #ef4444;
+  color: #fff;
+}
+.global-settings-btn { flex: 0 0 auto; }
+.match-lobby-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.35rem 0.2rem 0.55rem;
+}
+.match-lobby-heading h2,
+.match-lobby-eyebrow { margin: 0; }
+.match-lobby-heading h2 { margin-top: 0.15rem; font-size: 1.45rem; }
+.global-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.global-settings-card {
+  padding: 0.8rem;
+  border: 1px solid #334155;
+  border-radius: 0.65rem;
+  background: #151a21;
+}
+.global-settings-card h3 { margin-top: 0; }
+.global-settings-card .opponent-skill-toggles { margin-top: 0.7rem; }
+.new-match-modal__content { width: min(620px, calc(100vw - 1.5rem)); }
+.new-match-setup-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin: 0.9rem 0;
+}
+.new-match-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+.new-match-mode {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+}
+.new-match-mode legend { padding: 0 0.3rem; font-size: 0.82rem; font-weight: 700; }
+.new-match-mode label { display: inline-flex; align-items: center; gap: 0.35rem; }
+body[data-theme="light"] .match-session-identity { border-left-color: #cbd5e1; }
+body[data-theme="light"] .global-settings-card { border-color: #d1d5db; background: #f8fafc; }
+body[data-theme="light"] .new-match-mode { border-color: #cbd5e1; }

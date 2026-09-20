@@ -162,6 +162,8 @@ function applyStateSnapshot(parsed, options = {}) {
   state.uiScoutColumns = Object.assign({}, state.uiScoutColumns || {}, asRecord(parsed.uiScoutColumns));
   state.uiScoutWidgetLayout = parsed.uiScoutWidgetLayout || null;
   state.uiVideoAnalysisSort = Object.assign({}, state.uiVideoAnalysisSort || {}, asRecord(parsed.uiVideoAnalysisSort));
+  state.uiMatchSessionActive = parsed.uiMatchSessionActive === true;
+  state.uiActiveTab = typeof parsed.uiActiveTab === "string" ? parsed.uiActiveTab : "match";
   state.uiTopBarHidden = !!parsed.uiTopBarHidden;
   state.forceMobileLayout = !!parsed.forceMobileLayout;
   state.liberos = Array.isArray(parsed.liberos)
@@ -354,7 +356,8 @@ function buildCompactLocalStateSnapshot(snapshot) {
     useOpponentTeam: !!snapshot.useOpponentTeam,
     matchFinished: !!snapshot.matchFinished,
     autoRolePositioning: snapshot.autoRolePositioning !== false,
-    uiActiveTab: snapshot.uiActiveTab || "info",
+    uiActiveTab: snapshot.uiActiveTab || "match",
+    uiMatchSessionActive: snapshot.uiMatchSessionActive === true,
     uiAggTab: snapshot.uiAggTab || "summary",
     uiTopBarHidden: !!snapshot.uiTopBarHidden,
     forceMobileLayout: !!snapshot.forceMobileLayout,

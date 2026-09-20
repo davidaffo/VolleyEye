@@ -33,6 +33,7 @@ function applyImportedMatch(nextState, options = {}) {
   const preservedSavedOpponentTeams = state.savedOpponentTeams || {};
   const preservedSavedMatches = state.savedMatches || {};
   const preservedPlayersDb = state.playersDb || {};
+  const preservedOpponentSkillConfig = state.opponentSkillConfig || {};
   resetSetTypeState();
   const merged = Object.assign({}, state, nextState);
   const normalizedPlayers = normalizePlayers(nextState.players || []);
@@ -123,7 +124,7 @@ function applyImportedMatch(nextState, options = {}) {
   merged.courtViewMirrored = !!nextState.courtViewMirrored;
   merged.courtSideSwapped = !!nextState.courtSideSwapped;
   merged.useOpponentTeam = !!nextState.useOpponentTeam;
-  merged.opponentSkillConfig = nextState.opponentSkillConfig || state.opponentSkillConfig || {};
+  merged.opponentSkillConfig = cloneIsolationData(preservedOpponentSkillConfig);
   merged.freeballPending = !!nextState.freeballPending;
   merged.freeballPendingScope = nextState.freeballPendingScope === "opponent" ? "opponent" : "our";
   merged.flowTeamScope = nextState.flowTeamScope === "opponent" ? "opponent" : "our";
