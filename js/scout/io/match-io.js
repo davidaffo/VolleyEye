@@ -29,6 +29,7 @@ function applyImportedMatch(nextState, options = {}) {
       ? cloneIsolationData(nextState)
       : JSON.parse(JSON.stringify(nextState));
   const preservedPointRules = state.pointRules;
+  const preservedTheme = getStoredThemePreference() || normalizeThemePreference(state.theme);
   const preservedSavedTeams = state.savedTeams || {};
   const preservedSavedOpponentTeams = state.savedOpponentTeams || {};
   const preservedSavedMatches = state.savedMatches || {};
@@ -69,6 +70,7 @@ function applyImportedMatch(nextState, options = {}) {
     : Array.from({ length: 6 }, () => ({ main: "", replaced: "" }));
   merged.metricsConfig = nextState.metricsConfig || state.metricsConfig || {};
   merged.pointRules = preservedPointRules || merged.pointRules || {};
+  merged.theme = preservedTheme;
   merged.savedTeams = cloneIsolationData(preservedSavedTeams);
   merged.savedOpponentTeams = cloneIsolationData(preservedSavedOpponentTeams);
   merged.savedMatches = cloneIsolationData(preservedSavedMatches);
@@ -147,7 +149,7 @@ function applyImportedMatch(nextState, options = {}) {
     enforceAutoLiberoForState({ skipServerOnServe: true });
   }
   saveState();
-  applyTheme(state.theme || "dark");
+  applyTheme(preservedTheme);
   applyMatchInfoToUI();
   applyPlayersFromStateToTextarea();
   applyOpponentPlayersFromStateToTextarea();

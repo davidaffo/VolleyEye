@@ -1,0 +1,124 @@
+/*
+ * Single semantic palette for fundamentals.
+ * Components consume the same accent/surface tokens in every screen.
+ */
+:is(.skill-serve, .badge-serve) {
+  --skill-ui-accent: #1b5e20;
+  --skill-ui-on-accent: #ffffff;
+  --skill-ui-surface: rgba(34, 197, 94, 0.2);
+  --skill-ui-on-surface: var(--text-color, #f5f5f5);
+  --skill-ui-border: #22c55e;
+}
+:is(.skill-pass, .badge-pass) {
+  --skill-ui-accent: #f9a825;
+  --skill-ui-on-accent: #0f172a;
+  --skill-ui-surface: rgba(249, 168, 37, 0.22);
+  --skill-ui-on-surface: var(--text-color, #f5f5f5);
+  --skill-ui-border: #f9a825;
+}
+:is(.skill-freeball, .badge-freeball) {
+  --skill-ui-accent: #a21caf;
+  --skill-ui-on-accent: #ffffff;
+  --skill-ui-surface: rgba(192, 38, 211, 0.2);
+  --skill-ui-on-surface: var(--text-color, #f5f5f5);
+  --skill-ui-border: #c026d3;
+}
+:is(.skill-attack, .badge-attack) {
+  --skill-ui-accent: #b71c1c;
+  --skill-ui-on-accent: #ffffff;
+  --skill-ui-surface: rgba(239, 68, 68, 0.2);
+  --skill-ui-on-surface: var(--text-color, #f5f5f5);
+  --skill-ui-border: #ef4444;
+}
+:is(.skill-defense, .badge-defense) {
+  --skill-ui-accent: #475569;
+  --skill-ui-on-accent: #ffffff;
+  --skill-ui-surface: rgba(96, 165, 250, 0.2);
+  --skill-ui-on-surface: var(--text-color, #f5f5f5);
+  --skill-ui-border: #60a5fa;
+}
+:is(.skill-block, .badge-block) {
+  --skill-ui-accent: #5b21b6;
+  --skill-ui-on-accent: #ffffff;
+  --skill-ui-surface: rgba(167, 139, 250, 0.22);
+  --skill-ui-on-surface: var(--text-color, #f5f5f5);
+  --skill-ui-border: #8b5cf6;
+}
+:is(.skill-second, .badge-second) {
+  --skill-ui-accent: #0f766e;
+  --skill-ui-on-accent: #ffffff;
+  --skill-ui-surface: rgba(34, 211, 238, 0.2);
+  --skill-ui-on-surface: var(--text-color, #f5f5f5);
+  --skill-ui-border: #06b6d4;
+}
+
+body[data-theme="light"] :is(.skill-serve, .badge-serve) {
+  --skill-ui-surface: #dcfce7;
+  --skill-ui-on-surface: #14532d;
+  --skill-ui-border: #4ade80;
+}
+body[data-theme="light"] :is(.skill-pass, .badge-pass) {
+  --skill-ui-surface: #fef3c7;
+  --skill-ui-on-surface: #713f12;
+  --skill-ui-border: #f59e0b;
+}
+body[data-theme="light"] :is(.skill-freeball, .badge-freeball) {
+  --skill-ui-surface: #fae8ff;
+  --skill-ui-on-surface: #701a75;
+  --skill-ui-border: #d946ef;
+}
+body[data-theme="light"] :is(.skill-attack, .badge-attack) {
+  --skill-ui-surface: #fee2e2;
+  --skill-ui-on-surface: #7f1d1d;
+  --skill-ui-border: #ef4444;
+}
+body[data-theme="light"] :is(.skill-defense, .badge-defense) {
+  --skill-ui-surface: #e0f2fe;
+  --skill-ui-on-surface: #0c4a6e;
+  --skill-ui-border: #38bdf8;
+}
+body[data-theme="light"] :is(.skill-block, .badge-block) {
+  --skill-ui-surface: #ede9fe;
+  --skill-ui-on-surface: #4c1d95;
+  --skill-ui-border: #8b5cf6;
+}
+body[data-theme="light"] :is(.skill-second, .badge-second) {
+  --skill-ui-surface: #ccfbf1;
+  --skill-ui-on-surface: #115e59;
+  --skill-ui-border: #14b8a6;
+}
+
+/* Strong identity: live buttons, headers and compact badges. */
+:is(.skill-title, .skill-picker-btn, .badge)[class*="skill-"],
+.badge[class*="badge-"] {
+  background: var(--skill-ui-accent) !important;
+  border-color: var(--skill-ui-border) !important;
+  color: var(--skill-ui-on-accent) !important;
+}
+
+/* Tinted identity: settings cards, toggles and analysis columns. */
+.metric-block[class*="skill-"],
+.skill-col[class*="skill-"] {
+  background: var(--skill-ui-surface) !important;
+  border-color: var(--skill-ui-border) !important;
+  color: var(--skill-ui-on-surface) !important;
+}
+.metric-block[class*="skill-"] {
+  box-shadow: inset 4px 0 0 var(--skill-ui-accent);
+}
+.metric-block[class*="skill-"].disabled {
+  filter: saturate(0.55);
+}
+.opponent-skill-toggles label[class*="skill-"] {
+  margin-top: 0;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--skill-ui-border);
+  border-radius: 0.55rem;
+  background: var(--skill-ui-surface);
+  color: var(--skill-ui-on-surface);
+}
+
+:is(.skill-title, .skill-picker-btn, .badge)[class*="skill-"]:hover,
+.badge[class*="badge-"]:hover {
+  filter: brightness(1.08);
+}

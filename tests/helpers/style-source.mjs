@@ -12,6 +12,8 @@ export const STYLE_SOURCE_FILES = [
   "styles/team-management.css",
   "styles/responsive.css",
   "styles/scout-live.css",
+  "styles/light-theme.css",
+  "styles/skill-palette.css",
   "styles/print.css"
 ];
 

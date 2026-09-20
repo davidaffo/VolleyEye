@@ -727,6 +727,12 @@ body[data-theme="light"] .court-cell {
   background: #f9fafb;
   border-color: #cdd6e5;
 }
+body[data-theme="light"] .court-cell.best-volume {
+  border-color: #2563eb;
+  border-width: 2px;
+  border-style: solid;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.14);
+}
 body[data-theme="light"] .court-cell.best-eff {
   background: #dcfce7;
 }
@@ -804,10 +810,11 @@ body[data-theme="light"] .rotation-table td {
   flex-wrap: wrap;
 }
 .video-analysis__actions {
-  display: inline-flex;
+  display: flex;
   gap: 0.4rem;
   align-items: center;
   flex-wrap: wrap;
+  margin-bottom: 0.8rem;
 }
 .youtube-input {
   display: inline-flex;

@@ -257,7 +257,7 @@ async function captureAnalysisAsPdf() {
   const prevTheme = state.theme || document.body.dataset.theme || "dark";
   setActiveTab("aggregated");
   setActiveAggTab(prevAggTab || activeAggTab || "summary");
-  applyTheme("light");
+  applyTheme("light", { persistPreference: false });
   document.body.classList.add("pdf-capture");
   setPrintMatchTitle();
   const captureTarget = aggPanel.querySelector(".agg-subpanel.active") || aggPanel;
@@ -305,7 +305,7 @@ async function captureAnalysisAsPdf() {
   } finally {
     restoreFilters();
     document.body.classList.remove("pdf-capture");
-    applyTheme(prevTheme);
+    applyTheme(prevTheme, { persistPreference: false });
     if (prevTab) setActiveTab(prevTab);
     if (prevAggTab) setActiveAggTab(prevAggTab);
   }
@@ -320,7 +320,7 @@ async function openAnalysisPrintLayout() {
   const prevTheme = state.theme || document.body.dataset.theme || "dark";
   setActiveTab("aggregated");
   setActiveAggTab(prevAggTab || activeAggTab || "summary");
-  applyTheme("light");
+  applyTheme("light", { persistPreference: false });
   document.body.classList.add("pdf-capture");
   setPrintMatchTitle();
   const captureTarget = aggPanel.querySelector(".agg-subpanel.active") || aggPanel;
@@ -333,7 +333,7 @@ async function openAnalysisPrintLayout() {
   } finally {
     restoreFilters();
     document.body.classList.remove("pdf-capture");
-    applyTheme(prevTheme);
+    applyTheme(prevTheme, { persistPreference: false });
     if (prevTab) setActiveTab(prevTab);
     if (prevAggTab) setActiveAggTab(prevAggTab);
   }

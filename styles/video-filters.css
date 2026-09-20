@@ -210,6 +210,17 @@ body[data-theme="light"] .analysis-filter select {
   gap: 0.7rem;
 }
 .set-trend-panel {
+  --set-trend-plot-background: radial-gradient(circle at top, rgba(148, 163, 184, 0.08), transparent 58%), rgba(2, 6, 23, 0.48);
+  --set-trend-grid: rgba(148, 163, 184, 0.2);
+  --set-trend-axis: rgba(148, 163, 184, 0.38);
+  --set-trend-zero: rgba(250, 204, 21, 0.82);
+  --set-trend-label: rgba(226, 232, 240, 0.72);
+  --set-trend-positive: #22c55e;
+  --set-trend-neutral: #facc15;
+  --set-trend-negative: #ef4444;
+  --set-trend-guide: rgba(248, 250, 252, 0.92);
+  --set-trend-dot-ring: rgba(15, 23, 42, 0.95);
+  --set-trend-dot-active-ring: #ffffff;
   display: grid;
   gap: 0.8rem;
 }
@@ -246,9 +257,7 @@ body[data-theme="light"] .analysis-filter select {
   min-height: 260px;
   border-radius: 0.7rem;
   overflow: hidden;
-  background:
-    radial-gradient(circle at top, rgba(148, 163, 184, 0.08), transparent 58%),
-    rgba(2, 6, 23, 0.48);
+  background: var(--set-trend-plot-background);
 }
 .set-trend-card__plot svg {
   display: block;
@@ -260,17 +269,20 @@ body[data-theme="light"] .analysis-filter select {
 }
 .set-trend-svg .set-trend__grid line,
 .set-trend-svg .set-trend__axis {
-  stroke: rgba(148, 163, 184, 0.2);
+  stroke: var(--set-trend-grid);
   stroke-width: 1;
 }
+.set-trend-svg .set-trend__axis {
+  stroke: var(--set-trend-axis);
+}
 .set-trend-svg .set-trend__zero {
-  stroke: rgba(250, 204, 21, 0.82);
+  stroke: var(--set-trend-zero);
   stroke-width: 1.6;
   stroke-dasharray: 4 4;
 }
 .set-trend-svg .set-trend__tick text,
 .set-trend-svg .set-trend__label {
-  fill: rgba(226, 232, 240, 0.72);
+  fill: var(--set-trend-label);
   font-size: 11px;
 }
 .set-trend-svg .set-trend__segment {
@@ -279,54 +291,54 @@ body[data-theme="light"] .analysis-filter select {
   stroke-linecap: round;
 }
 .set-trend-svg .set-trend__segment.is-positive {
-  stroke: #22c55e;
+  stroke: var(--set-trend-positive);
 }
 .set-trend-svg .set-trend__segment.is-neutral {
-  stroke: #facc15;
+  stroke: var(--set-trend-neutral);
 }
 .set-trend-svg .set-trend__segment.is-negative {
-  stroke: #ef4444;
+  stroke: var(--set-trend-negative);
 }
 .set-trend-svg .set-trend__guide {
   opacity: 0;
   pointer-events: none;
-  stroke: rgba(248, 250, 252, 0.3);
+  stroke: var(--set-trend-guide);
   stroke-width: 2;
   stroke-dasharray: 4 5;
   transition: opacity 120ms ease, stroke 120ms ease, stroke-width 120ms ease;
 }
 .set-trend-svg .set-trend__guide.is-selected {
   opacity: 0.5;
-  stroke: rgba(248, 250, 252, 0.5);
+  stroke: var(--set-trend-guide);
 }
 .set-trend-svg .set-trend__guide.is-hover {
   opacity: 1;
-  stroke: rgba(248, 250, 252, 0.92);
+  stroke: var(--set-trend-guide);
   stroke-width: 2.5;
 }
 .set-trend-svg .set-trend__dot {
   cursor: pointer;
-  stroke: rgba(15, 23, 42, 0.95);
+  stroke: var(--set-trend-dot-ring);
   stroke-width: 1.5;
   transition: r 120ms ease, stroke-width 120ms ease, stroke 120ms ease, filter 120ms ease;
 }
 .set-trend-svg .set-trend__dot.is-positive {
-  fill: #22c55e;
+  fill: var(--set-trend-positive);
 }
 .set-trend-svg .set-trend__dot.is-neutral {
-  fill: #facc15;
+  fill: var(--set-trend-neutral);
 }
 .set-trend-svg .set-trend__dot.is-negative {
-  fill: #ef4444;
+  fill: var(--set-trend-negative);
 }
 .set-trend-svg .set-trend__dot.is-selected {
   r: 6;
-  stroke: #f8fafc;
+  stroke: var(--set-trend-dot-active-ring);
   stroke-width: 2;
 }
 .set-trend-svg .set-trend__dot.is-hover {
   r: 7;
-  stroke: #ffffff;
+  stroke: var(--set-trend-dot-active-ring);
   stroke-width: 2.75;
   filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.3));
 }

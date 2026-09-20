@@ -26,14 +26,14 @@
     };
   </script>
   <script>
-    window.__APP_CACHE_VERSION__ = "v0.18.0-401-c3671a1";
+    window.__APP_CACHE_VERSION__ = "v0.18.1-402-36b41f4";
     window.__IS_LOCALHOST_DEV__ =
       location.hostname === "localhost" ||
       location.hostname === "127.0.0.1" ||
       location.hostname === "::1";
     window.__APP_ASSET_SUFFIX__ = window.__IS_LOCALHOST_DEV__
       ? `?dev=${Date.now()}`
-      : `?v=v0.18.0-401-c3671a1`;
+      : `?v=v0.18.1-402-36b41f4`;
     if (location.protocol === "file:") {
       document.documentElement.dataset.fileOrigin = "true";
     }
@@ -51,6 +51,8 @@
       "styles/team-management.css",
       "styles/responsive.css",
       "styles/scout-live.css",
+      "styles/light-theme.css",
+      "styles/skill-palette.css",
       "styles/print.css"
     ].forEach(href => {
       const stylesheet = document.createElement("link");
@@ -114,6 +116,14 @@
           <p class="match-lobby-eyebrow">Archivio partite</p>
           <h2>Scegli una partita</h2>
           <p class="section-note">Seleziona una partita e accedi al suo spazio dedicato per Scout live, Analisi e Video.</p>
+        </div>
+        <div class="lobby-theme-picker">
+          <span class="lobby-theme-picker__label">Tema</span>
+          <div class="theme-toggle" role="group" aria-label="Tema applicazione">
+            <button type="button" id="theme-auto-lobby" class="secondary" data-theme-choice="auto" aria-pressed="false" title="Segui il tema del dispositivo">◐ Automatico</button>
+            <button type="button" id="theme-dark-lobby" class="secondary" data-theme-choice="dark" aria-pressed="false" title="Tema scuro">🌙 Scuro</button>
+            <button type="button" id="theme-light-lobby" class="secondary" data-theme-choice="light" aria-pressed="false" title="Tema chiaro">☀️ Chiaro</button>
+          </div>
         </div>
       </div>
       <div class="top-bar match-info-bar">
@@ -235,23 +245,24 @@
       <div class="global-settings-grid">
         <div class="global-settings-card">
           <h3>Aspetto</h3>
-          <p class="section-note">Scegli il tema usato in tutta l’applicazione.</p>
+          <p class="section-note">Scegli il tema usato in tutta l’applicazione oppure segui quello del dispositivo.</p>
           <div class="theme-toggle" role="group" aria-label="Tema applicazione">
-            <button type="button" id="theme-dark" class="secondary" aria-pressed="false" title="Tema scuro">🌙 Scuro</button>
-            <button type="button" id="theme-light" class="secondary" aria-pressed="false" title="Tema chiaro">☀️ Chiaro</button>
+            <button type="button" id="theme-auto" class="secondary" data-theme-choice="auto" aria-pressed="false" title="Segui il tema del dispositivo">◐ Automatico</button>
+            <button type="button" id="theme-dark" class="secondary" data-theme-choice="dark" aria-pressed="false" title="Tema scuro">🌙 Scuro</button>
+            <button type="button" id="theme-light" class="secondary" data-theme-choice="light" aria-pressed="false" title="Tema chiaro">☀️ Chiaro</button>
           </div>
         </div>
         <div class="global-settings-card">
           <h3>Scouting squadra avversaria</h3>
           <p class="section-note">Scegli quali fondamentali sono disponibili quando la partita usa due squadre.</p>
           <div class="opponent-skill-toggles">
-            <label class="auto-rotate-toggle"><input type="checkbox" id="opponent-skill-serve" /> Battuta</label>
-            <label class="auto-rotate-toggle"><input type="checkbox" id="opponent-skill-pass" /> Ricezione</label>
-            <label class="auto-rotate-toggle"><input type="checkbox" id="opponent-skill-freeball" /> Freeball</label>
-            <label class="auto-rotate-toggle"><input type="checkbox" id="opponent-skill-second" /> Alzata</label>
-            <label class="auto-rotate-toggle"><input type="checkbox" id="opponent-skill-attack" /> Attacco</label>
-            <label class="auto-rotate-toggle"><input type="checkbox" id="opponent-skill-defense" /> Difesa</label>
-            <label class="auto-rotate-toggle"><input type="checkbox" id="opponent-skill-block" /> Muro</label>
+            <label class="auto-rotate-toggle skill-serve"><input type="checkbox" id="opponent-skill-serve" /> Battuta</label>
+            <label class="auto-rotate-toggle skill-pass"><input type="checkbox" id="opponent-skill-pass" /> Ricezione</label>
+            <label class="auto-rotate-toggle skill-freeball"><input type="checkbox" id="opponent-skill-freeball" /> Freeball</label>
+            <label class="auto-rotate-toggle skill-second"><input type="checkbox" id="opponent-skill-second" /> Alzata</label>
+            <label class="auto-rotate-toggle skill-attack"><input type="checkbox" id="opponent-skill-attack" /> Attacco</label>
+            <label class="auto-rotate-toggle skill-defense"><input type="checkbox" id="opponent-skill-defense" /> Difesa</label>
+            <label class="auto-rotate-toggle skill-block"><input type="checkbox" id="opponent-skill-block" /> Muro</label>
           </div>
         </div>
       </div>
@@ -1536,6 +1547,21 @@
             <p class="section-note">Carica un video e sincronizza le skill registrate per saltare al momento corretto.</p>
           </div>
         </div>
+        <div class="video-analysis__actions">
+          <label id="video-file-picker" class="file-btn" for="video-file-input">Carica video</label>
+          <input id="video-file-input" type="file" accept="video/*" hidden />
+          <button id="btn-clear-video" class="danger" type="button">Rimuovi video</button>
+          <button id="btn-sync-first-skill" class="secondary">Sincronizza prima skill</button>
+          <button id="btn-copy-ffmpeg" class="secondary">Copia ffmpeg (selezione)</button>
+          <label class="auto-rotate-toggle">
+            <input type="checkbox" id="video-playbyplay-toggle" />
+            Play by play
+          </label>
+          <div class="youtube-input">
+            <input id="youtube-url-input" type="url" placeholder="https://youtu.be/..." />
+            <button id="btn-load-youtube" class="secondary">Usa YouTube</button>
+          </div>
+        </div>
       <div class="video-analysis__grid">
         <div class="video-skills">
           <div class="table-wrapper video-table-wrapper">
@@ -1552,21 +1578,6 @@
           </div>
         </div>
         <div class="video-player-wrap video-player-wrap--analysis">
-          <div class="video-analysis__actions">
-            <label id="video-file-picker" class="file-btn" for="video-file-input">Carica video</label>
-            <input id="video-file-input" type="file" accept="video/*" hidden />
-            <button id="btn-clear-video" class="danger" type="button">Rimuovi video</button>
-            <button id="btn-sync-first-skill" class="secondary">Sincronizza prima skill</button>
-            <button id="btn-copy-ffmpeg" class="secondary">Copia ffmpeg (selezione)</button>
-            <label class="auto-rotate-toggle">
-              <input type="checkbox" id="video-playbyplay-toggle" />
-              Play by play
-            </label>
-            <div class="youtube-input">
-              <input id="youtube-url-input" type="url" placeholder="https://youtu.be/..." />
-              <button id="btn-load-youtube" class="secondary">Usa YouTube</button>
-            </div>
-          </div>
           <div class="video-media">
             <div id="video-analysis-overlay" class="video-overlay hidden" aria-hidden="true">
               <div id="video-overlay-set" class="video-overlay-line"></div>

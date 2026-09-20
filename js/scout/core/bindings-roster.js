@@ -13,16 +13,23 @@ function bindRosterAndArchiveControls() {
     input.addEventListener("change", handler);
     input.addEventListener("blur", handler);
   });
-  if (elThemeToggleDark && elThemeToggleLight) {
-    elThemeToggleDark.addEventListener("click", () => {
-      applyTheme("dark");
+  if (elThemeToggles.length) {
+    elThemeToggles.forEach(button => button.addEventListener("click", () => {
+      applyTheme(button.dataset.themeChoice);
       saveState();
-    });
-    elThemeToggleLight.addEventListener("click", () => {
-      applyTheme("light");
-      saveState();
-    });
-    applyTheme(state.theme || "dark");
+    }));
+    if (typeof window.matchMedia === "function") {
+      const deviceTheme = window.matchMedia("(prefers-color-scheme: light)");
+      const syncAutomaticTheme = () => {
+        if (state.theme === "auto") applyTheme("auto");
+      };
+      if (typeof deviceTheme.addEventListener === "function") {
+        deviceTheme.addEventListener("change", syncAutomaticTheme);
+      } else if (typeof deviceTheme.addListener === "function") {
+        deviceTheme.addListener(syncAutomaticTheme);
+      }
+    }
+    applyTheme(state.theme || "auto");
   }
   const elPastePlayersModal = document.getElementById("paste-players-modal");
   const closePastePlayersModal = () => {

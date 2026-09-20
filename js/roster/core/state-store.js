@@ -53,19 +53,51 @@ function buildMatchDisplayName(matchObj) {
   return parts.join(" - ") || "Match";
 }
 
-function applyTheme(theme) {
-  const next = theme === "light" ? "light" : "dark";
-  document.body.dataset.theme = next;
-  state.theme = next;
-  const textColor = (THEME_TEXT && THEME_TEXT[next]) || "#ffffff";
-  document.documentElement.style.setProperty("--text-color", textColor);
-  if (elThemeToggleDark && elThemeToggleLight) {
-    const isLight = next === "light";
-    elThemeToggleLight.classList.toggle("active", isLight);
-    elThemeToggleDark.classList.toggle("active", !isLight);
-    elThemeToggleLight.setAttribute("aria-pressed", String(isLight));
-    elThemeToggleDark.setAttribute("aria-pressed", String(!isLight));
+const THEME_PREFERENCE_KEY = "volleyeye-theme-preference";
+
+function normalizeThemePreference(theme) {
+  return ["auto", "light", "dark"].includes(theme) ? theme : "auto";
+}
+
+function getStoredThemePreference() {
+  try {
+    const stored = localStorage.getItem(THEME_PREFERENCE_KEY);
+    return ["auto", "light", "dark"].includes(stored) ? stored : "";
+  } catch (_) {
+    return "";
   }
+}
+
+function setStoredThemePreference(theme) {
+  try {
+    localStorage.setItem(THEME_PREFERENCE_KEY, normalizeThemePreference(theme));
+  } catch (_) {
+    // Il tema resta comunque applicato per la sessione corrente.
+  }
+}
+
+function applyTheme(theme, options = {}) {
+  const preference = normalizeThemePreference(theme);
+  const persistPreference = options.persistPreference !== false;
+  const followsDevice = preference === "auto";
+  const devicePrefersLight =
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-color-scheme: light)").matches;
+  const resolvedTheme = followsDevice ? (devicePrefersLight ? "light" : "dark") : preference;
+  document.body.dataset.theme = resolvedTheme;
+  document.body.dataset.themePreference = preference;
+  document.documentElement.style.colorScheme = resolvedTheme;
+  const themeColor = document.querySelector('meta[name="theme-color"]');
+  if (themeColor) themeColor.content = resolvedTheme === "light" ? "#f1f5f9" : "#111111";
+  state.theme = preference;
+  if (persistPreference) setStoredThemePreference(preference);
+  const textColor = (THEME_TEXT && THEME_TEXT[resolvedTheme]) || "#ffffff";
+  document.documentElement.style.setProperty("--text-color", textColor);
+  elThemeToggles.forEach(button => {
+    const isActive = button.dataset.themeChoice === preference;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
 }
 const SKILL_COLUMN_MAP = {
   serve: [4, 5, 6, 7, 8],
@@ -121,9 +153,10 @@ function applyStateSnapshot(parsed, options = {}) {
   const { skipStorageSync = false } = options;
   const asRecord = value =>
     value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const globalThemePreference = getStoredThemePreference();
   state = Object.assign(state, parsed);
   state.match = asRecord(parsed.match);
-  state.theme = parsed.theme || "dark";
+  state.theme = globalThemePreference || normalizeThemePreference(parsed.theme);
   state.players = normalizePlayers(parsed.players || state.players || []);
   const normalizedNumbers = normalizeNumbersMap(parsed.playerNumbers || state.playerNumbers || {});
   state.playerNumbers =
@@ -343,7 +376,7 @@ function buildCompactLocalStateSnapshot(snapshot) {
   const compact = {
     __compactLocalSnapshot: true,
     lastSavedAt: Number(snapshot.lastSavedAt || Date.now()) || Date.now(),
-    theme: snapshot.theme || "dark",
+    theme: snapshot.theme || "auto",
     match: snapshot.match || {},
     selectedMatch: snapshot.selectedMatch || "",
     selectedTeam: snapshot.selectedTeam || "",

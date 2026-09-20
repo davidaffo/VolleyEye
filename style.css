@@ -64,9 +64,6 @@ body[data-theme="light"] {
   color: var(--text-color, #0f172a);
   --text-color: #0f172a;
 }
-body[data-theme="light"] :root {
-  color-scheme: light;
-}
 h1, h2, h3 {
   margin: 0.5rem 0;
   font-weight: 600;
@@ -328,6 +325,12 @@ body[data-theme="light"] .tab-panel {
 }
 .theme-toggle button {
   min-width: 44px;
+}
+.theme-toggle button.active {
+  background: #2d6cdf;
+  border-color: #60a5fa;
+  color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.24);
 }
 .pdf-capture .tabs-nav {
   display: none !important;

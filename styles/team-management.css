@@ -131,7 +131,7 @@ body[data-theme="light"] .default-lineup-chip {
 body[data-theme="light"] .default-lineup-chip.default-lineup-out {
   background: #f1f5f9;
   border-color: #cbd5f5;
-  color: #64748b;
+  color: #475569;
 }
 body[data-theme="light"] .default-lineup-rotation .rotation-select {
   background: #ffffff;
@@ -328,7 +328,7 @@ body[data-theme="light"] .team-manager-row--libero .team-manager-input {
 }
 body[data-theme="light"] #team-meta-name:disabled {
   background: #e5e7eb;
-  color: #6b7280;
+  color: #475569;
 }
 .team-manager-footer {
   display: flex;

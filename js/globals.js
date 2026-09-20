@@ -99,7 +99,7 @@ let state = {
     leg: "",
     matchType: ""
   },
-  theme: "dark",
+  theme: "auto",
   currentSet: 1,
   players: [],
   isServing: false,
@@ -624,8 +624,7 @@ const elPlayerAnalysisTableWrap = document.getElementById("player-analysis-table
 const elPlayerAnalysisCompareView = document.getElementById("player-analysis-compare-view");
 const elPlayerAnalysisChartMetric = document.getElementById("player-analysis-chart-metric");
 const elPlayerAnalysisSkillChartGrid = document.getElementById("player-analysis-skill-chart-grid");
-const elThemeToggleDark = document.getElementById("theme-dark");
-const elThemeToggleLight = document.getElementById("theme-light");
+const elThemeToggles = Array.from(document.querySelectorAll("[data-theme-choice]"));
 let modalMode = "skill";
 let modalSubPosIdx = -1;
 

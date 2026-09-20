@@ -1,4 +1,4 @@
-const APP_CACHE_VERSION = "v0.18.0-401-c3671a1";
+const APP_CACHE_VERSION = "v0.18.1-402-36b41f4";
 const withVersion = asset => `${asset}?v=${encodeURIComponent(APP_CACHE_VERSION || "dev")}`;
 
 importScripts(withVersion("./js/app-version.js"));
@@ -19,6 +19,8 @@ const ASSETS = [
   withVersion("./styles/team-management.css"),
   withVersion("./styles/responsive.css"),
   withVersion("./styles/scout-live.css"),
+  withVersion("./styles/light-theme.css"),
+  withVersion("./styles/skill-palette.css"),
   withVersion("./styles/print.css"),
   "./version.json",
   "./match_demo.json",
@@ -127,6 +129,8 @@ const NETWORK_FIRST_PATHS = new Set([
   "/styles/team-management.css",
   "/styles/responsive.css",
   "/styles/scout-live.css",
+  "/styles/light-theme.css",
+  "/styles/skill-palette.css",
   "/styles/print.css",
   "/manifest.json",
   "/js/app-version.js",
