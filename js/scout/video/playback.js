@@ -135,6 +135,7 @@ function syncPlayByPlayAfterRender() {
   playByPlayState.key = rows[idx].key;
 }
 function handleVideoSelectionChange(_rows, _ctx, opts) {
+  renderVideoMobileReview();
   if (!opts || !opts.userAction) return;
   const activeTab = document && document.body ? document.body.dataset.activeTab : "";
   if (state.videoPlayByPlay) {
@@ -145,6 +146,121 @@ function handleVideoSelectionChange(_rows, _ctx, opts) {
   }
   handleSeekForSelection("video", { preservePlayback: true, userAction: true });
   updateVideoAnalysisOverlay();
+}
+
+function getVideoMobileCurrentRow() {
+  const ctx = eventTableContexts.video;
+  const rows = ctx && Array.isArray(ctx.rows) ? ctx.rows : [];
+  if (!rows.length) return { rows, row: null, index: -1 };
+  let index = rows.findIndex(row => row.key === lastSelectedEventId && selectedEventIds.has(row.key));
+  if (index < 0) index = rows.findIndex(row => selectedEventIds.has(row.key));
+  if (index < 0) index = 0;
+  return { rows, row: rows[index], index };
+}
+
+function renderVideoMobileReview() {
+  scheduleVideoMobileSourcePrompt();
+  const { rows, row, index } = getVideoMobileCurrentRow();
+  const filterCount = countActiveVideoFilters(snapshotVideoFilters());
+  if (elVideoMobileFilterCount) elVideoMobileFilterCount.textContent = String(filterCount);
+  if (elVideoMobileResultsCount) {
+    elVideoMobileResultsCount.textContent = `${rows.length} ${rows.length === 1 ? "azione trovata" : "azioni trovate"}`;
+  }
+  const disabled = !row;
+  if (elVideoMobilePrev) elVideoMobilePrev.disabled = disabled || index <= 0;
+  if (elVideoMobileNext) elVideoMobileNext.disabled = disabled || index >= rows.length - 1;
+}
+
+function selectVideoMobileEvent(delta) {
+  const { rows, index } = getVideoMobileCurrentRow();
+  if (!rows.length) return;
+  const hasSelection = rows.some(row => selectedEventIds.has(row.key));
+  const requestedIndex = hasSelection ? index + delta : delta < 0 ? rows.length - 1 : 0;
+  const targetIndex = Math.min(rows.length - 1, Math.max(0, requestedIndex));
+  const target = rows[targetIndex];
+  setSelectionForContext("video", new Set([target.key]), target.key, { userAction: true });
+  renderVideoMobileReview();
+}
+
+function focusFirstFilteredVideoEventMobile(options = {}) {
+  if (!isVideoMobileViewport()) return;
+  if (!document.body || document.body.dataset.activeTab !== "video") return;
+  const ctx = eventTableContexts.video;
+  const rows = ctx && Array.isArray(ctx.rows) ? ctx.rows : [];
+  if (!rows.length) return;
+  const first = rows[0];
+  const userAction = !!options.userAction;
+  stopPlayByPlay();
+  setSelectionForContext("video", new Set([first.key]), first.key, { userAction });
+  if (!userAction) {
+    const baseMs = ctx ? ctx.baseMs : getVideoBaseTimeMs(getVideoSkillEvents());
+    const time = typeof first.videoTime === "number"
+      ? first.videoTime
+      : computeEventVideoTime(first.ev || {}, baseMs);
+    if (isFinite(time)) seekVideoToTime(time, { preservePlayback: true });
+  }
+  renderVideoMobileReview();
+}
+
+function openVideoMobileFilters() {
+  document.body.classList.add("video-mobile-filters-open");
+}
+
+function closeVideoMobileFilters() {
+  document.body.classList.remove("video-mobile-filters-open");
+}
+
+let videoMobileSourcePromptDismissed = false;
+let videoMobileSourcePromptTimer = null;
+
+function hasPlayableVideoSource() {
+  if (state.video && state.video.youtubeId) return true;
+  if (typeof videoObjectUrl === "string" && videoObjectUrl) return true;
+  return [elAnalysisVideo, elAnalysisVideoScout].filter(Boolean).some(video => {
+    return !!(video.currentSrc || video.getAttribute("src"));
+  });
+}
+
+function isVideoMobileViewport() {
+  return !!state.forceMobileLayout || window.matchMedia("(max-width: 700px)").matches;
+}
+
+function updateVideoMobileSourceButton() {
+  if (!elVideoMobileSourceOpen) return;
+  elVideoMobileSourceOpen.textContent = hasPlayableVideoSource() ? "Cambia video" : "Scegli video";
+}
+
+function openVideoMobileSourceModal(options = {}) {
+  if (!elVideoMobileSourceModal || !isVideoMobileViewport()) return;
+  if (options.automatic && videoMobileSourcePromptDismissed) return;
+  if (elVideoMobileYoutubeUrl) {
+    elVideoMobileYoutubeUrl.value = state.video && state.video.youtubeUrl ? state.video.youtubeUrl : "";
+  }
+  elVideoMobileSourceModal.classList.remove("hidden");
+  setModalOpenState(true, true);
+}
+
+function closeVideoMobileSourceModal(options = {}) {
+  if (!elVideoMobileSourceModal) return;
+  if (options.dismiss !== false) videoMobileSourcePromptDismissed = true;
+  elVideoMobileSourceModal.classList.add("hidden");
+  setModalOpenState(false, true);
+}
+
+function maybeOpenVideoMobileSourceModal() {
+  videoMobileSourcePromptTimer = null;
+  if (!isVideoMobileViewport()) return;
+  if (!document.body || document.body.dataset.activeTab !== "video") return;
+  updateVideoMobileSourceButton();
+  if (hasPlayableVideoSource() || videoMobileSourcePromptDismissed) return;
+  if (elVideoMobileSourceModal && !elVideoMobileSourceModal.classList.contains("hidden")) return;
+  openVideoMobileSourceModal({ automatic: true });
+}
+
+function scheduleVideoMobileSourcePrompt() {
+  updateVideoMobileSourceButton();
+  if (videoMobileSourcePromptTimer) return;
+  videoMobileSourcePromptTimer = setTimeout(maybeOpenVideoMobileSourceModal, 500);
 }
 function renderVideoAnalysis() {
   if (!elVideoSkillsContainer) return;
@@ -180,6 +296,7 @@ function renderVideoAnalysis() {
     tbl.appendChild(tbody);
     elVideoSkillsContainer.appendChild(tbl);
     updateVideoSelectionCount();
+    renderVideoMobileReview();
     return;
   }
   try {
@@ -215,6 +332,7 @@ function renderVideoAnalysis() {
     tbl.appendChild(tbody);
     elVideoSkillsContainer.appendChild(tbl);
     updateVideoSelectionCount();
+    renderVideoMobileReview();
     return;
   }
   renderEventTableRows(
@@ -249,6 +367,7 @@ function renderVideoAnalysis() {
   );
   updateVideoSelectionCount();
   updateVideoAnalysisOverlay();
+  renderVideoMobileReview();
   syncPlayByPlayAfterRender();
   if (updatedZones) {
     saveState();
@@ -458,6 +577,9 @@ function handleVideoFileChange(file, options = {}) {
   renderYoutubePlayer(0);
   renderYoutubePlayerScout(0);
   renderVideoAnalysis();
+  videoMobileSourcePromptDismissed = false;
+  closeVideoMobileSourceModal({ dismiss: false });
+  updateVideoMobileSourceButton();
 }
 function syncFirstSkillToVideo() {
   const skillEvents = getVideoSkillEvents();

@@ -292,6 +292,9 @@ function handleYoutubeUrlLoad(url) {
   renderYoutubePlayer(0);
   renderYoutubePlayerScout(0);
   renderVideoAnalysis();
+  videoMobileSourcePromptDismissed = false;
+  closeVideoMobileSourceModal({ dismiss: false });
+  updateVideoMobileSourceButton();
 }
 function clearYoutubeSource() {
   if (!state.video) return;

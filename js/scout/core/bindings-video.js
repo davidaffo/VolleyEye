@@ -1,4 +1,39 @@
 function bindVideoControls() {
+  if (elVideoMobileSourceOpen) elVideoMobileSourceOpen.addEventListener("click", () => openVideoMobileSourceModal());
+  if (elVideoMobileSourceClose) elVideoMobileSourceClose.addEventListener("click", closeVideoMobileSourceModal);
+  if (elVideoMobileSourceBackdrop) elVideoMobileSourceBackdrop.addEventListener("click", closeVideoMobileSourceModal);
+  if (elVideoMobileSourceLater) elVideoMobileSourceLater.addEventListener("click", closeVideoMobileSourceModal);
+  if (elVideoMobileFilePicker) {
+    elVideoMobileFilePicker.addEventListener("click", () => openLocalVideoPicker(elVideoFileInput));
+  }
+  const loadMobileYoutube = () => {
+    const url = (elVideoMobileYoutubeUrl && elVideoMobileYoutubeUrl.value) || "";
+    const id = parseYoutubeId(url);
+    if (!id) {
+      alert("Inserisci un link YouTube valido.");
+      return;
+    }
+    handleYoutubeUrlLoad(url);
+  };
+  if (elVideoMobileYoutubeLoad) elVideoMobileYoutubeLoad.addEventListener("click", loadMobileYoutube);
+  if (elVideoMobileYoutubeUrl) {
+    elVideoMobileYoutubeUrl.addEventListener("keydown", event => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      loadMobileYoutube();
+    });
+  }
+  if (elVideoMobileFilterOpen) elVideoMobileFilterOpen.addEventListener("click", openVideoMobileFilters);
+  if (elVideoMobileFilterClose) elVideoMobileFilterClose.addEventListener("click", closeVideoMobileFilters);
+  if (elVideoMobileFilterApply) {
+    elVideoMobileFilterApply.addEventListener("click", () => {
+      focusFirstFilteredVideoEventMobile({ userAction: true });
+      closeVideoMobileFilters();
+    });
+  }
+  if (elVideoMobileFilterBackdrop) elVideoMobileFilterBackdrop.addEventListener("click", closeVideoMobileFilters);
+  if (elVideoMobilePrev) elVideoMobilePrev.addEventListener("click", () => selectVideoMobileEvent(-1));
+  if (elVideoMobileNext) elVideoMobileNext.addEventListener("click", () => selectVideoMobileEvent(1));
   if (elAggTabButtons && typeof elAggTabButtons.forEach === "function") {
     elAggTabButtons.forEach(btn => {
       btn.addEventListener("click", () => {

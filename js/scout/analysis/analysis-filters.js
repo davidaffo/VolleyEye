@@ -1029,6 +1029,7 @@ function handleVideoFilterChange() {
   activeVideoFilterPresetId = null;
   syncVideoFilterState();
   renderVideoAnalysis();
+  focusFirstFilteredVideoEventMobile();
 }
 function resetTrajectoryFilters() {
   trajectoryFilterState.setters.clear();
@@ -1083,6 +1084,7 @@ function resetVideoFilters() {
     els.prev.value = "any";
   }
   renderVideoAnalysis();
+  focusFirstFilteredVideoEventMobile();
 }
 function getVideoFilterElements() {
   const wrap = document.getElementById("video-filters");
@@ -1302,6 +1304,7 @@ function renderVideoFilterPresets() {
       activeVideoFilterPresetId = entry.id;
       applyVideoFilterSnapshot(entry.filters || {});
       renderVideoAnalysis();
+      focusFirstFilteredVideoEventMobile();
       saveState({ persistLocal: true });
     });
     card.addEventListener("keydown", ev => {
@@ -1311,6 +1314,7 @@ function renderVideoFilterPresets() {
       activeVideoFilterPresetId = entry.id;
       applyVideoFilterSnapshot(entry.filters || {});
       renderVideoAnalysis();
+      focusFirstFilteredVideoEventMobile();
       saveState({ persistLocal: true });
     });
     card.addEventListener("dragstart", () => {

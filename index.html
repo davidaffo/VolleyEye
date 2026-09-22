@@ -1543,7 +1543,14 @@
       <div class="section video-analysis" id="video-analysis-section">
         <div class="video-analysis__head">
           <div>
-            <h2>Analisi video</h2>
+            <h2 class="video-analysis__desktop-title">Analisi video</h2>
+            <h2 class="video-mobile-only">Le mie azioni</h2>
+          </div>
+          <div class="video-mobile-head-actions video-mobile-only">
+            <button id="video-mobile-source-open" class="secondary video-mobile-source-open" type="button">Scegli video</button>
+            <button id="video-mobile-filter-open" class="secondary video-mobile-filter-open" type="button">
+              Filtri <span id="video-mobile-filter-count" class="video-mobile-filter-count">0</span>
+            </button>
           </div>
         </div>
         <div class="video-analysis__actions">
@@ -1594,6 +1601,10 @@
               allowfullscreen
             ></iframe>
             <div class="youtube-focus-guard" data-youtube-guard></div>
+            <div class="video-mobile-overlay-nav video-mobile-only" aria-label="Navigazione azioni">
+              <button id="video-mobile-prev" class="video-mobile-overlay-nav__button video-mobile-overlay-nav__button--prev" type="button" aria-label="Azione precedente">‹</button>
+              <button id="video-mobile-next" class="video-mobile-overlay-nav__button video-mobile-overlay-nav__button--next" type="button" aria-label="Azione successiva">›</button>
+            </div>
           </div>
           <button
             id="video-analysis-resize-handle"
@@ -1618,6 +1629,13 @@
         </div>
       </div>
       <div class="video-filters-panel">
+        <div class="video-mobile-filter-sheet-head video-mobile-only">
+          <div>
+            <strong>Filtra le azioni</strong>
+            <div id="video-mobile-results-count" class="section-note">0 azioni trovate</div>
+          </div>
+          <button id="video-mobile-filter-close" class="icon-button" type="button" aria-label="Chiudi filtri">✕</button>
+        </div>
         <div class="video-filters-layout">
         <div class="video-filters-main">
         <div class="video-filters-header">Filtri</div>
@@ -1706,7 +1724,29 @@
           <div id="video-filter-presets-list" class="video-filter-presets-list"></div>
         </aside>
         </div>
+        <div class="video-mobile-filter-footer video-mobile-only">
+          <button id="video-mobile-filter-apply" class="primary" type="button">Mostra le azioni</button>
+        </div>
       </div>
+      <button id="video-mobile-filter-backdrop" class="video-mobile-filter-backdrop video-mobile-only" type="button" aria-label="Chiudi filtri"></button>
+      </div>
+    </div>
+  </div>
+  <div id="video-mobile-source-modal" class="skill-modal video-mobile-source-modal hidden" role="dialog" aria-modal="true" aria-labelledby="video-mobile-source-title">
+    <div id="video-mobile-source-backdrop" class="skill-modal__backdrop"></div>
+    <div class="skill-modal__content video-mobile-source-dialog">
+      <button id="video-mobile-source-close" class="skill-modal__close-abs" type="button" aria-label="Chiudi">✕</button>
+      <div class="skill-modal__head">
+        <h3 id="video-mobile-source-title">Scegli il video</h3>
+      </div>
+      <div class="skill-modal__body video-mobile-source-body">
+        <p class="section-note">Carica un video dal telefono oppure incolla il link YouTube della partita.</p>
+        <button id="video-mobile-file-picker" class="primary video-mobile-source-file" type="button">Carica dal telefono</button>
+        <div class="video-mobile-source-divider"><span>oppure</span></div>
+        <label for="video-mobile-youtube-url">Link YouTube</label>
+        <input id="video-mobile-youtube-url" type="url" inputmode="url" placeholder="https://youtu.be/..." autocomplete="url" />
+        <button id="video-mobile-youtube-load" class="secondary" type="button">Usa questo link</button>
+        <button id="video-mobile-source-later" class="video-mobile-source-later" type="button">Continua senza video</button>
       </div>
     </div>
   </div>

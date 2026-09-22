@@ -734,6 +734,9 @@ function setActiveTab(target) {
   if (target === "scout") {
     requestAnimationFrame(() => applyScoutColumnLayout());
   }
+  if (target === "video" && typeof scheduleVideoMobileSourcePrompt === "function") {
+    scheduleVideoMobileSourcePrompt();
+  }
 }
 function initTabs() {
   if (!tabButtons || !tabPanels) return;
