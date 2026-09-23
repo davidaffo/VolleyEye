@@ -67,6 +67,7 @@ function syncRosterFromSelectedTeamIfNeeded() {
   return true;
 }
 function renderPlayers() {
+  syncAutoLiberoSelects();
   if (!elPlayersContainer) return;
   syncCourtSideLayout();
   // Il rendering è deliberatamente privo di sincronizzazioni con l'archivio squadre.
@@ -151,6 +152,7 @@ function renderPlayers() {
   maybeScrollToActiveCourtOnMobile();
 }
 function renderOpponentPlayers({ nextSkillId = null, animate = false } = {}) {
+  renderOpponentBenchChips();
   const elOpponentContainer = document.getElementById("opponent-players-container");
   if (!elOpponentContainer) return;
   if (!state.useOpponentTeam) {

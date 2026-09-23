@@ -495,7 +495,7 @@ function syncOpponentSettingsUI() {
   if (opponentPanel) {
     opponentPanel.classList.remove("hidden");
     opponentPanel
-      .querySelectorAll(".score-actions, .team-controls-panel")
+      .querySelectorAll(".score-actions, .team-controls-panel, .opponent-bench")
       .forEach(node => node.classList.toggle("hidden", !enabled));
   }
   const opponentSettingsPanel = document.querySelector('[data-team-panel="opponent-settings"]');

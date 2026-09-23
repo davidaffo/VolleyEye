@@ -431,7 +431,8 @@ function setTeamRotation(scope = "our", rotation = 1) {
   }
 }
 function getTeamAutoLiberoRole(scope = "our") {
-  return scope === "opponent" ? state.opponentAutoLiberoRole || "" : state.autoLiberoRole || "";
+  const role = scope === "opponent" ? state.opponentAutoLiberoRole : state.autoLiberoRole;
+  return normalizeAutoLiberoRolePreference(role, state.autoLiberoRoleDefaultVersion);
 }
 function setTeamAutoLiberoRole(scope = "our", role = "") {
   if (scope === "opponent") {
@@ -594,7 +595,7 @@ function cleanOpponentLiberos() {
   state.opponentLiberos = normalizePlayers(state.opponentLiberos || []).filter(name => set.has(name));
 }
 function ensureOpponentLiberosFromTeam() {
-  if (state.opponentLiberos && state.opponentLiberos.length > 0) return;
+  if (Array.isArray(state.opponentLiberos)) return;
   const selected = state.selectedOpponentTeam || "";
   if (!selected) return;
   const team = loadOpponentTeamFromStorage(selected);
@@ -618,6 +619,9 @@ function applyDefaultLineup(names = [], rotation = 1) {
   resetAutoRoleCache();
 }
 function applyOpponentDefaultLineup(names = [], rotation = 1) {
+  opponentAutoRoleBaseCourt = null;
+  state.opponentAutoRoleBaseCourt = null;
+  state.opponentLiberoAutoMap = {};
   const valid = new Set(state.opponentPlayers || []);
   const lineup = Array.isArray(names) ? names.filter(name => name && valid.has(name)) : [];
   state.opponentCourt = Array.from({ length: 6 }, (_, idx) => ({ main: lineup[idx] || "" }));

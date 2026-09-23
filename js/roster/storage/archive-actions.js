@@ -55,6 +55,7 @@ function getCurrentTeamPayload(name = "") {
     numbers,
     captains,
     defaultLineup,
+    defaultRotation: existing?.defaultRotation || 1,
     preferredLibero
   };
 }
@@ -808,7 +809,7 @@ function applyImportedTeamData(data) {
     roster.defaultLineup && roster.defaultLineup.length > 0
       ? roster.defaultLineup
       : roster.playersDetailed && roster.playersDetailed.length > 0
-        ? roster.playersDetailed.filter(p => !p.out).map(p => p.name)
+        ? roster.playersDetailed.filter(p => !p.out && p.role !== "L").map(p => p.name)
         : players;
   const applied = updatePlayersList(players, {
     askReset: true,
@@ -842,6 +843,10 @@ function applyImportedTeamData(data) {
 }
 function applyImportedOpponentTeamData(data) {
   const normalizedTeam = normalizeTeamPayload(data || {});
+  if (normalizedTeam && normalizedTeam.name === state.selectedTeam) {
+    alert("Non puoi selezionare la stessa squadra come avversaria.");
+    return;
+  }
   const roster = extractRosterFromTeam(normalizedTeam);
   const players = roster.players || [];
   if (!players || players.length === 0) {
@@ -870,12 +875,18 @@ function applyImportedOpponentTeamData(data) {
     syncOpponentTeamsFromStorage();
     renderTeamsSelect();
     renderOpponentTeamsSelect();
-    if (!state.match.opponent) {
+    if (state.useOpponentTeam || !state.match.opponent) {
       state.match.opponent = state.selectedOpponentTeam;
       applyMatchInfoToUI();
     }
   }
+  applyOpponentDefaultLineup(
+    roster.defaultLineup?.length ? roster.defaultLineup : players.filter(name => !roster.liberos.includes(name)),
+    roster.defaultRotation || 1
+  );
   saveState();
+  renderOpponentPlayers();
+  renderOpponentLiberoChipsInline();
   renderOpponentPlayersList();
   renderOpponentLiberoTags();
   alert("Squadra avversaria importata dal file.");

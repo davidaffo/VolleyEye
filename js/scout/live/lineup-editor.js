@@ -111,7 +111,7 @@ function updateLineupTouchOver(x, y) {
   const card = elAt && elAt.closest(".lineup-slot");
   const prev = document.querySelector(".lineup-slot.drop-over");
   if (prev) prev.classList.remove("drop-over");
-  if (!card) {
+  if (!card || (card.dataset.teamScope || "our") !== lineupTouchScope) {
     lineupTouchOverIdx = null;
     return;
   }
@@ -164,7 +164,7 @@ function handleLineupTouchStart(e, name, fromIdx, context, scope) {
   lineupTouchContext = context || "";
   lineupTouchScope = scope || "our";
   lineupTouchStart = { x: t.clientX, y: t.clientY };
-  const label = formatLineupModalName(name, { compactCourt: true });
+  const label = formatLineupModalName(name, { compactCourt: true, scope: lineupTouchScope });
   createLineupTouchGhost(label, t.clientX, t.clientY);
   updateLineupTouchOver(t.clientX, t.clientY);
   document.body.style.overflow = "hidden";
@@ -268,6 +268,7 @@ function renderLineupModal() {
     card.dataset.pos = "P" + (idx + 1);
     card.dataset.posIndex = String(idx);
     card.dataset.lineupContext = "modal";
+    card.dataset.teamScope = lineupModalScope;
     if (slot.main) {
       card.draggable = true;
       card.addEventListener("dragstart", e => {

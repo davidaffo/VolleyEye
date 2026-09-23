@@ -99,76 +99,22 @@ function bindScoutSettingsControls() {
       }
     });
   }
-  const elAutoLiberoSelect = document.getElementById("auto-libero-select");
-  const elAutoLiberoSelectOpp = document.getElementById("auto-libero-select-opp");
-  const elAutoLiberoSelectSettings = document.getElementById("auto-libero-select-settings");
   const elSwapLibero = document.getElementById("btn-swap-libero");
   const elSwapLiberoOpp = document.getElementById("btn-swap-libero-opp");
   const elSwapLiberoSettings = document.getElementById("btn-swap-libero-settings");
   const elLiberoToBench = document.getElementById("btn-libero-to-bench");
-  const syncAutoLiberoSelects = role => {
-    if (elAutoLiberoSelect) elAutoLiberoSelect.value = role || "";
-    if (elAutoLiberoSelectSettings) elAutoLiberoSelectSettings.value = role || "";
-  };
-  const syncOpponentAutoLiberoSelect = role => {
-    if (elAutoLiberoSelectOpp) elAutoLiberoSelectOpp.value = role || "";
-  };
-  syncAutoLiberoSelects(state.autoLiberoRole || "");
-  syncOpponentAutoLiberoSelect(state.opponentAutoLiberoRole || "");
-  [elAutoLiberoSelect, elAutoLiberoSelectSettings].forEach(sel => {
-    if (!sel) return;
-    sel.addEventListener("change", () => {
-      const role = sel.value || "";
-      if (typeof setAutoLiberoRole === "function") {
-        setAutoLiberoRole(role);
-      } else {
-        state.autoLiberoRole = role;
-        state.autoLiberoBackline = role !== "" ? true : state.autoLiberoBackline;
-        state.liberoAutoMap = {};
-        saveState();
-        if (typeof enforceAutoLiberoForState === "function") {
-          enforceAutoLiberoForState({ skipServerOnServe: true });
-        }
-        renderPlayers();
-        renderBenchChips();
-        renderLiberoChipsInline();
-        renderLineupChips();
-      }
-      syncAutoLiberoSelects(role);
+  syncAutoLiberoSelects();
+  ["our", "opponent"].forEach(scope => {
+    getAutoLiberoSelectsForScope(scope).forEach(select => {
+      select.addEventListener("change", () => setAutoLiberoRole(select.value, scope));
     });
   });
-  if (elAutoLiberoSelectOpp) {
-    elAutoLiberoSelectOpp.addEventListener("change", () => {
-      const role = elAutoLiberoSelectOpp.value || "";
-      if (typeof setTeamAutoLiberoRole === "function") {
-        setTeamAutoLiberoRole("opponent", role);
-      } else {
-        state.opponentAutoLiberoRole = role;
-      }
-      if (typeof setTeamAutoLiberoBackline === "function") {
-        setTeamAutoLiberoBackline("opponent", role !== "");
-      } else if (role !== "") {
-        state.opponentAutoLiberoBackline = true;
-      }
-      if (typeof setTeamLiberoAutoMap === "function") {
-        setTeamLiberoAutoMap("opponent", {});
-      } else {
-        state.opponentLiberoAutoMap = {};
-      }
-      if (typeof enforceAutoLiberoForScope === "function") {
-        enforceAutoLiberoForScope("opponent", { skipServerOnServe: true });
-      }
-      saveState();
-      syncOpponentAutoLiberoSelect(role);
-      if (typeof renderOpponentPlayers === "function") renderOpponentPlayers();
-    });
-  }
   [elSwapLibero, elSwapLiberoSettings].forEach(btn => {
     if (!btn) return;
     btn.addEventListener("click", () => {
       if (typeof swapPreferredLibero === "function") {
         swapPreferredLibero();
-        syncAutoLiberoSelects(state.autoLiberoRole || "");
+        syncAutoLiberoSelects();
       }
     });
   });

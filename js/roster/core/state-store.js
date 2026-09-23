@@ -130,7 +130,7 @@ function cloneIsolationData(value) {
   }
   return value === undefined || value === null ? value : JSON.parse(JSON.stringify(value));
 }
-function normalizeAutoLiberoRolePreference(value, defaultVersion = AUTO_LIBERO_ROLE_DEFAULT_VERSION) {
+function normalizeAutoLiberoRolePreference(value, defaultVersion = 0) {
   const isLegacyDefault = Number(defaultVersion || 0) < AUTO_LIBERO_ROLE_DEFAULT_VERSION;
   if (typeof value !== "string" || (isLegacyDefault && value === "")) {
     return "C";
@@ -405,7 +405,7 @@ function buildCompactLocalStateSnapshot(snapshot) {
     liberos: Array.isArray(snapshot.liberos) ? snapshot.liberos : [],
     liberoAutoMap: snapshot.liberoAutoMap || {},
     autoLiberoBackline: snapshot.autoLiberoBackline !== false,
-    autoLiberoRole: snapshot.autoLiberoRole || "",
+    autoLiberoRole: normalizeAutoLiberoRolePreference(snapshot.autoLiberoRole, snapshot.autoLiberoRoleDefaultVersion),
     autoLiberoRoleDefaultVersion: AUTO_LIBERO_ROLE_DEFAULT_VERSION,
     preferredLibero: snapshot.preferredLibero || "",
     captains: Array.isArray(snapshot.captains) ? snapshot.captains.slice(0, 1) : [],
@@ -414,7 +414,7 @@ function buildCompactLocalStateSnapshot(snapshot) {
     opponentLiberos: Array.isArray(snapshot.opponentLiberos) ? snapshot.opponentLiberos : [],
     opponentLiberoAutoMap: snapshot.opponentLiberoAutoMap || {},
     opponentAutoLiberoBackline: snapshot.opponentAutoLiberoBackline !== false,
-    opponentAutoLiberoRole: snapshot.opponentAutoLiberoRole || "",
+    opponentAutoLiberoRole: normalizeAutoLiberoRolePreference(snapshot.opponentAutoLiberoRole, snapshot.autoLiberoRoleDefaultVersion),
     opponentPreferredLibero: snapshot.opponentPreferredLibero || "",
     opponentCaptains: Array.isArray(snapshot.opponentCaptains) ? snapshot.opponentCaptains.slice(0, 1) : [],
     events: Array.isArray(snapshot.events) ? snapshot.events : [],

@@ -572,6 +572,11 @@ function handleTeamSelectChange(selectedOverride = "") {
     updateTeamButtonsState();
     return;
   }
+  if (state.useOpponentTeam && selected === state.selectedOpponentTeam) {
+    alert("Non puoi selezionare la stessa squadra come avversaria.");
+    renderTeamsSelect();
+    return;
+  }
   const hasData = hasMatchDataForReset();
   const isChanging = selected !== state.selectedTeam;
   if (isChanging && hasData) {
@@ -595,7 +600,7 @@ function handleTeamSelectChange(selectedOverride = "") {
     roster.defaultLineup && roster.defaultLineup.length > 0
       ? roster.defaultLineup
       : roster.playersDetailed && roster.playersDetailed.length > 0
-        ? roster.playersDetailed.filter(p => !p.out).map(p => p.name)
+        ? roster.playersDetailed.filter(p => !p.out && p.role !== "L").map(p => p.name)
         : roster.players || [];
   const applied = updatePlayersList(roster.players || [], {
     askReset: true,
@@ -619,7 +624,7 @@ function handleOpponentTeamSelectChange(selectedOverride = "") {
   if (selected && selected === state.selectedTeam) {
     alert("Non puoi selezionare la stessa squadra come avversaria.");
     if (elOpponentTeamsSelect) elOpponentTeamsSelect.value = "";
-    state.selectedOpponentTeam = "";
+    renderOpponentTeamsSelect();
     return;
   }
   const hasData = hasMatchDataForReset();
@@ -663,7 +668,7 @@ function handleOpponentTeamSelectChange(selectedOverride = "") {
     roster.defaultLineup && roster.defaultLineup.length > 0
       ? roster.defaultLineup
       : roster.playersDetailed && roster.playersDetailed.length > 0
-        ? roster.playersDetailed.filter(p => !p.out).map(p => p.name)
+        ? roster.playersDetailed.filter(p => !p.out && p.role !== "L").map(p => p.name)
         : roster.players || [];
   applyOpponentDefaultLineup(opponentDefaultLineup, roster.defaultRotation || 1);
   if (typeof renderOpponentPlayers === "function") {
@@ -674,6 +679,7 @@ function handleOpponentTeamSelectChange(selectedOverride = "") {
     applyMatchInfoToUI();
   }
   renderOpponentTeamsSelect();
+  saveState();
 }
 function renderLiberoTags() {
   const mainContainers = [elLiberoTags].filter(Boolean);

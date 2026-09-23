@@ -205,7 +205,7 @@ function renderTeamsSelect() {
 }
 function renderOpponentTeamsSelect() {
   if (!elOpponentTeamsSelect) return;
-  const previousSelection = elOpponentTeamsSelect.value || state.selectedOpponentTeam || "";
+  const previousSelection = state.selectedOpponentTeam || "";
   const selectedName = previousSelection === state.selectedTeam ? "" : previousSelection;
   renderArchivedTeamsSelect(elOpponentTeamsSelect, {
     selectedName,

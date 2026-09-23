@@ -130,7 +130,9 @@ function applyImportedMatch(nextState, options = {}) {
   merged.freeballPending = !!nextState.freeballPending;
   merged.freeballPendingScope = nextState.freeballPendingScope === "opponent" ? "opponent" : "our";
   merged.flowTeamScope = nextState.flowTeamScope === "opponent" ? "opponent" : "our";
-  state = merged;
+  // Settings and roster managers retain this object from bootstrap.
+  // Replacing it leaves their writes on the previous match's state.
+  Object.assign(state, merged);
   sanitizeRosterIsolation("our");
   sanitizeRosterIsolation("opponent");
   if (typeof cleanCourtPlayers === "function") {

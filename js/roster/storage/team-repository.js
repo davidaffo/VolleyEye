@@ -313,12 +313,30 @@ function loadTeamsMapFromStorage() {
   return map;
 }
 function migrateTeamsToPersistent() {
-  if (!state.savedTeams || Object.keys(state.savedTeams).length === 0) return;
-  Object.entries(state.savedTeams).forEach(([name, data]) => {
-    if (!localStorage.getItem(getTeamStorageKey(name))) {
-      saveTeamToStorage(name, data);
+  const migrationKey = STORAGE_KEY + ":archive-migration-v1";
+  // Replaying old snapshots resurrects deleted or renamed archive entries.
+  const migration = localStorage.getItem(migrationKey);
+  if (migration === "done") return;
+  const hasArchive = listTeamsFromStorage().length > 0;
+  const teams = migration
+    ? JSON.parse(migration)
+    : hasArchive ? {} : Object.assign({}, state.savedOpponentTeams || {}, state.savedTeams || {});
+  Object.keys(localStorage).filter(key => key.startsWith(OPPONENT_TEAM_PREFIX)).forEach(key => {
+    const name = key.slice(OPPONENT_TEAM_PREFIX.length);
+    if (Object.prototype.hasOwnProperty.call(teams, name)) return;
+    try {
+      teams[name] = JSON.parse(localStorage.getItem(key));
+    } catch (error) {
+      logError("Error migrating opponent team " + name, error);
     }
   });
+  const failed = {};
+  Object.entries(teams).forEach(([name, data]) => {
+    if (!localStorage.getItem(getTeamStorageKey(name)) && normalizeTeamPayload(data, name)) {
+      if (!saveTeamToStorage(name, data)) failed[name] = data;
+    }
+  });
+  localStorage.setItem(migrationKey, Object.keys(failed).length ? JSON.stringify(failed) : "done");
 }
 function syncTeamsFromStorage() {
   const teams = loadTeamsMapFromStorage();
@@ -326,13 +344,7 @@ function syncTeamsFromStorage() {
   state.savedOpponentTeams = cloneIsolationData(teams);
 }
 function migrateOpponentTeamsIntoTeams() {
-  const opponentNames = listOpponentTeamsFromStorage();
-  opponentNames.forEach(name => {
-    const data = loadOpponentTeamFromStorage(name);
-    if (data && !localStorage.getItem(getTeamStorageKey(name))) {
-      saveTeamToStorage(name, data);
-    }
-  });
+  migrateTeamsToPersistent();
 }
 function extractRosterFromTeam(team) {
   const normalized = normalizeTeamPayload(team);
@@ -372,7 +384,7 @@ function getSelectedTeamDefaultSettings() {
   const roster = extractRosterFromTeam(team);
   const fallback =
     roster.playersDetailed && roster.playersDetailed.length > 0
-      ? roster.playersDetailed.filter(p => !p.out).map(p => p.name)
+      ? roster.playersDetailed.filter(p => !p.out && p.role !== "L").map(p => p.name)
       : roster.players || [];
   const defaultLineup =
     roster.defaultLineup && roster.defaultLineup.length > 0 ? roster.defaultLineup : fallback;
@@ -387,7 +399,7 @@ function getSelectedOpponentTeamDefaultSettings() {
   const roster = extractRosterFromTeam(team);
   const fallback =
     roster.playersDetailed && roster.playersDetailed.length > 0
-      ? roster.playersDetailed.filter(p => !p.out).map(p => p.name)
+      ? roster.playersDetailed.filter(p => !p.out && p.role !== "L").map(p => p.name)
       : roster.players || [];
   const defaultLineup =
     roster.defaultLineup && roster.defaultLineup.length > 0 ? roster.defaultLineup : fallback;

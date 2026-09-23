@@ -1015,6 +1015,10 @@ function saveTeamManagerPayload(options = {}) {
     payload.name = previousName;
     nextName = previousName;
   }
+  if (isOpponent && !storageOnly && nextName === state.selectedTeam) {
+    alert("Non puoi selezionare la stessa squadra come avversaria.");
+    return;
+  }
   if (saveToStorage) {
     if (isOpponent) {
       const compact = compactTeamPayload(payload, payload.name);
@@ -1027,13 +1031,15 @@ function saveTeamManagerPayload(options = {}) {
         deleteOpponentTeamFromStorage(previousName);
       }
       syncOpponentTeamsFromStorage();
-      state.selectedOpponentTeam = nextName;
+      if (!storageOnly) {
+        state.selectedOpponentTeam = nextName;
+        if (state.useOpponentTeam || !state.match.opponent || state.match.opponent === previousName) {
+          state.match.opponent = nextName;
+          applyMatchInfoToUI();
+        }
+      }
       renderTeamsSelect();
       renderOpponentTeamsSelect();
-      if (state.useOpponentTeam || !state.match.opponent || state.match.opponent === previousName) {
-        state.match.opponent = nextName;
-        applyMatchInfoToUI();
-      }
     } else {
       const compact = compactTeamPayload(payload, payload.name);
       if (!saveTeamToStorage(nextName, compact)) {
@@ -1079,7 +1085,14 @@ function saveTeamManagerPayload(options = {}) {
         captains: roster.captains
       });
       state.opponentPreferredLibero = roster.preferredLibero || roster.liberos?.[0] || "";
+      if (!preserveCourt) {
+        applyOpponentDefaultLineup(
+          roster.defaultLineup?.length ? roster.defaultLineup : roster.players.filter(name => !roster.liberos.includes(name)),
+          roster.defaultRotation || 1
+        );
+      }
       renderOpponentLiberoChipsInline();
+      renderOpponentPlayers();
     }
   } else {
     if (liveEditMode) {
@@ -1090,7 +1103,7 @@ function saveTeamManagerPayload(options = {}) {
       roster.defaultLineup && roster.defaultLineup.length > 0
         ? roster.defaultLineup
         : roster.playersDetailed && roster.playersDetailed.length > 0
-          ? roster.playersDetailed.filter(p => !p.out).map(p => p.name)
+          ? roster.playersDetailed.filter(p => !p.out && p.role !== "L").map(p => p.name)
           : roster.players;
     updatePlayersList(roster.players, {
       askReset: !preserveCourt,

@@ -78,10 +78,10 @@ function syncLineupPreferredLiberoSelect() {
   }
 }
 function formatLineupModalName(name, options = {}) {
-  const scope = options.scope === "opponent" ? "opponent" : lineupModalScope;
+  const scope = options.scope === "opponent" || options.scope === "our" ? options.scope : lineupModalScope;
   const numbersMap = getPlayerNumbersForScope(scope);
   const captains = scope === "opponent" ? state.opponentCaptains || [] : state.captains || [];
-  const captainSet = new Set(captains.map(captain => captain.toLowerCase()));
+  const captainSet = options.includeCaptain === false ? null : new Set(captains.map(captain => captain.toLowerCase()));
   return formatNameWithNumberFor(
     name,
     numbersMap,
@@ -94,6 +94,7 @@ function getBenchForLineupWithRoster(court, rosterNames, liberos, numbersMap) {
   getCourtShape(court).forEach(slot => {
     const name = slot.main || "";
     if (name) used.add(name);
+    if (slot.replaced) used.add(slot.replaced);
   });
   const bench = (rosterNames || []).filter(name => name && !libSet.has(name) && !used.has(name));
   if (typeof sortNamesByNumber === "function") {
@@ -136,7 +137,7 @@ function applyDefaultLineupToModal() {
   }
   const roster = extractRosterFromTeam(team);
   const fallback = roster.playersDetailed && roster.playersDetailed.length > 0
-    ? roster.playersDetailed.filter(p => !p.out).map(p => p.name)
+    ? roster.playersDetailed.filter(p => !p.out && p.role !== "L").map(p => p.name)
     : roster.players || [];
   const names =
     roster.defaultLineup && roster.defaultLineup.length > 0 ? roster.defaultLineup : fallback;

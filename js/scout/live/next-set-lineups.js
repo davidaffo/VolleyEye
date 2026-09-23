@@ -104,6 +104,7 @@ function renderNextSetLineup(scope, courtEl, benchEl) {
     card.dataset.pos = "P" + (idx + 1);
     card.dataset.posIndex = String(idx);
     card.dataset.lineupContext = "next-set";
+    card.dataset.teamScope = scope;
     if (slot.main) {
       card.draggable = true;
       card.addEventListener("dragstart", e => {
