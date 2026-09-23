@@ -56,18 +56,31 @@ function setAutoLiberoBackline(enabled) {
   renderLiberoChipsInline();
   renderLineupChips();
 }
-function setAutoLiberoRole(role) {
+function getAutoLiberoSelectsForScope(scope = "our") {
+  const ids = scope === "opponent"
+    ? ["auto-libero-select-opp"]
+    : ["auto-libero-select", "auto-libero-select-settings"];
+  return ids.map(id => document.getElementById(id)).filter(Boolean);
+}
+function syncAutoLiberoSelects() {
+  ["our", "opponent"].forEach(scope => {
+    const role = getTeamAutoLiberoRole(scope);
+    getAutoLiberoSelectsForScope(scope).forEach(select => { select.value = role; });
+  });
+}
+function setAutoLiberoRole(role, scope = "our") {
   if (typeof role !== "string") return;
   const sanitized = AUTO_LIBERO_ROLE_OPTIONS.includes(role) ? role : "";
-  state.autoLiberoRole = sanitized;
-  state.autoLiberoBackline = sanitized !== "" ? true : state.autoLiberoBackline;
-  // Cambiando ruolo, azzera i vecchi abbinamenti per forzare la nuova sostituzione
-  state.liberoAutoMap = {};
-  if (Object.prototype.hasOwnProperty.call(state, "autoLiberoMap")) {
+  setTeamAutoLiberoRole(scope, sanitized);
+  state.autoLiberoRoleDefaultVersion = AUTO_LIBERO_ROLE_DEFAULT_VERSION;
+  setTeamAutoLiberoBackline(scope, sanitized !== "");
+  setTeamLiberoAutoMap(scope, {});
+  if (scope === "our" && Object.prototype.hasOwnProperty.call(state, "autoLiberoMap")) {
     state.autoLiberoMap = {};
   }
-  enforceAutoLiberoForState({ skipServerOnServe: true });
+  enforceAutoLiberoForScope(scope, { skipServerOnServe: true });
   saveState();
+  syncAutoLiberoSelects();
   renderPlayers();
   renderBenchChips();
   renderLiberoChipsInline();

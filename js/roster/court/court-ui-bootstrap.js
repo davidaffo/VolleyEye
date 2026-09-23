@@ -219,7 +219,7 @@ function updateBenchTouchOver(x, y) {
   const card = elAt && elAt.closest(".court-card");
   const prev = document.querySelector(".court-card.drop-over");
   if (prev) prev.classList.remove("drop-over");
-  if (!card || !card.dataset.posIndex) {
+  if (!card || !card.dataset.posIndex || (card.dataset.teamScope || "our") !== touchBenchScope) {
     touchBenchOverPos = -1;
     return;
   }
@@ -643,6 +643,36 @@ function renderLiberoChipsInline() {
   });
   renderOpponentLiberoChipsInline();
 }
+function renderOpponentBenchChips() {
+  const container = document.getElementById("bench-chips-opp");
+  if (!container) return;
+  container.innerHTML = "";
+  if (!state.useOpponentTeam) return;
+  const names = getBenchForLineupWithRoster(
+    state.opponentCourt || [], state.opponentPlayers || [],
+    state.opponentLiberos || [], state.opponentPlayerNumbers || {}
+  );
+  if (!names.length) {
+    const empty = document.createElement("span");
+    empty.className = "bench-empty";
+    empty.textContent = "Nessuna riserva disponibile.";
+    container.appendChild(empty);
+  }
+  names.forEach(name => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "bench-chip";
+    chip.dataset.playerName = name;
+    chip.dataset.teamScope = "opponent";
+    chip.textContent = formatNameWithNumberFor(name, state.opponentPlayerNumbers || {}, {
+      scope: "opponent",
+      captainSet: new Set((state.opponentCaptains || []).map(n => n.toLowerCase()))
+    });
+    chip.title = "Imposta formazione avversaria";
+    chip.addEventListener("click", () => openMobileLineupModal("opponent"));
+    container.appendChild(chip);
+  });
+}
 function renderOpponentLiberoChipsInline() {
   if (!elLiberoTagsInlineOpp) return;
   if (typeof ensureOpponentLiberosFromTeam === "function") {
@@ -675,12 +705,11 @@ function renderOpponentLiberoChipsInline() {
       captainSet: new Set((state.opponentCaptains || []).map(n => n.toLowerCase()))
     }) + (isUsed ? " (in campo)" : "");
     chip.appendChild(label);
-    const isActive = libSet.has(name);
     if (!isUsed) {
       chip.draggable = true;
       chip.addEventListener("dragstart", handleBenchDragStart);
       chip.addEventListener("dragend", handleBenchDragEnd);
-      chip.addEventListener("click", () => toggleOpponentLiberoAndRefresh(name, !isActive));
+      chip.addEventListener("click", () => handleBenchClickForScope(name, "opponent"));
       chip.addEventListener("pointerdown", ev => handleBenchPointerDown(ev, name, "opponent"));
       chip.addEventListener("touchstart", ev => handleBenchTouchStart(ev, name, "opponent"), { passive: false });
       chip.addEventListener("touchmove", handleBenchTouchMove, { passive: false });
