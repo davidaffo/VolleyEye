@@ -715,6 +715,8 @@ function matchesPreviousSkill(ev, filterVal) {
   switch (normalizedVal) {
     case "freeball-positive":
       return prevFreeball || isPositiveReceive;
+    case "receive-positive":
+      return !!isPositiveReceive;
     case "defense-negative":
       return isNegativeReceive || prevIsDefense || fallbackDefense;
     case "freeball-only":

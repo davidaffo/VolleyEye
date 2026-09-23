@@ -199,6 +199,7 @@ let state = {
     scoutHeight: 320
   },
   uiScoutColumns: {
+    left: 280,
     right: 380
   },
   uiScoutWidgetLayout: null,

@@ -394,7 +394,10 @@ function buildCompactLocalStateSnapshot(snapshot) {
     uiAggTab: snapshot.uiAggTab || "summary",
     uiTopBarHidden: !!snapshot.uiTopBarHidden,
     forceMobileLayout: !!snapshot.forceMobileLayout,
-    uiScoutColumns: { right: Number(snapshot.uiScoutColumns && snapshot.uiScoutColumns.right) || 380 },
+    uiScoutColumns: {
+      left: Number(snapshot.uiScoutColumns && snapshot.uiScoutColumns.left) || 280,
+      right: Number(snapshot.uiScoutColumns && snapshot.uiScoutColumns.right) || 380
+    },
     uiScoutWidgetLayout: snapshot.uiScoutWidgetLayout || null,
     uiPlayerAnalysis: snapshot.uiPlayerAnalysis || null,
     uiVideoLayout: snapshot.uiVideoLayout || null,

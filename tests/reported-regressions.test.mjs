@@ -276,6 +276,29 @@ test("il tabellino nasconde le freeball disattivate", () => {
   assert.match(css, /\.agg-table\.agg-table--hide-freeball \.skill-col\.skill-freeball\s*\{[\s\S]*?display:\s*none/);
 });
 
+test("le traiettorie d'attacco possono filtrare solo le ricezioni positive", () => {
+  const source = extract(scout, "function matchesPreviousSkill", "function matchesAdvancedFilters");
+  const context = {
+    findPreviousEvent: event => event.previous || null
+  };
+  vm.runInNewContext(source, context);
+
+  assert.equal(
+    context.matchesPreviousSkill({ previous: { skillId: "pass", code: "+" } }, "receive-positive"),
+    true
+  );
+  assert.equal(
+    context.matchesPreviousSkill({ previous: { skillId: "pass", code: "#" } }, "receive-positive"),
+    true
+  );
+  assert.equal(
+    context.matchesPreviousSkill({ fromFreeball: true }, "receive-positive"),
+    false
+  );
+  assert.ok((index.match(/value="receive-positive">Solo ricezione positiva/g) || []).length >= 2);
+  assert.match(scout, /value:\s*"receive-positive", label:\s*"Solo ricezione positiva"/);
+});
+
 test("la distribuzione separa le damp per rotazione e mostra la legenda grafica", () => {
   const distribution = extract(scout, "function getFilteredPlayerAttacksForSecondDistribution", "function renderPlayerSecondTable");
   assert.match(distribution, /setType\.toLowerCase\(\) === "damp"/);

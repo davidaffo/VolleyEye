@@ -575,7 +575,8 @@ body[data-theme="light"] .rotation-number {
 .scout-grid {
   display: grid;
   grid-template-columns:
-    280px
+    minmax(0, var(--scout-left-width, 280px))
+    10px
     minmax(0, 1fr)
     10px
     minmax(0, var(--scout-right-width, 380px));

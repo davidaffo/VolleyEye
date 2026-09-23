@@ -452,6 +452,15 @@
             </div>
         </div>
       </div>
+      <button
+        id="scout-resize-left"
+        class="scout-column-resizer"
+        type="button"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Ridimensiona colonna partita"
+        title="Trascina per ridimensionare. Doppio clic per ripristinare."
+      ></button>
       <div class="section scout-col-center" data-scout-panel="team">
         <div class="set-type-wrapper">
           <div class="set-type-shortcuts set-type-inline" id="set-type-shortcuts" style="display: none">
@@ -981,6 +990,7 @@
               <select id="traj-filter-prev">
                 <option value="any">Tutte</option>
                 <option value="freeball-positive">Freeball o ricezione positiva</option>
+                <option value="receive-positive">Solo ricezione positiva</option>
                 <option value="defense-negative">Difesa + ricezione negativa</option>
                 <option value="freeball-only">Solo freeball</option>
                 <option value="dig-only">Solo difesa</option>
@@ -1127,6 +1137,7 @@
               <select id="second-filter-prev">
                 <option value="any">Tutte</option>
                 <option value="freeball-positive">Freeball o ricezione positiva</option>
+                <option value="receive-positive">Solo ricezione positiva</option>
                 <option value="defense-negative">Difesa + ricezione negativa</option>
                 <option value="freeball-only">Solo freeball</option>
                 <option value="dig-only">Solo difesa</option>
@@ -1372,6 +1383,7 @@
                       <select id="player-traj-filter-prev">
                         <option value="any">Tutte</option>
                         <option value="freeball-positive">Freeball o ricezione positiva</option>
+                        <option value="receive-positive">Solo ricezione positiva</option>
                         <option value="defense-negative">Difesa + ricezione negativa</option>
                         <option value="freeball-only">Solo freeball</option>
                         <option value="dig-only">Solo difesa</option>
@@ -1510,6 +1522,7 @@
                       <select id="player-second-filter-prev">
                         <option value="any">Tutte</option>
                         <option value="freeball-positive">Freeball o ricezione positiva</option>
+                        <option value="receive-positive">Solo ricezione positiva</option>
                         <option value="defense-negative">Difesa + ricezione negativa</option>
                         <option value="freeball-only">Solo freeball</option>
                         <option value="dig-only">Solo difesa</option>
@@ -1669,6 +1682,7 @@
           <select id="video-filter-prev">
             <option value="any">Tutte</option>
             <option value="freeball-positive">Freeball o ricezione positiva</option>
+            <option value="receive-positive">Solo ricezione positiva</option>
             <option value="defense-negative">Difesa + ricezione negativa</option>
             <option value="freeball-only">Solo freeball</option>
             <option value="dig-only">Solo difesa</option>
