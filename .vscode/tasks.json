@@ -1,0 +1,21 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Aggiorna versione VolleyEye",
+      "type": "shell",
+      "command": "npm run release -- ${input:versionIncrement}",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "versionIncrement",
+      "type": "pickString",
+      "description": "Tipo di aggiornamento versione",
+      "options": ["patch", "minor", "major"],
+      "default": "patch"
+    }
+  ]
+}
