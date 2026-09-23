@@ -29,7 +29,7 @@ test("entrare e uscire dalla partita è un passaggio esplicito e persistito", ()
 test("selezionare una riga in lobby carica la relativa anteprima senza entrare nel workspace", () => {
   const listHandler = bindings.slice(
     bindings.indexOf('if (elSavedMatchesList)'),
-    bindings.indexOf('if (elBtnSaveMatchInfo)')
+    bindings.indexOf('document.querySelectorAll("[data-edit-match]")')
   );
   assert.match(listHandler, /loadSelectedMatch\(\)/);
   assert.doesNotMatch(listHandler, /enterSelectedMatch\(\)/);

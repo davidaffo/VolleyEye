@@ -3,16 +3,6 @@ function bindRosterAndArchiveControls() {
     if (!select) return;
     select.addEventListener("change", () => setCurrentSet(select.value));
   });
-  [elOpponent, elCategory, elDate, elLeg, elMatchType].forEach(input => {
-    if (!input) return;
-    const handler = () => {
-      saveMatchInfoFromUI();
-      if (typeof renderMatchesSelect === "function") renderMatchesSelect();
-      if (typeof renderMatchSummary === "function") renderMatchSummary();
-    };
-    input.addEventListener("change", handler);
-    input.addEventListener("blur", handler);
-  });
   if (elThemeToggles.length) {
     elThemeToggles.forEach(button => button.addEventListener("click", () => {
       applyTheme(button.dataset.themeChoice);
@@ -633,36 +623,9 @@ function bindRosterAndArchiveControls() {
       }
     });
   }
-  if (elBtnSaveMatchInfo) {
-    elBtnSaveMatchInfo.addEventListener("click", () => {
-      const selectedName = (elSavedMatchesSelect && elSavedMatchesSelect.value) || state.selectedMatch || "";
-      if (selectedName) {
-        state.selectedMatch = selectedName;
-      }
-      saveMatchInfoFromUI();
-      if (typeof saveMatchToStorage === "function" && typeof buildMatchExportPayload === "function") {
-        const matchInfo = getMatchInfoFromInputs();
-        const desiredName =
-          state.selectedMatch ||
-          (typeof generateMatchName === "function" ? generateMatchName("") : "") ||
-          "Match";
-        const payload = buildMatchExportPayload();
-        payload.name = desiredName;
-        payload.state.match = Object.assign({}, payload.state.match || {}, matchInfo);
-        state.match = Object.assign({}, payload.state.match);
-        state.selectedMatch = desiredName;
-        state.savedMatches = state.savedMatches || {};
-        state.savedMatches[desiredName] = payload;
-        saveMatchToStorage(desiredName, payload);
-        syncMatchInfoInputs(payload.state.match);
-      } else if (typeof persistCurrentMatch === "function") {
-        persistCurrentMatch();
-      }
-      if (typeof renderMatchesSelect === "function") renderMatchesSelect();
-      if (typeof renderMatchSummary === "function") renderMatchSummary();
-      alert("Info match salvate.");
-    });
-  }
+  document.querySelectorAll("[data-edit-match]").forEach(button => {
+    button.addEventListener("click", () => openNewMatchModal("edit"));
+  });
   if (elBtnNewMatch) {
     elBtnNewMatch.addEventListener("click", () => {
       if (typeof createNewMatchFromPrompt === "function") {
@@ -699,12 +662,19 @@ function bindRosterAndArchiveControls() {
   if (newMatchConfirm) {
     newMatchConfirm.addEventListener("click", () => {
       const selectedMode = document.querySelector('input[name="new-match-mode"]:checked');
-      const created = typeof createNewMatchFromSetup === "function" && createNewMatchFromSetup({
+      const setup = {
         teamName: (document.getElementById("new-match-team") || {}).value || "",
         mode: selectedMode ? selectedMode.value : "single",
         opponentTeam: (document.getElementById("new-match-opponent-team") || {}).value || "",
-        opponentManual: (document.getElementById("new-match-opponent-name") || {}).value || ""
-      });
+        opponentManual: (document.getElementById("new-match-opponent-name") || {}).value || "",
+        category: elCategory.value,
+        date: elDate.value,
+        matchType: elMatchType.value,
+        leg: elLeg.value
+      };
+      const created = newMatchModal.dataset.mode === "edit"
+        ? saveMatchDetailsFromSetup(setup)
+        : createNewMatchFromSetup(setup);
       if (created && typeof closeNewMatchModal === "function") closeNewMatchModal();
     });
   }

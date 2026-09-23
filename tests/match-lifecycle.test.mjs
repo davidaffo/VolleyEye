@@ -10,6 +10,36 @@ const end = roster.indexOf("function createNewMatchFromPrompt", start);
 assert.ok(start >= 0 && end > start, "ciclo di pausa e salvataggio match non trovato");
 const lifecycleSource = roster.slice(start, end);
 
+test("modificare i dati conserva squadre, modalità, eventi e identità del match", () => {
+  const source = roster.slice(roster.indexOf("function saveMatchDetailsFromSetup"), roster.indexOf("function createNewMatchFromSetup"));
+  for (const double of [false, true]) {
+    const state = {
+      loadedMatchName: "id-stabile", selectedMatch: "id-stabile",
+      useOpponentTeam: double, selectedTeam: "Casa", selectedOpponentTeam: "Ospiti",
+      events: [{ eventId: 1 }], match: { teamName: "Casa", opponent: "Ospiti" }
+    };
+    const context = {
+      state, persistCurrentMatch: () => true, alert: () => {},
+      getTodayIso: () => "2026-09-23"
+    };
+    vm.runInNewContext(source, context);
+    const events = state.events;
+    assert.equal(context.saveMatchDetailsFromSetup({
+      category: "U18", date: "2026-09-24", matchType: "torneo", leg: "gara-1",
+      teamName: "Non consentita", mode: "single", opponentTeam: "Non consentita",
+      opponentManual: "Nuovo nome"
+    }), true);
+    assert.equal(state.match.category, "U18");
+    assert.equal(state.match.date, "2026-09-24");
+    assert.equal(state.match.teamName, "Casa");
+    assert.equal(state.match.opponent, double ? "Ospiti" : "Nuovo nome");
+    assert.equal(state.selectedOpponentTeam, "Ospiti");
+    assert.equal(state.useOpponentTeam, double);
+    assert.equal(state.loadedMatchName, "id-stabile");
+    assert.equal(state.events, events);
+  }
+});
+
 function buildContext({ persistResult = true } = {}) {
   const state = {
     loadedMatchName: "Match corrente",

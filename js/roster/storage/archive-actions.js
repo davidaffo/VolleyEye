@@ -384,13 +384,38 @@ function populateNewMatchTeamSelects() {
   if (emptyHint) emptyHint.classList.toggle("hidden", names.length > 0);
   if (confirmButton) confirmButton.disabled = names.length === 0;
 }
-function openNewMatchModal() {
+function openNewMatchModal(dialogMode = "create") {
   const modal = document.getElementById("new-match-modal");
   if (!modal) return false;
+  const editing = dialogMode === "edit";
+  if (editing && !state.loadedMatchName && !state.selectedMatch) {
+    alert("Seleziona prima una partita.");
+    return false;
+  }
+  modal.dataset.mode = editing ? "edit" : "create";
   populateNewMatchTeamSelects();
+  document.getElementById("new-match-title").textContent = editing ? "Modifica dati partita" : "Crea partita";
+  modal.querySelector(".match-lobby-eyebrow").textContent = editing ? "Partita selezionata" : "Nuova partita";
+  document.getElementById("new-match-confirm").textContent = editing ? "Salva modifiche" : "Crea partita";
+  if (editing) document.getElementById("new-match-confirm").disabled = false;
+  if (editing) document.getElementById("new-match-empty-teams").classList.add("hidden");
+  ["new-match-team", "new-match-opponent-team"].forEach(id => {
+    const select = document.getElementById(id);
+    if (editing) {
+      const name = id === "new-match-team" ? state.selectedTeam || state.match.teamName : state.selectedOpponentTeam || state.match.opponent;
+      select.replaceChildren(new Option(name || "—", name || ""));
+    }
+    select.disabled = editing || select.options.length <= 1;
+  });
+  modal.querySelectorAll('input[name="new-match-mode"]').forEach(input => { input.disabled = editing; });
+  document.getElementById("new-match-manage-teams").classList.toggle("hidden", editing);
+  if (typeof syncMatchInfoInputs === "function") syncMatchInfoInputs(editing ? state.match : {
+    category: state.match && state.match.category || "",
+    date: getTodayIso(), matchType: "amichevole", leg: ""
+  });
   const manualOpponent = document.getElementById("new-match-opponent-name");
   if (manualOpponent) {
-    manualOpponent.value = state.useOpponentTeam ? "" : (state.match && state.match.opponentManual) || "";
+    manualOpponent.value = state.useOpponentTeam ? "" : (state.match && (state.match.opponentManual || state.match.opponent)) || "";
   }
   const desiredMode = state.useOpponentTeam ? "double" : "single";
   const mode = modal.querySelector(`input[name="new-match-mode"][value="${desiredMode}"]`);
@@ -407,6 +432,34 @@ function closeNewMatchModal() {
 }
 function createNewMatchFromPrompt() {
   return openNewMatchModal();
+}
+function saveMatchDetailsFromSetup(setup) {
+  if (!state.loadedMatchName && !state.selectedMatch) return false;
+  if (!state.useOpponentTeam && !String(setup.opponentManual || "").trim()) {
+    alert("Inserisci il nome dell'avversario.");
+    return false;
+  }
+  const previousMatch = { ...state.match };
+  Object.assign(state.match, {
+    category: String(setup.category || "").trim(),
+    date: setup.date || getTodayIso(),
+    matchType: setup.matchType || "",
+    leg: setup.leg || ""
+  });
+  if (!state.useOpponentTeam) {
+    state.match.opponent = String(setup.opponentManual).trim();
+    state.match.opponentManual = state.match.opponent;
+  }
+  const saved = persistCurrentMatch({ allowCreate: true });
+  if (!saved) {
+    state.match = previousMatch;
+    alert("Impossibile salvare i dati partita. Riprova.");
+    return false;
+  }
+  if (typeof renderMatchesSelect === "function") renderMatchesSelect();
+  if (typeof renderMatchSummary === "function") renderMatchSummary();
+  if (typeof saveState === "function") saveState();
+  return true;
 }
 function createNewMatchFromSetup(setup = {}) {
   const teamName = String(setup.teamName || "").trim();
@@ -472,8 +525,10 @@ function createNewMatchFromSetup(setup = {}) {
   state.match = Object.assign({}, state.match || {}, {
     opponent,
     opponentManual: useOpponentTeam ? "" : opponentManual,
-    date: getTodayIso(),
-    matchType: (state.match && state.match.matchType) || "amichevole",
+    category: String(setup.category || "").trim(),
+    date: setup.date || getTodayIso(),
+    matchType: setup.matchType ?? "amichevole",
+    leg: setup.leg || "",
     teamName
   });
   state.selectedMatch = generateMatchName();

@@ -26,14 +26,14 @@
     };
   </script>
   <script>
-    window.__APP_CACHE_VERSION__ = "v0.18.3-408-068690a";
+    window.__APP_CACHE_VERSION__ = "v0.18.5-410-4a24c39";
     window.__IS_LOCALHOST_DEV__ =
       location.hostname === "localhost" ||
       location.hostname === "127.0.0.1" ||
       location.hostname === "::1";
     window.__APP_ASSET_SUFFIX__ = window.__IS_LOCALHOST_DEV__
       ? `?dev=${Date.now()}`
-      : `?v=v0.18.3-408-068690a`;
+      : `?v=v0.18.5-410-4a24c39`;
     if (location.protocol === "file:") {
       document.documentElement.dataset.fileOrigin = "true";
     }
@@ -97,6 +97,7 @@
     <button class="tab-btn match-session-only" data-tab-target="aggregated">Analisi</button>
     <button class="tab-btn match-session-only" data-tab-target="video">Video</button>
     <button class="tab-btn global-settings-btn" data-tab-target="info">Impostazioni</button>
+    <button class="secondary match-session-only" type="button" data-edit-match>Modifica dati partita</button>
     <button id="btn-exit-match" class="secondary match-session-only match-session-exit" type="button" data-exit-match>Esci dalla partita</button>
   </div>
   <div class="tabs-dots" aria-label="Navigazione pagine">
@@ -142,49 +143,6 @@
         <div class="match-manager__body">
           <div class="match-manager-grid">
             <div class="match-manager-panel">
-              <h4>Informazioni match</h4>
-              <div class="top-bar match-form-grid">
-                <div class="col">
-                  <label for="match-opponent">Avversario · definito alla creazione</label>
-                  <input id="match-opponent" type="text" readonly />
-                </div>
-                <div class="col">
-                  <label for="match-category">Categoria</label>
-                  <input id="match-category" type="text" />
-                </div>
-                <div class="col">
-                  <label for="match-date">Data</label>
-                  <input id="match-date" type="date" />
-                </div>
-                <div class="col">
-                  <label for="match-type">Tipo partita</label>
-                  <select id="match-type">
-                    <option value="amichevole">Amichevole</option>
-                    <option value="campionato">Campionato</option>
-                    <option value="torneo">Torneo</option>
-                    <option value="playoff">Playoff</option>
-                    <option value="playout">Playout</option>
-                    <option value="coppa">Coppa</option>
-                    <option value="">Altro</option>
-                  </select>
-                </div>
-                <div class="col">
-                  <label for="match-leg">Turno</label>
-                  <select id="match-leg">
-                    <option value="">-</option>
-                    <option value="andata">Andata</option>
-                    <option value="ritorno">Ritorno</option>
-                    <option value="gara-1">Gara 1</option>
-                    <option value="gara-2">Gara 2</option>
-                    <option value="gara-3">Gara 3</option>
-                  </select>
-                </div>
-              </div>
-              <div class="controls-row">
-                <button id="btn-save-match-info">Salva info match</button>
-              </div>
-            </div>
-            <div class="match-manager-panel">
               <h4>Match salvati</h4>
               <div id="saved-matches-list" class="match-list" role="listbox" aria-label="Match salvati"></div>
               <select id="saved-matches" class="hidden-select" tabindex="-1" aria-hidden="true">
@@ -193,6 +151,7 @@
               <div class="controls-row">
                 <button id="btn-load-match">Entra nella partita</button>
                 <button id="btn-new-match" class="secondary">Nuovo match</button>
+                <button type="button" class="secondary" data-edit-match>Modifica dati partita</button>
                 <button id="btn-delete-match" class="danger">Elimina</button>
               </div>
               <div class="controls-row match-actions-row">
@@ -2150,7 +2109,7 @@
         <button id="new-match-close" class="pill-remove" type="button" aria-label="Chiudi">✕</button>
       </div>
       <div class="settings-modal__body">
-        <p class="section-note">Questa configurazione resta bloccata per tutta la partita.</p>
+        <p class="section-note">Squadra principale, modalità e squadra avversaria in modalità doppia restano bloccate dopo la creazione.</p>
         <div class="new-match-setup-grid">
           <label class="new-match-field">
             <span>Squadra principale</span>
@@ -2171,6 +2130,39 @@
           </label>
         </div>
         <p id="new-match-empty-teams" class="section-note hidden">Prima di creare una partita devi salvare almeno una squadra.</p>
+        <div class="new-match-setup-grid">
+                <div class="col">
+                  <label for="match-category">Categoria</label>
+                  <input id="match-category" type="text" />
+                </div>
+                <div class="col">
+                  <label for="match-date">Data</label>
+                  <input id="match-date" type="date" />
+                </div>
+                <div class="col">
+                  <label for="match-type">Tipo partita</label>
+                  <select id="match-type">
+                    <option value="amichevole">Amichevole</option>
+                    <option value="campionato">Campionato</option>
+                    <option value="torneo">Torneo</option>
+                    <option value="playoff">Playoff</option>
+                    <option value="playout">Playout</option>
+                    <option value="coppa">Coppa</option>
+                    <option value="">Altro</option>
+                  </select>
+                </div>
+                <div class="col">
+                  <label for="match-leg">Turno</label>
+                  <select id="match-leg">
+                    <option value="">-</option>
+                    <option value="andata">Andata</option>
+                    <option value="ritorno">Ritorno</option>
+                    <option value="gara-1">Gara 1</option>
+                    <option value="gara-2">Gara 2</option>
+                    <option value="gara-3">Gara 3</option>
+                  </select>
+                </div>
+        </div>
         <div class="controls-row new-match-actions">
           <button id="new-match-confirm" type="button">Crea partita</button>
           <button id="new-match-manage-teams" class="secondary" type="button">Gestione squadre</button>
