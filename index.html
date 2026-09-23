@@ -26,14 +26,14 @@
     };
   </script>
   <script>
-    window.__APP_CACHE_VERSION__ = "v0.18.6-411-da8022c";
+    window.__APP_CACHE_VERSION__ = "v0.19.0-412-9afb4b2";
     window.__IS_LOCALHOST_DEV__ =
       location.hostname === "localhost" ||
       location.hostname === "127.0.0.1" ||
       location.hostname === "::1";
     window.__APP_ASSET_SUFFIX__ = window.__IS_LOCALHOST_DEV__
       ? `?dev=${Date.now()}`
-      : `?v=v0.18.6-411-da8022c`;
+      : `?v=v0.19.0-412-9afb4b2`;
     if (location.protocol === "file:") {
       document.documentElement.dataset.fileOrigin = "true";
     }
@@ -2194,6 +2194,7 @@
           <input id="teams-manager-file-input" type="file" accept="application/json,text/plain" hidden />
         </div>
         <p class="section-note">La selezione qui serve solo per gestire le squadre salvate.</p>
+        <div id="team-merge-panel" class="teams-manager-row"></div>
       </div>
     </div>
   </div>

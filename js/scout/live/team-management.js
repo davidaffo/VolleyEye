@@ -564,6 +564,7 @@ function renderTeamsManagerList() {
       elTeamsManagerList.appendChild(item);
     });
   }
+  renderTeamMergeControls();
   const hasSelection = !!teamsManagerSelectedName;
   if (elTeamsManagerOpenTeam) elTeamsManagerOpenTeam.disabled = !hasSelection;
   if (elTeamsManagerDelete) elTeamsManagerDelete.disabled = !hasSelection;
@@ -641,74 +642,57 @@ function removeOrphanPlayersFromDb() {
   }
   renderPlayersDbList();
 }
+// Shared preparation for both the player archive and team merges. No writes here.
+function buildPlayersMergePlan(idMap, rosterPlayers = []) {
+  const db = { ...loadPlayersDbFromStorage(), ...state.playersDb };
+  rosterPlayers.forEach(player => {
+    db[player.id] = buildPlayersDbEntry(player, db[player.id] || {});
+  });
+  idMap.forEach((primaryId, secondaryId) => {
+    const primary = db[primaryId];
+    const secondary = db[secondaryId];
+    if (!primary || !secondary || primaryId === secondaryId || idMap.has(primaryId)) {
+      throw new Error("Abbinamento giocatrice non valido.");
+    }
+    db[primaryId] = {
+      ...secondary,
+      ...primary,
+      id: primaryId,
+      firstName: primary.firstName || secondary.firstName || "",
+      lastName: primary.lastName || secondary.lastName || "",
+      photo: primary.photo || secondary.photo || "",
+      name: primary.name || secondary.name || ""
+    };
+    delete db[secondaryId];
+  });
+  function rewrite(value, field = "") {
+    if (typeof value === "string") {
+      return ["id", "playerId", "setterId", "attackerId"].includes(field) && idMap.has(value)
+        ? idMap.get(value) : value;
+    }
+    if (!value || typeof value !== "object") return value;
+    if (Array.isArray(value)) return value.map(item => rewrite(item));
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, rewrite(item, key)]));
+  }
+  const teams = rewrite(loadTeamsMapFromStorage());
+  const matches = rewrite(loadMatchesMapFromStorage());
+  const currentName = state.loadedMatchName || state.selectedMatch || "";
+  if (currentName && matches[currentName] && typeof getCurrentMatchPayload === "function") {
+    matches[currentName] = rewrite(getCurrentMatchPayload(currentName));
+  }
+  const nextState = rewrite(state);
+  Object.assign(nextState, { playersDb: db, savedTeams: teams, savedOpponentTeams: teams, savedMatches: matches, lastSavedAt: Date.now() });
+  return { teams, matches, db, nextState };
+}
 function mergePlayersDbEntries(primaryId, secondaryId) {
   if (!primaryId || !secondaryId || primaryId === secondaryId) return false;
-  const db = Object.assign({}, state.playersDb || {});
-  const primary = db[primaryId];
-  const secondary = db[secondaryId];
-  if (!primary || !secondary) return false;
-  const merged = {
-    id: primaryId,
-    firstName: primary.firstName || secondary.firstName || "",
-    lastName: primary.lastName || secondary.lastName || "",
-    photo: primary.photo || secondary.photo || "",
-    name:
-      primary.name ||
-      secondary.name ||
-      (typeof buildFullName === "function" ? buildFullName(primary.lastName, primary.firstName) : "") ||
-      ""
-  };
-  db[primaryId] = merged;
-  delete db[secondaryId];
-  state.playersDb = db;
-  if (typeof savePlayersDbToStorage === "function") {
-    savePlayersDbToStorage(db);
+  try {
+    commitArchiveMerge(buildPlayersMergePlan(new Map([[secondaryId, primaryId]])));
+    return true;
+  } catch (error) {
+    logError("Errore unione giocatrici", error);
+    return false;
   }
-  const teamsMap = typeof loadTeamsMapFromStorage === "function" ? loadTeamsMapFromStorage() : {};
-  Object.entries(teamsMap || {}).forEach(([teamName, team]) => {
-    const normalized = typeof normalizeTeamPayload === "function" ? normalizeTeamPayload(team, teamName) : team;
-    if (!normalized || !Array.isArray(normalized.playersDetailed)) return;
-    let changed = false;
-    const playersDetailed = normalized.playersDetailed.map(player => {
-      const id = player && (player.id || player.playerId);
-      if (id !== secondaryId) return player;
-      changed = true;
-      return Object.assign({}, player, { id: primaryId });
-    });
-    if (changed) {
-      normalized.playersDetailed = playersDetailed;
-      if (typeof saveTeamToStorage === "function") {
-        saveTeamToStorage(teamName, normalized);
-      }
-    }
-  });
-  if (typeof syncTeamsFromStorage === "function") syncTeamsFromStorage();
-  const savedMatches = state.savedMatches || {};
-  Object.entries(savedMatches).forEach(([name, payload]) => {
-    if (!payload || !payload.state || !Array.isArray(payload.state.events)) return;
-    let touched = false;
-    payload.state.events.forEach(ev => {
-      if (ev && ev.playerId === secondaryId) {
-        ev.playerId = primaryId;
-        touched = true;
-      }
-    });
-    if (touched && typeof saveMatchToStorage === "function") {
-      saveMatchToStorage(name, payload);
-      savedMatches[name] = payload;
-    }
-  });
-  state.savedMatches = savedMatches;
-  if (Array.isArray(state.events)) {
-    state.events.forEach(ev => {
-      if (ev && ev.playerId === secondaryId) {
-        ev.playerId = primaryId;
-      }
-    });
-  }
-  syncEventPlayerLinks(state.events || []);
-  saveState();
-  return true;
 }
 function updatePlayerPhotoInDbAndTeams(playerId, photoDataUrl = "") {
   if (!playerId) return false;
@@ -985,4 +969,177 @@ function getAutoRoleDisplayCourt(forSkillId = null, scope = "our") {
     }));
   }
   return ensureCourtShapeFor(effectiveBase).map((slot, idx) => ({ slot, idx }));
+}
+
+// Team merges preserve historical names, numbers and court positions; identity links change.
+function buildTeamMerge(primaryName, secondaryName, choices) {
+  if (!primaryName || primaryName === secondaryName) throw new Error("Scegli due squadre diverse.");
+  const teams = loadTeamsMapFromStorage();
+  const primary = normalizeTeamPayload(teams[primaryName], primaryName);
+  const secondary = normalizeTeamPayload(teams[secondaryName], secondaryName);
+  if (!primary || !secondary) throw new Error("Squadra non trovata o non valida.");
+  const idMap = new Map();
+  const players = primary.playersDetailed.map(p => ({ ...p }));
+  const used = new Set();
+  secondary.playersDetailed.forEach(player => {
+    const targetId = choices[player.id] || (players.some(p => p.id === player.id) ? player.id : "");
+    const target = primary.playersDetailed.find(p => p.id === targetId);
+    if (targetId && !target) throw new Error("Abbinamento giocatrice non valido.");
+    if (target) {
+      if (used.has(targetId)) throw new Error("Abbina ogni giocatrice a una sola giocatrice della squadra mantenuta.");
+      used.add(targetId);
+      if (player.id !== targetId) idMap.set(player.id, targetId);
+      const kept = players.find(p => p.id === targetId);
+      ["codeOfficial", "number"].forEach(key => { if (!kept[key]) kept[key] = player[key]; });
+    } else {
+      if (players.some(p => p.name.toLowerCase() === player.name.toLowerCase())) {
+        throw new Error("Due giocatrici hanno lo stesso nome: abbinale oppure distingui i nomi prima dell'unione.");
+      }
+      players.push({ ...player, isCaptain: primary.captains.length ? false : player.isCaptain });
+    }
+  });
+  // Avoid chained identity substitutions involving players already in the retained roster.
+  if ([...idMap.keys()].some(id => primary.playersDetailed.some(p => p.id === id))) {
+    throw new Error("Una giocatrice è già condivisa dalle due squadre: mantieni il suo abbinamento originale.");
+  }
+  const merged = compactTeamPayload({ ...primary, playersDetailed: players }, primaryName);
+  merged.staff = { ...secondary.staff, ...Object.fromEntries(Object.entries(primary.staff).filter(([, v]) => v)) };
+  merged.officialCode ||= secondary.officialCode;
+  merged.officialId ||= secondary.officialId;
+  function rewrite(value, field = "") {
+    if (typeof value === "string") {
+      if (["selectedTeam", "selectedOpponentTeam", "teamName", "opponent", "opponentManual"].includes(field) && value === secondaryName) return primaryName;
+      return value;
+    }
+    if (!value || typeof value !== "object") return value;
+    if (Array.isArray(value)) return value.map(item => rewrite(item));
+    const result = {};
+    Object.entries(value).forEach(([key, item]) => { result[key] = rewrite(item, key); });
+    if (field === "savedTeams" || field === "savedOpponentTeams") {
+      if (result[secondaryName]) {
+        result[primaryName] = { ...result[secondaryName], name: primaryName };
+        delete result[secondaryName];
+      }
+    }
+    return result;
+  }
+  const plan = buildPlayersMergePlan(idMap, [...primary.playersDetailed, ...secondary.playersDetailed]);
+  const { db } = plan;
+  merged.playersDetailed.forEach(p => {
+    // Identity data (including fallback photos) comes from the shared player merge.
+    p.photo = db[p.id].photo || p.photo;
+    db[p.id] = buildPlayersDbEntry(p, db[p.id] || {});
+  });
+  const rewrittenTeams = rewrite(plan.teams);
+  delete rewrittenTeams[secondaryName];
+  rewrittenTeams[primaryName] = merged;
+  const matches = rewrite(plan.matches);
+  const nextState = rewrite(plan.nextState);
+  Object.assign(teams, rewrittenTeams);
+  delete teams[secondaryName];
+  Object.assign(nextState, { playersDb: db, savedTeams: teams, savedOpponentTeams: teams, savedMatches: matches, lastSavedAt: Date.now() });
+  return { teams, matches, db, nextState };
+}
+function commitTeamMerge(primaryName, secondaryName, choices) {
+  commitArchiveMerge(buildTeamMerge(primaryName, secondaryName, choices), [getTeamStorageKey(secondaryName)]);
+}
+function commitArchiveMerge(plan, removedKeys = []) {
+  const writes = new Map();
+  Object.entries(plan.teams).forEach(([name, team]) => writes.set(getTeamStorageKey(name), JSON.stringify(team)));
+  Object.entries(plan.matches).forEach(([name, match]) => writes.set(getMatchStorageKey(name), JSON.stringify(match)));
+  writes.set(PLAYER_PREFIX, JSON.stringify(plan.db));
+  const snapshot = buildCompactLocalStateSnapshot(plan.nextState);
+  // The snapshot helper reads the current global state for the selected match.
+  // Replace that part with the already rewritten payload before committing.
+  snapshot.savedMatches = plan.nextState.selectedMatch && plan.matches[plan.nextState.selectedMatch]
+    ? { [plan.nextState.selectedMatch]: plan.matches[plan.nextState.selectedMatch] }
+    : {};
+  writes.set(STORAGE_KEY, JSON.stringify(snapshot));
+  removedKeys.forEach(key => writes.set(key, null));
+  const previous = new Map([...writes.keys()].map(key => [key, localStorage.getItem(key)]));
+  const changed = [];
+  try {
+    writes.forEach((value, key) => {
+      if (value === previous.get(key)) return;
+      if (value === null) localStorage.removeItem(key);
+      else localStorage.setItem(key, value);
+      changed.push(key);
+    });
+  } catch (error) {
+    changed.reverse().forEach(key => {
+      const old = previous.get(key);
+      if (old === null) localStorage.removeItem(key);
+      else localStorage.setItem(key, old);
+    });
+    throw new Error("Salvataggio non riuscito. Unione annullata: " + error.message);
+  }
+  Object.assign(state, plan.nextState);
+  writeStateToIndexedDb(snapshot);
+}
+function renderTeamMergeControls() {
+  const panel = document.getElementById("team-merge-panel");
+  if (!panel) return;
+  panel.replaceChildren();
+  const names = listTeamsFromStorage().filter(name => name !== teamsManagerSelectedName);
+  if (!teamsManagerSelectedName || !names.length) return;
+  const title = document.createElement("h4");
+  title.textContent = "Unisci in “" + teamsManagerSelectedName + "”";
+  const label = document.createElement("label");
+  label.textContent = "Squadra da unire ed eliminare";
+  const select = document.createElement("select");
+  select.setAttribute("aria-label", label.textContent);
+  select.add(new Option("Seleziona una squadra…", ""));
+  names.forEach(name => select.add(new Option(name, name)));
+  label.append(select);
+  const details = document.createElement("div");
+  panel.append(title, label, details);
+  select.addEventListener("change", () => {
+    details.replaceChildren();
+    if (!select.value) return;
+    const primary = loadTeamNormalized(teamsManagerSelectedName);
+    const secondary = loadTeamNormalized(select.value);
+    if (!primary || !secondary) return;
+    const note = document.createElement("p");
+    note.className = "section-note";
+    note.textContent = "Verifica gli abbinamenti. Le giocatrici non abbinate saranno aggiunte. In caso di conflitto si mantengono i dati della squadra scelta; nomi e numeri storici delle partite restano invariati.";
+    details.append(note);
+    const choices = {};
+    secondary.playersDetailed.forEach(player => {
+      const row = document.createElement("label");
+      row.className = "controls-row";
+      row.append(document.createTextNode(player.name + " → "));
+      const picker = document.createElement("select");
+      picker.setAttribute("aria-label", "Abbina " + player.name);
+      picker.add(new Option("Aggiungi alla rosa", ""));
+      primary.playersDetailed.forEach(p => picker.add(new Option(p.name, p.id)));
+      const match = primary.playersDetailed.find(p => p.id === player.id) || primary.playersDetailed.find(p => p.name.toLowerCase() === player.name.toLowerCase());
+      picker.value = match ? match.id : "";
+      if (primary.playersDetailed.some(p => p.id === player.id)) picker.disabled = true;
+      choices[player.id] = picker.value;
+      picker.addEventListener("change", () => { choices[player.id] = picker.value; });
+      row.append(picker);
+      details.append(row);
+    });
+    const button = document.createElement("button");
+    button.className = "danger";
+    button.textContent = "Unisci squadre";
+    button.addEventListener("click", () => {
+      const primaryName = teamsManagerSelectedName;
+      const secondaryName = select.value;
+      try {
+        buildTeamMerge(primaryName, secondaryName, choices);
+        if (!confirm("Unire “" + secondaryName + "” in “" + primaryName + "”? Le partite saranno ricollegate e “" + secondaryName + "” sarà eliminata. Gli ID delle giocatrici abbinate saranno unificati anche nelle altre squadre e partite.")) return;
+        commitTeamMerge(primaryName, secondaryName, choices);
+      } catch (error) {
+        alert(error.message);
+        return;
+      }
+      renderTeamsManagerList();
+      renderTeamsSelect();
+      renderOpponentTeamsSelect();
+      if (typeof applyMatchInfoToUI === "function") applyMatchInfoToUI();
+      alert("Squadre unite e partite aggiornate.");
+    });
+    details.append(button);
+  });
 }
