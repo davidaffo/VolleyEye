@@ -1,15 +1,19 @@
+import { IDBFactory } from "fake-indexeddb";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 import { ROSTER_SOURCE_FILES } from "./helpers/roster-source.mjs";
 import { SCOUT_SOURCE_FILES } from "./helpers/scout-source.mjs";
 
+const dvwRoot = 'resources/data volley';
+const dvwFiles = [`${dvwRoot}/data volley example file.dvw`, ...readdirSync(`${dvwRoot}/files scout`).filter(file => file.endsWith('.dvw')).map(file => `${dvwRoot}/files scout/${file}`)];
 const rootUrl = new URL("../", import.meta.url);
 const runtimeFiles = [
   "js/globals.js",
   "js/shared/namespace.js",
   "js/shared/state-isolation.js",
+  "js/shared/persistent-storage.js",
   "js/shared/team-ui.js",
   "js/shared/lineup-core.js",
   "js/shared/auto-role.js",
@@ -57,6 +61,7 @@ function buildBrowserContext() {
   };
   const context = {
     console,
+    indexedDB: new IDBFactory(),
     document,
     localStorage: storage,
     sessionStorage: storage,
@@ -99,7 +104,7 @@ test("gli script modulari condividono lo stesso contesto classico senza collisio
   );
 });
 
-test("dopo il caricamento di un match il roster avversario aggiorna stato, numeri e panchina attivi", () => {
+test("dopo il caricamento di un match il roster avversario aggiorna stato, numeri e panchina attivi", async () => {
   const context = buildBrowserContext();
   const saved = new Map();
   context.localStorage = {
@@ -111,6 +116,7 @@ test("dopo il caricamento di un match il roster avversario aggiorna stato, numer
   };
   context.alert = message => assert.fail(message);
   runtimeFiles.forEach(path => vm.runInContext(readFileSync(new URL(path, rootUrl), "utf8"), context, { filename: path }));
+  await context.initializePersistentStorage();
   vm.runInContext(`
     const initialStateReference = state;
     applyImportedMatch({
@@ -184,11 +190,13 @@ test("dopo il caricamento di un match il roster avversario aggiorna stato, numer
   assert.equal(context.createdSnapshot.opponentPlayers.length, 10);
   assert.equal(context.createdSnapshot.opponentPlayerNumbers["Ospite 7"], "17");
   assert.equal(context.createdSnapshot.opponentCourt.filter(slot => slot.main).length, 6);
+  await vm.runInContext("archiveStorage.flush()", context);
 });
 
-test("gli stessi controlli del libero usano C per entrambe le squadre e conservano Nessuno esplicito", () => {
+test("gli stessi controlli del libero usano C per entrambe le squadre e conservano Nessuno esplicito", async () => {
   const context = buildBrowserContext();
   runtimeFiles.forEach(path => vm.runInContext(readFileSync(new URL(path, rootUrl), "utf8"), context, { filename: path }));
+  await context.initializePersistentStorage();
   const selects = Object.fromEntries(["auto-libero-select", "auto-libero-select-settings", "auto-libero-select-opp"].map(id => [id, {
     value: "", listeners: {}, addEventListener(event, callback) { this.listeners[event] = callback; }
   }]));
@@ -227,4 +235,64 @@ test("gli stessi controlli del libero usano C per entrambe le squadre e conserva
   }
   for (const select of Object.values(selects)) assert.equal(select.value, "C");
   assert.equal(vm.runInContext('getTeamAutoLiberoBackline("our") && getTeamAutoLiberoBackline("opponent")', context), true);
+  await vm.runInContext("archiveStorage.flush()", context);
+});
+
+test("tutti i file DVW vengono importati cumulativamente in IndexedDB con localStorage leggero", async () => {
+  const context = buildBrowserContext();
+  const saved = new Map();
+  context.localStorage = {
+    get length() { return saved.size; },
+    key: index => Array.from(saved.keys())[index] ?? null,
+    getItem: key => saved.get(key) ?? null,
+    setItem: (key, value) => {
+      const size = Array.from(saved).reduce((total, [k, v]) => total + (k === key ? 0 : k.length + v.length), 0) + key.length + String(value).length;
+      if (size > 5 * 1024 * 1024 / 2) {
+        const error = new Error('quota');
+        error.name = 'QuotaExceededError';
+        throw error;
+      }
+      saved.set(key, String(value));
+    },
+    removeItem: key => saved.delete(key)
+  };
+  context.alert = message => assert.fail(message);
+  runtimeFiles.forEach(path => vm.runInContext(readFileSync(new URL(path, rootUrl), "utf8"), context, { filename: path }));
+  await context.initializePersistentStorage();
+  for (const file of dvwFiles) {
+    context.importText = readFileSync(file, 'utf8');
+    await assert.doesNotReject(() => vm.runInContext(`(async () => {
+      var imported = parseDataVolleyDvwToMatchState(importText);
+      var archiveResult = await importMatchStateAsNew(imported, { silent: true });
+      var reopened = loadMatchFromStorage(archiveResult.name);
+      globalThis.roundTripEvents = reopened.state.events;
+      globalThis.imported = imported;
+      await archiveStorage.flush();
+    })()`, context), file);
+    assert.deepEqual(JSON.parse(JSON.stringify(context.roundTripEvents)), JSON.parse(JSON.stringify(context.imported.events)), file);
+    assert.ok([...saved.values()].reduce((size, raw) => size + raw.length, 0) < 10000, 'localStorage deve contenere solo stato leggero');
+  }
+  // Open a saved match, persist an edit, then simulate a new browser runtime.
+  vm.runInContext(`
+    var lastName = listMatchesFromStorage().at(-1);
+    applyImportedMatch(loadMatchFromStorage(lastName).state, { silent: true });
+    state.selectedMatch = lastName;
+    state.loadedMatchName = lastName;
+    state.events[0].importPersistenceTest = "conservato";
+    saveState();
+  `, context);
+  await vm.runInContext("archiveStorage.flush()", context);
+  const reopened = buildBrowserContext();
+  reopened.indexedDB = context.indexedDB;
+  reopened.localStorage = context.localStorage;
+  reopened.alert = message => assert.fail(message);
+  runtimeFiles.forEach(path => vm.runInContext(readFileSync(new URL(path, rootUrl), "utf8"), reopened, { filename: path }));
+  await reopened.initializePersistentStorage();
+  assert.equal(reopened.listMatchesFromStorage().length, dvwFiles.length);
+  for (const name of reopened.listMatchesFromStorage()) assert.ok(reopened.loadMatchFromStorage(name).state.events.length > 0);
+  assert.equal(await reopened.loadStateFromIndexedDb(), true);
+  assert.equal(vm.runInContext('state.events[0].importPersistenceTest', reopened), 'conservato');
+  assert.equal(reopened.loadMatchFromStorage(context.lastName).state.events[0].importPersistenceTest, 'conservato');
+  assert.ok([...saved.values()].reduce((size, raw) => size + raw.length, 0) < 10000);
+  await vm.runInContext("archiveStorage.flush()", reopened);
 });

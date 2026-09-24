@@ -1,17 +1,59 @@
+// Store repeated event fields once per column, preserving missing fields separately.
+// This representation is internal to the archive; exports keep the regular JSON format.
+function encodeMatchStoragePayload(data) {
+  const events = data && data.state && data.state.events;
+  if (!Array.isArray(events) || !events.length || events.some(event => !event || typeof event !== "object" || Array.isArray(event))) {
+    return JSON.stringify(data);
+  }
+  const keys = new Set(events.flatMap(event => Object.keys(event)));
+  const columns = Array.from(keys, key => {
+    const values = [];
+    const lookup = new Map();
+    const indices = events.map(event => {
+      const value = Object.prototype.hasOwnProperty.call(event, key) ? JSON.stringify(event[key]) : undefined;
+      if (value === undefined) return -1;
+      if (!lookup.has(value)) {
+        lookup.set(value, values.length);
+        values.push(JSON.parse(value));
+      }
+      return lookup.get(value);
+    });
+    return [key, values, indices];
+  });
+  const payload = { ...data, state: { ...data.state } };
+  delete payload.state.events;
+  return JSON.stringify({ storageFormat: "volleyeye-match-columns-v1", payload, eventCount: events.length, columns });
+}
+function decodeMatchStoragePayload(raw) {
+  const stored = JSON.parse(raw);
+  if (!stored || stored.storageFormat !== "volleyeye-match-columns-v1") return stored;
+  const events = Array.from({ length: stored.eventCount }, () => ({}));
+  stored.columns.forEach(([key, values, indices]) => {
+    indices.forEach((index, row) => {
+      if (index < 0) return;
+      // Each event owns its nested values, just as with regular JSON.parse.
+      Object.defineProperty(events[row], key, {
+        value: JSON.parse(JSON.stringify(values[index])), enumerable: true, writable: true, configurable: true
+      });
+    });
+  });
+  stored.payload.state.events = events;
+  return stored.payload;
+}
 function getMatchStorageKey(name) {
   return MATCH_PREFIX + name;
 }
 function listMatchesFromStorage() {
-  return Object.keys(localStorage)
+  return archiveStorage.keys()
     .filter(k => k.startsWith(MATCH_PREFIX))
     .map(k => k.replace(MATCH_PREFIX, ""));
 }
 function loadMatchFromStorage(name) {
   if (!name) return null;
   try {
-    const raw = localStorage.getItem(getMatchStorageKey(name));
+    const raw = archiveStorage.getItem(getMatchStorageKey(name));
     if (!raw) return null;
-    return JSON.parse(raw);
+    return decodeMatchStoragePayload(raw);
   } catch (e) {
     logError("Error loading match " + name, e);
     return null;
@@ -24,7 +66,7 @@ function getMatchPayloadTimestamp(payload) {
   const savedAt = Date.parse(payload.savedAt || payload.exportedAt || "");
   return Number.isFinite(savedAt) ? savedAt : 0;
 }
-function saveMatchToStorage(name, data) {
+function saveMatchToStorage(name, data, options = {}) {
   if (!name) return;
   try {
     if (typeof window !== "undefined") {
@@ -67,14 +109,18 @@ function saveMatchToStorage(name, data) {
         // ignore debug tracing failures
       }
     }
-    localStorage.setItem(getMatchStorageKey(name), JSON.stringify(data));
-    return true;
+    const committed = archiveStorage.setItem(getMatchStorageKey(name), JSON.stringify(data));
+    return options.waitForCommit ? committed.then(() => true) : true;
   } catch (e) {
     const isQuota =
       e &&
       (e.name === "QuotaExceededError" ||
         e.code === 22 ||
         e.code === 1014);
+    if (options.throwOnError) {
+      if (isQuota) throw new Error("Spazio di archiviazione del browser esaurito. Esporta un backup e rimuovi dall’archivio le partite non necessarie prima di riprovare.");
+      throw e;
+    }
     if (!isQuota) {
       logError("Error saving match " + name, e);
     }
@@ -84,7 +130,7 @@ function saveMatchToStorage(name, data) {
 function deleteMatchFromStorage(name) {
   if (!name) return;
   try {
-    localStorage.removeItem(getMatchStorageKey(name));
+    archiveStorage.removeItem(getMatchStorageKey(name));
   } catch (e) {
     logError("Error deleting match " + name, e);
   }
@@ -103,7 +149,7 @@ function migrateMatchesToPersistent(options = {}) {
   if (!state.savedMatches || Object.keys(state.savedMatches).length === 0) return;
   if (onlyIfStorageEmpty && listMatchesFromStorage().length > 0) return;
   Object.entries(state.savedMatches).forEach(([name, data]) => {
-    if (!localStorage.getItem(getMatchStorageKey(name))) {
+    if (!archiveStorage.getItem(getMatchStorageKey(name))) {
       saveMatchToStorage(name, data);
     }
   });

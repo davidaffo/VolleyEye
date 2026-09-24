@@ -149,6 +149,11 @@ async function clearStateSnapshotFromIndexedDb() {
         resolve();
       }
     });
+    if (typeof archiveStorage !== "undefined") {
+      await Promise.allSettled(Array.from(archiveStorage.pending));
+      archiveStorage.db = null;
+      archiveStorage.cache.clear();
+    }
     db.close();
     if (typeof stateDbPromise !== "undefined") {
       stateDbPromise = null;

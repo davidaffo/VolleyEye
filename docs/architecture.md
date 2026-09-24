@@ -50,3 +50,32 @@ I file sono raggruppati per dominio in `js/roster/`:
 Le API che attraversano un confine di dominio sono raccolte nell'unico namespace
 `window.VolleyEye`. Formazioni, auto-role, isolamento dello stato, rendering dei
 roster e impostazioni match non devono creare nuovi identificatori globali.
+
+### Persistenza locale
+
+`js/shared/persistent-storage.js` gestisce l'archivio IndexedDB nel database
+`volleyScoutStateDb`, versione 2, store `archive`. Partite, squadre, anagrafica
+(con foto) e snapshot completo della sessione sono salvati qui. Le letture della
+UI usano una copia in memoria caricata prima del bootstrap; le scritture aprono
+subito una transazione e sono confermate solo al suo completamento. Importazioni
+e unioni attendono il commit; le unioni aggiornano tutti i record in una sola
+transazione. Durante scritture pendenti o fallite la chiusura della pagina richiede
+conferma per evitare la perdita di modifiche.
+
+`localStorage` conserva solo tema, preferenze, segnali di reset e uno snapshot
+`__uiOnly` con selezioni e disposizione dell'interfaccia. Non contiene eventi,
+rose, fotografie o copie dell'archivio. Gli HTML di analisi esportati lavorano in
+memoria e non scrivono i dati incorporati nell'archivio del browser.
+
+Al primo avvio la migrazione copia le vecchie chiavi `Data/…`, lo snapshot locale
+e quello dello store IndexedDB `state`. Per la sessione sceglie lo snapshot più
+recente. Il commit e una rilettura di verifica precedono la rimozione delle copie
+locali. Un marcatore consente di riprendere la pulizia interrotta senza ripristinare
+record successivamente eliminati. I vecchi match JSON e quelli salvati nel formato
+compatto a colonne restano leggibili; esportazioni e backup mantengono il formato
+JSON pubblico.
+
+I test usano `fake-indexeddb` per verificare transazioni, migrazione, abort e
+riapertura. La prova del runtime importa consecutivamente tutti i DVW in
+`resources/data volley`, verifica la riapertura da un nuovo contesto e mantiene
+il contenuto complessivo di `localStorage` sotto 10 KB di testo.

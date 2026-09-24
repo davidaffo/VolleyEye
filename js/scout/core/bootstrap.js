@@ -37,4 +37,9 @@ async function init() {
   await finalizeApplicationBootstrap(context);
 }
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener("DOMContentLoaded", () => {
+  init().catch(error => {
+    console.error("Avvio archivio non riuscito", error);
+    alert("Impossibile aprire l’archivio. " + error.message);
+  });
+});

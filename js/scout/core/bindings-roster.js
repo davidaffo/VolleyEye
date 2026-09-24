@@ -434,7 +434,7 @@ function bindRosterAndArchiveControls() {
     elPlayersDbClean.addEventListener("click", removeOrphanPlayersFromDb);
   }
   if (elBtnMergePlayers) {
-    elBtnMergePlayers.addEventListener("click", () => {
+    elBtnMergePlayers.addEventListener("click", async () => {
       if (!elPlayersDbMergePrimary || !elPlayersDbMergeSecondary) return;
       const primaryId = elPlayersDbMergePrimary.value || "";
       const secondaryId = elPlayersDbMergeSecondary.value || "";
@@ -444,7 +444,7 @@ function bindRosterAndArchiveControls() {
       }
       const ok = confirm("Unire le due giocatrici selezionate mantenendo l'ID della prima?");
       if (!ok) return;
-      const merged = mergePlayersDbEntries(primaryId, secondaryId);
+      const merged = await mergePlayersDbEntries(primaryId, secondaryId);
       if (!merged) {
         alert("Unione non riuscita. Verifica che entrambe esistano nell'archivio.");
         return;

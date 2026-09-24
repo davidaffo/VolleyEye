@@ -4,8 +4,8 @@ function getTeamStorageKey(name) {
 function listTeamsFromStorage() {
   const names = [];
   try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
+    for (let i = 0; i < archiveStorage.length; i++) {
+      const key = archiveStorage.key(i);
       if (key && key.startsWith(TEAM_PREFIX)) {
         names.push(key.slice(TEAM_PREFIX.length));
       }
@@ -17,7 +17,7 @@ function listTeamsFromStorage() {
 }
 function loadPlayersDbFromStorage() {
   try {
-    const raw = localStorage.getItem(PLAYER_PREFIX);
+    const raw = archiveStorage.getItem(PLAYER_PREFIX);
     if (!raw) return {};
     const parsed = JSON.parse(raw);
     return parsed && typeof parsed === "object" ? parsed : {};
@@ -28,7 +28,7 @@ function loadPlayersDbFromStorage() {
 }
 function savePlayersDbToStorage(db) {
   try {
-    localStorage.setItem(PLAYER_PREFIX, JSON.stringify(db || {}));
+    archiveStorage.setItem(PLAYER_PREFIX, JSON.stringify(db || {}));
     return true;
   } catch (e) {
     logError("Error saving players db", e);
@@ -114,7 +114,7 @@ function syncPlayersDbFromTeam(team) {
 function loadTeamFromStorage(name) {
   if (!name) return null;
   try {
-    const raw = localStorage.getItem(getTeamStorageKey(name));
+    const raw = archiveStorage.getItem(getTeamStorageKey(name));
     if (!raw) return null;
     return JSON.parse(raw);
   } catch (e) {
@@ -288,7 +288,7 @@ function saveTeamToStorage(name, data) {
   try {
     const compact = compactTeamPayload(data, name);
     if (!compact) return false;
-    localStorage.setItem(getTeamStorageKey(name), JSON.stringify(compact));
+    archiveStorage.setItem(getTeamStorageKey(name), JSON.stringify(compact));
     syncPlayersDbFromTeam(compact);
     return true;
   } catch (e) {
@@ -299,7 +299,7 @@ function saveTeamToStorage(name, data) {
 function deleteTeamFromStorage(name) {
   if (!name) return;
   try {
-    localStorage.removeItem(getTeamStorageKey(name));
+    archiveStorage.removeItem(getTeamStorageKey(name));
   } catch (e) {
     logError("Error deleting team " + name, e);
   }
@@ -315,28 +315,28 @@ function loadTeamsMapFromStorage() {
 function migrateTeamsToPersistent() {
   const migrationKey = STORAGE_KEY + ":archive-migration-v1";
   // Replaying old snapshots resurrects deleted or renamed archive entries.
-  const migration = localStorage.getItem(migrationKey);
+  const migration = archiveStorage.getItem(migrationKey);
   if (migration === "done") return;
   const hasArchive = listTeamsFromStorage().length > 0;
   const teams = migration
     ? JSON.parse(migration)
     : hasArchive ? {} : Object.assign({}, state.savedOpponentTeams || {}, state.savedTeams || {});
-  Object.keys(localStorage).filter(key => key.startsWith(OPPONENT_TEAM_PREFIX)).forEach(key => {
+  archiveStorage.keys().filter(key => key.startsWith(OPPONENT_TEAM_PREFIX)).forEach(key => {
     const name = key.slice(OPPONENT_TEAM_PREFIX.length);
     if (Object.prototype.hasOwnProperty.call(teams, name)) return;
     try {
-      teams[name] = JSON.parse(localStorage.getItem(key));
+      teams[name] = JSON.parse(archiveStorage.getItem(key));
     } catch (error) {
       logError("Error migrating opponent team " + name, error);
     }
   });
   const failed = {};
   Object.entries(teams).forEach(([name, data]) => {
-    if (!localStorage.getItem(getTeamStorageKey(name)) && normalizeTeamPayload(data, name)) {
+    if (!archiveStorage.getItem(getTeamStorageKey(name)) && normalizeTeamPayload(data, name)) {
       if (!saveTeamToStorage(name, data)) failed[name] = data;
     }
   });
-  localStorage.setItem(migrationKey, Object.keys(failed).length ? JSON.stringify(failed) : "done");
+  archiveStorage.setItem(migrationKey, Object.keys(failed).length ? JSON.stringify(failed) : "done");
 }
 function syncTeamsFromStorage() {
   const teams = loadTeamsMapFromStorage();
@@ -422,7 +422,7 @@ function saveOpponentTeamToStorage(name, data) {
 function deleteOpponentTeamFromStorage(name) {
   if (!name) return;
   try {
-    localStorage.removeItem(getTeamStorageKey(name));
+    archiveStorage.removeItem(getTeamStorageKey(name));
   } catch (e) {
     logError("Error deleting opponent team " + name, e);
   }

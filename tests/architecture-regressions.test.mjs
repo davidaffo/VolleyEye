@@ -109,7 +109,7 @@ test("timeout, cambi e annullamento rispettano lo scope della squadra", () => {
 test("l'import database segnala i salvataggi parziali senza doppio messaggio di successo", () => {
   const scout = readScoutSource();
   const applyImport = scout.slice(
-    scout.indexOf("function applyImportedDatabase"),
+    scout.indexOf("async function applyImportedDatabase"),
     scout.indexOf("function buildUniqueImportedMatchName")
   );
   assert.match(applyImport, /Array\.isArray\(imported\.players\)/);

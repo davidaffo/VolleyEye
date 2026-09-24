@@ -387,7 +387,7 @@ async function showDefaultDemoWelcomePopup() {
   }
   setDefaultDemoPreference("keep");
 }
-function applyImportedDatabase(nextState) {
+async function applyImportedDatabase(nextState) {
   if (!nextState || !nextState.state) {
     alert("File database non valido.");
     return false;
@@ -428,6 +428,11 @@ function applyImportedDatabase(nextState) {
   state.selectedOpponentTeam = imported.selectedOpponentTeam || "";
   renderOpponentTeamsSelect();
   saveState({ persistLocal: true, skipMatchPersist: true });
+  try {
+    await archiveStorage.flush();
+  } catch (error) {
+    failedWrites.push("archivio IndexedDB: " + error.message);
+  }
   if (failedWrites.length > 0) {
     alert(
       "Database importato solo in parte. Non è stato possibile salvare: " +
@@ -460,7 +465,7 @@ function buildUniqueImportedMatchName(baseName = "") {
   }
   return `${rawBase} (import ${Date.now()})`;
 }
-function importMatchStateAsNew(nextState, options = {}) {
+async function importMatchStateAsNew(nextState, options = {}) {
   if (!nextState || !Array.isArray(nextState.players) || !Array.isArray(nextState.events)) {
     throw new Error("Invalid imported match payload");
   }
@@ -473,7 +478,7 @@ function importMatchStateAsNew(nextState, options = {}) {
     exportedAt: new Date().toISOString(),
     state: JSON.parse(JSON.stringify(nextState))
   };
-  if (!saveMatchToStorage(uniqueName, payload)) {
+  if (!await saveMatchToStorage(uniqueName, payload, { throwOnError: true, waitForCommit: true })) {
     throw new Error("Impossibile salvare la partita importata nell'archivio.");
   }
   state.savedMatches = state.savedMatches || {};

@@ -355,6 +355,7 @@ function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return false;
     const parsed = JSON.parse(raw);
+    if (parsed.__uiOnly) return false;
     return applyStateSnapshot(parsed, { skipStorageSync: true });
   } catch (e) {
     logError("Error loading state", e);
@@ -365,6 +366,14 @@ function getSnapshotTimestamp(snapshot) {
   if (!snapshot || typeof snapshot !== "object") return 0;
   const ts = Number(snapshot.lastSavedAt || 0);
   return Number.isFinite(ts) ? ts : 0;
+}
+function buildLocalUiSnapshot(snapshot) {
+  const keys = ["theme", "selectedMatch", "loadedMatchName", "selectedTeam", "selectedOpponentTeam",
+    "uiActiveTab", "uiMatchSessionActive", "uiAggTab", "uiTopBarHidden", "forceMobileLayout",
+    "uiScoutColumns", "uiScoutWidgetLayout", "uiVideoLayout", "uiVideoAnalysisSort"];
+  const result = { __uiOnly: true, lastSavedAt: Number(snapshot.lastSavedAt || Date.now()) };
+  keys.forEach(key => { if (snapshot[key] !== undefined) result[key] = snapshot[key]; });
+  return result;
 }
 function buildCompactLocalStateSnapshot(snapshot) {
   if (!snapshot || typeof snapshot !== "object") return null;
@@ -484,7 +493,8 @@ async function loadStateFromIndexedDb() {
     }
     const indexedTs = getSnapshotTimestamp(indexed);
     const localTs = getSnapshotTimestamp(local);
-    const parsed = localTs > indexedTs ? local : indexed;
+    const parsed = local && !local.__uiOnly && localTs > indexedTs ? local : indexed;
+    if (parsed && local && local.__uiOnly && localTs >= indexedTs) Object.assign(parsed, local);
     if (!parsed) return false;
     return applyStateSnapshot(parsed, { skipStorageSync: true });
   } catch (e) {
@@ -493,6 +503,7 @@ async function loadStateFromIndexedDb() {
   return false;
 }
 function saveState(options = {}) {
+  if (typeof window !== "undefined" && window.__EXPORT_ANALYSIS_HTML__) return;
   const { persistLocal = false, skipMatchPersist = false } = options || {};
   try {
     if (typeof window !== "undefined") {
@@ -523,27 +534,11 @@ function saveState(options = {}) {
     }
     const snapshot = buildCompactLocalStateSnapshot(state) || state;
     writeStateToIndexedDb(snapshot);
-    // La copia compatta entra in localStorage e deve essere sincrona: affidarsi
-    // soltanto alla scrittura asincrona su IndexedDB perde le ultime modifiche
-    // quando l'utente ricarica subito la pagina.
-    {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
-      } catch (localErr) {
-        const compact = snapshot;
-        let compactSaved = false;
-        try {
-          if (compact) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(compact));
-            compactSaved = true;
-          }
-        } catch (_) {
-          // ignore secondary local storage failure
-        }
-        if (!compactSaved) {
-          throw localErr;
-        }
-      }
+    // Only UI preferences belong in localStorage; match data is in IndexedDB.
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(buildLocalUiSnapshot(snapshot)));
+    } catch (error) {
+      logError("Error saving UI preferences", error);
     }
     const loading =
       typeof window !== "undefined" && typeof window.isLoadingMatch !== "undefined"

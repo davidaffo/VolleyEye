@@ -1,7 +1,7 @@
 function handleImportMatchFile(file) {
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = e => {
+  reader.onload = async e => {
     try {
       const txt = (e.target && e.target.result) || "";
       let parsed = null;
@@ -20,10 +20,10 @@ function handleImportMatchFile(file) {
           (typeof buildMatchDisplayName === "function" ? buildMatchDisplayName((nextState && nextState.match) || {}) : "") ||
           "Match importato";
       }
-      importMatchStateAsNew(nextState, { baseName: importedBaseName });
+      await importMatchStateAsNew(nextState, { baseName: importedBaseName });
     } catch (err) {
       console.error("Import match error", err);
-      alert("Errore durante l'import del match.");
+      alert("Errore durante l'import del match." + (err && err.message ? "\n" + err.message : ""));
     } finally {
       if (elMatchFileInput) elMatchFileInput.value = "";
     }
@@ -65,7 +65,7 @@ function clearMatchLinkParam() {
     logError("clear-match-link", err);
   }
 }
-function maybeImportMatchFromUrl() {
+async function maybeImportMatchFromUrl() {
   const encoded = readMatchLinkParam();
   if (!encoded) return { imported: false };
   const parsed = decodePayloadFromLink(encoded);
@@ -79,7 +79,7 @@ function maybeImportMatchFromUrl() {
     (parsed && typeof parsed.name === "string" && parsed.name.trim()) ||
     (typeof buildMatchDisplayName === "function" ? buildMatchDisplayName((nextState && nextState.match) || {}) : "") ||
     "Match importato";
-  const result = importMatchStateAsNew(nextState, { baseName: importedBaseName, silent: true });
+  const result = await importMatchStateAsNew(nextState, { baseName: importedBaseName, silent: true });
   clearMatchLinkParam();
   return { imported: !!(result && result.ok), name: (result && result.name) || state.selectedMatch };
 }
@@ -104,14 +104,14 @@ function exportDatabaseToFile() {
 function handleImportDatabaseFile(file) {
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = e => {
+  reader.onload = async e => {
     try {
       const txt = (e.target && e.target.result) || "";
       const parsed = JSON.parse(txt);
       if (parsed && ["volleyeye", "simple-volley-scout"].includes(parsed.app) && parsed.state) {
-        applyImportedDatabase(parsed);
+        await applyImportedDatabase(parsed);
       } else {
-        applyImportedDatabase({ state: parsed });
+        await applyImportedDatabase({ state: parsed });
       }
     } catch (err) {
       console.error("Import database error", err);
@@ -241,9 +241,9 @@ async function importDatabaseFromUrl(url) {
     const parsed = await fetchJsonFromUrl(url);
     let imported = false;
     if (parsed && ["volleyeye", "simple-volley-scout"].includes(parsed.app) && parsed.state) {
-      imported = applyImportedDatabase(parsed);
+      imported = await applyImportedDatabase(parsed);
     } else {
-      imported = applyImportedDatabase({ state: parsed });
+      imported = await applyImportedDatabase({ state: parsed });
     }
     if (imported && elImportDbUrl) elImportDbUrl.value = "";
   } catch (err) {

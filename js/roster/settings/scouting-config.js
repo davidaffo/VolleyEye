@@ -176,7 +176,7 @@ function applyMatchRequirementLock() {
   }
 }
 const STATE_DB_NAME = "volleyScoutStateDb";
-const STATE_DB_VERSION = 1;
+const STATE_DB_VERSION = 2;
 const STATE_DB_STORE = "state";
 let stateDbPromise = null;
 function getStateDb() {
@@ -186,39 +186,29 @@ function getStateDb() {
     const request = indexedDB.open(STATE_DB_NAME, STATE_DB_VERSION);
     request.onupgradeneeded = () => {
       const db = request.result;
+      if (!db.objectStoreNames.contains(ARCHIVE_DB_STORE)) db.createObjectStore(ARCHIVE_DB_STORE);
       if (!db.objectStoreNames.contains(STATE_DB_STORE)) {
         db.createObjectStore(STATE_DB_STORE);
       }
     };
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      const db = request.result;
+      db.onversionchange = () => { db.close(); stateDbPromise = null; archiveStorage.db = null; };
+      resolve(db);
+    };
+    request.onblocked = () => {
+      if (typeof alert === "function") alert("Chiudi le altre schede di VolleyEye per aggiornare l’archivio.");
+    };
     request.onerror = () => resolve(null);
   });
   return stateDbPromise;
 }
 function readStateFromIndexedDb() {
-  return getStateDb().then(db => {
-    if (!db) return null;
-    return new Promise(resolve => {
-      const tx = db.transaction(STATE_DB_STORE, "readonly");
-      const store = tx.objectStore(STATE_DB_STORE);
-      const request = store.get(STORAGE_KEY);
-      request.onsuccess = () => resolve(request.result || null);
-      request.onerror = () => resolve(null);
-    });
-  });
+  const raw = archiveStorage.getItem(STORAGE_KEY);
+  return Promise.resolve(raw ? JSON.parse(raw) : null);
 }
 function writeStateToIndexedDb(snapshot) {
-  return getStateDb().then(db => {
-    if (!db) return false;
-    return new Promise(resolve => {
-      const tx = db.transaction(STATE_DB_STORE, "readwrite");
-      const store = tx.objectStore(STATE_DB_STORE);
-      store.put(snapshot, STORAGE_KEY);
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => resolve(false);
-      tx.onabort = () => resolve(false);
-    });
-  });
+  return archiveStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
 }
 function makeUniqueMatchName(baseName, existingNames = []) {
   const base = String(baseName || "Match").trim() || "Match";

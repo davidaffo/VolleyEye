@@ -704,7 +704,6 @@ async function exportAnalysisHtml() {
   try {
     var exportedStateJson = decodeURIComponent(escape(atob(${JSON.stringify(stateJsonBase64)})));
     window.__exportedAnalysisState = JSON.parse(exportedStateJson);
-    localStorage.setItem("volleyScoutV1", exportedStateJson);
   } catch (e) {}
   window.__EXPORT_ANALYSIS_HTML__ = true;
   window.__analysisAssetMap = ${assetMapJson};

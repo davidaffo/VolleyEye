@@ -26,14 +26,14 @@
     };
   </script>
   <script>
-    window.__APP_CACHE_VERSION__ = "v0.19.3-416-9998ad3";
+    window.__APP_CACHE_VERSION__ = "v0.19.4-417-867b6ea";
     window.__IS_LOCALHOST_DEV__ =
       location.hostname === "localhost" ||
       location.hostname === "127.0.0.1" ||
       location.hostname === "::1";
     window.__APP_ASSET_SUFFIX__ = window.__IS_LOCALHOST_DEV__
       ? `?dev=${Date.now()}`
-      : `?v=v0.19.3-416-9998ad3`;
+      : `?v=v0.19.4-417-867b6ea`;
     if (location.protocol === "file:") {
       document.documentElement.dataset.fileOrigin = "true";
     }
@@ -2454,6 +2454,7 @@
       "js/globals.js",
       "js/shared/namespace.js",
       "js/shared/state-isolation.js",
+      "js/shared/persistent-storage.js",
       "js/shared/team-ui.js",
       "js/shared/lineup-core.js",
       "js/shared/auto-role.js",

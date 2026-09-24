@@ -73,7 +73,7 @@ test("il caricamento iniziale salva le squadre demo prima di applicare il match"
 test("al primo caricamento viene chiesto se conservare o eliminare le demo", () => {
   const chooser = source.slice(
     source.indexOf("function askDefaultDemoChoice"),
-    source.indexOf("function applyImportedDatabase")
+    source.indexOf("async function applyImportedDatabase")
   );
   assert.match(chooser, /Usa le demo/);
   assert.match(chooser, /Non usare ed elimina/);

@@ -684,10 +684,10 @@ function buildPlayersMergePlan(idMap, rosterPlayers = []) {
   Object.assign(nextState, { playersDb: db, savedTeams: teams, savedOpponentTeams: teams, savedMatches: matches, lastSavedAt: Date.now() });
   return { teams, matches, db, nextState };
 }
-function mergePlayersDbEntries(primaryId, secondaryId) {
+async function mergePlayersDbEntries(primaryId, secondaryId) {
   if (!primaryId || !secondaryId || primaryId === secondaryId) return false;
   try {
-    commitArchiveMerge(buildPlayersMergePlan(new Map([[secondaryId, primaryId]])));
+    await commitArchiveMerge(buildPlayersMergePlan(new Map([[secondaryId, primaryId]])));
     return true;
   } catch (error) {
     logError("Errore unione giocatrici", error);
@@ -1041,9 +1041,9 @@ function buildTeamMerge(primaryName, secondaryName, choices) {
   return { teams, matches, db, nextState };
 }
 function commitTeamMerge(primaryName, secondaryName, choices) {
-  commitArchiveMerge(buildTeamMerge(primaryName, secondaryName, choices), [getTeamStorageKey(secondaryName)]);
+  return commitArchiveMerge(buildTeamMerge(primaryName, secondaryName, choices), [getTeamStorageKey(secondaryName)]);
 }
-function commitArchiveMerge(plan, removedKeys = []) {
+async function commitArchiveMerge(plan, removedKeys = []) {
   const writes = new Map();
   Object.entries(plan.teams).forEach(([name, team]) => writes.set(getTeamStorageKey(name), JSON.stringify(team)));
   Object.entries(plan.matches).forEach(([name, match]) => writes.set(getMatchStorageKey(name), JSON.stringify(match)));
@@ -1056,26 +1056,19 @@ function commitArchiveMerge(plan, removedKeys = []) {
     : {};
   writes.set(STORAGE_KEY, JSON.stringify(snapshot));
   removedKeys.forEach(key => writes.set(key, null));
-  const previous = new Map([...writes.keys()].map(key => [key, localStorage.getItem(key)]));
-  const changed = [];
   try {
-    writes.forEach((value, key) => {
-      if (value === previous.get(key)) return;
-      if (value === null) localStorage.removeItem(key);
-      else localStorage.setItem(key, value);
-      changed.push(key);
-    });
+    await archiveStorage.commit(writes);
   } catch (error) {
-    changed.reverse().forEach(key => {
-      const old = previous.get(key);
-      if (old === null) localStorage.removeItem(key);
-      else localStorage.setItem(key, old);
-    });
     throw new Error("Salvataggio non riuscito. Unione annullata: " + error.message);
   }
   Object.assign(state, plan.nextState);
-  writeStateToIndexedDb(snapshot);
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(buildLocalUiSnapshot(snapshot)));
+  } catch (error) {
+    logError("Error saving UI preferences", error);
+  }
 }
+
 function renderTeamMergeControls() {
   const panel = document.getElementById("team-merge-panel");
   if (!panel) return;
@@ -1123,13 +1116,13 @@ function renderTeamMergeControls() {
     const button = document.createElement("button");
     button.className = "danger";
     button.textContent = "Unisci squadre";
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       const primaryName = teamsManagerSelectedName;
       const secondaryName = select.value;
       try {
         buildTeamMerge(primaryName, secondaryName, choices);
         if (!confirm("Unire “" + secondaryName + "” in “" + primaryName + "”? Le partite saranno ricollegate e “" + secondaryName + "” sarà eliminata. Gli ID delle giocatrici abbinate saranno unificati anche nelle altre squadre e partite.")) return;
-        commitTeamMerge(primaryName, secondaryName, choices);
+        await commitTeamMerge(primaryName, secondaryName, choices);
       } catch (error) {
         alert(error.message);
         return;

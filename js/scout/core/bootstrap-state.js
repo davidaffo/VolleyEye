@@ -100,6 +100,7 @@ async function initializeApplicationState() {
       window.__appResetInProgress = false;
     }
   }
+  await initializePersistentStorage({ temporary: isExportAnalysisHtml });
   let loadedFromIndexedDb = false;
   let loadedFromLocalStorage = false;
   let defaultDemoCreated = false;
@@ -142,7 +143,7 @@ async function initializeApplicationState() {
   setActiveTab(state.uiActiveTab || activeTab || "match");
   setActiveAggTab(state.uiAggTab || activeAggTab || "summary");
   ensureBaseRotationDefault();
-  const linkImport = maybeImportMatchFromUrl();
+  const linkImport = await maybeImportMatchFromUrl();
   renderYoutubePlayer();
   renderYoutubePlayerScout();
   restoreCachedLocalVideo();
@@ -216,5 +217,6 @@ async function initializeApplicationState() {
   updateTeamCounters();
   setScoutControlsDisabled(!!state.matchFinished);
 
+  await archiveStorage.flush();
   return { isExportAnalysisHtml, defaultDemoCreated, linkImport };
 }

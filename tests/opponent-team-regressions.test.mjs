@@ -31,7 +31,7 @@ function storage() {
 function migrationContext() {
   const localStorage = storage();
   const context = {
-    localStorage, STORAGE_KEY: "state", TEAM_PREFIX: "teams/", OPPONENT_TEAM_PREFIX: "opponents/",
+    localStorage, archiveStorage: { getItem: localStorage.getItem, setItem: localStorage.setItem, removeItem: localStorage.removeItem, keys: () => Object.keys(localStorage) }, STORAGE_KEY: "state", TEAM_PREFIX: "teams/", OPPONENT_TEAM_PREFIX: "opponents/",
     state: { savedTeams: { Originale: { name: "Originale" }, "Originale B": { name: "Originale B" } } },
     getTeamStorageKey: name => "teams/" + name,
     listTeamsFromStorage: () => Object.keys(localStorage).filter(key => key.startsWith("teams/")),

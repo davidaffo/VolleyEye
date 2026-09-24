@@ -189,7 +189,7 @@ test("lo snapshot locale conserva le impostazioni e viene scritto sincronicament
   ].forEach(field => assert.match(compact, new RegExp(`${field}:`)));
   const stateStore = readFileSync(new URL("../js/roster/core/state-store.js", import.meta.url), "utf8");
   const save = stateStore.slice(stateStore.indexOf("function saveState"));
-  assert.match(save, /localStorage\.setItem\(STORAGE_KEY, JSON\.stringify\(snapshot\)\)/);
+  assert.match(save, /localStorage\.setItem\(STORAGE_KEY, JSON\.stringify\(buildLocalUiSnapshot\(snapshot\)\)\)/);
   assert.doesNotMatch(save, /persistLocal \|\| typeof indexedDB/);
 });
 

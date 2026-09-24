@@ -23,6 +23,12 @@ function setup() {
     buildCompactLocalStateSnapshot: value => value, writeStateToIndexedDb: () => {},
     localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) }
   };
+  context.buildLocalUiSnapshot = () => ({ __uiOnly: true });
+  context.localStorage = { setItem() {} };
+  context.archiveStorage = { commit: async writes => {
+    for (const [key, value] of writes) if (key === context.failKey) throw new Error('quota');
+    writes.forEach((value, key) => value === null ? storage.delete(key) : storage.set(key, value));
+  } };
   vm.createContext(context);
   vm.runInContext(roster.slice(roster.indexOf('function normalizePlayers'), roster.indexOf('function replacePlayerNameEverywhere')), context);
   vm.runInContext(roster.slice(roster.indexOf('function normalizeTeamPayload'), roster.indexOf('function saveTeamToStorage')), context);
@@ -31,9 +37,9 @@ function setup() {
   vm.runInContext(management.slice(management.indexOf('function buildTeamMerge'), management.indexOf('function renderTeamMergeControls')), context);
   return { context, storage };
 }
-test('merge combines roster, remaps identities and both team scopes without changing historical scoring', () => {
+test('merge combines roster, remaps identities and both team scopes without changing historical scoring', async () => {
   const { context: c, storage } = setup();
-  c.commitTeamMerge('A', 'B', { [id(2)]: id(1) });
+  await c.commitTeamMerge('A', 'B', { [id(2)]: id(1) });
   assert.equal(storage.has('teams/B'), false);
   const team = JSON.parse(storage.get('teams/A'));
   assert.deepEqual(team.playersDetailed.map(p => p.id), [id(1), id(3)]);
@@ -48,17 +54,16 @@ test('merge combines roster, remaps identities and both team scopes without chan
   assert.equal(c.state.events[0].playerId, id(1));
   assert.equal(c.state.playersDb[id(2)], undefined);
 });
-test('failed write restores archives and leaves live state untouched', () => {
+test('failed write restores archives and leaves live state untouched', async () => {
   const { context: c, storage } = setup();
   const before = [...storage];
   const stateBefore = JSON.stringify(c.state);
-  const original = c.localStorage.setItem;
-  c.localStorage.setItem = (key, value) => { if (key === 'players') throw new Error('quota'); original(key, value); };
-  assert.throws(() => c.commitTeamMerge('A', 'B', { [id(2)]: id(1) }), /annullata/);
+  c.failKey = 'players';
+  await assert.rejects(() => c.commitTeamMerge('A', 'B', { [id(2)]: id(1) }), /annullata/);
   assert.deepEqual([...storage], before);
   assert.equal(JSON.stringify(c.state), stateBefore);
 });
-test('invalid and ambiguous choices fail before writing', () => {
+test('invalid and ambiguous choices fail before writing', async () => {
   const { context: c, storage } = setup();
   const before = [...storage];
   assert.throws(() => c.commitTeamMerge('A', 'A', {}), /diverse/);
@@ -67,7 +72,7 @@ test('invalid and ambiguous choices fail before writing', () => {
   assert.throws(() => c.commitTeamMerge('A', 'B', { [id(2)]: id(1), [id(3)]: id(1) }), /una sola/);
   assert.deepEqual([...storage], before);
 });
-test('manual identity pairing preserves historical roster snapshots and updates other teams', () => {
+test('manual identity pairing preserves historical roster snapshots and updates other teams', async () => {
   const { context: c, storage } = setup();
   const b = JSON.parse(storage.get('teams/B'));
   b.playersDetailed[0].firstName = 'Annamaria';
@@ -76,7 +81,7 @@ test('manual identity pairing preserves historical roster snapshots and updates 
   const match = JSON.parse(storage.get('matches/game'));
   match.state.savedTeams = { B: b };
   storage.set('matches/game', JSON.stringify(match));
-  c.commitTeamMerge('A', 'B', { [id(2)]: id(1) });
+  await c.commitTeamMerge('A', 'B', { [id(2)]: id(1) });
   const saved = JSON.parse(storage.get('matches/game'));
   assert.equal(saved.state.savedTeams.B, undefined);
   assert.equal(saved.state.savedTeams.A.playersDetailed[0].firstName, 'Annamaria');
@@ -84,13 +89,13 @@ test('manual identity pairing preserves historical roster snapshots and updates 
   assert.equal(saved.state.savedTeams.A.playersDetailed[0].id, id(1));
   assert.equal(JSON.parse(storage.get('teams/C')).playersDetailed[0].id, id(1));
 });
-test('merge persists unsaved current match events and uses rewritten snapshot', () => {
+test('merge persists unsaved current match events and uses rewritten snapshot', async () => {
   const { context: c, storage } = setup();
   c.state.selectedMatch = 'game';
   c.state.loadedMatchName = 'game';
   c.getCurrentMatchPayload = () => ({ state: { selectedTeam: 'B', events: [{ playerId: id(2), code: '+' }, { playerId: id(3), code: '#' }] } });
   c.buildCompactLocalStateSnapshot = next => ({ ...next, savedMatches: { game: c.getCurrentMatchPayload() } });
-  c.commitTeamMerge('A', 'B', { [id(2)]: id(1) });
+  await c.commitTeamMerge('A', 'B', { [id(2)]: id(1) });
   const saved = JSON.parse(storage.get('matches/game'));
   const snapshot = JSON.parse(storage.get('state'));
   assert.equal(saved.state.events.length, 2);
@@ -98,13 +103,13 @@ test('merge persists unsaved current match events and uses rewritten snapshot', 
   assert.equal(snapshot.savedMatches.game.state.selectedTeam, 'A');
   assert.equal(snapshot.savedMatches.game.state.events[0].playerId, id(1));
 });
-test('existing player merge uses the same identity and archive updates as team merge', () => {
+test('existing player merge uses the same identity and archive updates as team merge', async () => {
   const { context: c, storage } = setup();
   c.state.playersDb = {
     [id(1)]: { id: id(1), firstName: 'Anna', lastName: 'Rossi', name: 'Rossi Anna', photo: '' },
     [id(2)]: { id: id(2), firstName: 'Annamaria', lastName: 'Rossi', name: 'Rossi Annamaria', photo: 'portrait' }
   };
-  assert.equal(c.mergePlayersDbEntries(id(1), id(2)), true);
+  assert.equal(await c.mergePlayersDbEntries(id(1), id(2)), true);
   assert.equal(c.state.playersDb[id(1)].photo, 'portrait');
   assert.equal(c.state.playersDb[id(1)].firstName, 'Anna');
   assert.equal(c.state.playersDb[id(2)], undefined);
@@ -114,26 +119,25 @@ test('existing player merge uses the same identity and archive updates as team m
   assert.equal(c.state.selectedTeam, 'B');
   assert.equal(storage.has('teams/B'), true);
 });
-test('existing player merge also rolls back failed archive writes', () => {
+test('existing player merge also rolls back failed archive writes', async () => {
   const { context: c, storage } = setup();
   c.state.playersDb = { [id(1)]: player(1, 'Anna'), [id(2)]: player(2, 'Anna') };
   const before = [...storage];
   const stateBefore = JSON.stringify(c.state);
-  const original = c.localStorage.setItem;
-  c.localStorage.setItem = (key, value) => { if (key === 'players') throw new Error('quota'); original(key, value); };
-  assert.equal(c.mergePlayersDbEntries(id(1), id(2)), false);
+  c.failKey = 'players';
+  assert.equal(await c.mergePlayersDbEntries(id(1), id(2)), false);
   assert.deepEqual([...storage], before);
   assert.equal(JSON.stringify(c.state), stateBefore);
 });
-test('both merge entry points delegate player identity work to the shared implementation', () => {
+test('both merge entry points delegate player identity work to the shared implementation', async () => {
   for (const teamMerge of [false, true]) {
     const { context: c } = setup();
     c.state.playersDb = { [id(1)]: player(1, 'Anna'), [id(2)]: player(2, 'Anna') };
     const shared = c.buildPlayersMergePlan;
     let calls = 0;
     c.buildPlayersMergePlan = (...args) => { calls++; return shared(...args); };
-    if (teamMerge) c.commitTeamMerge('A', 'B', { [id(2)]: id(1) });
-    else assert.equal(c.mergePlayersDbEntries(id(1), id(2)), true);
+    if (teamMerge) await c.commitTeamMerge('A', 'B', { [id(2)]: id(1) });
+    else assert.equal(await c.mergePlayersDbEntries(id(1), id(2)), true);
     assert.equal(calls, 1);
   }
 });
