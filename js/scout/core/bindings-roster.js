@@ -613,14 +613,8 @@ function bindRosterAndArchiveControls() {
         elSavedMatchesSelect.value = name;
       }
       state.selectedMatch = name;
-      if (typeof loadSelectedMatch === "function") {
-        loadSelectedMatch();
-      } else {
-        if (typeof renderMatchesList === "function") {
-          renderMatchesList(Object.keys(state.savedMatches || {}), name);
-        }
-        updateMatchButtonsState();
-      }
+      renderMatchesList(Object.keys(state.savedMatches || {}), name);
+      updateMatchButtonsState();
     });
   }
   document.querySelectorAll("[data-edit-match]").forEach(button => {

@@ -26,14 +26,14 @@
     };
   </script>
   <script>
-    window.__APP_CACHE_VERSION__ = "v0.19.0-412-9afb4b2";
+    window.__APP_CACHE_VERSION__ = "v0.19.1-413-1e49fbf";
     window.__IS_LOCALHOST_DEV__ =
       location.hostname === "localhost" ||
       location.hostname === "127.0.0.1" ||
       location.hostname === "::1";
     window.__APP_ASSET_SUFFIX__ = window.__IS_LOCALHOST_DEV__
       ? `?dev=${Date.now()}`
-      : `?v=v0.19.0-412-9afb4b2`;
+      : `?v=v0.19.1-413-1e49fbf`;
     if (location.protocol === "file:") {
       document.documentElement.dataset.fileOrigin = "true";
     }
@@ -127,16 +127,6 @@
           </div>
         </div>
       </div>
-      <div class="top-bar match-info-bar">
-        <div class="col">
-          <label>Match corrente</label>
-          <div id="match-summary" class="match-summary">—</div>
-        </div>
-        <div class="col col-auto">
-          <label class="spacer-label">&nbsp;</label>
-          <button id="btn-open-debug-modal" class="secondary" type="button">Debug</button>
-        </div>
-      </div>
     </div>
     <div class="section">
       <div class="match-manager__content">
@@ -171,6 +161,7 @@
             </div>
             <div class="match-manager-panel match-manager-panel--actions">
               <h4>Azioni database</h4>
+              <button id="btn-open-debug-modal" class="secondary" type="button">Debug</button>
               <div class="controls-row match-actions-row">
                 <button id="btn-export-db" class="secondary">Esporta database completo</button>
                 <button id="btn-import-db" class="secondary">Importa database</button>

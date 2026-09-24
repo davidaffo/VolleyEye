@@ -26,12 +26,12 @@ test("entrare e uscire dalla partita è un passaggio esplicito e persistito", ()
   assert.match(stateStore, /uiMatchSessionActive: snapshot\.uiMatchSessionActive === true/);
 });
 
-test("selezionare una riga in lobby carica la relativa anteprima senza entrare nel workspace", () => {
+test("selezionare una riga in lobby non carica la partita", () => {
   const listHandler = bindings.slice(
     bindings.indexOf('if (elSavedMatchesList)'),
     bindings.indexOf('document.querySelectorAll("[data-edit-match]")')
   );
-  assert.match(listHandler, /loadSelectedMatch\(\)/);
+  assert.doesNotMatch(listHandler, /loadSelectedMatch\(\)/);
   assert.doesNotMatch(listHandler, /enterSelectedMatch\(\)/);
 });
 

@@ -464,38 +464,28 @@ function importMatchStateAsNew(nextState, options = {}) {
   if (!nextState || !Array.isArray(nextState.players) || !Array.isArray(nextState.events)) {
     throw new Error("Invalid imported match payload");
   }
-  const silent = !!(options && options.silent);
-  const explicitBaseName = options && typeof options.baseName === "string" ? options.baseName : "";
-  const importedBaseName =
-    explicitBaseName.trim() ||
-    (typeof buildMatchDisplayName === "function" ? buildMatchDisplayName((nextState && nextState.match) || {}) : "") ||
+  const baseName = String(options.baseName || "").trim() ||
+    (typeof buildMatchDisplayName === "function" ? buildMatchDisplayName(nextState.match || {}) : "") ||
     "Match importato";
-  const uniqueName = buildUniqueImportedMatchName(importedBaseName);
-  isLoadingMatch = true;
-  if (typeof window !== "undefined") {
-    window.isLoadingMatch = true;
+  const uniqueName = buildUniqueImportedMatchName(baseName);
+  const payload = {
+    app: "volleyeye", version: 1, name: uniqueName,
+    exportedAt: new Date().toISOString(),
+    state: JSON.parse(JSON.stringify(nextState))
+  };
+  if (!saveMatchToStorage(uniqueName, payload)) {
+    throw new Error("Impossibile salvare la partita importata nell'archivio.");
   }
-  try {
-    applyImportedMatch(nextState, { silent: true });
+  state.savedMatches = state.savedMatches || {};
+  state.savedMatches[uniqueName] = payload;
+  if (typeof renderMatchesSelect === "function") renderMatchesSelect();
+  if (!state.uiMatchSessionActive) {
     state.selectedMatch = uniqueName;
-    state.loadedMatchName = uniqueName;
-    if (typeof persistCurrentMatch === "function") {
-      persistCurrentMatch({ allowCreate: true });
-    }
-    if (typeof saveState === "function") {
-      saveState({ persistLocal: true, skipMatchPersist: true });
-    }
-    if (typeof renderMatchesSelect === "function") {
-      renderMatchesSelect();
-    }
-    if (!silent) {
-      alert(`Match importato correttamente come "${uniqueName}".`);
-    }
-    return { ok: true, name: uniqueName };
-  } finally {
-    isLoadingMatch = false;
-    if (typeof window !== "undefined") {
-      window.isLoadingMatch = false;
-    }
+    if (elSavedMatchesSelect) elSavedMatchesSelect.value = uniqueName;
+    if (typeof renderMatchesList === "function") renderMatchesList(Object.keys(state.savedMatches), uniqueName);
+    if (typeof updateMatchButtonsState === "function") updateMatchButtonsState();
   }
+  if (typeof saveState === "function") saveState({ persistLocal: true, skipMatchPersist: true });
+  if (!options.silent) alert(`Partita importata nell'archivio come "${uniqueName}". Premi “Entra nella partita” per aprirla.`);
+  return { ok: true, name: uniqueName };
 }

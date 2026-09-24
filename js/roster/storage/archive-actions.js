@@ -263,10 +263,10 @@ function applyMatchPayload(payload, opts = {}) {
 }
 function loadSelectedMatch() {
   if (!elSavedMatchesSelect) return;
+  const name = elSavedMatchesSelect.value;
   if (!isLoadingMatch && (state.loadedMatchName || "").trim()) {
     persistCurrentMatch({ allowCreate: false });
   }
-  const name = elSavedMatchesSelect.value;
   if (!name) {
     state.selectedMatch = "";
     state.loadedMatchName = "";
@@ -384,10 +384,15 @@ function populateNewMatchTeamSelects() {
   if (emptyHint) emptyHint.classList.toggle("hidden", names.length > 0);
   if (confirmButton) confirmButton.disabled = names.length === 0;
 }
+let matchDetailsArchiveName = "";
 function openNewMatchModal(dialogMode = "create") {
   const modal = document.getElementById("new-match-modal");
   if (!modal) return false;
   const editing = dialogMode === "edit";
+  matchDetailsArchiveName = editing && !state.uiMatchSessionActive
+    ? (elSavedMatchesSelect && elSavedMatchesSelect.value) || "" : "";
+  const archived = matchDetailsArchiveName ? loadMatchFromStorage(matchDetailsArchiveName) : null;
+  const details = archived && archived.state ? archived.state : state;
   if (editing && !state.loadedMatchName && !state.selectedMatch) {
     alert("Seleziona prima una partita.");
     return false;
@@ -402,22 +407,22 @@ function openNewMatchModal(dialogMode = "create") {
   ["new-match-team", "new-match-opponent-team"].forEach(id => {
     const select = document.getElementById(id);
     if (editing) {
-      const name = id === "new-match-team" ? state.selectedTeam || state.match.teamName : state.selectedOpponentTeam || state.match.opponent;
+      const name = id === "new-match-team" ? details.selectedTeam || details.match.teamName : details.selectedOpponentTeam || details.match.opponent;
       select.replaceChildren(new Option(name || "—", name || ""));
     }
     select.disabled = editing || select.options.length <= 1;
   });
   modal.querySelectorAll('input[name="new-match-mode"]').forEach(input => { input.disabled = editing; });
   document.getElementById("new-match-manage-teams").classList.toggle("hidden", editing);
-  if (typeof syncMatchInfoInputs === "function") syncMatchInfoInputs(editing ? state.match : {
+  if (typeof syncMatchInfoInputs === "function") syncMatchInfoInputs(editing ? details.match : {
     category: state.match && state.match.category || "",
     date: getTodayIso(), matchType: "amichevole", leg: ""
   });
   const manualOpponent = document.getElementById("new-match-opponent-name");
   if (manualOpponent) {
-    manualOpponent.value = state.useOpponentTeam ? "" : (state.match && (state.match.opponentManual || state.match.opponent)) || "";
+    manualOpponent.value = details.useOpponentTeam ? "" : (details.match && (details.match.opponentManual || details.match.opponent)) || "";
   }
-  const desiredMode = state.useOpponentTeam ? "double" : "single";
+  const desiredMode = details.useOpponentTeam ? "double" : "single";
   const mode = modal.querySelector(`input[name="new-match-mode"][value="${desiredMode}"]`);
   if (mode) mode.checked = true;
   updateNewMatchModeUI();
@@ -434,6 +439,28 @@ function createNewMatchFromPrompt() {
   return openNewMatchModal();
 }
 function saveMatchDetailsFromSetup(setup) {
+  if (typeof matchDetailsArchiveName !== "undefined" && matchDetailsArchiveName) {
+    const payload = loadMatchFromStorage(matchDetailsArchiveName);
+    if (!payload || !payload.state) return false;
+    const details = payload.state;
+    const opponentManual = String(setup.opponentManual || "").trim();
+    if (!details.useOpponentTeam && !opponentManual) {
+      alert("Inserisci il nome dell'avversario.");
+      return false;
+    }
+    details.match = { ...details.match, category: String(setup.category || "").trim(),
+      date: setup.date || getTodayIso(), matchType: setup.matchType || "", leg: setup.leg || "" };
+    if (!details.useOpponentTeam) Object.assign(details.match, { opponent: opponentManual, opponentManual });
+    if (!saveMatchToStorage(matchDetailsArchiveName, payload)) {
+      alert("Impossibile salvare i dati partita. Riprova.");
+      return false;
+    }
+    if (state.loadedMatchName === matchDetailsArchiveName) state.match = { ...details.match };
+    state.savedMatches[matchDetailsArchiveName] = payload;
+    renderMatchesSelect();
+    saveState({ persistLocal: true, skipMatchPersist: true });
+    return true;
+  }
   if (!state.loadedMatchName && !state.selectedMatch) return false;
   if (!state.useOpponentTeam && !String(setup.opponentManual || "").trim()) {
     alert("Inserisci il nome dell'avversario.");
