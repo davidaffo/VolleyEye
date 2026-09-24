@@ -219,7 +219,7 @@ function buildDvRow(code, options = {}) {
     opponentTeam = null,
     flags = []
   } = options;
-  const normalizedFlags = Array.from({ length: 7 }, (_, idx) => sanitizeDvField(flags[idx] || ""));
+  const normalizedFlags = Array.from({ length: 6 }, (_, idx) => sanitizeDvField(flags[idx] || ""));
   return [
     sanitizeDvField(code),
     ...normalizedFlags,

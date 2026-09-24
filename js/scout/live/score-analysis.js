@@ -32,6 +32,13 @@ function getScoreOverrideTotals(targetSet = null) {
   );
 }
 function getPointDirection(ev) {
+  // Imported score markers award each rally once. Direction is stored for home.
+  if (ev && ev.dvwScoreAuthoritative) {
+    const direction = ev.pointDirection;
+    if (direction !== "for" && direction !== "against") return null;
+    return getTeamScopeFromEvent(ev) === "opponent"
+      ? (direction === "for" ? "against" : "for") : direction;
+  }
   if (ev && ev.pendingBlockEval) return null;
   if (ev && (ev.derivedFromPassServe || ev.derivedFromBlock)) return null;
   if (ev && ev.skillId === "manual" && (ev.pointDirection === "for" || ev.pointDirection === "against")) {

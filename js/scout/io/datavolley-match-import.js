@@ -72,6 +72,7 @@ function buildImportedTeamPayloadFromDvw(parsedTeam) {
 }
 function buildDvwSetStarts(homePayload, awayPayload, scoutRows) {
   const setStarts = {};
+  const seenFirstSkill = new Set();
   const tryBuildFromPlayers = (payload, setNum) => {
     const lineup = Array(6).fill("");
     (payload.playersDetailed || []).forEach(player => {
@@ -96,14 +97,15 @@ function buildDvwSetStarts(homePayload, awayPayload, scoutRows) {
   (scoutRows || []).forEach(row => {
     const cells = parseDvwRow(row);
     const code = String(cells[0] || "").trim();
-    const setNum = parseInt(cells[9], 10) || 1;
-    const homeRotation = parseInt(cells[10], 10) || 1;
-    const awayRotation = parseInt(cells[11], 10) || 1;
-    const homeLineupNums = cells.slice(15, 21);
-    const awayLineupNums = cells.slice(21, 27);
+    const setNum = parseInt(cells[8], 10) || 1;
+    const homeRotation = parseInt(cells[9], 10) || 1;
+    const awayRotation = parseInt(cells[10], 10) || 1;
+    const homeLineupNums = cells.slice(14, 20);
+    const awayLineupNums = cells.slice(20, 26);
     const homeLineup = homeLineupNums.map(num => homePayload.numberToName.get(padDv(num, 2)) || "");
     const awayLineup = awayLineupNums.map(num => awayPayload.numberToName.get(padDv(num, 2)) || "");
-    if (!setStarts[setNum] && (homeLineup.some(Boolean) || awayLineup.some(Boolean))) {
+    if (!seenFirstSkill.has(setNum) && parseDvwSkillCode(code).kind === "skill" && (homeLineup.some(Boolean) || awayLineup.some(Boolean))) {
+      seenFirstSkill.add(setNum);
       setStarts[setNum] = {
         our: { court: makeImportedCourtFromNames(homeLineup), rotation: homeRotation },
         opponent: { court: makeImportedCourtFromNames(awayLineup), rotation: awayRotation },
@@ -127,7 +129,15 @@ function parseDataVolleyDvwToMatchState(text) {
   const matchRows = (sections.get("3MATCH") || []).filter(line => String(line || "").trim());
   const teamRows = (sections.get("3TEAMS") || []).filter(line => String(line || "").trim()).map(parseDvwRow);
   const setRows = (sections.get("3SET") || []).filter(line => String(line || "").trim()).map(parseDvwRow);
-  const scoutRows = (sections.get("3SCOUT") || []).filter(line => String(line || "").trim());
+  let scoutRows = (sections.get("3SCOUT") || []).filter(line => String(line || "").trim());
+  // Older VolleyEye exports included one extra flag before the clock.
+  const legacyLayout = (sections.get("3DATAVOLLEYSCOUT") || []).some(line => line === "GENERATOR-PRG: VolleyEye")
+    && scoutRows.some(line => /^\d{2}[.:]\d{2}[.:]\d{2}$/.test(parseDvwRow(line)[8] || ""));
+  if (legacyLayout) scoutRows = scoutRows.map(line => {
+    const cells = parseDvwRow(line);
+    cells.splice(1, 1);
+    return cells.join(";");
+  });
   const matchInfo = matchRows.length ? parseDvwRow(matchRows[0]) : [];
   const homeTeamMeta = teamRows[0]
     ? { code: teamRows[0][0] || "", name: teamRows[0][1] || "Squadra", id: teamRows[0][0] || "" }
@@ -163,11 +173,11 @@ function parseDataVolleyDvwToMatchState(text) {
     const cells = parseDvwRow(line);
     const rawCode = String(cells[0] || "").trim();
     const decoded = parseDvwSkillCode(rawCode);
-    const setNum = parseInt(cells[9], 10) || 1;
-    const homeRotation = parseInt(cells[10], 10) || lastHomeRotation || 1;
-    const awayRotation = parseInt(cells[11], 10) || lastAwayRotation || 1;
-    const homeLineupNums = cells.slice(15, 21);
-    const awayLineupNums = cells.slice(21, 27);
+    const setNum = parseInt(cells[8], 10) || 1;
+    const homeRotation = parseInt(cells[9], 10) || lastHomeRotation || 1;
+    const awayRotation = parseInt(cells[10], 10) || lastAwayRotation || 1;
+    const homeLineupNums = cells.slice(14, 20);
+    const awayLineupNums = cells.slice(20, 26);
     const homeLineup = homeLineupNums.map(num => homePayload.numberToName.get(padDv(num, 2)) || "");
     const awayLineup = awayLineupNums.map(num => awayPayload.numberToName.get(padDv(num, 2)) || "");
     if (homeLineup.some(Boolean)) lastHomeCourt = makeImportedCourtFromNames(homeLineup);
@@ -241,6 +251,7 @@ function parseDataVolleyDvwToMatchState(text) {
         }
       }
       setContext.pendingPointMarker = null;
+      setContext.lastEventIndex = null;
       return;
     }
     if (decoded.kind === "lineup" || decoded.kind === "rotation" || decoded.kind === "set-end" || decoded.kind === "unknown") {
@@ -249,7 +260,7 @@ function parseDataVolleyDvwToMatchState(text) {
     if (decoded.kind === "timeout") {
       events.push({
         eventId: `dvw-${idx + 1}`,
-        t: buildDvwTimestamp(matchInfo[0], cells[8]),
+        t: buildDvwTimestamp(matchInfo[0], cells[7]),
         set: setNum,
         rotation: decoded.teamScope === "opponent" ? awayRotation : homeRotation,
         playerIdx: null,
@@ -263,8 +274,8 @@ function parseDataVolleyDvwToMatchState(text) {
         actionType: "timeout",
         playerIn: null,
         playerOut: null,
-        homeScore: 0,
-        visitorScore: 0,
+        homeScore: setContext.scoreOur,
+        visitorScore: setContext.scoreOpp,
         videoTime: 0,
         dv: normalizeDataVolleyEventMeta({})
       });
@@ -282,7 +293,7 @@ function parseDataVolleyDvwToMatchState(text) {
       }
       events.push({
         eventId: `dvw-${idx + 1}`,
-        t: buildDvwTimestamp(matchInfo[0], cells[8]),
+        t: buildDvwTimestamp(matchInfo[0], cells[7]),
         set: setNum,
         rotation: scope === "opponent" ? awayRotation : homeRotation,
         playerIdx: null,
@@ -296,8 +307,8 @@ function parseDataVolleyDvwToMatchState(text) {
         actionType: "substitution",
         playerIn,
         playerOut,
-        homeScore: 0,
-        visitorScore: 0,
+        homeScore: setContext.scoreOur,
+        visitorScore: setContext.scoreOpp,
         videoTime: 0,
         dv: normalizeDataVolleyEventMeta({})
       });
@@ -340,7 +351,7 @@ function parseDataVolleyDvwToMatchState(text) {
     };
     const event = {
       eventId: `dvw-${idx + 1}`,
-      t: buildDvwTimestamp(matchInfo[0], cells[8]),
+      t: buildDvwTimestamp(matchInfo[0], cells[7]),
       durationMs: 0,
       clockMs: idx * 1000,
       set: setNum,
@@ -359,6 +370,7 @@ function parseDataVolleyDvwToMatchState(text) {
       skillId,
       code: decoded.evaluation,
       pointDirection: null,
+      dvwScoreAuthoritative: true,
       value: 1,
       autoRotationDirection: null,
       autoRotateNext: null,
