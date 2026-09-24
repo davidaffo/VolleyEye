@@ -217,7 +217,7 @@ body.top-bar-hidden .tab-panel .section:first-child h3 {
   margin-top: 0.1rem;
 }
 .topbar-toggle-btn {
-  position: fixed;
+  position: sticky;
   top: 3.15rem;
   left: 50%;
   transform: translateX(-50%);
