@@ -537,42 +537,10 @@ body[data-theme="light"] .event-row.selected:hover {
 .agg-table th:not(:first-child) {
   padding: 0.14rem 0.08rem !important;
 }
-/* Analisi skill: temi separati */
-.agg-table th.skill-col.skill-serve,
-.agg-table td.skill-col.skill-serve { background: rgba(34, 197, 94, 0.22); }
-.agg-table th.skill-col.skill-pass,
-.agg-table td.skill-col.skill-pass { background: rgba(249, 168, 37, 0.22); }
-.agg-table th.skill-col.skill-freeball,
-.agg-table td.skill-col.skill-freeball { background: rgba(192, 38, 211, 0.22); }
+/* Fundamental colors come from the shared semantic skill palette. */
 .agg-table.agg-table--hide-freeball .skill-col.skill-freeball {
   display: none;
 }
-.agg-table th.skill-col.skill-attack,
-.agg-table td.skill-col.skill-attack { background: rgba(239, 68, 68, 0.22); }
-.agg-table th.skill-col.skill-defense,
-.agg-table td.skill-col.skill-defense { background: rgba(96, 165, 250, 0.2); }
-.agg-table th.skill-col.skill-block,
-.agg-table td.skill-col.skill-block { background: rgba(167, 139, 250, 0.22); }
-.agg-table th.skill-col.skill-second,
-.agg-table td.skill-col.skill-second { background: rgba(34, 211, 238, 0.22); }
-body:not([data-theme="light"]) .agg-table th.skill-col,
-body:not([data-theme="light"]) .agg-table td.skill-col {
-  color: #ffffff !important;
-}
-body[data-theme="light"] .agg-table th.skill-col.skill-serve,
-body[data-theme="light"] .agg-table td.skill-col.skill-serve { background: #defce7 !important; color: #0f172a !important; }
-body[data-theme="light"] .agg-table th.skill-col.skill-pass,
-body[data-theme="light"] .agg-table td.skill-col.skill-pass { background: #fef3c7 !important; color: #0f172a !important; }
-body[data-theme="light"] .agg-table th.skill-col.skill-freeball,
-body[data-theme="light"] .agg-table td.skill-col.skill-freeball { background: #fae8ff !important; color: #0f172a !important; }
-body[data-theme="light"] .agg-table th.skill-col.skill-attack,
-body[data-theme="light"] .agg-table td.skill-col.skill-attack { background: #fee2e2 !important; color: #0f172a !important; }
-body[data-theme="light"] .agg-table th.skill-col.skill-defense,
-body[data-theme="light"] .agg-table td.skill-col.skill-defense { background: #e0f2fe !important; color: #0f172a !important; }
-body[data-theme="light"] .agg-table th.skill-col.skill-block,
-body[data-theme="light"] .agg-table td.skill-col.skill-block { background: #ede9fe !important; color: #0f172a !important; }
-body[data-theme="light"] .agg-table th.skill-col.skill-second,
-body[data-theme="light"] .agg-table td.skill-col.skill-second { background: #cffafe !important; color: #0f172a !important; }
 .agg-table td:first-child {
   text-align: center;
   font-weight: 600;

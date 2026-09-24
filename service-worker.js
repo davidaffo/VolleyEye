@@ -1,4 +1,4 @@
-const APP_CACHE_VERSION = "v0.19.1-413-1e49fbf";
+const APP_CACHE_VERSION = "v0.19.2-414-94c9d1a";
 const withVersion = asset => `${asset}?v=${encodeURIComponent(APP_CACHE_VERSION || "dev")}`;
 
 importScripts(withVersion("./js/app-version.js"));

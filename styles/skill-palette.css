@@ -4,85 +4,113 @@
  */
 :is(.skill-serve, .badge-serve) {
   --skill-ui-accent: #1b5e20;
-  --skill-ui-on-accent: #ffffff;
-  --skill-ui-surface: rgba(34, 197, 94, 0.2);
+  --skill-ui-on-accent: #d1fae5;
+  --skill-ui-surface: rgba(27, 94, 32, 0.18);
   --skill-ui-on-surface: var(--text-color, #f5f5f5);
   --skill-ui-border: #22c55e;
+  --skill-ui-table-surface: rgba(34, 197, 94, 0.22);
 }
 :is(.skill-pass, .badge-pass) {
   --skill-ui-accent: #f9a825;
-  --skill-ui-on-accent: #0f172a;
-  --skill-ui-surface: rgba(249, 168, 37, 0.22);
+  --skill-ui-on-accent: #ffffff;
+  --skill-ui-surface: rgba(249, 168, 37, 0.18);
   --skill-ui-on-surface: var(--text-color, #f5f5f5);
   --skill-ui-border: #f9a825;
+  --skill-ui-table-surface: rgba(249, 168, 37, 0.22);
 }
 :is(.skill-freeball, .badge-freeball) {
-  --skill-ui-accent: #a21caf;
-  --skill-ui-on-accent: #ffffff;
-  --skill-ui-surface: rgba(192, 38, 211, 0.2);
+  --skill-ui-accent: #c026d3;
+  --skill-ui-on-accent: #fdf4ff;
+  --skill-ui-surface: rgba(192, 38, 211, 0.18);
   --skill-ui-on-surface: var(--text-color, #f5f5f5);
   --skill-ui-border: #c026d3;
+  --skill-ui-table-surface: rgba(192, 38, 211, 0.22);
 }
 :is(.skill-attack, .badge-attack) {
   --skill-ui-accent: #b71c1c;
-  --skill-ui-on-accent: #ffffff;
-  --skill-ui-surface: rgba(239, 68, 68, 0.2);
+  --skill-ui-on-accent: #ffe4e6;
+  --skill-ui-surface: rgba(183, 28, 28, 0.18);
   --skill-ui-on-surface: var(--text-color, #f5f5f5);
   --skill-ui-border: #ef4444;
+  --skill-ui-table-surface: rgba(239, 68, 68, 0.22);
 }
 :is(.skill-defense, .badge-defense) {
-  --skill-ui-accent: #475569;
-  --skill-ui-on-accent: #ffffff;
-  --skill-ui-surface: rgba(96, 165, 250, 0.2);
+  --skill-ui-accent: #546e7a;
+  --skill-ui-on-accent: #e2e8f0;
+  --skill-ui-surface: rgba(84, 110, 122, 0.18);
   --skill-ui-on-surface: var(--text-color, #f5f5f5);
   --skill-ui-border: #60a5fa;
+  --skill-ui-table-surface: rgba(96, 165, 250, 0.2);
 }
 :is(.skill-block, .badge-block) {
-  --skill-ui-accent: #5b21b6;
-  --skill-ui-on-accent: #ffffff;
-  --skill-ui-surface: rgba(167, 139, 250, 0.22);
+  --skill-ui-accent: #4a148c;
+  --skill-ui-on-accent: #ede9fe;
+  --skill-ui-surface: rgba(74, 20, 140, 0.18);
   --skill-ui-on-surface: var(--text-color, #f5f5f5);
   --skill-ui-border: #8b5cf6;
+  --skill-ui-table-surface: rgba(167, 139, 250, 0.22);
 }
 :is(.skill-second, .badge-second) {
-  --skill-ui-accent: #0f766e;
-  --skill-ui-on-accent: #ffffff;
-  --skill-ui-surface: rgba(34, 211, 238, 0.2);
+  --skill-ui-accent: #00838f;
+  --skill-ui-on-accent: #ccfbf1;
+  --skill-ui-surface: rgba(0, 131, 143, 0.18);
   --skill-ui-on-surface: var(--text-color, #f5f5f5);
   --skill-ui-border: #06b6d4;
+  --skill-ui-table-surface: rgba(34, 211, 238, 0.22);
 }
 
 body[data-theme="light"] :is(.skill-serve, .badge-serve) {
+  --skill-ui-accent: #1b5e20;
+  --skill-ui-on-accent: #ffffff;
+  --skill-ui-table-surface: var(--skill-ui-surface);
   --skill-ui-surface: #dcfce7;
   --skill-ui-on-surface: #14532d;
   --skill-ui-border: #4ade80;
 }
 body[data-theme="light"] :is(.skill-pass, .badge-pass) {
+  --skill-ui-accent: #f9a825;
+  --skill-ui-on-accent: #0f172a;
+  --skill-ui-table-surface: var(--skill-ui-surface);
   --skill-ui-surface: #fef3c7;
   --skill-ui-on-surface: #713f12;
   --skill-ui-border: #f59e0b;
 }
 body[data-theme="light"] :is(.skill-freeball, .badge-freeball) {
+  --skill-ui-accent: #a21caf;
+  --skill-ui-on-accent: #ffffff;
+  --skill-ui-table-surface: var(--skill-ui-surface);
   --skill-ui-surface: #fae8ff;
   --skill-ui-on-surface: #701a75;
   --skill-ui-border: #d946ef;
 }
 body[data-theme="light"] :is(.skill-attack, .badge-attack) {
+  --skill-ui-accent: #b71c1c;
+  --skill-ui-on-accent: #ffffff;
+  --skill-ui-table-surface: var(--skill-ui-surface);
   --skill-ui-surface: #fee2e2;
   --skill-ui-on-surface: #7f1d1d;
   --skill-ui-border: #ef4444;
 }
 body[data-theme="light"] :is(.skill-defense, .badge-defense) {
+  --skill-ui-accent: #475569;
+  --skill-ui-on-accent: #ffffff;
+  --skill-ui-table-surface: var(--skill-ui-surface);
   --skill-ui-surface: #e0f2fe;
   --skill-ui-on-surface: #0c4a6e;
   --skill-ui-border: #38bdf8;
 }
 body[data-theme="light"] :is(.skill-block, .badge-block) {
+  --skill-ui-accent: #5b21b6;
+  --skill-ui-on-accent: #ffffff;
+  --skill-ui-table-surface: var(--skill-ui-surface);
   --skill-ui-surface: #ede9fe;
   --skill-ui-on-surface: #4c1d95;
   --skill-ui-border: #8b5cf6;
 }
 body[data-theme="light"] :is(.skill-second, .badge-second) {
+  --skill-ui-accent: #0f766e;
+  --skill-ui-on-accent: #ffffff;
+  --skill-ui-table-surface: var(--skill-ui-surface);
   --skill-ui-surface: #ccfbf1;
   --skill-ui-on-surface: #115e59;
   --skill-ui-border: #14b8a6;
@@ -99,12 +127,27 @@ body[data-theme="light"] :is(.skill-second, .badge-second) {
 /* Tinted identity: settings cards, toggles and analysis columns. */
 .metric-block[class*="skill-"],
 .skill-col[class*="skill-"] {
-  background: var(--skill-ui-surface) !important;
-  border-color: var(--skill-ui-border) !important;
+  background-color: var(--skill-ui-surface) !important;
   color: var(--skill-ui-on-surface) !important;
 }
+/* Tables retain their original cell tint without resetting stripe/hover layers. */
+.agg-table td.skill-col[class*="skill-"] {
+  background-color: var(--skill-ui-table-surface) !important;
+  color: var(--skill-ui-table-text, #ffffff) !important;
+}
+.agg-table th.skill-col[class*="skill-"] {
+  color: var(--skill-ui-table-text, #ffffff) !important;
+}
+body[data-theme="light"] .agg-table {
+  --skill-ui-table-text: var(--light-text);
+}
 .metric-block[class*="skill-"] {
-  box-shadow: inset 4px 0 0 var(--skill-ui-accent);
+  border-color: var(--skill-ui-card-border, #2a2a2a) !important;
+  box-shadow: var(--skill-ui-card-shadow, none);
+}
+body[data-theme="light"] .metric-block[class*="skill-"] {
+  --skill-ui-card-border: var(--skill-ui-border);
+  --skill-ui-card-shadow: inset 4px 0 0 var(--skill-ui-accent);
 }
 .metric-block[class*="skill-"].disabled {
   filter: saturate(0.55);

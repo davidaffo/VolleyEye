@@ -159,3 +159,16 @@ test("le coppie principali del tema chiaro superano il contrasto WCAG AA", () =>
     );
   });
 });
+
+
+test("la palette delle celle conserva griglia neutra e livelli di hover del tabellino", () => {
+  const cellRules = [...skillPaletteCss.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+    .filter(([, selector]) => selector.includes('.skill-col'));
+  assert.ok(cellRules.length > 0);
+  for (const [, selector, declarations] of cellRules) {
+    assert.doesNotMatch(declarations, /(?:^|[;\n])\s*background\s*:/,
+      `${selector}: background cancellerebbe righe alternate e hover`);
+    assert.doesNotMatch(declarations, /(?:^|[;\n])\s*border(?:-color)?\s*:/,
+      `${selector}: la palette non deve colorare la griglia del tabellino`);
+  }
+});
