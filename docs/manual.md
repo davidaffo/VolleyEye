@@ -256,9 +256,65 @@ La prima vista è il **tabellino riepilogativo**, che mostra per ogni giocatrice
 - punti fatti e punti subiti
 - errori personali
 - dati principali di battuta, ricezione, freeball, attacco, muro e difesa
-- metriche come **Pos**, **Prf** ed **Eff**
+- metriche come **positività**, **perfezione** ed **efficienza**
 - riepilogo totale squadra
 - riepilogo per singolo set
+
+#### Come si calcolano positività, efficienza e perfezione
+
+Le tre metriche sono percentuali calcolate separatamente per ogni fondamentale, usando gli eventi inclusi nei filtri dell'analisi. Il **totale** è il numero di valutazioni registrate per quel fondamentale: comprende tutti i codici `#`, `+`, `!`, `-`, `/` e `=`, inclusi quelli neutri. Se non ci sono valutazioni, la metrica viene mostrata come un trattino, perché non è calcolabile.
+
+##### Positività
+
+Indica la percentuale di azioni con valutazione `#` o `+`, più quelle con eventuali altri codici impostati come positivi.
+
+**Positività = (numero di azioni con codice `#`, `+` o altro codice configurato come positivo / totale delle azioni) × 100**
+
+Ogni azione viene contata una sola volta. Nel calcolo attuale, `#` e `+` sono sempre inclusi nella positività, anche se nelle impostazioni vengono classificati diversamente. Gli esiti negativi non vengono sottratti: restano nel totale.
+
+##### Efficienza
+
+Misura il saldo tra le azioni positive e quelle negative rispetto al totale.
+
+**Efficienza = ((numero di azioni con codici configurati come positivi − numero di azioni con codici configurati come negativi) / totale delle azioni) × 100**
+
+Per questa metrica valgono esattamente le assegnazioni delle impostazioni scout: i codici neutri contribuiscono solo al totale. L'efficienza può essere negativa se le azioni negative sono più di quelle positive.
+
+##### Perfezione
+
+Indica la percentuale di azioni valutate con `#`.
+
+**Perfezione = (numero di azioni con codice `#` / totale delle azioni) × 100**
+
+Il significato tecnico di `#` dipende dal fondamentale: ad esempio indica una ricezione perfetta oppure un attacco a punto. La scelta dei codici positivi e negativi nelle impostazioni non modifica questa formula.
+
+##### Criteri predefiniti per fondamentale
+
+La tabella riporta i codici conteggiati con le impostazioni iniziali. Per la perfezione viene sempre contato soltanto `#`.
+
+| Fondamentale | Codici inclusi nella positività | Codici positivi per l'efficienza | Codici negativi per l'efficienza |
+| --- | --- | --- | --- |
+| Battuta | `#`, `+`, `!`, `/` | `#`, `+`, `!`, `/` | `=` |
+| Ricezione | `#`, `+` | `#`, `+` | `/`, `=` |
+| Freeball | `#`, `+` | `#`, `+` | `/`, `=` |
+| Alzata | `#`, `+` | `#` | `-`, `/`, `=` |
+| Attacco | `#`, `+` | `#` | `/`, `=` |
+| Muro | `#`, `+` | `#`, `+` | `/`, `=` |
+| Difesa | `#`, `+`, `!` | `#`, `+`, `!` | `=` |
+
+Ad esempio, su **20 ricezioni** con 8 valutazioni `#`, 6 `+`, 3 `-`, 1 `/` e 2 `=`, usando i criteri predefiniti:
+
+- **Positività**: `(8 + 6) / 20 × 100 = 70%`.
+- **Efficienza**: `(8 + 6 − 1 − 2) / 20 × 100 = 55%`.
+- **Perfezione**: `8 / 20 × 100 = 40%`.
+
+Su **20 attacchi** con gli stessi conteggi, la **positività** resta al **70%** e la **perfezione** al **40%**, mentre l'**efficienza** è `(8 − 1 − 2) / 20 × 100 = 25%`: per l'efficienza d'attacco, con i criteri predefiniti, solo `#` è positivo.
+
+Puoi modificare i criteri nella schermata di impostazione, alla voce **Regole calcolo efficienza/positività**. Le modifiche ricalcolano anche le statistiche degli eventi già inseriti. Le regole che assegnano i punti sono configurate separatamente: non vanno confuse con i codici positivi e negativi usati per queste metriche.
+
+Nei grafici, **cumulativa** significa che a ogni punto la percentuale viene ricalcolata su tutti gli eventi considerati fino a quel momento. Quando aggreghi più partite, il grafico mostra invece il valore di ciascuna partita. Nei riepiloghi aggregati le percentuali si calcolano sui conteggi complessivi, non facendo la media delle percentuali delle singole giocatrici o dei singoli set.
+
+#### Consultazione e indicatori di squadra
 
 Inoltre:
 
@@ -282,9 +338,9 @@ I grafici permettono di vedere l'andamento di ogni fondamentale durante la parti
 
 Per ogni skill puoi visualizzare diverse metriche:
 
-- **Eff % cumulativa**
-- **Pos % cumulativa**
-- **Prf % cumulativa**
+- **Efficienza percentuale cumulativa**
+- **Positività percentuale cumulativa**
+- **Perfezione percentuale cumulativa**
 - **Esito singolo (codice)**
 
 Sono utili per individuare, ad esempio:
@@ -376,14 +432,6 @@ Puoi anche attivare il **confronto tra giocatrici**. In questo caso il programma
 
 È disponibile anche il comando **Stampa / PDF**, che prepara l'analisi per la stampa o per il salvataggio come PDF tramite le funzioni del browser.
 
-### Nota importante sulle metriche
-
-Tutti i risultati mostrati nella sezione analisi dipendono da due elementi:
-
-- i dati realmente inseriti nello scout
-- le regole di valutazione configurate nelle impostazioni
-
-In particolare, metriche come **Pos**, **Prf**, **Eff** e l'assegnazione dei punti sono sempre calcolate in base ai criteri che hai definito per i singoli fondamentali. Se modifichi quei criteri, cambierà anche la lettura statistica dell'analisi.
 
 
 ---
