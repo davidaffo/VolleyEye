@@ -65,6 +65,26 @@ function getTrajectoryColorForCode(code, variant = "attack") {
   const palette = variant === "serve" ? TRAJECTORY_LINE_COLORS_SERVE : TRAJECTORY_LINE_COLORS;
   return palette[normalized] || "#38bdf8";
 }
+// Share the drawing palette with every trajectory legend, including player comparisons.
+function renderTrajectoryLegend(target, variant = "attack") {
+  if (!target || target.querySelector(":scope > .trajectory-legend")) return;
+  const legend = document.createElement("div");
+  legend.className = "distribution-legend trajectory-legend";
+  legend.setAttribute("aria-label", "Legenda colori traiettorie");
+  const groups = variant === "serve"
+    ? [["#", "# · Ace"], ["+", "+, !, / · Positivo"], ["-", "− · Negativo"], ["=", "= · Errore"]]
+    : [["#", "# · Punto"], ["+", "+, ! · Positivo"], ["-", "− · Negativo"], ["=", "=, / · Errore o muro subito"]];
+  groups.forEach(([code, label]) => {
+    const item = document.createElement("span");
+    const swatch = document.createElement("i");
+    swatch.setAttribute("aria-hidden", "true");
+    swatch.style.backgroundColor = getTrajectoryColorForCode(code, variant);
+    item.appendChild(swatch);
+    item.appendChild(document.createTextNode(label));
+    legend.appendChild(item);
+  });
+  target.appendChild(legend);
+}
 function getFilteredTrajectoryEvents() {
   const events = getAnalysisEvents().filter(ev => {
     if (!ev || ev.skillId !== "attack") return false;
@@ -381,6 +401,7 @@ function renderLogServeTrajectories() {
       stats: getServeStatsForServer("opponent", serverName)
     });
   }
+  if (showOur || showOpp) renderTrajectoryLegend(elLogServeTrajectory, "serve");
 }
 function initLogServeTrajectoryControls() {
   if (!elLogServeTrajectory) return;
@@ -420,6 +441,7 @@ function getFilteredServeTrajectoryEvents() {
 }
 function renderTrajectoryAnalysis() {
   if (!elTrajectoryGrid) return;
+  renderTrajectoryLegend(elTrajectoryGrid, "attack");
   renderTrajectoryFilters();
   renderAttackMetricsSummary(elTrajectoryAttackSummary, getFilteredAttackSummaryEvents());
   const canvases = elTrajectoryGrid.querySelectorAll("canvas[data-traj-canvas]");
@@ -680,6 +702,7 @@ function renderServeTrajectoryAnalysis() {
       playerIdx
     });
   });
+  renderTrajectoryLegend(elServeTrajectoryGrid, "serve");
 }
 const MATCH_SHEET_ROLE_ORDER = ["P", "S1", "C2", "O", "S2", "C1"];
 const MATCH_SHEET_ROTATION_ORDER = [1, 6, 5, 4, 3, 2];

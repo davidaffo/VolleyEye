@@ -255,6 +255,7 @@ function renderPlayerTrajectoryAnalysis() {
 }
 function renderAttackTrajectoryGridForPlayer(targetGrid, playerIdx) {
   if (!targetGrid) return;
+  renderTrajectoryLegend(targetGrid, "attack");
   const canvases = targetGrid.querySelectorAll("canvas[data-traj-canvas]");
   if (!canvases || canvases.length === 0) return;
   const prefs = ensurePlayerAnalysisState();
@@ -510,4 +511,5 @@ function renderServeTrajectoryGridForPlayer(targetGrid, playerIdx) {
     onImagesLoad: () => renderPlayerAnalysis(),
     playerIdx
   });
+  renderTrajectoryLegend(targetGrid, "serve");
 }

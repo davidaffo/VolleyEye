@@ -1008,3 +1008,10 @@ body.video-panel-resizing * {
 .video-media {
   position: relative;
 }
+
+/* Same swatches and layout as the setting distribution legend in both themes. */
+.trajectory-legend {
+  grid-column: 1 / -1;
+  align-self: start;
+  margin-top: 0.4rem;
+}
