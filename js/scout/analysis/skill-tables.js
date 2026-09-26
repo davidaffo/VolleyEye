@@ -520,6 +520,18 @@ function renderAggSkillDetailTable(summaryAll) {
     buildRow(label, counts, idx, false);
   });
   buildRow("Totale squadra", totals, null, true);
+  const countsBySet = new Map(getSummarySetNumbers().map(setNum => [setNum, emptyCounts()]));
+  analysisEvents.forEach(ev => {
+    if (!ev || ev.skillId !== skillId || !ev.code) return;
+    if (ev.actionType === "timeout" || ev.actionType === "substitution") return;
+    if (getTeamScopeFromEvent(ev) !== analysisScope) return;
+    if (!isSkillEnabledForScope(skillId, analysisScope)) return;
+    const counts = countsBySet.get(normalizeSetNumber(ev.set));
+    if (counts) counts[ev.code] = (counts[ev.code] || 0) + 1;
+  });
+  countsBySet.forEach((counts, setNum) => {
+    buildRow("Set " + setNum, counts, null, true);
+  });
   renderAggSkillDetailChartPanel(skillId);
   renderScoreAndRotations(summaryAll, analysisScope, { events: analysisEvents });
   renderSecondTable();
