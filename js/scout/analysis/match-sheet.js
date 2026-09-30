@@ -160,6 +160,19 @@ function renderMatchSheetNotesBlock(key, label = "Note") {
     <div class="match-sheet-notes-print">${formatMatchSheetNotes(value)}</div>
   </div>`;
 }
+function renderMatchSheetArrowHead(start, end, color, size = 5) {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const length = Math.hypot(dx, dy);
+  if (!length) return "";
+  const ux = dx / length;
+  const uy = dy / length;
+  const depth = Math.min(size, length);
+  const bx = end.x - ux * depth;
+  const by = end.y - uy * depth;
+  const halfWidth = depth * 0.45;
+  return `<polygon points="${end.x},${end.y} ${bx - uy * halfWidth},${by + ux * halfWidth} ${bx + uy * halfWidth},${by - ux * halfWidth}" fill="${color}" />`;
+}
 function renderMatchSheetCourtSvg(trajectories = [], options = {}) {
   const isFullCourt = !!options.fullCourt;
   const courtHeight = isFullCourt ? MATCH_SHEET_COURT_HEIGHT : 100;
@@ -173,14 +186,15 @@ function renderMatchSheetCourtSvg(trajectories = [], options = {}) {
     const color = getMatchSheetEventColor(item.code, options.variant || "attack");
     const opacity = Math.max(0.28, 0.78 - idx * 0.012);
     return `<g opacity="${opacity}">
-      <line x1="${item.start.x.toFixed(1)}" y1="${scaleY(item.start.y).toFixed(1)}" x2="${item.end.x.toFixed(1)}" y2="${scaleY(item.end.y).toFixed(1)}" stroke="${color}" stroke-width="1.7" stroke-linecap="round" marker-end="url(#matchSheetArrow)" />
+      <line x1="${item.start.x.toFixed(1)}" y1="${scaleY(item.start.y).toFixed(1)}" x2="${item.end.x.toFixed(1)}" y2="${scaleY(item.end.y).toFixed(1)}" stroke="${color}" stroke-width="1.7" stroke-linecap="round" />
+      ${renderMatchSheetArrowHead({x: item.start.x, y: scaleY(item.start.y)}, {x: item.end.x, y: scaleY(item.end.y)}, color)}
     </g>`;
   }).join("");
   const sourceArrow = options.sourceZone
     ? getMatchSheetDefenseArrow(parseInt(options.sourceZone, 10))
     : null;
   const sourceArrowSvg = sourceArrow
-    ? `<line class="match-sheet-source-arrow" x1="${sourceArrow.start.x}" y1="${scaleY(sourceArrow.start.y)}" x2="${sourceArrow.end.x}" y2="${scaleY(sourceArrow.end.y)}" marker-end="url(#matchSheetArrowBlack)" />`
+    ? `<line class="match-sheet-source-arrow" x1="${sourceArrow.start.x}" y1="${scaleY(sourceArrow.start.y)}" x2="${sourceArrow.end.x}" y2="${scaleY(sourceArrow.end.y)}" />${renderMatchSheetArrowHead({x: sourceArrow.start.x, y: scaleY(sourceArrow.start.y)}, {x: sourceArrow.end.x, y: scaleY(sourceArrow.end.y)}, "#111827")}`
     : "";
   const players = (options.players || []).map(slot => {
     const zone = slot.point || (
@@ -200,14 +214,6 @@ function renderMatchSheetCourtSvg(trajectories = [], options = {}) {
   return `<div class="match-sheet-court ${options.className || ""}">
     ${title}
     <svg viewBox="0 ${viewTop} 100 ${viewHeight}" role="img" aria-label="${escapeDvwScoutHtml(options.title || "Campo")}">
-      <defs>
-        <marker id="matchSheetArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"></path>
-        </marker>
-        <marker id="matchSheetArrowBlack" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="#111827"></path>
-        </marker>
-      </defs>
       <rect x="1" y="1" width="98" height="${courtHeight - 2}" rx="1.5" />
       <line x1="34" y1="1" x2="34" y2="${courtHeight - 1}" class="court-line-soft" />
       <line x1="66" y1="1" x2="66" y2="${courtHeight - 1}" class="court-line-soft" />

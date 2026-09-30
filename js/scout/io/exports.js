@@ -456,3 +456,43 @@ async function exportMatchToFile() {
     window.trackVolleyEyeEventOnce("match_exported", { export_format: "json" });
   }
 }
+
+// Isolate the sheet for both the PDF button and the browser's print command.
+function getMatchSheetPrintScale(width, height, pageWidth, pageHeight) {
+  if (width <= 0 || height <= 0 || pageWidth <= 0 || pageHeight <= 0) return 1;
+  return Math.min(1, (pageWidth - 2) / width, (pageHeight - 2) / height);
+}
+function prepareMatchSheetPrint() {
+  if (document.body.dataset.aggTab !== "match-sheet") return;
+  const sheet = document.getElementById("match-sheet-page");
+  if (!sheet) return;
+  clearMatchSheetPrint();
+  const root = document.createElement("div");
+  root.id = "match-sheet-print-root";
+  const copy = sheet.cloneNode(true);
+  copy.removeAttribute("id");
+  root.appendChild(copy);
+  document.body.appendChild(root);
+  document.body.classList.add("printing-match-sheet");
+  // Measure the unscaled sheet, including overflowing descendants, on both axes.
+  const page = root.getBoundingClientRect();
+  const bounds = copy.getBoundingClientRect();
+  let width = Math.max(copy.scrollWidth, bounds.width);
+  let height = Math.max(copy.scrollHeight, bounds.height);
+  copy.querySelectorAll("*").forEach(element => {
+    const rect = element.getBoundingClientRect();
+    if (!rect.width && !rect.height) return;
+    width = Math.max(width, rect.right - bounds.left);
+    height = Math.max(height, rect.bottom - bounds.top);
+  });
+  const scale = getMatchSheetPrintScale(width, height, page.width, page.height);
+  copy.style.transform = `scale(${scale})`;
+  copy.style.left = `${Math.max(0, (page.width - width * scale) / 2)}px`;
+
+}
+function clearMatchSheetPrint() {
+  document.getElementById("match-sheet-print-root")?.remove();
+  document.body.classList.remove("printing-match-sheet");
+}
+window.addEventListener("beforeprint", prepareMatchSheetPrint);
+window.addEventListener("afterprint", clearMatchSheetPrint);

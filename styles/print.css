@@ -205,3 +205,90 @@
 #paste-players-modal #players-input {
   min-height: 260px;
 }
+
+/* Measurable before print media activates as well as inside print preview. */
+#match-sheet-print-root {
+  display: block;
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 277mm;
+  height: 189mm;
+  padding: 0;
+  margin: 0;
+}
+#match-sheet-print-root .match-sheet-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  width: 277mm !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  height: auto !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  zoom: 1 !important;
+  transform-origin: top left;
+}
+#match-sheet-print-root .match-sheet-notes textarea { display: none !important; }
+#match-sheet-print-root .match-sheet-notes-print { display: block; }
+@media print {
+  body.printing-match-sheet {
+    margin: 0 !important;
+    padding: 0 !important;
+    zoom: 1 !important;
+  }
+  body.printing-match-sheet::before,
+  body.printing-match-sheet::after,
+  body.printing-match-sheet > :not(#match-sheet-print-root) {
+    display: none !important;
+  }
+  body.printing-match-sheet > #match-sheet-print-root {
+    display: block !important;
+    position: relative;
+    left: 0;
+    top: 0;
+    width: 277mm;
+    height: 189mm;
+    margin: 0;
+    padding: 0;
+    break-inside: avoid;
+  }
+  #match-sheet-print-root .match-sheet-page {
+    box-sizing: border-box;
+    width: 277mm;
+    min-width: 0;
+    min-height: 0;
+    max-height: none;
+    height: auto;
+    margin: 0;
+    background: white !important;
+    color: #111827 !important;
+  }
+  #match-sheet-print-root .match-sheet-court-grid--sideout:has(> :nth-child(7)) {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+}
+
+/* Keep the original section order while reducing print spacing. */
+#match-sheet-print-root .match-sheet-page {
+  display: block;
+  padding: 2mm;
+}
+#match-sheet-print-root .match-sheet-section {
+  min-width: 0;
+  margin-top: 2mm;
+  align-content: start;
+}
+#match-sheet-print-root .match-sheet-court .match-sheet-notes {
+  display: block;
+}
+#match-sheet-print-root .match-sheet-court .match-sheet-notes label {
+  display: none;
+}
+#match-sheet-print-root .match-sheet-note-line {
+  min-height: 3mm;
+  line-height: 3mm;
+}
