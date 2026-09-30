@@ -148,7 +148,7 @@ async function initializeApplicationState() {
   renderYoutubePlayerScout();
   restoreCachedLocalVideo();
   restoreYoutubeFromState();
-  applyTheme(state.theme || "auto");
+  applyTheme(state.theme || "dark");
   applyTopBarVisibility();
   applyMatchInfoToUI();
   updateRotationDisplay();

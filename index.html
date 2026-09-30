@@ -26,14 +26,14 @@
     };
   </script>
   <script>
-    window.__APP_CACHE_VERSION__ = "v0.19.7-420-53ca3a9";
+    window.__APP_CACHE_VERSION__ = "v0.19.8-421-764d6fb";
     window.__IS_LOCALHOST_DEV__ =
       location.hostname === "localhost" ||
       location.hostname === "127.0.0.1" ||
       location.hostname === "::1";
     window.__APP_ASSET_SUFFIX__ = window.__IS_LOCALHOST_DEV__
       ? `?dev=${Date.now()}`
-      : `?v=v0.19.7-420-53ca3a9`;
+      : `?v=v0.19.8-421-764d6fb`;
     if (location.protocol === "file:") {
       document.documentElement.dataset.fileOrigin = "true";
     }
@@ -121,7 +121,6 @@
         <div class="lobby-theme-picker">
           <span class="lobby-theme-picker__label">Tema</span>
           <div class="theme-toggle" role="group" aria-label="Tema applicazione">
-            <button type="button" id="theme-auto-lobby" class="secondary" data-theme-choice="auto" aria-pressed="false" title="Segui il tema del dispositivo">◐ Automatico</button>
             <button type="button" id="theme-dark-lobby" class="secondary" data-theme-choice="dark" aria-pressed="false" title="Tema scuro">🌙 Scuro</button>
             <button type="button" id="theme-light-lobby" class="secondary" data-theme-choice="light" aria-pressed="false" title="Tema chiaro">☀️ Chiaro</button>
           </div>
@@ -197,7 +196,6 @@
           <h3>Aspetto</h3>
           <p class="section-note">Scegli il tema usato in tutta l’applicazione oppure segui quello del dispositivo.</p>
           <div class="theme-toggle" role="group" aria-label="Tema applicazione">
-            <button type="button" id="theme-auto" class="secondary" data-theme-choice="auto" aria-pressed="false" title="Segui il tema del dispositivo">◐ Automatico</button>
             <button type="button" id="theme-dark" class="secondary" data-theme-choice="dark" aria-pressed="false" title="Tema scuro">🌙 Scuro</button>
             <button type="button" id="theme-light" class="secondary" data-theme-choice="light" aria-pressed="false" title="Tema chiaro">☀️ Chiaro</button>
           </div>

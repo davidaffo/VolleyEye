@@ -99,7 +99,7 @@ let state = {
     leg: "",
     matchType: ""
   },
-  theme: "auto",
+  theme: "dark",
   currentSet: 1,
   players: [],
   isServing: false,

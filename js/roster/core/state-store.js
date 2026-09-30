@@ -56,13 +56,13 @@ function buildMatchDisplayName(matchObj) {
 const THEME_PREFERENCE_KEY = "volleyeye-theme-preference";
 
 function normalizeThemePreference(theme) {
-  return ["auto", "light", "dark"].includes(theme) ? theme : "auto";
+  return theme === "light" ? "light" : "dark";
 }
 
 function getStoredThemePreference() {
   try {
     const stored = localStorage.getItem(THEME_PREFERENCE_KEY);
-    return ["auto", "light", "dark"].includes(stored) ? stored : "";
+    return stored ? normalizeThemePreference(stored) : "";
   } catch (_) {
     return "";
   }
@@ -79,11 +79,7 @@ function setStoredThemePreference(theme) {
 function applyTheme(theme, options = {}) {
   const preference = normalizeThemePreference(theme);
   const persistPreference = options.persistPreference !== false;
-  const followsDevice = preference === "auto";
-  const devicePrefersLight =
-    typeof window.matchMedia === "function" &&
-    window.matchMedia("(prefers-color-scheme: light)").matches;
-  const resolvedTheme = followsDevice ? (devicePrefersLight ? "light" : "dark") : preference;
+  const resolvedTheme = preference;
   document.body.dataset.theme = resolvedTheme;
   document.body.dataset.themePreference = preference;
   document.documentElement.style.colorScheme = resolvedTheme;
@@ -385,7 +381,7 @@ function buildCompactLocalStateSnapshot(snapshot) {
   const compact = {
     __compactLocalSnapshot: true,
     lastSavedAt: Number(snapshot.lastSavedAt || Date.now()) || Date.now(),
-    theme: snapshot.theme || "auto",
+    theme: normalizeThemePreference(snapshot.theme),
     match: snapshot.match || {},
     selectedMatch: snapshot.selectedMatch || "",
     selectedTeam: snapshot.selectedTeam || "",

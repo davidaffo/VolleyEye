@@ -49,13 +49,16 @@ test("il cambio tema aggiorna anche controlli nativi e colore della finestra", (
   assert.match(stateStore, /resolvedTheme === "light" \? "#f1f5f9" : "#111111"/);
 });
 
-test("il tema automatico segue il dispositivo e sincronizza entrambi i selettori", () => {
-  assert.match(globals, /theme: "auto"/);
+test("il tema predefinito è scuro e i selettori offrono solo chiaro e scuro", () => {
+  assert.match(globals, /theme: "dark"/);
   assert.match(globals, /querySelectorAll\("\[data-theme-choice\]"\)/);
-  assert.match(stateStore, /window\.matchMedia\("\(prefers-color-scheme: light\)"\)\.matches/);
-  assert.match(stateStore, /document\.body\.dataset\.themePreference = preference/);
-  assert.match(themeBindings, /deviceTheme\.addEventListener\("change", syncAutomaticTheme\)/);
-  assert.match(themeBindings, /if \(state\.theme === "auto"\) applyTheme\("auto"\)/);
+  assert.doesNotMatch(index, /data-theme-choice="auto"/);
+  assert.doesNotMatch(stateStore + themeBindings, /prefers-color-scheme|syncAutomaticTheme/);
+  const normalize = new Function(`${stateStore.match(/function normalizeThemePreference\(theme\) \{[^}]+\}/)[0]}; return normalizeThemePreference;`)();
+  for (const value of [undefined, null, "auto", "invalid", "dark"]) {
+    assert.equal(normalize(value), "dark");
+  }
+  assert.equal(normalize("light"), "light");
 });
 
 test("il tema è globale e non viene sostituito caricando o esportando una partita", () => {

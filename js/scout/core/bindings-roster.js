@@ -8,18 +8,7 @@ function bindRosterAndArchiveControls() {
       applyTheme(button.dataset.themeChoice);
       saveState();
     }));
-    if (typeof window.matchMedia === "function") {
-      const deviceTheme = window.matchMedia("(prefers-color-scheme: light)");
-      const syncAutomaticTheme = () => {
-        if (state.theme === "auto") applyTheme("auto");
-      };
-      if (typeof deviceTheme.addEventListener === "function") {
-        deviceTheme.addEventListener("change", syncAutomaticTheme);
-      } else if (typeof deviceTheme.addListener === "function") {
-        deviceTheme.addListener(syncAutomaticTheme);
-      }
-    }
-    applyTheme(state.theme || "auto");
+    applyTheme(state.theme || "dark");
   }
   const elPastePlayersModal = document.getElementById("paste-players-modal");
   const closePastePlayersModal = () => {

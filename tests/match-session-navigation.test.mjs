@@ -66,10 +66,10 @@ test("le impostazioni di scouting avversario sono globali", () => {
 test("la selezione del tema è disponibile in lobby e nelle impostazioni", () => {
   const lobby = html.slice(html.indexOf('data-tab="match"'), html.indexOf('data-tab="info"'));
   const settings = html.slice(html.indexOf('data-tab="info"'), html.indexOf('data-tab="scout"'));
-  assert.match(lobby, /id="theme-auto-lobby"/);
+  assert.doesNotMatch(lobby, /id="theme-auto-lobby"/);
   assert.match(lobby, /id="theme-dark-lobby"/);
   assert.match(lobby, /id="theme-light-lobby"/);
-  assert.match(settings, /id="theme-auto"/);
+  assert.doesNotMatch(settings, /id="theme-auto"/);
   assert.match(settings, /id="theme-dark"/);
   assert.match(settings, /id="theme-light"/);
 });
