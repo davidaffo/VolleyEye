@@ -92,15 +92,19 @@ function getMatchSheetSideoutStartPoint(zone) {
   const isFrontRow = zone === 2 || zone === 3 || zone === 4;
   return {
     x: xByZone[zone],
-    y: isFrontRow ? MATCH_SHEET_COURT_HEIGHT / 2 : MATCH_SHEET_COURT_HEIGHT / 3
+    y: isFrontRow ? 90 : 60
   };
 }
 function getMatchSheetSideoutTrajectory(ev) {
   if (!ev) return null;
   const startZone = getMatchSheetAttackStartZone(ev);
   const start = getMatchSheetSideoutStartPoint(startZone);
-  const attack = getMatchSheetAttackTrajectory(ev);
-  const end = attack && attack.end;
+  // Attack coordinates refer to the destination court image, not a full two-sided court.
+  const trajectory = ev.attackDirection || ev.attackTrajectory || {};
+  const rawEnd = trajectory.end || ev.attackEnd;
+  const end = rawEnd && Number.isFinite(rawEnd.x) && Number.isFinite(rawEnd.y)
+    ? { x: (1 - clamp01Val(rawEnd.x)) * 100, y: 100 + (1 - clamp01Val(rawEnd.y)) * 100 }
+    : getMatchSheetPoint(null, getMatchSheetAttackEndZone(ev), "near");
   if (!start || !end) return null;
   return { start, end, code: ev.code || ev.evaluation || "", count: 1 };
 }
@@ -165,12 +169,11 @@ function renderMatchSheetCourtSvg(trajectories = [], options = {}) {
     const raw = Number(y) || 0;
     return isFullCourt ? raw : raw / 2;
   };
-  const lines = (trajectories || []).slice(0, 28).map((item, idx) => {
+  const lines = (options.fullCourt ? (trajectories || []) : (trajectories || []).slice(0, 28)).map((item, idx) => {
     const color = getMatchSheetEventColor(item.code, options.variant || "attack");
     const opacity = Math.max(0.28, 0.78 - idx * 0.012);
     return `<g opacity="${opacity}">
       <line x1="${item.start.x.toFixed(1)}" y1="${scaleY(item.start.y).toFixed(1)}" x2="${item.end.x.toFixed(1)}" y2="${scaleY(item.end.y).toFixed(1)}" stroke="${color}" stroke-width="1.7" stroke-linecap="round" marker-end="url(#matchSheetArrow)" />
-      <circle cx="${item.end.x.toFixed(1)}" cy="${scaleY(item.end.y).toFixed(1)}" r="1.9" fill="${color}" />
     </g>`;
   }).join("");
   const sourceArrow = options.sourceZone
@@ -180,16 +183,17 @@ function renderMatchSheetCourtSvg(trajectories = [], options = {}) {
     ? `<line class="match-sheet-source-arrow" x1="${sourceArrow.start.x}" y1="${scaleY(sourceArrow.start.y)}" x2="${sourceArrow.end.x}" y2="${scaleY(sourceArrow.end.y)}" marker-end="url(#matchSheetArrowBlack)" />`
     : "";
   const players = (options.players || []).map(slot => {
-    const zone =
+    const zone = slot.point || (
       options.playersSide === "far"
         ? MATCH_SHEET_FAR_COURT_ZONES[slot.pos]
         : options.playersSide === "near"
           ? MATCH_SHEET_NEAR_COURT_ZONES[slot.pos]
-          : getMatchSheetPoint(null, slot.pos, "full");
+          : getMatchSheetPoint(null, slot.pos, "full"));
     if (!zone || !slot.label) return "";
     return `<g class="match-sheet-court-player">
       <circle cx="${zone.x}" cy="${scaleY(zone.y)}" r="6.5" />
-      <text x="${zone.x}" y="${scaleY(zone.y) + 2.2}">${escapeDvwScoutHtml(slot.label)}</text>
+      <text x="${zone.x}" y="${scaleY(zone.y) + (slot.role ? -0.5 : 2.2)}">${escapeDvwScoutHtml(slot.label)}</text>
+      ${slot.role ? `<text class="match-sheet-court-player__role" x="${zone.x}" y="${scaleY(zone.y) + 4}">${escapeDvwScoutHtml(slot.role)}</text>` : ""}
     </g>`;
   }).join("");
   const title = options.title ? `<div class="match-sheet-court__title">${escapeDvwScoutHtml(options.title)}</div>` : "";
@@ -297,7 +301,7 @@ function getMatchSheetSideoutGroups(scope) {
   MATCH_SHEET_ROTATION_ORDER.forEach(rot => {
     groups[rot] = [];
   });
-  getMatchSheetEvents(scope)
+  getMatchSheetSideoutEvents(scope)
     .filter(isMatchSheetSideoutAttack)
     .forEach(ev => {
       const key = inferMatchSheetSideoutRotation(ev);
@@ -308,24 +312,76 @@ function getMatchSheetSideoutGroups(scope) {
     });
   return groups;
 }
-function getMatchSheetLineupPlayersForEvents(scope, rotation) {
-  const events = getMatchSheetEvents(scope).filter(ev => inferMatchSheetSideoutRotation(ev) === rotation);
-  const attackEvents = events.filter(isMatchSheetSideoutAttack);
-  const byZone = new Map();
-  attackEvents.forEach(ev => {
-    const zone = getMatchSheetAttackStartZone(ev);
-    if (!zone || byZone.has(zone)) return;
+function getMatchSheetSideoutEvents(scope) {
+  const filters = ensureMatchSheetFiltersState();
+  const sets = filters.sideoutSets || [];
+  const players = (filters.sideoutPlayers || {})[scope] || [];
+  return getMatchSheetEvents(scope).filter(ev => {
     const idx = typeof ev.playerIdx === "number" ? ev.playerIdx : resolvePlayerIdxFromNameForScope(ev.playerName, scope);
-    const players = getPlayersForScope(scope);
-    const numbers = getPlayerNumbersForScope(scope);
-    const name = ev.playerName || players[idx] || "";
-    if (!name) return;
-    byZone.set(zone, {
-      pos: zone,
-      label: `${numbers[name] || ""}${numbers[name] ? " " : ""}${abbreviateMatchSheetName(name)}`
-    });
+    return (!sets.length || sets.includes(String(ev.set))) &&
+      (!players.length || players.includes(String(idx)));
   });
-  return Array.from(byZone.values());
+}
+function getMatchSheetLatestPlayerNumbers(scope) {
+  const sources = [state];
+  const extras = typeof getAnalysisExtraMatchState === "function" ? getAnalysisExtraMatchState() : {};
+  for (const key of extras[scope] || []) {
+    const source = state.savedMatches && state.savedMatches[key];
+    if (source && source.state) sources.push(source.state);
+  }
+  sources.sort((a, b) => String(a.match?.date || "").localeCompare(String(b.match?.date || "")));
+  const numbers = new Map();
+  for (const source of sources) {
+    const rosterNumbers = scope === "opponent" ? source.opponentPlayerNumbers : source.playerNumbers;
+    for (const [name, number] of Object.entries(rosterNumbers || {})) {
+      if (number !== "" && number != null) numbers.set(name.trim().toLocaleLowerCase(), String(number));
+    }
+  }
+  return numbers;
+}
+function getMatchSheetLineupPlayersForEvents(scope, rotation) {
+  const players = getPlayersForScope(scope);
+  const numbers = getPlayerNumbersForScope(scope);
+  const latestNumbers = getMatchSheetLatestPlayerNumbers(scope);
+  const groups = new Map();
+  getMatchSheetSideoutEvents(scope).filter(isMatchSheetSideoutAttack).forEach(ev => {
+    if (inferMatchSheetSideoutRotation(ev) !== rotation) return;
+    const pos = getMatchSheetAttackStartZone(ev);
+    if (!pos || !getMatchSheetSideoutTrajectory(ev)) return;
+    const idx = typeof ev.playerIdx === "number" ? ev.playerIdx : resolvePlayerIdxFromNameForScope(ev.playerName, scope);
+    const name = players[idx] || ev.playerName || "Giocatrice non identificata";
+    const formation = getSetStartEntryForScope(ev.set, scope);
+    const court = formation ? getCourtShape(formation.court || []) : [];
+    const position = court.findIndex(slot => slot && (slot.main === name || slot.replaced === name));
+    const role = position >= 0 ? String(getRoleLabelForRotation(position + 1, formation.rotation || 1)) : "";
+    const key = `${pos}:${idx}:${name}:${role}`;
+    if (!groups.has(key)) groups.set(key, {pos, role, name, number: latestNumbers.get(name.trim().toLocaleLowerCase()) ?? numbers[name] ?? ev.playerNumberAtEvent ?? "", count: 0, events: []});
+    const group = groups.get(key);
+    group.count += 1;
+    group.events.push(ev);
+  });
+  const result = Array.from(groups.values()).sort((a, b) => a.pos - b.pos || b.count - a.count || a.name.localeCompare(b.name));
+  result.forEach(group => {
+    const peers = result.filter(item => item.pos === group.pos);
+    const offset = peers.length > 1 ? -10 + 20 * peers.indexOf(group) / (peers.length - 1) : 0;
+    const start = getMatchSheetSideoutStartPoint(group.pos);
+    group.point = {x: start.x + offset, y: start.y};
+    group.label = group.number !== "" ? String(group.number) : "—";
+    group.description = `Zona ${group.pos} · ${group.role ? group.role + " · " : ""}${group.number ? "#" + group.number + " " : ""}${group.name} · ${group.count} attacchi`;
+  });
+  return result;
+}
+
+function renderMatchSheetSideoutFilters(scope) {
+  const filters = ensureMatchSheetFiltersState();
+  const sets = [...new Set(getMatchSheetEvents(scope).map(ev => ev.set).filter(value => value != null))].sort((a, b) => a - b);
+  const selectedPlayers = (filters.sideoutPlayers || {})[scope] || [];
+  const option = (kind, value, label, selected) => `<label><input type="checkbox" data-sideout-filter="${kind}" value="${escapeDvwScoutHtml(String(value))}" ${selected.includes(String(value)) ? "checked" : ""}> ${escapeDvwScoutHtml(label)}</label>`;
+  return `<details class="match-sheet-sideout-filters"><summary>Filtri cambio palla · set e giocatrici</summary>
+    <p>Nessuna selezione: tutti i set e tutte le giocatrici. Restano validi i filtri generali dell’analisi.</p>
+    <fieldset><legend>Set</legend>${sets.map(set => option("sets", set, `Set ${set}`, filters.sideoutSets || [])).join("")}</fieldset>
+    <fieldset><legend>Giocatrici</legend>${getPlayersForScope(scope).map((name, idx) => option("players", idx, name, selectedPlayers)).join("")}</fieldset>
+    </details>`;
 }
 function getMatchSheetRelatedAttack(ev) {
   if (!ev) return null;
@@ -423,25 +479,28 @@ function renderMatchSheetAnalysis() {
       noteKey: `defense:${zone}`
     })
   ).join("");
-  const sideoutHtml = MATCH_SHEET_ROTATION_ORDER.map(rot =>
-    renderMatchSheetCourtSvg(sideoutGroups[rot] || [], {
-      title: `P${rot}`,
-      variant: "attack",
-      players: getMatchSheetLineupPlayersForEvents(scope, rot),
-      playersSide: "far",
-      className: "match-sheet-court--sideout",
-      fullCourt: true,
+  const renderSideoutCourt = rot => {
+    const attackers = getMatchSheetLineupPlayersForEvents(scope, rot);
+    const trajectories = attackers.flatMap(attacker => attacker.events.map(ev => ({
+      ...getMatchSheetSideoutTrajectory(ev), start: attacker.point
+    })));
+    return renderMatchSheetCourtSvg(trajectories, {
+      title: rot === "extra" ? "CP extra" : `P${rot}`,
+      variant: "attack", players: attackers, playersSide: "far",
+      className: "match-sheet-court--sideout", fullCourt: true,
       noteKey: `sideout:${rot}`
-    })
-  ).join("") + ((sideoutGroups.extra || []).length
-    ? renderMatchSheetCourtSvg(sideoutGroups.extra, {
-        title: "CP extra",
-        variant: "attack",
-        className: "match-sheet-court--sideout",
-        fullCourt: true,
-        noteKey: "sideout:extra"
-      })
-    : "");
+    });
+  };
+  const sideoutHtml = MATCH_SHEET_ROTATION_ORDER.map(renderSideoutCourt).join("") +
+    ((sideoutGroups.extra || []).length ? renderSideoutCourt("extra") : "");
+  const controls = document.getElementById("match-sheet-controls");
+  if (controls) controls.innerHTML = `
+        <label class="match-sheet-filter">
+          <input type="checkbox" data-match-sheet-filter="includeAttackErrors" ${filters.includeAttackErrors ? "checked" : ""}>
+          <span>Includi attacchi errore</span>
+        </label>
+    ${renderMatchSheetSideoutFilters(scope)}
+  `;
   page.innerHTML = `
     <header class="match-sheet-header">
       <div>
@@ -451,10 +510,7 @@ function renderMatchSheetAnalysis() {
       <div class="match-sheet-header__meta">
         <span>${players.length} giocatrici</span>
         <span>${getMatchSheetEvents(scope).length} eventi filtrati</span>
-        <label class="match-sheet-filter">
-          <input type="checkbox" data-match-sheet-filter="includeAttackErrors" ${filters.includeAttackErrors ? "checked" : ""}>
-          <span>Includi attacchi errore</span>
-        </label>
+
       </div>
     </header>
     <section class="match-sheet-section match-sheet-section--players match-sheet-section--with-label">
@@ -487,7 +543,22 @@ function renderMatchSheetAnalysis() {
       saveState({ persistLocal: true });
     });
   });
-  page.querySelectorAll("[data-match-sheet-filter]").forEach(input => {
+  controls?.querySelectorAll("[data-sideout-filter]").forEach(input => {
+    input.addEventListener("change", () => {
+      const next = ensureMatchSheetFiltersState();
+      const kind = input.dataset.sideoutFilter;
+      const values = Array.from(controls.querySelectorAll(`[data-sideout-filter="${kind}"]:checked`), item => item.value);
+      if (kind === "sets") next.sideoutSets = values;
+      else {
+        if (!next.sideoutPlayers) next.sideoutPlayers = {};
+        next.sideoutPlayers[scope] = values;
+      }
+      saveState({ persistLocal: true });
+      renderMatchSheetAnalysis();
+      controls.querySelector(".match-sheet-sideout-filters").open = true;
+    });
+  });
+  controls?.querySelectorAll("[data-match-sheet-filter]").forEach(input => {
     input.addEventListener("change", () => {
       const nextFilters = ensureMatchSheetFiltersState();
       nextFilters[input.dataset.matchSheetFilter] = !!input.checked;

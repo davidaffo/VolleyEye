@@ -806,80 +806,23 @@ function exitCurrentMatch() {
   if (typeof renderMatchesSelect === "function") renderMatchesSelect();
   saveState({ persistLocal: true, skipMatchPersist: true });
 }
-function initSwipeTabs() {
-  if (!("ontouchstart" in window)) return;
-  let startX = 0;
-  let startY = 0;
-  let startTime = 0;
-  let startTarget = null;
-  let startedInSwipeZone = false;
-  let lastX = null;
-  let lastY = null;
-  const minDistance = 90;
-  const maxOffset = 35;
-  const maxTime = 600;
-  const swipeZoneRatio = 0.25;
-  const tabsOrder = ["match", "info", "scout", "aggregated", "video"];
-  const onStart = e => {
-    if (!e.touches || e.touches.length === 0) {
-      startedInSwipeZone = false;
-      return;
-    }
-    const t = e.touches[0];
-    startX = t.clientX;
-    startY = t.clientY;
-    startTime = Date.now();
-    startTarget = e.target;
-    const height = window.innerHeight || document.documentElement.clientHeight || 0;
-    const zoneBottom = height * swipeZoneRatio;
-    startedInSwipeZone = startY <= zoneBottom;
-    lastX = startX;
-    lastY = startY;
+function initMobileNavigation() {
+  const navigation = document.getElementById("mobile-navigation");
+  if (!navigation) return;
+  const close = restoreFocus => {
+    if (!navigation.open) return;
+    navigation.open = false;
+    if (restoreFocus) navigation.querySelector("summary").focus();
   };
-  const onMove = e => {
-    if (!startedInSwipeZone) return;
-    if (!e.touches || e.touches.length === 0) return;
-    const t = e.touches[0];
-    lastX = t.clientX;
-    lastY = t.clientY;
-  };
-  const onEnd = e => {
-    if (elSkillModal && !elSkillModal.classList.contains("hidden")) return;
-    if (!startedInSwipeZone) return;
-    if (lastX === null || lastY === null) return;
-    const dx = lastX - startX;
-    const dy = lastY - startY;
-    const dt = Date.now() - startTime;
-    if (dt > maxTime) return;
-    if (Math.abs(dy) > maxOffset) return;
-    if (Math.abs(dx) < minDistance) return;
-    if (Math.abs(dx) < Math.abs(dy) * 1.2) return;
-    if (activeTab === "aggregated" && startTarget instanceof Element) {
-      const scrollable = startTarget.closest(
-        ".table-wrapper, .trajectory-layout, .trajectory-grid, .serve-trajectory-grid, .video-analysis__grid, .video-table-wrapper"
-      );
-      if (scrollable && scrollable.scrollWidth > scrollable.clientWidth) return;
-    }
-    if (document.body.classList.contains("drawer-menu-open")) {
-      if (dx < 0) document.body.classList.remove("drawer-menu-open");
-      return;
-    }
-    if (document.body.classList.contains("drawer-log-open")) {
-      if (dx > 0) document.body.classList.remove("drawer-log-open");
-      return;
-    }
-    const dir = dx > 0 ? "right" : "left";
-    const idx = tabsOrder.indexOf(activeTab);
-    if (idx === -1) return;
-    const nextIdx = dir === "left" ? Math.min(tabsOrder.length - 1, idx + 1) : Math.max(0, idx - 1);
-    if (nextIdx !== idx) setActiveTab(tabsOrder[nextIdx]);
-    startedInSwipeZone = false;
-    lastX = null;
-    lastY = null;
-  };
-  document.addEventListener("touchstart", onStart, { passive: true });
-  document.addEventListener("touchmove", onMove, { passive: true });
-  document.addEventListener("touchend", onEnd, { passive: true });
+  navigation.addEventListener("click", event => {
+    if (event.target.closest("button")) close(true);
+  });
+  document.addEventListener("click", event => {
+    if (!navigation.contains(event.target)) close(false);
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") close(true);
+  });
 }
 function setupFocusGuards() {
   const shouldBlurElement = el => {

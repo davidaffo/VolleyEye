@@ -12,7 +12,7 @@ async function initializeApplicationState() {
   initCrossTabResetSync();
   initBugReportLink();
   initTabs();
-  initSwipeTabs();
+  initMobileNavigation();
   setupFocusGuards();
   resetAttackShortcutModals();
   initSetTypeShortcuts();

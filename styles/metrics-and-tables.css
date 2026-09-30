@@ -1007,3 +1007,22 @@ body[data-theme="light"] .trajectory-filter {
   background: #f8fafc;
   border-color: #dbe2ee;
 }
+
+.match-sheet-sideout-filters {
+  margin-bottom: 0.6rem;
+}
+.match-sheet-sideout-filters summary {
+  cursor: pointer;
+}
+.match-sheet-sideout-filters fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  border: 1px solid var(--border-color, #555);
+  margin: 0.5rem 0;
+}
+.match-sheet-sideout-filters label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}

@@ -923,6 +923,9 @@ body[data-theme="light"] .play-by-play-token code {
   font-weight: 700;
   text-anchor: middle;
 }
+.match-sheet-court-player text.match-sheet-court-player__role {
+  font-size: 3px;
+}
 .match-sheet-court-grid {
   display: grid;
   gap: 0.3rem;

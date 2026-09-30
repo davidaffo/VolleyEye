@@ -30,13 +30,14 @@ test("le traiettorie già orientate dal campo lontano non vengono ruotate due vo
   assert.deepEqual(result.end, {x: 30, y: 160});
 });
 
-test("cambio palla e attacco condividono la destinazione, anche senza coordinate", () => {
+test("il cambio palla termina nel campo avversario, anche senza coordinate", () => {
   for (const data of [
     '{attackStartZone: 4, attackDirection: {start: {x: .2, y: .8}, end: {x: .7, y: .2}}}',
     '{attackStartZone: 4, attackEndZone: 1}'
   ]) {
     const result = evaluate(`({attack: getMatchSheetAttackTrajectory(${data}), sideout: getMatchSheetSideoutTrajectory(${data})})`);
-    assert.deepEqual(result.sideout.end, result.attack.end);
+    assert.ok(result.sideout.start.y < 100);
+    assert.ok(result.sideout.end.y > 100);
     assert.equal(result.sideout.start.x, 82);
   }
   assert.deepEqual(evaluate('MATCH_SHEET_FAR_COURT_ZONES[4]'), {x: 82, y: 76});
@@ -49,4 +50,61 @@ test("il servizio ruota le coordinate locali di entrambi i semicampi", () => {
   assert.deepEqual(result.end, {x: 75, y: 196});
   const fallback = evaluate('getMatchSheetServeTrajectory({serveStartZone: 1, serveEnd: {x: .25, y: 0}})');
   assert.equal(fallback.start.x, 18);
+});
+
+
+test("anche una destinazione bassa nell’immagine resta nel campo avversario", () => {
+  for (const y of [.1, .4, .7, .95]) {
+    const result = evaluate(`getMatchSheetSideoutTrajectory({attackStartZone: 4, attackDirection: {end: {x: .2, y: ${y}}}})`);
+    assert.equal(result.start.y, 90);
+    assert.equal(result.end.x, 80);
+    assert.equal(result.end.y, 100 + (1 - y) * 100);
+    assert.ok(result.end.y > 100);
+  }
+});
+
+test("i filtri cambio palla combinano set e giocatrice della squadra selezionata", () => {
+  context.state = {uiMatchSheetFilters: {sideoutSets: ["2"], sideoutPlayers: {our: ["1"]}}};
+  context.getAnalysisEvents = () => [
+    {set: 1, playerIdx: 1}, {set: 2, playerIdx: 0}, {set: 2, playerIdx: 1}
+  ];
+  context.getTeamScopeFromEvent = () => "our";
+  context.matchesSummarySetFilter = () => true;
+  assert.deepEqual(evaluate('getMatchSheetSideoutEvents("our")'), [{set: 2, playerIdx: 1}]);
+  context.state.uiMatchSheetFilters = {};
+  assert.equal(evaluate('getMatchSheetSideoutEvents("our")').length, 3);
+});
+
+test("i ruoli seguono le zone degli attacchi e non le posizioni assolute di rotazione", () => {
+  context.state = {uiMatchSheetFilters: {}};
+  context.getPlayersForScope = () => ["Anna", "Bea", "Carla"];
+  context.getPlayerNumbersForScope = () => ({Anna: 9, Bea: 7, Carla: 12});
+  context.getSetStartEntryForScope = () => ({court: [{main: "Anna"}, {main: "Bea"}], rotation: 1});
+  context.getCourtShape = court => court;
+  context.getRoleLabelForRotation = pos => pos === 1 ? "O" : "C1";
+  context.getAnalysisEvents = () => [
+    {set: 1, playerIdx: 0, skillId: "attack", attackBp: false, rotation: 3, attackStartZone: 2, attackEndZone: 1},
+    {set: 1, playerIdx: 1, skillId: "attack", attackBp: false, rotation: 3, attackStartZone: 3, attackEndZone: 1},
+    {set: 1, playerIdx: 2, skillId: "attack", attackBp: false, rotation: 3, attackStartZone: 2, attackEndZone: 1}
+  ];
+  const labels = evaluate('getMatchSheetLineupPlayersForEvents("our", 3)');
+  assert.deepEqual(labels.map(item => [item.pos, item.role]), [[2, "O"], [2, ""], [3, "C1"]]);
+  assert.notEqual(labels[0].point.x, labels[1].point.x);
+  assert.match(labels[1].description, /Zona 2 · #12 Carla · 1 attacchi/);
+  assert.deepEqual(labels.map(item => item.label), ["9", "12", "7"]);
+});
+
+
+test("i numeri aggregati vengono dalla partita più recente, non dall’ordine di selezione", () => {
+  context.state = {
+    match: {date: "2026-09-20"}, playerNumbers: {Anna: 9},
+    savedMatches: {
+      newest: {state: {match: {date: "2026-09-29"}, playerNumbers: {Anna: 14}}},
+      oldest: {state: {match: {date: "2026-09-10"}, playerNumbers: {Anna: 3}}}
+    }
+  };
+  context.getAnalysisExtraMatchState = () => ({our: new Set(["newest", "oldest"])});
+  assert.equal(evaluate('getMatchSheetLatestPlayerNumbers("our").get("anna")'), "14");
+  context.state.match.date = "2026-09-30";
+  assert.equal(evaluate('getMatchSheetLatestPlayerNumbers("our").get("anna")'), "9");
 });
