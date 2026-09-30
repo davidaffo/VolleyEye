@@ -69,6 +69,8 @@ function orientMatchSheetFromOpposite(traj) {
   };
   const startsFromOurSide = next.start.y > next.end.y || next.start.y > MATCH_SHEET_COURT_HEIGHT / 2;
   if (startsFromOurSide) {
+    next.start.x = 100 - next.start.x;
+    next.end.x = 100 - next.end.x;
     next.start.y = MATCH_SHEET_COURT_HEIGHT - next.start.y;
     next.end.y = MATCH_SHEET_COURT_HEIGHT - next.end.y;
   }
@@ -85,7 +87,7 @@ function getMatchSheetAttackTrajectory(ev) {
   return orientMatchSheetFromOpposite({ start, end, code: ev.code || ev.evaluation || "", count: 1 });
 }
 function getMatchSheetSideoutStartPoint(zone) {
-  const xByZone = { 1: 82, 2: 82, 3: 50, 4: 18, 5: 18, 6: 50 };
+  const xByZone = { 1: 18, 2: 18, 3: 50, 4: 82, 5: 82, 6: 50 };
   if (!xByZone[zone]) return null;
   const isFrontRow = zone === 2 || zone === 3 || zone === 4;
   return {
@@ -95,14 +97,10 @@ function getMatchSheetSideoutStartPoint(zone) {
 }
 function getMatchSheetSideoutTrajectory(ev) {
   if (!ev) return null;
-  const traj = ev.attackDirection || ev.attackTrajectory || {};
   const startZone = getMatchSheetAttackStartZone(ev);
-  const endZone = getMatchSheetAttackEndZone(ev);
   const start = getMatchSheetSideoutStartPoint(startZone);
-  let end = getMatchSheetPoint(traj.end || ev.attackEnd, endZone, "near");
-  if (end && end.y < MATCH_SHEET_COURT_HEIGHT / 2) {
-    end = { x: end.x, y: MATCH_SHEET_COURT_HEIGHT - end.y };
-  }
+  const attack = getMatchSheetAttackTrajectory(ev);
+  const end = attack && attack.end;
   if (!start || !end) return null;
   return { start, end, code: ev.code || ev.evaluation || "", count: 1 };
 }
@@ -115,10 +113,10 @@ function getMatchSheetServeTrajectory(ev) {
     ? ev.serveEnd
     : null;
   const start = startRaw
-    ? { x: clamp01Val(startRaw.x) * 100, y: clamp01Val(startRaw.y) * 80 + 4 }
+    ? { x: (1 - clamp01Val(startRaw.x)) * 100, y: (1 - clamp01Val(startRaw.y)) * 80 + 4 }
     : getMatchSheetPoint(null, getServeStartZone(ev), "far");
   const end = endRaw
-    ? { x: clamp01Val(endRaw.x) * 100, y: clamp01Val(endRaw.y) * 80 + 116 }
+    ? { x: (1 - clamp01Val(endRaw.x)) * 100, y: (1 - clamp01Val(endRaw.y)) * 80 + 116 }
     : null;
   if (!start || !end) return null;
   return { start, end, code: ev.code || ev.evaluation || "", count: 1 };

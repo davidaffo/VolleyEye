@@ -717,11 +717,11 @@ const MATCH_SHEET_COURT_ZONES = {
   6: { x: 50, y: 45 }
 };
 const MATCH_SHEET_FAR_COURT_ZONES = {
-  1: { x: 82, y: 24 },
-  2: { x: 82, y: 76 },
+  1: { x: 18, y: 24 },
+  2: { x: 18, y: 76 },
   3: { x: 50, y: 76 },
-  4: { x: 18, y: 76 },
-  5: { x: 18, y: 24 },
+  4: { x: 82, y: 76 },
+  5: { x: 82, y: 24 },
   6: { x: 50, y: 24 }
 };
 const MATCH_SHEET_NEAR_COURT_ZONES = {
