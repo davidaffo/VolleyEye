@@ -344,6 +344,7 @@ function applyStateSnapshot(parsed, options = {}) {
     syncMatchesFromStorage();
   }
   enforceAutoLiberoForState({ skipServerOnServe: true });
+  if (typeof resetAnalysisForMatch === "function") resetAnalysisForMatch();
   return true;
 }
 function loadState() {

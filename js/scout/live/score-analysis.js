@@ -31,6 +31,13 @@ function getScoreOverrideTotals(targetSet = null) {
     { for: 0, against: 0 }
   );
 }
+function getScoreOverrideTotalsForScope(targetSet, scope = "our") {
+  const totals = getScoreOverrideTotals(targetSet);
+  if (state.useOpponentTeam && scope === "opponent") {
+    return { for: totals.against, against: totals.for };
+  }
+  return totals;
+}
 function getPointDirection(ev) {
   // Imported score markers award each rally once. Direction is stored for home.
   if (ev && ev.dvwScoreAuthoritative) {
@@ -109,7 +116,9 @@ function computePointsSummary(targetSet, options = {}) {
     const againstVal = Math.max(0, obj.against);
     return { rotation: rotNum, for: forVal, against: againstVal, delta: forVal - againstVal };
   });
-  const overrideTotals = includeOverrides ? getScoreOverrideTotals(target) : { for: 0, against: 0 };
+  const overrideTotals = includeOverrides
+    ? getScoreOverrideTotalsForScope(target, teamScope)
+    : { for: 0, against: 0 };
   const totalForClean = Math.max(0, totalFor + overrideTotals.for);
   const totalAgainstClean = Math.max(0, totalAgainst + overrideTotals.against);
   const hasRotationEvents = rotationList.some(r => r.for || r.against);
@@ -153,7 +162,7 @@ function computeSetScores(teamScope = "our", options = {}) {
   Object.keys(overrideMap || {}).forEach(key => {
     const setNum = parseInt(key, 10);
     if (!setNum) return;
-    const entry = getScoreOverrideForSet(setNum);
+    const entry = getScoreOverrideTotalsForScope(setNum, teamScope);
     if (!setMap[setNum]) {
       setMap[setNum] = { for: 0, against: 0 };
     }

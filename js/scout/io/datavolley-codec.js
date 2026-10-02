@@ -142,6 +142,35 @@ function buildDvwZonePoint(zone, side = "start", attackCode = "") {
   }
   return point;
 }
+// DataVolley grid: 100 columns, 101 rows, one-based cell indices.
+// Cell-centre conversion: https://github.com/openvolley/datavolley/blob/master/R/plot.R (dv_index2xy).
+function parseDvwCoordinateIndex(value) {
+  const raw = String(value || "").trim();
+  if (!/^\d{1,5}$/.test(raw)) return null;
+  const index = Number(raw);
+  if (index < 1 || index > 10100) return null;
+  const column = (index - 1) % 100 + 1;
+  const row = Math.floor((index - 1) / 100) + 1;
+  return { index, x: 0.5 + (column - 10.5) / 80 * 3, y: 0.5 + (row - 10.5) / 81 * 6 };
+}
+function buildDvwAttackCoordinatePoints(startValue, endValue) {
+  const start = parseDvwCoordinateIndex(startValue);
+  const end = parseDvwCoordinateIndex(endValue);
+  if (!start || !end) return null;
+  // Normalize the direction of play independently of home/visiting team.
+  const flip = start.y > 3.5;
+  const orient = point => flip ? { x: 4 - point.x, y: 7 - point.y } : point;
+  const from = orient(start);
+  const to = orient(end);
+  const clamp = value => Math.max(0, Math.min(1, value));
+  const imageX = x => clamp((61 + (x - 0.5) / 3 * 955) / 1080);
+  // The app draws attacks on the destination half-court, with the origin at
+  // the net. Keep the native indices on the event for the full-court positions.
+  return {
+    start: { x: imageX(from.x), y: 0.992 },
+    end: { x: imageX(to.x), y: clamp((1077 - (to.y - 3.5) / 3 * 955) / 1080) }
+  };
+}
 function makeImportedCourtFromNames(names = []) {
   return Array.from({ length: 6 }, (_, idx) => ({ main: String(names[idx] || "").trim(), replaced: "" }));
 }
@@ -225,7 +254,7 @@ function refineDvwTailBySkill(skillLetter, rawTail, parsedParts) {
   };
   if (!raw) return fallback;
   if (skill === "A") {
-    const match = raw.match(/^(?:[A-Z0-9]{2})?~(\d)(\d)?([A-D]?)(?:~)?(.*)$/);
+    const match = raw.match(/^(?:[A-Z0-9]{2}|~~)?~(\d)(\d)?([A-D]?)(?:~)?(.*)$/);
     if (match) {
       return {
         zoneMeta: {
@@ -399,7 +428,7 @@ function parseDvwSkillCode(code) {
   if (/^\*\*\d+set/i.test(raw)) {
     return { kind: "set-end" };
   }
-  const skill = raw.match(/^(?:([*a]))?(\d{1,2})([SRABDEF])([HMQTUNO])([#=!+\-/])(.*)$/i);
+  const skill = raw.match(/^(?:([*a]))?(\d{1,2})([SRABDEF])([HMQTUNO~])([#=!+\-/])(.*)$/i);
   if (!skill) return { kind: "unknown" };
   const inferredScope = skill[1]
     ? (skill[1].toLowerCase() === "a" ? "opponent" : "our")
@@ -413,7 +442,7 @@ function parseDvwSkillCode(code) {
     teamScope: inferredScope,
     playerNumber: padDv(skill[2], 2),
     skillLetter: skill[3].toUpperCase(),
-    typeLetter: skill[4].toUpperCase(),
+    typeLetter: skill[4] === "~" ? "" : skill[4].toUpperCase(),
     evaluation: skill[5],
     tail,
     advancedCode: tailParts.advancedCode,

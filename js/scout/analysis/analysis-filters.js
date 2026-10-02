@@ -426,10 +426,28 @@ function getTeamFilterOptions() {
   }
   return options;
 }
+function getDefaultAnalysisTeamScope() {
+  // One-team DVW exports can contain only the visiting roster (e.g. VolleyScout).
+  return state.useOpponentTeam && !(state.players || []).length && (state.opponentPlayers || []).length
+    ? "opponent" : "our";
+}
 function ensureAnalysisTeamFilterDefault() {
-  if (!state.useOpponentTeam && analysisTeamFilterState.teams.size === 0) {
-    analysisTeamFilterState.teams.add("our");
-  }
+  if (analysisTeamFilterState.teams.size !== 0) return;
+  const scope = getDefaultAnalysisTeamScope();
+  if (!state.useOpponentTeam || scope === "opponent") analysisTeamFilterState.teams.add(scope);
+}
+function resetAnalysisForMatch() {
+  // Filters contain roster indices and set numbers belonging to the old match.
+  [analysisTeamFilterState, analysisSummaryFilterState, trajectoryFilterState,
+    serveTrajectoryFilterState, playerTrajectoryFilterState, playerServeTrajectoryFilterState,
+    secondFilterState, playerSecondFilterState, videoFilterState].forEach(filters => {
+    Object.values(filters).forEach(value => { if (value instanceof Set) value.clear(); });
+    if ("prevSkill" in filters) filters.prevSkill = "any";
+  });
+  activeVideoFilterPresetId = null;
+  aggTableView = { mode: "summary", skillId: null, playerIdx: null };
+  ensureAnalysisTeamFilterDefault();
+  invalidateAnalysisCaches();
 }
 function invalidateAnalysisCaches() {
   analysisStatsCache = null;

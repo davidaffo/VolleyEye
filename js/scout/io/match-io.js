@@ -98,7 +98,12 @@ function applyImportedMatch(nextState, options = {}) {
   merged.currentSet = Math.min(5, Math.max(1, parseInt(nextState.currentSet, 10) || 1));
   merged.matchFinished = !!nextState.matchFinished;
   merged.skillClock = nextState.skillClock || { paused: false, pausedAtMs: null, pausedAccumMs: 0, lastEffectiveMs: null };
-  merged.scoreOverrides = normalizeScoreOverrides(nextState.scoreOverrides || {});
+  const suppliedScoreOverrides = normalizeScoreOverrides(nextState.scoreOverrides || {});
+  merged.scoreOverrides = Object.keys(suppliedScoreOverrides).length
+    ? suppliedScoreOverrides
+    : typeof buildDvwScoreOverrides === "function"
+      ? normalizeScoreOverrides(buildDvwScoreOverrides(nextState.events || [], null, nextState.setResults || {}))
+      : suppliedScoreOverrides;
   merged.setResults = nextState.setResults && typeof nextState.setResults === "object" ? nextState.setResults : {};
   merged.setStarts = nextState.setStarts && typeof nextState.setStarts === "object" ? nextState.setStarts : {};
   merged.video =
@@ -133,6 +138,8 @@ function applyImportedMatch(nextState, options = {}) {
   // Settings and roster managers retain this object from bootstrap.
   // Replacing it leaves their writes on the previous match's state.
   Object.assign(state, merged);
+  state.uiAnalysisExtraMatchesByScope = cloneIsolationData(nextState.uiAnalysisExtraMatchesByScope || { our: [], opponent: [] });
+  if (typeof resetAnalysisForMatch === "function") resetAnalysisForMatch();
   sanitizeRosterIsolation("our");
   sanitizeRosterIsolation("opponent");
   if (typeof cleanCourtPlayers === "function") {

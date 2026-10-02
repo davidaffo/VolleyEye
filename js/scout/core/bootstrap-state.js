@@ -191,7 +191,7 @@ async function initializeApplicationState() {
   }
   applyForceMobileLayout(!!state.forceMobileLayout);
   updateCourtModalPlacement();
-  if (!state.players || state.players.length === 0) {
+  if ((!state.players || state.players.length === 0) && !(state.useOpponentTeam && (state.opponentPlayers || []).length)) {
     applyTemplateTeam({ askReset: false });
   } else {
     if (!state.stats || Object.keys(state.stats).length === 0) {

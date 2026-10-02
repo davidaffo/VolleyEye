@@ -166,7 +166,14 @@ Limiti noti lato import:
 
 - i marker `$$` vengono ancora interpretati in modo minimale
 - `special_code`, `end_subzone`, `end_cone` e alcune tail rare non sono ancora ricostruite 1:1
-- le traiettorie importate da DVW restano una ricostruzione geometrica dal codice, non coordinate native
+- quando le colonne coordinate di partenza/arrivo sono valide, gli attacchi usano la destinazione precisa; gli indici originali (incluso quello intermedio) restano in `event.dvwCoordinates`
+- il disegno su metà campo proietta la partenza sulla rete; senza coordinate valide resta il fallback geometrico dalle zone
+
+Compatibilità VolleyScout: il tipo colpo `~` viene accettato come non specificato;
+la coda `~~~36~H` contiene le zone 3 e 6 anche senza combinazione attacco.
+Le date degli export con `GENERATOR-PRG: Volleyball Scout` sono lette come
+`giorno/mese/anno`. La conversione della griglia coordinate segue
+[`dv_index2xy` di OpenVolley](https://github.com/openvolley/datavolley/blob/master/R/plot.R).
 
 ### Export `.dvw`
 

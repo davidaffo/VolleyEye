@@ -18,7 +18,8 @@ const context = {
   getPointDirection: event => event.pointDirection || null,
   getPointDirectionForScope: event => event.pointDirection || null,
   isOpponentErrorPoint: event => event && event.code === "opp-error",
-  getScoreOverrideTotals: () => ({ for: 0, against: 0 })
+  getScoreOverrideTotals: () => ({ for: 0, against: 0 }),
+  getScoreOverrideTotalsForScope: () => ({ for: 0, against: 0 })
 };
 vm.runInNewContext(`${valueHelper}\n${summaryFunction}`, context);
 const plain = value => JSON.parse(JSON.stringify(value));

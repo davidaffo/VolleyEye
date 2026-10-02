@@ -3,26 +3,13 @@ import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
-import { ROSTER_SOURCE_FILES } from "./helpers/roster-source.mjs";
-import { SCOUT_SOURCE_FILES } from "./helpers/scout-source.mjs";
+import { runtimeFiles } from "./helpers/browser-runtime-files.mjs";
 
 const dvwRoot = 'resources/data volley';
 const dvwFiles = [`${dvwRoot}/data volley example file.dvw`, ...readdirSync(`${dvwRoot}/files scout`).filter(file => file.endsWith('.dvw')).map(file => `${dvwRoot}/files scout/${file}`)];
+dvwFiles.push(...readdirSync('resources/data volley da volleyscout').filter(file => file.endsWith('.dvw')).map(file => `resources/data volley da volleyscout/${file}`));
 const rootUrl = new URL("../", import.meta.url);
-const runtimeFiles = [
-  "js/globals.js",
-  "js/shared/namespace.js",
-  "js/shared/state-isolation.js",
-  "js/shared/persistent-storage.js",
-  "js/shared/team-ui.js",
-  "js/shared/lineup-core.js",
-  "js/shared/auto-role.js",
-  "js/shared/roster-manager.js",
-  "js/match-settings.js",
-  "js/opponent-settings.js",
-  ...ROSTER_SOURCE_FILES.map(path => `js/${path}`),
-  ...SCOUT_SOURCE_FILES.map(path => `js/${path}`)
-];
+
 
 function makeClassList() {
   return { add() {}, remove() {}, toggle() {}, contains() { return false; } };
@@ -296,3 +283,27 @@ test("tutti i file DVW vengono importati cumulativamente in IndexedDB con localS
   assert.ok([...saved.values()].reduce((size, raw) => size + raw.length, 0) < 10000);
   await vm.runInContext("archiveStorage.flush()", reopened);
 });
+
+for (const [file, count] of [['Castenaso - Budrio.dvw', 144], ['Finale Villanova-Budrio.dvw', 174]]) {
+  test(`l'analisi apre la squadra scoutizzata di ${file} dopo una partita diversa`, async () => {
+    const context = buildBrowserContext();
+    runtimeFiles.forEach(path => vm.runInContext(readFileSync(new URL(path, rootUrl), 'utf8'), context, { filename: path }));
+    await context.initializePersistentStorage();
+    context.importText = readFileSync(`resources/data volley da volleyscout/${file}`, 'utf8');
+    vm.runInContext(`
+      ensureAnalysisTeamFilterDefault();
+      analysisSummaryFilterState.sets.add(99);
+      trajectoryFilterState.players.add(99);
+      trajectoryFilterState.sets.add(99);
+      aggTableView = { mode: 'player', skillId: null, playerIdx: 99 };
+      applyImportedMatch(parseDataVolleyDvwToMatchState(importText), { silent: true });
+    `, context);
+    assert.equal(context.getAnalysisTeamScope(), 'opponent');
+    assert.equal(context.getFilteredTrajectoryEvents().length, count);
+    assert.ok(context.getMatchSheetPlayers(context.getAnalysisTeamScope()).length > 0);
+    assert.ok(context.filterEventsByAnalysisTeam().every(event => event.team === 'opponent'));
+    assert.equal(vm.runInContext('analysisSummaryFilterState.sets.size', context), 0);
+    assert.equal(vm.runInContext('aggTableView.mode', context), 'summary');
+    await vm.runInContext('archiveStorage.flush()', context);
+  });
+}

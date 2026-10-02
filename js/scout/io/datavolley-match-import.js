@@ -116,6 +116,49 @@ function buildDvwSetStarts(homePayload, awayPayload, scoutRows) {
   });
   return setStarts;
 }
+function buildDvwScoreOverrides(events, finalScores = null, setResults = null) {
+  const countedBySet = {};
+  const terminalBySet = {};
+  (events || []).forEach(event => {
+    if (!event || !event.dvwScoreAuthoritative) return;
+    const setNum = parseInt(event.set, 10) || 1;
+    if (!countedBySet[setNum]) countedBySet[setNum] = { our: 0, opponent: 0 };
+    if (event.pointDirection === "for" || event.pointDirection === "against") {
+      const value = Number.isFinite(Number(event.value)) ? Math.max(0, Number(event.value)) : 1;
+      countedBySet[setNum][event.pointDirection === "for" ? "our" : "opponent"] += value;
+    }
+    const homeScore = Number(event.homeScore);
+    const visitorScore = Number(event.visitorScore);
+    if (Number.isFinite(homeScore) && Number.isFinite(visitorScore)) {
+      terminalBySet[setNum] = { our: homeScore, opponent: visitorScore };
+    }
+  });
+  const targets = finalScores && Object.keys(finalScores).length
+    ? finalScores
+    : Object.fromEntries(Object.entries(terminalBySet).map(([setKey, score]) => {
+        const target = { our: score.our, opponent: score.opponent };
+        const winner = setResults && setResults[setKey];
+        if (winner === "our" || winner === "opponent") {
+          const loser = winner === "our" ? "opponent" : "our";
+          const minimum = Number(setKey) === 5 ? 15 : 25;
+          target[winner] = Math.max(target[winner], minimum, target[loser] + 2);
+        }
+        return [setKey, target];
+      }));
+  const overrides = {};
+  Object.entries(targets || {}).forEach(([setKey, target]) => {
+    const counted = countedBySet[setKey] || { our: 0, opponent: 0 };
+    const adjustment = {
+      for: Number(target.our) - counted.our,
+      against: Number(target.opponent) - counted.opponent
+    };
+    if (Number.isFinite(adjustment.for) && Number.isFinite(adjustment.against) &&
+        (adjustment.for || adjustment.against)) {
+      overrides[setKey] = adjustment;
+    }
+  });
+  return overrides;
+}
 function parseDataVolleyDvwToMatchState(text) {
   const sections = parseDvwSections(text);
   if (!sections.has("3DATAVOLLEYSCOUT") || !sections.has("3SCOUT")) {
@@ -139,6 +182,12 @@ function parseDataVolleyDvwToMatchState(text) {
     return cells.join(";");
   });
   const matchInfo = matchRows.length ? parseDvwRow(matchRows[0]) : [];
+  // Volleyball Scout exports Italian day/month/year dates, including ambiguous ones.
+  const isVolleyScout = (sections.get("3DATAVOLLEYSCOUT") || []).some(line => /^GENERATOR-PRG:\s*Volleyball Scout\s*$/i.test(line));
+  if (isVolleyScout && /^\d{2}\/\d{2}\/\d{4}$/.test(matchInfo[0] || "")) {
+    const [day, month, year] = matchInfo[0].split("/");
+    matchInfo[0] = `${year}/${month}/${day}`;
+  }
   const homeTeamMeta = teamRows[0]
     ? { code: teamRows[0][0] || "", name: teamRows[0][1] || "Squadra", id: teamRows[0][0] || "" }
     : { code: "OUR", name: "Squadra", id: "OUR" };
@@ -151,12 +200,16 @@ function parseDataVolleyDvwToMatchState(text) {
   const setterCallDefs = parseDvwSetterCallDefinitions(dvwSetterCalls);
   const setStarts = buildDvwSetStarts(homePayload, awayPayload, scoutRows);
   const setResults = {};
+  const setFinalScores = {};
   setRows.forEach((row, idx) => {
     const setNum = idx + 1;
     const finalScore = String(row[4] || "").trim();
-    const scoreMatch = finalScore.match(/^(\d+)-(\d+)$/);
+    const scoreMatch = finalScore.match(/^(\d+)\s*-\s*(\d+)$/);
     if (!scoreMatch) return;
-    setResults[setNum] = Number(scoreMatch[1]) > Number(scoreMatch[2]) ? "our" : "opponent";
+    const scoreOur = Number(scoreMatch[1]);
+    const scoreOpp = Number(scoreMatch[2]);
+    setFinalScores[setNum] = { our: scoreOur, opponent: scoreOpp };
+    setResults[setNum] = scoreOur > scoreOpp ? "our" : "opponent";
   });
   const events = [];
   const playerIdByScopeAndName = {
@@ -439,9 +492,15 @@ function parseDataVolleyDvwToMatchState(text) {
         };
       }
     }
-    if (skillId === "attack" && startZoneNum) {
-      const start = buildDvwZonePoint(startZoneNum, "start", decoded.advancedCode);
-      const end = endZoneNum ? buildDvwZonePoint(endZoneNum, "end", decoded.advancedCode) : null;
+    if (skillId === "attack") {
+      const coordinates = buildDvwAttackCoordinatePoints(cells[4], cells[6]);
+      const start = coordinates ? coordinates.start : buildDvwZonePoint(startZoneNum, "start", decoded.advancedCode);
+      const end = coordinates ? coordinates.end : endZoneNum ? buildDvwZonePoint(endZoneNum, "end", decoded.advancedCode) : null;
+      event.dvwCoordinates = {
+        start: parseDvwCoordinateIndex(cells[4])?.index ?? null,
+        mid: parseDvwCoordinateIndex(cells[5])?.index ?? null,
+        end: parseDvwCoordinateIndex(cells[6])?.index ?? null
+      };
       event.attackStart = start;
       event.attackEnd = end;
       if (start && end) {
@@ -483,6 +542,10 @@ function parseDataVolleyDvwToMatchState(text) {
   });
   const homeTeamPayload = buildImportedTeamPayloadFromDvw(homePayload);
   const awayTeamPayload = buildImportedTeamPayloadFromDvw(awayPayload);
+  // Some producers (notably Volleyball Scout) emit score updates without a
+  // scoutable action and may also emit corrections to both sides at once.
+  // Keep skill statistics tied to real actions and reconcile only the score.
+  const scoreOverrides = buildDvwScoreOverrides(events, setFinalScores);
   const savedTeams = {};
   if (homeTeamPayload && homeTeamPayload.name) savedTeams[homeTeamPayload.name] = homeTeamPayload;
   if (awayTeamPayload && awayTeamPayload.name) savedTeams[awayTeamPayload.name] = awayTeamPayload;
@@ -527,7 +590,7 @@ function parseDataVolleyDvwToMatchState(text) {
     savedTeams,
     savedOpponentTeams: savedTeams,
     stats: {},
-    scoreOverrides: {},
+    scoreOverrides,
     metricsConfig: state.metricsConfig || {},
     pointRules: state.pointRules || {},
     video: { offsetSeconds: 0, fileName: "", youtubeId: "", youtubeUrl: "", lastPlaybackSeconds: 0 }
