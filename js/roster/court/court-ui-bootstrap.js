@@ -82,7 +82,6 @@ function updatePlayersList(newPlayers, options = {}) {
   }
 
   renderPlayers();
-  renderBenchChips();
   renderLiberoChipsInline();
   renderLineupChips();
   renderLiberoTags();
@@ -144,35 +143,6 @@ function handleBenchDragStart(e) {
   }
 }
 function handleBenchDragEnd() {
-  resetDragState();
-}
-function handleLiberoReplacedDragStart(e, name) {
-  if (!name || !e.dataTransfer) return;
-  draggedPlayerName = name;
-  draggedFromPos = null;
-  dragSourceType = "libero-return";
-  e.dataTransfer.setData("text/plain", name);
-  e.dataTransfer.effectAllowed = "move";
-  if (activeDropChip) {
-    activeDropChip.classList.remove("drop-over");
-    activeDropChip = null;
-  }
-}
-function handleBenchDropZoneOver(e) {
-  if (dragSourceType !== "court" || draggedFromPos === null) return;
-  e.preventDefault();
-  if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
-  if (elBenchChips) elBenchChips.classList.add("bench-drop-over");
-}
-function handleBenchDropZoneLeave() {
-  if (elBenchChips) elBenchChips.classList.remove("bench-drop-over");
-}
-function handleBenchDropZoneDrop(e) {
-  e.preventDefault();
-  if (dragSourceType === "court" && draggedFromPos !== null) {
-    clearCourtAssignment(draggedFromPos, "main");
-  }
-  handleBenchDropZoneLeave();
   resetDragState();
 }
 function ensureBenchTouchListeners() {
@@ -340,12 +310,13 @@ function handleBenchPointerDrop(e) {
   clearBenchTouch();
   touchBenchPointerId = null;
 }
-function handleCourtDragStart(e, posIdx) {
-  const slot = state.court[posIdx] || { main: "" };
+function handleCourtDragStart(e, posIdx, scope = "our") {
+  const slot = getTeamCourt(scope)[posIdx] || { main: "" };
   if (!slot.main || !e.dataTransfer) return;
   draggedPlayerName = slot.main;
   draggedFromPos = posIdx;
   dragSourceType = "court";
+  draggedScope = scope;
   e.dataTransfer.setData("text/plain", slot.main);
   e.dataTransfer.effectAllowed = "move";
   if (activeDropChip) {
@@ -386,6 +357,10 @@ function handlePositionDrop(e, card) {
     resetDragState();
     return;
   }
+  if (draggedPlayerName && draggedScope !== scope) {
+    resetDragState();
+    return;
+  }
   const court = scope === "opponent" ? state.opponentCourt || [] : state.court || [];
   const targetSlot = court[posIdx] || { main: "", replaced: "" };
   if (isLiberoForScope(targetSlot.main, scope) && targetSlot.replaced === name) {
@@ -394,7 +369,7 @@ function handlePositionDrop(e, card) {
     return;
   }
   if (dragSourceType === "court" && draggedFromPos !== null) {
-    if (!isLibero(name)) {
+    if (!isLiberoForScope(name, scope)) {
       resetDragState();
       return;
     }
@@ -436,11 +411,6 @@ function handlePositionDrop(e, card) {
     resetDragState();
     return;
   }
-  if (dragSourceType === "libero-return") {
-    setCourtPlayerForScope(posIdx, target, name, scope);
-    resetDragState();
-    return;
-  }
   if (!isLiberoForScope(name, scope)) {
     resetDragState();
     return;
@@ -466,40 +436,7 @@ function handleBenchClickForScope(name, scope = "our") {
   setCourtPlayerForScope(targetPos, "main", name, scope);
 }
 function getUsedNames() {
-  ensureCourtShape();
-  const used = new Set();
-  state.court.forEach(slot => {
-    if (slot.main) used.add(slot.main);
-  });
-  return used;
-}
-function getBenchPlayers() {
-  const used = getUsedNames();
-  const libSet = new Set(state.liberos || []);
-  const replaced = new Set(getReplacedByLiberos());
-  const names = (state.players || []).filter(name => {
-    if (used.has(name)) return false; // già in campo
-    if (libSet.has(name)) return false; // i liberi stanno nella colonna dedicata
-    // se è la titolare sostituita dal libero, deve comparire
-    if (replaced.has(name)) return true;
-    return true;
-  });
-  return sortNamesByNumber(names, state.playerNumbers || {});
-}
-function getBenchLiberos() {
-  const used = getUsedNames();
-  const libSet = new Set(state.liberos || []);
-  const replaced = new Set(getReplacedByLiberos());
-  const names = [];
-  (state.players || []).forEach(name => {
-    if (libSet.has(name) && (!used.has(name) || replaced.has(name))) {
-      names.push(name);
-    }
-  });
-  replaced.forEach(name => {
-    if (!used.has(name)) names.push(name);
-  });
-  return orderLiberosByPreference(Array.from(new Set(names)), "our", state.playerNumbers || {});
+  return getUsedNamesForScope("our");
 }
 function orderLiberosByPreference(names, scope = "our", numbersMap = {}) {
   const list = typeof sortNamesByNumber === "function" ? sortNamesByNumber(names, numbersMap) : names.slice();
@@ -507,16 +444,6 @@ function orderLiberosByPreference(names, scope = "our", numbersMap = {}) {
   if (preferred && list.includes(preferred)) {
     return [preferred].concat(list.filter(n => n !== preferred));
   }
-  return list;
-}
-function getReplacedByLiberos() {
-  ensureCourtShape();
-  const list = [];
-  state.court.forEach(slot => {
-    if (slot.main && (state.liberos || []).includes(slot.main) && slot.replaced) {
-      list.push(slot.replaced);
-    }
-  });
   return list;
 }
 function cleanLiberos() {
@@ -555,19 +482,9 @@ function toggleLibero(name) {
     state.preferredLibero = state.liberos[0];
   }
   saveState();
-  renderBenchChips();
   renderLiberoTags();
   renderLiberoChipsInline();
   renderPlayers();
-}
-function getLockedMap() {
-  const map = {};
-  state.court.forEach((slot, idx) => {
-    if (slot.replaced && (state.liberos || []).includes(slot.main)) {
-      map[slot.replaced] = idx;
-    }
-  });
-  return map;
 }
 function releaseReplaced(name, keepIdx, court = state.court) {
   if (lineupCore && typeof lineupCore.releaseReplacedFromCourt === "function") {
@@ -593,132 +510,70 @@ function releaseReplaced(name, keepIdx, court = state.court) {
     updated.forEach((slot, idx) => (court[idx] = slot));
   }
 }
-function renderBenchChips() {
-  ensureBenchDropZone();
-  if (!elBenchChips) return;
-  elBenchChips.innerHTML = "";
-  const bench = getBenchPlayers();
-  const lockedMap = getLockedMap();
-  renderChipList(elBenchChips, bench, lockedMap, {
-    highlightLibero: true,
-    isLiberoColumn: false,
-    emptyText: "Nessuna riserva disponibile.",
-    replacedSet: new Set(getReplacedByLiberos())
-  });
-  if (typeof isErrorPickModeForScope === "function" && isErrorPickModeForScope("our")) {
-    const teamErrorBtn = document.createElement("button");
-    teamErrorBtn.type = "button";
-    teamErrorBtn.className = "error-choice-btn danger bench-team-error-btn";
-    teamErrorBtn.textContent = "Errore squadra";
-    teamErrorBtn.addEventListener("click", () => {
-      const errorType =
-        typeof selectedErrorType !== "undefined" && selectedErrorType ? selectedErrorType : null;
-      if (typeof handleTeamError === "function") {
-        handleTeamError(errorType, "our");
-      }
-      if (typeof stopErrorPickMode === "function") {
-        stopErrorPickMode();
-      }
-    });
-    elBenchChips.prepend(teamErrorBtn);
-  }
-}
-function ensureBenchDropZone() {
-  if (!elBenchChips || benchDropZoneInitialized) return;
-  elBenchChips.addEventListener("dragenter", handleBenchDropZoneOver, true);
-  elBenchChips.addEventListener("dragover", handleBenchDropZoneOver, true);
-  elBenchChips.addEventListener("dragleave", handleBenchDropZoneLeave, true);
-  elBenchChips.addEventListener("drop", handleBenchDropZoneDrop, true);
-  benchDropZoneInitialized = true;
-}
 function renderLiberoChipsInline() {
-  if (!elLiberoTagsInline) return;
-  elLiberoTagsInline.innerHTML = "";
-  const liberos = getBenchLiberos();
-  const lockedMap = getLockedMap();
-  renderChipList(elLiberoTagsInline, liberos, lockedMap, {
-    isLiberoColumn: true,
-    emptyText: "Nessun libero disponibile.",
-    replacedSet: new Set(getReplacedByLiberos())
-  });
-  renderOpponentLiberoChipsInline();
+  renderTeamLiberoChipsInline("our");
+  renderTeamLiberoChipsInline("opponent");
 }
-function renderOpponentBenchChips() {
-  const container = document.getElementById("bench-chips-opp");
+function renderOpponentLiberoChipsInline() {
+  renderTeamLiberoChipsInline("opponent");
+}
+function renderTeamLiberoChipsInline(scope) {
+  const container = scope === "opponent" ? elLiberoTagsInlineOpp : elLiberoTagsInline;
   if (!container) return;
   container.innerHTML = "";
-  if (!state.useOpponentTeam) return;
-  const names = getBenchForLineupWithRoster(
-    state.opponentCourt || [], state.opponentPlayers || [],
-    state.opponentLiberos || [], state.opponentPlayerNumbers || {}
+  const numbers = getTeamNumbers(scope);
+  const liberoSet = new Set(getTeamLiberos(scope));
+  const used = getUsedNamesForScope(scope);
+  const replaced = getReplacedByLiberosForScope(scope);
+  const lockedMap = getLockedMapForScope(scope);
+  const names = orderLiberosByPreference(
+    Array.from(new Set([...getTeamPlayers(scope).filter(name => liberoSet.has(name)), ...replaced])),
+    scope,
+    numbers
   );
+  const captains = scope === "opponent" ? state.opponentCaptains || [] : state.captains || [];
+  const captainSet = new Set(captains.map(name => name.toLowerCase()));
   if (!names.length) {
     const empty = document.createElement("span");
     empty.className = "bench-empty";
-    empty.textContent = "Nessuna riserva disponibile.";
+    empty.textContent = "Nessun libero disponibile.";
     container.appendChild(empty);
-  }
-  names.forEach(name => {
-    const chip = document.createElement("button");
-    chip.type = "button";
-    chip.className = "bench-chip";
-    chip.dataset.playerName = name;
-    chip.dataset.teamScope = "opponent";
-    chip.textContent = formatNameWithNumberFor(name, state.opponentPlayerNumbers || {}, {
-      scope: "opponent",
-      captainSet: new Set((state.opponentCaptains || []).map(n => n.toLowerCase()))
-    });
-    chip.title = "Imposta formazione avversaria";
-    chip.addEventListener("click", () => openMobileLineupModal("opponent"));
-    container.appendChild(chip);
-  });
-}
-function renderOpponentLiberoChipsInline() {
-  if (!elLiberoTagsInlineOpp) return;
-  if (typeof ensureOpponentLiberosFromTeam === "function") {
-    ensureOpponentLiberosFromTeam();
-  }
-  elLiberoTagsInlineOpp.innerHTML = "";
-  const libSet = new Set(state.opponentLiberos || []);
-  const ordered = sortNamesByNumber(state.opponentPlayers || [], state.opponentPlayerNumbers || {});
-  const names = orderLiberosByPreference(
-    ordered.filter(name => libSet.has(name)),
-    "opponent",
-    state.opponentPlayerNumbers || {}
-  );
-  if (names.length === 0) {
-    const span = document.createElement("span");
-    span.className = "bench-empty";
-    span.textContent = "Nessun libero disponibile.";
-    elLiberoTagsInlineOpp.appendChild(span);
     return;
   }
-  const used = getUsedNamesForScope("opponent");
   names.forEach(name => {
     const chip = document.createElement("div");
     const isUsed = used.has(name);
-    chip.className = "bench-chip libero-flag" + (isUsed ? " bench-locked" : "");
+    const isReplaced = lockedMap[name] !== undefined;
+    chip.className = "bench-chip" + (liberoSet.has(name) ? " libero-flag" : " replaced-chip") +
+      (isUsed || isReplaced ? " bench-locked" : "");
     chip.dataset.playerName = name;
-    chip.dataset.teamScope = "opponent";
+    chip.dataset.teamScope = scope;
     const label = document.createElement("span");
-    label.textContent = formatNameWithNumberFor(name, state.opponentPlayerNumbers || {}, {
-      captainSet: new Set((state.opponentCaptains || []).map(n => n.toLowerCase()))
-    }) + (isUsed ? " (in campo)" : "");
+    label.textContent = formatNameWithNumberFor(name, numbers, { scope, captainSet }) +
+      (isUsed ? " (in campo)" : isReplaced ? " (sost. libero)" : "");
     chip.appendChild(label);
     if (!isUsed) {
-      chip.draggable = true;
-      chip.addEventListener("dragstart", handleBenchDragStart);
-      chip.addEventListener("dragend", handleBenchDragEnd);
-      chip.addEventListener("click", () => handleBenchClickForScope(name, "opponent"));
-      chip.addEventListener("pointerdown", ev => handleBenchPointerDown(ev, name, "opponent"));
-      chip.addEventListener("touchstart", ev => handleBenchTouchStart(ev, name, "opponent"), { passive: false });
-      chip.addEventListener("touchmove", handleBenchTouchMove, { passive: false });
-      chip.addEventListener("touchend", handleBenchTouchEnd, { passive: false });
-      chip.addEventListener("touchcancel", handleBenchTouchCancel, { passive: false });
+      chip.addEventListener("click", () => {
+        if (isReplaced) {
+          restorePlayerFromLiberoForScope(lockedMap[name], scope);
+        } else {
+          handleBenchClickForScope(name, scope);
+        }
+      });
+      if (!isReplaced) {
+        chip.draggable = true;
+        chip.addEventListener("dragstart", handleBenchDragStart);
+        chip.addEventListener("dragend", handleBenchDragEnd);
+        chip.addEventListener("pointerdown", ev => handleBenchPointerDown(ev, name, scope));
+        chip.addEventListener("touchstart", ev => handleBenchTouchStart(ev, name, scope), { passive: false });
+        chip.addEventListener("touchmove", handleBenchTouchMove, { passive: false });
+        chip.addEventListener("touchend", handleBenchTouchEnd, { passive: false });
+        chip.addEventListener("touchcancel", handleBenchTouchCancel, { passive: false });
+      }
     } else {
       chip.setAttribute("aria-disabled", "true");
     }
-    elLiberoTagsInlineOpp.appendChild(chip);
+    container.appendChild(chip);
   });
 }
 function renderLineupChips() {
@@ -964,7 +819,6 @@ function applyAutoRolePositioning() {
   autoRoleRotationApplied = rot;
   saveState();
   renderPlayers();
-  renderBenchChips();
   renderLiberoChipsInline();
   renderLineupChips();
   updateRotationDisplay();
@@ -1014,7 +868,6 @@ function rotateCourt(direction) {
   saveState();
   renderPlayers();
   renderLineupChips();
-  renderBenchChips();
   updateRotationDisplay();
   animateFlip(prevCourtRects, ".court-card", el => {
     const name = el.dataset.playerName || "";
@@ -1044,7 +897,6 @@ function resetDragState() {
   draggedFromPos = null;
   dragSourceType = "";
   draggedScope = "our";
-  handleBenchDropZoneLeave();
   if (activeDropChip) {
     activeDropChip.classList.remove("drop-over");
     activeDropChip = null;

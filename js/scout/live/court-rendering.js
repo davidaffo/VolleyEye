@@ -779,7 +779,7 @@ function renderTeamCourtCards(options = {}) {
     header.className = "court-header" + (canDrag ? " draggable" : "");
     header.draggable = canDrag;
     if (canDrag) {
-      header.addEventListener("dragstart", e => handleCourtDragStart(e, posIdx));
+      header.addEventListener("dragstart", e => handleCourtDragStart(e, posIdx, scope));
       header.addEventListener("dragend", handleCourtDragEnd);
     }
     const tagBar = document.createElement("div");
@@ -802,11 +802,7 @@ function renderTeamCourtCards(options = {}) {
       btnReturn.textContent = "↩";
       const handleReturn = e => {
         e.stopPropagation();
-        if (scope === "opponent" && typeof restorePlayerFromLiberoForScope === "function") {
-          restorePlayerFromLiberoForScope(posIdx, "opponent");
-        } else if (typeof restorePlayerFromLibero === "function") {
-          restorePlayerFromLibero(posIdx);
-        }
+        restorePlayerFromLiberoForScope(posIdx, scope);
       };
       btnReturn.addEventListener("click", handleReturn);
       btnReturn.addEventListener("keydown", e => {
@@ -824,18 +820,9 @@ function renderTeamCourtCards(options = {}) {
     if (isLibSlot) {
       nameLabel.classList.add("libero-flag");
     }
-      if (activeName && scope === "opponent" && typeof formatNameWithNumberFor === "function") {
-        nameLabel.textContent = formatNameWithNumberFor(activeName, numbersMap, {
-          captainSet,
-          compactCourt: true
-        });
-    } else {
-      nameLabel.textContent = activeName
-        ? formatNameWithNumber(activeName, { compactCourt: true })
-        : scope === "our"
-          ? "Trascina una giocatrice qui"
-          : "—";
-    }
+    nameLabel.textContent = activeName
+      ? formatNameWithNumberFor(activeName, numbersMap, { scope, captainSet, compactCourt: true })
+      : "—";
     nameBlock.appendChild(nameLabel);
     if (scope === "our" || scope === "opponent") {
       const roleTag = document.createElement("span");
@@ -960,10 +947,7 @@ function renderTeamCourtCards(options = {}) {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "error-choice-btn danger error-pick-bench-btn";
-      btn.textContent =
-        scope === "opponent"
-          ? formatNameWithNumberFor(name, getPlayerNumbersForScope(scope))
-          : formatNameWithNumber(name);
+      btn.textContent = formatNameWithNumberFor(name, getPlayerNumbersForScope(scope), { scope });
       btn.addEventListener("click", () => {
         openErrorModalForPickedPlayer(scope, idx, name);
       });

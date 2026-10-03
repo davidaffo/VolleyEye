@@ -26,14 +26,14 @@
     };
   </script>
   <script>
-    window.__APP_CACHE_VERSION__ = "v0.19.12-425-b87f34a";
+    window.__APP_CACHE_VERSION__ = "v0.19.13-426-e1038ce";
     window.__IS_LOCALHOST_DEV__ =
       location.hostname === "localhost" ||
       location.hostname === "127.0.0.1" ||
       location.hostname === "::1";
     window.__APP_ASSET_SUFFIX__ = window.__IS_LOCALHOST_DEV__
       ? `?dev=${Date.now()}`
-      : `?v=v0.19.12-425-b87f34a`;
+      : `?v=v0.19.13-426-e1038ce`;
     if (location.protocol === "file:") {
       document.documentElement.dataset.fileOrigin = "true";
     }
@@ -509,10 +509,6 @@
                 </div>
               </div>
               <div id="opponent-players-container"></div>
-              <div class="opponent-bench">
-                <label>Riserve</label>
-                <div id="bench-chips-opp" class="bench-chips"></div>
-              </div>
             </div>
           </div>
           <div class="court-net-divider">
@@ -524,6 +520,7 @@
               <button id="btn-block-number" class="small secondary net-action-btn" type="button">N° muro (N)</button>
             </div>
             <button id="btn-net-block-prompt" class="small net-action-btn net-action-btn--block-prompt hidden" type="button">Muro</button>
+            <button id="btn-contesa" class="small danger net-action-btn" type="button" title="Annulla l’azione fino alla battuta inclusa">Contesa</button>
             <button id="btn-undo" class="small danger net-action-btn">↩ Annulla ultimo</button>
           </div>
           <div class="team-panel team-panel--near team-panel--home" data-team-panel="home">

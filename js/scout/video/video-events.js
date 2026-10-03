@@ -849,7 +849,6 @@ function recordTimeoutEvent() {
   saveState({ persistLocal: true });
   renderEventsLog();
   renderPlayers();
-  renderBenchChips();
   renderLiberoChipsInline();
   renderLineupChips();
   updateRotationDisplay();
@@ -859,7 +858,6 @@ function recordOpponentTimeoutEvent() {
   saveState({ persistLocal: true });
   renderEventsLog();
   renderPlayers();
-  renderBenchChips();
   renderLiberoChipsInline();
   renderLineupChips();
   updateRotationDisplay();
@@ -876,7 +874,6 @@ function recordSubstitutionEvent({ playerIn, playerOut, teamScope = "our" }) {
   saveState({ persistLocal: true });
   renderEventsLog();
   renderPlayers();
-  renderBenchChips();
   renderLiberoChipsInline();
   renderLineupChips();
   updateRotationDisplay();

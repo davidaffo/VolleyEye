@@ -24,220 +24,97 @@ function updateFloatingServeErrorButton(isCompactMobile) {
   elFloatingServeErrorBtn.dataset.playerName = server.name;
   elFloatingServeErrorBtn.classList.remove("hidden");
 }
-function syncRosterFromSelectedTeamIfNeeded() {
-  if (rosterSyncInProgress) return false;
-  if (typeof loadTeamFromStorage !== "function" || typeof extractRosterFromTeam !== "function") return false;
-  const teamName = (state.selectedTeam || (state.match && state.match.teamName) || "").trim();
-  if (!teamName) return false;
-  const team = loadTeamFromStorage(teamName);
-  if (!team) return false;
-  const roster = extractRosterFromTeam(team);
-  const rosterPlayers = normalizePlayers(roster.players || []);
-  let currentPlayers = normalizePlayers(state.players || []);
-  const rosterNumbers =
-    typeof normalizeNumbersMap === "function" ? normalizeNumbersMap(roster.numbers || {}) : roster.numbers || {};
-  const hasRoster = rosterPlayers.length > 0;
-  const missing = hasRoster
-    ? rosterPlayers.filter(name => !currentPlayers.some(current => current.toLowerCase() === name.toLowerCase()))
-    : [];
-  if (!missing.length) return false;
-  rosterSyncInProgress = true;
-  const mergedPlayers = currentPlayers.concat(missing);
-  const mergedNumbers = Object.assign({}, rosterNumbers || {}, state.playerNumbers || {});
-  const mergedLiberos = Array.from(
-    new Set(
-      [
-        ...(state.liberos || []),
-        ...normalizePlayers(roster.liberos || []).map(name => mapRosterNameToCurrent(name))
-      ].filter(name => mergedPlayers.some(player => player.toLowerCase() === name.toLowerCase()))
-    )
-  );
-  const mergedCaptains = (state.captains && state.captains.length ? state.captains : roster.captains) || [];
-  const preferred = state.preferredLibero || roster.preferredLibero || "";
-  updatePlayersList(mergedPlayers, {
-    askReset: false,
-    preserveCourt: true,
-    playerNumbers: mergedNumbers,
-    liberos: mergedLiberos,
-    captains: mergedCaptains,
-    setDefaultLineup: false,
-    preferredLibero: preferred
-  });
-  rosterSyncInProgress = false;
-  return true;
+function getScoutCourtSkill(scope) {
+  if (scope === "opponent" && !state.useOpponentTeam) return null;
+  const predicted = scope === "our" && !state.useOpponentTeam
+    ? getPredictedSkillId()
+    : getPredictedSkillIdForScope(scope);
+  if (predicted || !state.predictiveSkillFlow) return predicted;
+  if (!state.useOpponentTeam) {
+    const ownEvents = (state.events || []).filter(event => event && event.team !== "opponent");
+    if (getLastFlowEvent(ownEvents)) return null;
+  }
+  const fallback = isServingForScope(scope) ? "serve" : "pass";
+  if (isSkillEnabledForScope(fallback, scope)) return fallback;
+  const enabled = getEnabledSkillsForScope(scope);
+  return enabled.length ? enabled[0].id : null;
 }
 function renderPlayers() {
   syncAutoLiberoSelects();
-  if (!elPlayersContainer) return;
   syncCourtSideLayout();
-  // Il rendering è deliberatamente privo di sincronizzazioni con l'archivio squadre.
-  // Il roster del match cambia solo tramite selezione esplicita o modifica rapida.
-  if (typeof cleanCourtPlayers === "function" && state.court) {
-    const valid = new Set(state.players || []);
-    const hasInvalid = state.court.some(slot => slot && slot.main && !valid.has(slot.main));
-    if (hasInvalid) {
-      cleanCourtPlayers();
-    }
-  }
-  elPlayersContainer.innerHTML = "";
-  elPlayersContainer.classList.add("court-layout");
-  elPlayersContainer.classList.toggle("court-layout--mirror", !!state.courtViewMirrored);
-  ensureCourtShape();
   ensureMetricsConfigDefaults();
-  let predictedSkillId = state.useOpponentTeam
-    ? getPredictedSkillIdForScope("our")
-    : getPredictedSkillId();
-  let predictedOpponentSkillId = state.useOpponentTeam ? getPredictedSkillIdForScope("opponent") : null;
-  if (state.useOpponentTeam && state.predictiveSkillFlow && !predictedOpponentSkillId) {
-    const oppFallbackSeed = isServingForScope("opponent") ? "serve" : "pass";
-    if (isSkillEnabledForScope(oppFallbackSeed, "opponent")) {
-      predictedOpponentSkillId = oppFallbackSeed;
-    } else {
-      const enabledOpp = getEnabledSkillsForScope("opponent");
-      predictedOpponentSkillId = enabledOpp.length ? enabledOpp[0].id : null;
-    }
+  const ourSkill = getScoutCourtSkill("our");
+  const opponentSkill = getScoutCourtSkill("opponent");
+  updateSetTypeVisibility(ourSkill || opponentSkill);
+  renderScoutTeamCourt("our", { nextSkillId: ourSkill });
+  renderScoutTeamCourt("opponent", { nextSkillId: opponentSkill });
+  updateOpponentRotationDisplay();
+  recalcAllStatsAndUpdateUI();
+  renderLineupChips();
+  updateNetBlockPrompt();
+  renderLogServeTrajectories();
+  const compact = !!state.forceMobileLayout || window.matchMedia("(max-width: 900px)").matches;
+  updateFloatingServeErrorButton(compact);
+  maybeScrollToActiveCourtOnMobile();
+}
+function renderOpponentPlayers(options = {}) {
+  syncCourtSideLayout();
+  updateOpponentRotationDisplay();
+  renderScoutTeamCourt("opponent", options);
+}
+function renderScoutTeamCourt(scope, { nextSkillId = null, animate = false } = {}) {
+  const container = document.getElementById(scope === "opponent" ? "opponent-players-container" : "players-container");
+  if (!container) return;
+  const compact = !!state.forceMobileLayout || window.matchMedia("(max-width: 900px)").matches;
+  const activeScope = compact ? getMobileActiveScope() : null;
+  const hidden = (scope === "opponent" && !state.useOpponentTeam) || (activeScope && activeScope !== scope);
+  container.classList.toggle("hidden", !!hidden);
+  if (hidden) {
+    container.innerHTML = "";
+    const parent = container.parentElement;
+    if (parent) parent.querySelectorAll('.error-pick-bench-host, .point-pick-host').forEach(node => node.remove());
+    return;
   }
-  if (state.predictiveSkillFlow && !state.useOpponentTeam && !predictedSkillId) {
-    const ownEvents = (state.events || []).filter(ev => {
-      if (!ev || !ev.skillId) return false;
-      if (!ev.team) return true;
-      return ev.team !== "opponent";
-    });
-    const lastOwnFlowEvent = getLastFlowEvent(ownEvents);
-    if (!lastOwnFlowEvent) {
-      const fallbackSeed = state.isServing ? "serve" : "pass";
-      if (isSkillEnabled(fallbackSeed)) {
-        predictedSkillId = fallbackSeed;
-      } else {
-        const enabled = getEnabledSkills();
-        predictedSkillId = enabled.length ? enabled[0].id : null;
-      }
-    }
-  }
-  const isCompactMobile = !!state.forceMobileLayout || window.matchMedia("(max-width: 900px)").matches;
-  const mobileActiveScope = isCompactMobile ? getMobileActiveScope() : null;
-  elPlayersContainer.classList.toggle("hidden", mobileActiveScope === "opponent");
-  updateSetTypeVisibility(predictedSkillId || predictedOpponentSkillId);
-  const hasSelectedServe = isAnySelectedSkill("serve");
-  const layoutSkill =
-    state.predictiveSkillFlow && predictedSkillId
-      ? predictedSkillId
-      : isAnySelectedSkill("pass")
-        ? "pass"
-        : hasSelectedServe
-          ? "serve"
-          : null;
-  const displayCourt = getAutoRoleDisplayCourt(layoutSkill, "our");
+  const selector = `.court-card[data-team-scope="${scope}"]`;
+  const animationKey = element => element.dataset.playerName || "pos-" + (element.dataset.posIndex || "");
+  const shouldAnimate = animate && typeof captureRects === "function" && typeof animateFlip === "function";
+  const previousRects = shouldAnimate ? captureRects(selector, animationKey) : null;
+  const valid = new Set(getPlayersForScope(scope));
+  const court = ensureCourtShapeFor(getTeamCourt(scope)).map(slot => ({
+    main: valid.has(slot.main) ? slot.main : "",
+    replaced: valid.has(slot.replaced) ? slot.replaced : ""
+  }));
+  // Il renderer legge soltanto il roster del match, senza ricaricare l’archivio.
+  if (scope === "opponent") state.opponentCourt = court;
+  else state.court = court;
+  container.innerHTML = "";
+  container.classList.add("court-layout");
+  const mirrored = scope === "opponent" ? state.opponentCourtViewMirrored : state.courtViewMirrored;
+  container.classList.toggle("court-layout--mirror", !!mirrored);
+  const predictedSkill = nextSkillId || getScoutCourtSkill(scope);
+  const layoutSkill = state.predictiveSkillFlow && predictedSkill
+    ? predictedSkill
+    : isAnySelectedSkillForScope(scope, "pass")
+      ? "pass"
+      : isAnySelectedSkillForScope(scope, "serve") ? "serve" : null;
+  const displayCourt = getAutoRoleDisplayCourt(layoutSkill, scope);
   renderTeamCourtCards({
-    container: elPlayersContainer,
-    scope: "our",
+    container,
+    scope,
     court: displayCourt.map(item => item.slot || { main: "" }),
-    baseCourt: ensureCourtShapeFor(state.court),
+    baseCourt: court,
     displayCourt,
-    numbersMap: state.playerNumbers || {},
-    captainSet: new Set((state.captains || []).map(name => name.toLowerCase())),
-    libSet: new Set(state.liberos || []),
+    numbersMap: getPlayerNumbersForScope(scope),
+    captainSet: new Set(getCaptainsForScope(scope).map(name => name.toLowerCase())),
+    libSet: new Set(getLiberosForScope(scope)),
     allowDrag: true,
     allowReturn: true,
     allowDrop: true,
-    isCompactMobile,
-    nextSkillId: predictedSkillId
+    allowSkills: true,
+    isCompactMobile: compact,
+    nextSkillId: predictedSkill
   });
-  recalcAllStatsAndUpdateUI();
-  renderLineupChips();
-  renderOpponentPlayers({ nextSkillId: predictedOpponentSkillId });
-  updateNetBlockPrompt();
-  renderLogServeTrajectories();
-  updateFloatingServeErrorButton(isCompactMobile);
-  maybeScrollToActiveCourtOnMobile();
-}
-function renderOpponentPlayers({ nextSkillId = null, animate = false } = {}) {
-  renderOpponentBenchChips();
-  const elOpponentContainer = document.getElementById("opponent-players-container");
-  if (!elOpponentContainer) return;
-  if (!state.useOpponentTeam) {
-    elOpponentContainer.innerHTML = "";
-    elOpponentContainer.classList.add("hidden");
-    if (typeof updateOpponentRotationDisplay === "function") {
-      updateOpponentRotationDisplay();
-    }
-    return;
-  }
-  const isCompactMobile = !!state.forceMobileLayout || window.matchMedia("(max-width: 900px)").matches;
-  const mobileActiveScope = isCompactMobile ? getMobileActiveScope() : null;
-  const hideOpponentCourt = mobileActiveScope === "our";
-  elOpponentContainer.classList.toggle("hidden", hideOpponentCourt);
-  if (hideOpponentCourt) {
-    elOpponentContainer.innerHTML = "";
-    return;
-  }
-  const shouldAnimate = animate && typeof captureRects === "function" && typeof animateFlip === "function";
-  const prevRects = shouldAnimate
-    ? captureRects('.court-card[data-team-scope="opponent"]', el => {
-        const name = el.dataset.playerName || "";
-        const pos = el.dataset.posIndex || "";
-        return name || "pos-" + pos;
-      })
-    : null;
-  if (typeof ensureOpponentLiberosFromTeam === "function") {
-    ensureOpponentLiberosFromTeam();
-  }
-  syncCourtSideLayout();
-  if (typeof updateOpponentRotationDisplay === "function") {
-    updateOpponentRotationDisplay();
-  }
-  elOpponentContainer.innerHTML = "";
-  elOpponentContainer.classList.add("court-layout");
-  elOpponentContainer.classList.toggle("court-layout--mirror", !!state.opponentCourtViewMirrored);
-  const baseOppCourt =
-    Array.isArray(state.opponentCourt) && state.opponentCourt.length === 6
-      ? state.opponentCourt
-      : Array.from({ length: 6 }, (_, idx) => ({ main: (state.opponentPlayers || [])[idx] || "" }));
-  const court =
-    typeof ensureCourtShapeFor === "function"
-      ? ensureCourtShapeFor(baseOppCourt)
-      : Array.from({ length: 6 }, (_, idx) => baseOppCourt[idx] || { main: "" });
-  let predictedSkillId = state.useOpponentTeam ? nextSkillId || getPredictedSkillIdForScope("opponent") : null;
-  if (state.useOpponentTeam && state.predictiveSkillFlow && !predictedSkillId) {
-    const fallbackSeed = isServingForScope("opponent") ? "serve" : "pass";
-    if (isSkillEnabledForScope(fallbackSeed, "opponent")) {
-      predictedSkillId = fallbackSeed;
-    } else {
-      const enabledOpp = getEnabledSkillsForScope("opponent");
-      predictedSkillId = enabledOpp.length ? enabledOpp[0].id : null;
-    }
-  }
-  const layoutSkill =
-    state.predictiveSkillFlow && predictedSkillId
-      ? predictedSkillId
-      : isAnySelectedSkillForScope("opponent", "pass")
-        ? "pass"
-        : isAnySelectedSkillForScope("opponent", "serve")
-          ? "serve"
-          : null;
-  const displayCourt = getAutoRoleDisplayCourt(layoutSkill, "opponent");
-  renderTeamCourtCards({
-    container: elOpponentContainer,
-    scope: "opponent",
-    court: displayCourt.map(item => item.slot || { main: "" }),
-    baseCourt: ensureCourtShapeFor(state.opponentCourt || []),
-    displayCourt,
-    numbersMap: state.opponentPlayerNumbers || {},
-    captainSet: new Set((state.opponentCaptains || []).map(name => name.toLowerCase())),
-    libSet: new Set(state.opponentLiberos || []),
-    allowReturn: true,
-    allowDrop: !!state.useOpponentTeam,
-    isCompactMobile,
-    nextSkillId: predictedSkillId,
-    allowSkills: !!state.useOpponentTeam
-  });
-  if (shouldAnimate) {
-    animateFlip(prevRects, '.court-card[data-team-scope="opponent"]', el => {
-      const name = el.dataset.playerName || "";
-      const pos = el.dataset.posIndex || "";
-      return name || "pos-" + pos;
-    });
-  }
+  if (shouldAnimate) animateFlip(previousRects, selector, animationKey);
 }
 function syncCourtSideLayout() {
   const courtArea = document.getElementById("court-area");

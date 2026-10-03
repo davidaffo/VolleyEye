@@ -77,6 +77,8 @@ function bindDataAndNavigationControls() {
     elBtnForceRefreshApp.addEventListener("click", forceRefreshAppAssets);
   }
   if (elBtnUndo) elBtnUndo.addEventListener("click", undoLastEvent);
+  const elBtnContesa = document.getElementById("btn-contesa");
+  if (elBtnContesa) elBtnContesa.addEventListener("click", undoContestedRally);
   if (elBtnDvwScoutApply) {
     elBtnDvwScoutApply.addEventListener("click", () => {
       applyDvwScoutInput();

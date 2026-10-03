@@ -96,7 +96,6 @@ function resetMatch() {
   recalcAllStatsAndUpdateUI();
   renderEventsLog();
   renderPlayers();
-  renderBenchChips();
   updateRotationDisplay();
 }
 function deleteIndexedDbByName(name) {
@@ -226,7 +225,6 @@ function restoreScoutActionSnapshot(snapshot) {
   recalcAllStatsAndUpdateUI();
   renderEventsLog();
   renderPlayers();
-  renderBenchChips();
   renderLiberoChipsInline();
   renderLineupChips();
   updateRotationDisplay();
@@ -249,7 +247,6 @@ function undoLastEvent() {
     recalcAllStatsAndUpdateUI();
     renderEventsLog();
     renderPlayers();
-    renderBenchChips();
     renderLiberoChipsInline();
     renderLineupChips();
     updateRotationDisplay();
@@ -274,7 +271,6 @@ function undoLastEvent() {
     recalcAllStatsAndUpdateUI();
     renderEventsLog();
     renderPlayers();
-    renderBenchChips();
     renderLiberoChipsInline();
     renderLineupChips();
     updateRotationDisplay();
@@ -327,10 +323,37 @@ function undoLastEvent() {
   recalcAllStatsAndUpdateUI();
   renderEventsLog();
   renderPlayers();
-  renderBenchChips();
   renderLiberoChipsInline();
   renderLineupChips();
   updateRotationDisplay();
+}
+function undoContestedRally() {
+  const events = state.events || [];
+  const currentSet = Number(state.currentSet || 1);
+  let serveIndex = -1;
+  for (let index = events.length - 1; index >= 0; index--) {
+    const event = events[index];
+    if (!event) continue;
+    if (
+      Number(event.set || 1) !== currentSet ||
+      event.actionType === "set-change" ||
+      event.actionType === "match-end"
+    ) break;
+    if (event.skillId === "serve") {
+      serveIndex = index;
+      break;
+    }
+  }
+  if (serveIndex === -1) {
+    alert("Non c’è una battuta da annullare nell’azione corrente.");
+    return;
+  }
+  // Uno snapshot può annullare insieme battuta derivata e ricezione.
+  while (state.events.length > serveIndex) {
+    const previousLength = state.events.length;
+    undoLastEvent();
+    if (state.events.length >= previousLength) break;
+  }
 }
 function deleteEventByKey(eventKey) {
   if (!eventKey) return;
@@ -368,7 +391,6 @@ function deleteEventByKey(eventKey) {
   recalcAllStatsAndUpdateUI();
   renderEventsLog();
   renderPlayers();
-  renderBenchChips();
   renderLiberoChipsInline();
   renderLineupChips();
   updateRotationDisplay();
@@ -410,7 +432,6 @@ function undoSubstitutionEvent(ev) {
     }
     saveState();
     if (typeof renderPlayers === "function") renderPlayers();
-    if (typeof renderBenchChips === "function") renderBenchChips();
     if (typeof renderLineupChips === "function") renderLineupChips();
     if (typeof updateRotationDisplay === "function") updateRotationDisplay();
   }

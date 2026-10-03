@@ -971,7 +971,6 @@ const TRAJECTORY_LINE_WIDTH = 3;
 const trajectoryBgCache = {};
 let serveTrajectoryImgs = null;
 let multiscoutTeamScope = "our";
-let rosterSyncInProgress = false;
 function getAnalysisCourtSide(value) {
   return value === "far" ? "far" : "near";
 }

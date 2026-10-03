@@ -8,7 +8,6 @@ function setAutoRolePositioning(enabled) {
     saveState();
     if (restored) {
       renderPlayers();
-      renderBenchChips();
       renderLiberoChipsInline();
       renderLineupChips();
       updateRotationDisplay();
@@ -52,7 +51,6 @@ function setAutoLiberoBackline(enabled) {
   enforceAutoLiberoForState({ skipServerOnServe: true });
   saveState();
   renderPlayers();
-  renderBenchChips();
   renderLiberoChipsInline();
   renderLineupChips();
 }
@@ -82,7 +80,6 @@ function setAutoLiberoRole(role, scope = "our") {
   saveState();
   syncAutoLiberoSelects();
   renderPlayers();
-  renderBenchChips();
   renderLiberoChipsInline();
   renderLineupChips();
 }
@@ -156,7 +153,6 @@ function handlePlayerNumberChange(name, value) {
   saveState();
   renderPlayersManagerList();
   renderPlayers();
-  renderBenchChips();
   renderLineupChips();
   renderAggregatedTable();
   renderEventsLog();
@@ -295,7 +291,6 @@ function swapPreferredLiberoForScope(scope = "our") {
   enforceAutoLiberoForScope(scope, { skipServerOnServe: true });
   saveState();
   renderPlayers();
-  renderBenchChips();
   renderLiberoChipsInline();
   renderLineupChips();
   if (typeof renderOpponentPlayers === "function") {
@@ -326,7 +321,6 @@ function restorePlayerFromLiberoForScope(posIdx, scope = "our") {
   }
   saveState();
   renderPlayers();
-  renderBenchChips();
   renderLiberoChipsInline();
   renderLineupChips();
   if (typeof renderOpponentPlayers === "function") {
@@ -429,40 +423,7 @@ function isLiberoForScope(name, scope = "our") {
   return getTeamLiberos(scope).includes(name);
 }
 function canPlaceInSlot(name, posIdx, showAlert = true) {
-  if (!name) return true;
-  ensureCourtShape();
-  const targetSlot = state.court[posIdx] || { main: "", replaced: "" };
-  // Se esiste un libero in campo che sostituisce questa giocatrice, può rientrare solo lì (ma sempre consentito su quello slot)
-  const libSlotIdx = (state.court || []).findIndex(
-    slot => isLibero(slot.main) && slot.replaced === name
-  );
-  if (libSlotIdx !== -1) {
-    if (libSlotIdx !== posIdx) {
-      if (showAlert) alert("Questa giocatrice può rientrare solo nello slot del libero che la sta sostituendo.");
-      return false;
-    }
-    return true;
-  }
-  if (isLibero(name) && FRONT_ROW_INDEXES.has(posIdx)) {
-    if (showAlert) alert("Non puoi mettere il libero in prima linea.");
-    return false;
-  }
-  if (isLibero(name)) {
-    const anotherLiberoIdx = (state.court || []).findIndex(
-      slot => slot.main && slot.main !== name && isLibero(slot.main)
-    );
-    if (anotherLiberoIdx !== -1 && anotherLiberoIdx !== posIdx) {
-      if (showAlert) alert("Puoi avere solo un libero in campo alla volta.");
-      return false;
-    }
-  }
-  const lockedMap = getLockedMap();
-  // se la giocatrice è proprio quella sostituita dal libero in questo slot, consentiamo il rientro qui
-  if (lockedMap[name] !== undefined && lockedMap[name] !== posIdx && targetSlot.replaced !== name) {
-    if (showAlert) alert("Questa giocatrice può rientrare solo nella sua posizione (sostituita dal libero).");
-    return false;
-  }
-  return true;
+  return canPlaceInSlotForScope(name, posIdx, showAlert, "our");
 }
 function getLockedMapForScope(scope = "our") {
   const map = {};
@@ -600,7 +561,6 @@ function commitCourtChange(baseCourt, options = {}) {
   enforceAutoLiberoForState({ skipServerOnServe: true });
   saveState();
   renderPlayers();
-  renderBenchChips();
   renderLiberoChipsInline();
   renderLineupChips();
   updateRotationDisplay();
@@ -623,78 +583,7 @@ function commitCourtChangeForScope(baseCourt, scope = "our") {
   updateOpponentRotationDisplay();
 }
 function setCourtPlayer(posIdx, target, playerName) {
-  ensureCourtShape();
-  const baseCourt = ensureCourtShapeFor(state.court); // opera sempre sul lineup visibile
-  const name = (playerName || "").trim();
-  if (!name) return;
-  if (!canPlaceInSlot(name, posIdx, true)) return;
-  const slotState = state.court[posIdx] || { main: "", replaced: "" };
-  const slotBase = baseCourt[posIdx] || slotState;
-  const isLiberoHere = isLibero(slotState.main) || isLibero(slotBase.main);
-  const replacedName = slotState.replaced || slotBase.replaced || "";
-  const prevMain = slotBase.main || "";
-  const benchPlayers = new Set(getBenchPlayers());
-  const shouldRecordSub =
-    prevMain &&
-    prevMain !== name &&
-    !isLibero(prevMain) &&
-    !isLibero(name) &&
-    benchPlayers.has(name);
-  // Caso speciale: rientro titolare al posto del libero che la sostituisce
-  if (isLiberoHere && replacedName === name && !isLibero(name)) {
-    const next = cloneCourtLineup(baseCourt);
-    next[posIdx] = { main: name, replaced: "" };
-    commitCourtChange(next);
-    return;
-  }
-  let nextCourt = null;
-  if (lineupCore && typeof lineupCore.setPlayerOnCourt === "function") {
-    nextCourt = lineupCore.setPlayerOnCourt({
-      court: baseCourt,
-      posIdx,
-      playerName: name,
-      liberos: state.liberos || []
-    });
-  } else {
-    const reserved = reserveNamesInCourt(name, baseCourt);
-    reserved.forEach((slot, idx) => (baseCourt[idx] = slot));
-    const slot = baseCourt[posIdx] || { main: "", replaced: "" };
-    const prevMain = slot.main;
-    const updated = Object.assign({}, slot);
-    updated.main = name;
-    const isIncomingLibero = (state.liberos || []).includes(name);
-    const prevWasLibero = (state.liberos || []).includes(prevMain);
-    if (isIncomingLibero) {
-      if (prevWasLibero) {
-        // mantieni l'aggancio alla titolare originale se stai sostituendo un libero con un altro libero
-        updated.replaced = slot.replaced || "";
-      } else {
-        updated.replaced = prevMain || slot.replaced || "";
-      }
-      if (updated.replaced) {
-        registerLiberoPair(updated.replaced, name);
-      }
-    } else {
-      updated.replaced = "";
-    }
-    releaseReplaced(name, posIdx, baseCourt);
-    baseCourt[posIdx] = updated;
-    nextCourt = baseCourt;
-  }
-  const placedSlot = nextCourt && nextCourt[posIdx];
-  if (placedSlot && isLibero(placedSlot.main) && placedSlot.replaced) {
-    registerLiberoPair(placedSlot.replaced, placedSlot.main);
-    state.preferredLibero = placedSlot.main;
-    const roleCat = roleToAutoCategory(getRoleLabel(posIdx + 1)); // ruolo corrente della posizione
-    if (roleCat) {
-      state.autoLiberoRole = roleCat;
-      state.autoLiberoBackline = true;
-    }
-  }
-  commitCourtChange(nextCourt);
-  if (shouldRecordSub && typeof recordSubstitutionEvent === "function") {
-    recordSubstitutionEvent({ playerIn: name, playerOut: prevMain });
-  }
+  setCourtPlayerForScope(posIdx, target, playerName, "our");
 }
 function swapCourtPlayers(fromIdx, toIdx) {
   ensureCourtShape();
@@ -728,17 +617,17 @@ function swapCourtPlayers(fromIdx, toIdx) {
   commitCourtChange(nextCourt);
 }
 function setCourtPlayerForScope(posIdx, target, playerName, scope = "our") {
-  if (scope === "our") {
-    setCourtPlayer(posIdx, target, playerName);
-    return;
-  }
   const baseCourt = ensureCourtShapeFor(getTeamCourt(scope));
   const name = (playerName || "").trim();
-  if (!name) return;
+  if (!name || !getTeamPlayers(scope).includes(name)) return;
   if (!canPlaceInSlotForScope(name, posIdx, true, scope)) return;
   const slotState = baseCourt[posIdx] || { main: "", replaced: "" };
   const isLiberoHere = isLiberoForScope(slotState.main, scope);
   const replacedName = slotState.replaced || "";
+  const prevMain = slotState.main || "";
+  const shouldRecordSub = prevMain && prevMain !== name &&
+    !isLiberoForScope(prevMain, scope) && !isLiberoForScope(name, scope) &&
+    !getUsedNamesForScope(scope).has(name);
   if (isLiberoHere && replacedName === name && !isLiberoForScope(name, scope)) {
     const next = cloneCourtLineup(baseCourt);
     next[posIdx] = { main: name, replaced: "" };
@@ -779,7 +668,21 @@ function setCourtPlayerForScope(posIdx, target, playerName, scope = "our") {
     baseCourt[posIdx] = updated;
     nextCourt = baseCourt;
   }
+  const placedSlot = nextCourt && nextCourt[posIdx];
+  if (placedSlot && isLiberoForScope(placedSlot.main, scope) && placedSlot.replaced) {
+    registerLiberoPairForScope(placedSlot.replaced, placedSlot.main, scope);
+    setTeamPreferredLibero(scope, placedSlot.main);
+    const rotation = scope === "opponent" ? state.opponentRotation : state.rotation;
+    const roleCat = roleToAutoCategory(getRoleLabelForRotation(posIdx + 1, rotation || 1));
+    if (roleCat) {
+      setTeamAutoLiberoRole(scope, roleCat);
+      setTeamAutoLiberoBackline(scope, true);
+    }
+  }
   commitCourtChangeForScope(nextCourt, scope);
+  if (shouldRecordSub && typeof recordSubstitutionEvent === "function") {
+    recordSubstitutionEvent({ playerIn: name, playerOut: prevMain, teamScope: scope });
+  }
 }
 function clearCourtAssignment(posIdx, target) {
   ensureCourtShape();

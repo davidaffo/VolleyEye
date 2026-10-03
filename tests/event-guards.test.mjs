@@ -33,7 +33,6 @@ const context = {
   ensureCourtShapeFor: court => court,
   saveState: () => {},
   renderPlayers: () => {},
-  renderBenchChips: () => {},
   renderLineupChips: () => {},
   updateRotationDisplay: () => {}
 };

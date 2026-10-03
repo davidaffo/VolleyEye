@@ -546,7 +546,6 @@ const elBtnExportTeam = document.getElementById("btn-export-team");
 const elBtnImportTeam = document.getElementById("btn-import-team");
 const elTeamFileInput = document.getElementById("team-file-input");
 const elLineupChips = document.getElementById("lineup-chips");
-const elBenchChips = document.getElementById("bench-chips");
 const elRotationIndicator = document.getElementById("rotation-indicator");
 const elRotationSelect = document.getElementById("rotation-select");
 const elRotationSelectOpp = document.getElementById("rotation-select-opp");
@@ -643,7 +642,6 @@ const elPlayerAnalysisChartMetric = document.getElementById("player-analysis-cha
 const elPlayerAnalysisSkillChartGrid = document.getElementById("player-analysis-skill-chart-grid");
 const elThemeToggles = Array.from(document.querySelectorAll("[data-theme-choice]"));
 let modalMode = "skill";
-let modalSubPosIdx = -1;
 
 function applySkillThemeVars() {
   const root = document.documentElement;

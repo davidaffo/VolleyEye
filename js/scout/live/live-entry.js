@@ -479,7 +479,6 @@ function renderSkillChoice(playerIdx, playerName, scope = "our") {
   activeSkillModalContext = { playerIdx, playerName: playerName || null, skillId: null, scope };
   updateSetTypeVisibility(getPredictedSkillIdForScope(scope) || getPredictedSkillId());
   modalMode = "skill";
-  modalSubPosIdx = -1;
   elSkillModalBody.innerHTML = "";
   const players = getPlayersForScope(scope);
   if (elSkillModalTitle) {
@@ -517,7 +516,6 @@ function renderSkillCodes(playerIdx, playerName, skillId, scope = "our") {
   const predicted = getPredictedSkillIdForScope(scope) || getPredictedSkillId();
   updateSetTypeVisibility(skillId === "attack" ? "attack" : predicted);
   modalMode = "skill-codes";
-  modalSubPosIdx = -1;
   elSkillModalBody.innerHTML = "";
   const skill = SKILLS.find(s => s.id === skillId);
   const players = getPlayersForScope(scope);
@@ -727,50 +725,6 @@ function openSkillCodesModal(playerIdx, playerName, skillId, scope = "our") {
   elSkillModal.classList.remove("hidden");
   setModalOpenState(true);
 }
-function openSubModal(posIdx) {
-  if (!elSkillModal || !elSkillModalBody) return;
-  if (isDesktopCourtModalLayout()) {
-    setCourtAreaLocked(true);
-  }
-  updateCourtModalPlacement();
-  modalMode = "sub";
-  modalSubPosIdx = posIdx;
-  elSkillModalBody.innerHTML = "";
-  setSkillModalCancelVisibility(false);
-  if (elSkillModalTitle) {
-    elSkillModalTitle.textContent = "Sostituisci posizione " + (posIdx + 1);
-  }
-  const bench = getBenchPlayers();
-  const liberos = getBenchLiberos();
-  const candidates = Array.from(new Set([...bench, ...liberos]));
-  if (candidates.length === 0) {
-    const empty = document.createElement("div");
-    empty.className = "players-empty";
-    empty.textContent = "Nessuna riserva disponibile.";
-    elSkillModalBody.appendChild(empty);
-  } else {
-    candidates.forEach(name => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      const isLib = (state.liberos || []).includes(name);
-      btn.className = "sub-option-btn" + (isLib ? " libero" : "");
-      btn.textContent = formatNameWithNumber(name);
-      if (isLib) {
-        const tag = document.createElement("span");
-        tag.className = "sub-libero-tag";
-        tag.textContent = "Libero";
-        btn.appendChild(tag);
-      }
-      btn.addEventListener("click", () => {
-        setCourtPlayer(posIdx, "main", name);
-        closeSkillModal();
-      });
-      elSkillModalBody.appendChild(btn);
-    });
-  }
-  elSkillModal.classList.remove("hidden");
-  setModalOpenState(true);
-}
 function cancelSkillModalFlow() {
   if (!activeSkillModalContext) return;
   const { playerIdx, playerName, scope } = activeSkillModalContext;
@@ -793,9 +747,6 @@ function isPointPickModeForScope(scope) {
 function stopErrorPickMode(options = {}) {
   if (!errorPickModeState) return;
   errorPickModeState = null;
-  if (typeof renderBenchChips === "function") {
-    renderBenchChips();
-  }
   if (options && options.render === false) return;
   renderPlayers();
 }
@@ -816,9 +767,6 @@ function startErrorPickMode(scope = "our") {
   closePointModal();
   closeErrorModal();
   errorPickModeState = { scope };
-  if (typeof renderBenchChips === "function") {
-    renderBenchChips();
-  }
   renderPlayers();
 }
 function startPointPickMode(scope = "our") {

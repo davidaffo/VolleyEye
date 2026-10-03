@@ -1,57 +1,3 @@
-function renderChipList(container, names, lockedMap, options = {}) {
-  if (!container) return;
-  container.innerHTML = "";
-  const {
-    isLiberoColumn = false,
-    highlightLibero = false,
-    emptyText = "Nessuna riserva disponibile.",
-    replacedSet = new Set()
-  } = options;
-  if (!names || names.length === 0) {
-    const span = document.createElement("span");
-    span.className = "bench-empty";
-    span.textContent = emptyText;
-    container.appendChild(span);
-    return;
-  }
-  const libSet = new Set(state.liberos || []);
-  names.forEach(name => {
-    const chip = document.createElement("div");
-    const classes = ["bench-chip"];
-    if (isLiberoColumn || (highlightLibero && libSet.has(name))) {
-      classes.push("libero-flag");
-    }
-    if (replacedSet.has(name)) {
-      classes.push("replaced-chip");
-    }
-    if (lockedMap[name] !== undefined) classes.push("bench-locked");
-    chip.className = classes.join(" ");
-    const isLiberoPlayer = libSet.has(name);
-    const allowDirect = isLiberoColumn || isLiberoPlayer;
-    chip.draggable = allowDirect;
-    chip.dataset.playerName = name;
-    const label = document.createElement("span");
-    label.textContent =
-      formatNameWithNumber(name) + (lockedMap[name] !== undefined ? " (sost. libero)" : "");
-    chip.appendChild(label);
-    if (allowDirect) {
-      chip.addEventListener("dragstart", handleBenchDragStart);
-      chip.addEventListener("dragend", handleBenchDragEnd);
-      chip.addEventListener("click", () => handleBenchClick(name));
-      chip.addEventListener("pointerdown", ev => handleBenchPointerDown(ev, name));
-      chip.addEventListener("touchstart", ev => handleBenchTouchStart(ev, name), {
-        passive: false
-      });
-      chip.addEventListener("touchmove", handleBenchTouchMove, { passive: false });
-      chip.addEventListener("touchend", handleBenchTouchEnd, { passive: false });
-      chip.addEventListener("touchcancel", handleBenchTouchCancel, { passive: false });
-    } else {
-      chip.title = "Usa Imposta formazione per cambiare le titolari.";
-      chip.setAttribute("aria-disabled", "true");
-    }
-    container.appendChild(chip);
-  });
-}
 const elMetricsConfig = document.getElementById("metrics-config");
 const elBtnResetMetrics = document.getElementById("btn-reset-metrics");
 const elBtnResetCodes = document.getElementById("btn-reset-codes");
@@ -61,7 +7,6 @@ let draggedPlayerName = "";
 let draggedFromPos = null;
 let dragSourceType = "";
 let draggedScope = "our";
-let benchDropZoneInitialized = false;
 let touchBenchName = "";
 let touchBenchScope = "our";
 let touchBenchOverPos = -1;

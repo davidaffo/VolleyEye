@@ -1243,7 +1243,7 @@ body[data-theme="light"] #next-set-block-opp {
   gap: 0.35rem;
   min-width: 0;
 }
-#btn-undo {
+#btn-contesa {
   margin-left: auto;
 }
 .net-action-btn--block-prompt {
@@ -1274,6 +1274,7 @@ body[data-theme="light"] #next-set-block-opp {
   font-size: 1rem;
   letter-spacing: 0.12em;
 }
+.court-net-divider.block-prompt-active #btn-contesa,
 .court-net-divider.block-prompt-active #btn-undo {
   width: auto;
   white-space: nowrap;

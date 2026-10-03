@@ -143,20 +143,17 @@ test("dopo il caricamento di un match il roster avversario aggiorna stato, numer
   assert.equal(context.reopened.opponentPlayerNumbers["Ospite 7"], "27");
   assert.equal(context.integrationResult.snapshot.opponentPlayerNumbers["Ospite 7"], "17", "lo snapshot precedente deve restare isolato");
 
-  function node() {
-    return {
-      children: [], dataset: {}, classList: makeClassList(),
-      set innerHTML(value) { this.children = []; },
-      appendChild(child) { this.children.push(child); },
-      addEventListener() {}
-    };
-  }
-  const bench = node();
-  context.document.getElementById = id => id === "bench-chips-opp" ? bench : null;
-  context.document.createElement = node;
-  vm.runInContext("renderOpponentBenchChips()", context);
-  assert.equal(bench.children.length, 3);
-  assert.ok(bench.children.some(child => child.dataset.playerName === "Ospite 7" && child.textContent.startsWith("27 - ")));
+  // The live court has no bench: roster choices belong to the shared lineup modal.
+  vm.runInContext(`
+    lineupModalScope = "opponent";
+    globalThis.benchNames = getBenchForLineupWithRoster(
+      state.opponentCourt, getLineupModalPlayers(), getLineupModalLiberos(), getLineupModalNumbers()
+    );
+    globalThis.reserveLabel = formatLineupModalName("Ospite 7");
+  `, context);
+  assert.equal(context.benchNames.length, 3);
+  assert.ok(context.benchNames.includes("Ospite 7"));
+  assert.ok(context.reserveLabel.startsWith("27 - "));
 
   // Exercise the actual archive selection path used by the new-match dialog.
   context.document.getElementById = () => null;

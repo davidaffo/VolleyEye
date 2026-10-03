@@ -1,16 +1,3 @@
-function getBenchForLineup(court) {
-  const libSet = new Set(state.liberos || []);
-  const used = new Set();
-  getCourtShape(court).forEach(slot => {
-    const name = slot.main || "";
-    if (name) used.add(name);
-  });
-  const bench = (state.players || []).filter(name => name && !libSet.has(name) && !used.has(name));
-  if (typeof sortNamesByNumber === "function") {
-    return sortNamesByNumber(bench, state.playerNumbers || {});
-  }
-  return bench;
-}
 function getLineupBaseCourtFromState() {
   const libSet = new Set(getLineupModalLiberos());
   const baseCourt =
@@ -669,7 +656,6 @@ function saveLineupModal({ countSubstitutions = false } = {}) {
     state.court = nextCourt;
     saveState();
     if (typeof renderPlayers === "function") renderPlayers();
-    if (typeof renderBenchChips === "function") renderBenchChips();
     if (typeof renderLineupChips === "function") renderLineupChips();
     if (typeof updateRotationDisplay === "function") updateRotationDisplay();
   }

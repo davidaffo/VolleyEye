@@ -157,7 +157,6 @@ async function initializeApplicationState() {
   renderPlayersManagerList();
   renderOpponentLiberoTags();
   renderOpponentPlayersList();
-  renderBenchChips();
   renderLiberoChipsInline();
   renderLineupChips();
   renderLiberoTags();
@@ -201,7 +200,6 @@ async function initializeApplicationState() {
     renderPlayers();
     renderEventsLog();
     renderAggregatedTable();
-    renderBenchChips();
     renderLiberoChipsInline();
     renderLineupChips();
     renderLiberoTags();

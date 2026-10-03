@@ -79,33 +79,15 @@ function element() {
     setAttribute() {}
   };
 }
-function benchContext() {
-  const container = element();
-  const context = {
-    state: { useOpponentTeam: true, players: ["Casa"], opponentPlayers: ["Titolare", "Riserva", "Libero", "Sostituita"],
-      opponentCourt: [{ main: "Titolare" }, { main: "Libero", replaced: "Sostituita" }],
-      opponentLiberos: ["Libero"], opponentPlayerNumbers: { Riserva: "12" }, opponentCaptains: ["Riserva"] },
-    document: { getElementById: () => container, createElement: element },
-    getCourtShape: court => court,
-    formatNameWithNumberFor: (name, numbers) => `${numbers[name]} - ${name}`,
-    openMobileLineupModal: scope => { context.opened = scope; }, container
-  };
-  load(context, scout, ["getBenchForLineupWithRoster"]);
-  return load(context, roster, ["renderOpponentBenchChips"]);
-}
-test("le riserve avversarie sono visibili e aprono la formazione della squadra corretta", () => {
-  const c = benchContext();
-  c.renderOpponentBenchChips();
-  assert.equal(c.container.children.length, 1);
-  assert.equal(c.container.children[0].textContent, "12 - Riserva");
-  c.container.children[0].events.click();
-  assert.equal(c.opened, "opponent");
-  c.state.opponentCourt.push({ main: "Riserva" });
-  c.renderOpponentBenchChips();
-  assert.equal(c.container.children[0].textContent, "Nessuna riserva disponibile.");
-  c.state.useOpponentTeam = false;
-  c.renderOpponentBenchChips();
-  assert.equal(c.container.children.length, 0);
+test("le riserve avversarie restano disponibili nella formazione, usando soltanto il roster avversario", () => {
+  const c = load({ getCourtShape: court => court }, scout, ["getBenchForLineupWithRoster"]);
+  const bench = c.getBenchForLineupWithRoster(
+    [{ main: "Titolare" }, { main: "Libero", replaced: "Sostituita" }],
+    ["Titolare", "Riserva", "Libero", "Sostituita"],
+    ["Libero"],
+    { Riserva: "12" }
+  );
+  assert.deepEqual(plain(bench), ["Riserva"]);
 });
 test("la formazione avversaria usa i propri numeri e capitano anche con nomi omonimi", () => {
   const c = load({
@@ -123,10 +105,12 @@ test("il clic sul libero avversario usa il cambio e non rimuove il ruolo", () =>
     elLiberoTagsInlineOpp: container, document: { createElement: element },
     sortNamesByNumber: names => names, orderLiberosByPreference: names => names,
     getUsedNamesForScope: () => new Set(), formatNameWithNumberFor: name => name,
+    getTeamNumbers: () => ({}), getTeamLiberos: () => ["Libero"], getTeamPlayers: () => ["Libero"],
+    getReplacedByLiberosForScope: () => [], getLockedMapForScope: () => ({}),
     handleBenchClickForScope: (name, scope) => { c.clicked = [name, scope]; }
   };
   for (const name of ["handleBenchDragStart", "handleBenchDragEnd", "handleBenchTouchMove", "handleBenchTouchEnd", "handleBenchTouchCancel"]) c[name] = () => {};
-  load(c, roster, ["renderOpponentLiberoChipsInline"]);
+  load(c, roster, ["renderTeamLiberoChipsInline", "renderOpponentLiberoChipsInline"]);
   c.renderOpponentLiberoChipsInline();
   container.children[0].events.click();
   assert.deepEqual(c.clicked, ["Libero", "opponent"]);

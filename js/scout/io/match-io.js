@@ -166,7 +166,6 @@ function applyImportedMatch(nextState, options = {}) {
   renderOpponentLiberoTags();
   renderOpponentPlayersList();
   renderPlayers();
-  renderBenchChips();
   renderLiberoChipsInline();
   renderLineupChips();
   renderLiberoTags();
@@ -307,7 +306,6 @@ function removeDefaultDemoData({ askConfirmation = true, showResult = true } = {
     applyPlayersFromStateToTextarea();
     applyOpponentPlayersFromStateToTextarea();
     renderPlayers();
-    renderBenchChips();
     renderLineupChips();
   }
   if (showResult) alert("Dati demo eliminati.");

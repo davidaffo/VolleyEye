@@ -708,7 +708,6 @@ function resetMatchState(options = {}) {
   recalcAllStatsAndUpdateUI();
   renderEventsLog();
   renderPlayers();
-  renderBenchChips();
   updateRotationDisplay();
   applyMatchInfoToUI();
   if (!skipMatchesRender) {
@@ -919,7 +918,6 @@ function applyImportedTeamData(data) {
   renderOpponentLiberoTags();
   renderLiberoChipsInline();
   renderPlayers();
-  renderBenchChips();
   renderLineupChips();
   alert("Squadra importata dal file.");
 }

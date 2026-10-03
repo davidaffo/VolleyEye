@@ -387,7 +387,6 @@ function renamePlayerAtIndex(idx, nextNameRaw) {
   applyPlayersFromStateToTextarea();
   renderPlayersManagerList();
   renderPlayers();
-  renderBenchChips();
   renderLiberoChipsInline();
   renderLineupChips();
   renderLiberoTags();

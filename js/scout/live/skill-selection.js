@@ -62,7 +62,6 @@ function syncLineupPreferredLiberoSelect() {
         if (typeof updateOpponentRotationDisplay === "function") updateOpponentRotationDisplay();
       } else {
         if (typeof renderPlayers === "function") renderPlayers();
-        if (typeof renderBenchChips === "function") renderBenchChips();
         if (typeof renderLineupChips === "function") renderLineupChips();
         if (typeof renderLiberoChipsInline === "function") renderLiberoChipsInline();
         if (typeof updateRotationDisplay === "function") updateRotationDisplay();
