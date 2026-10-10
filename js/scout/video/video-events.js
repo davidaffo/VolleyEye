@@ -825,22 +825,22 @@ function updateTeamCounters() {
   const setNum = state.currentSet || 1;
   if (elTimeoutCount) {
     const used = getTimeoutCountForSet(setNum);
-    const remaining = Math.max(0, 2 - used);
+    const remaining = Math.max(0, MAX_TIMEOUTS_PER_SET - used);
     elTimeoutCount.textContent = String(remaining);
   }
   if (elTimeoutOppCount) {
     const used = getTimeoutOppCountForSet(setNum);
-    const remaining = Math.max(0, 2 - used);
+    const remaining = Math.max(0, MAX_TIMEOUTS_PER_SET - used);
     elTimeoutOppCount.textContent = String(remaining);
   }
   if (elSubstitutionRemaining) {
     const used = getSubstitutionCountForSet(setNum, "our");
-    const remaining = Math.max(0, 6 - used);
+    const remaining = Math.max(0, MAX_SUBSTITUTIONS_PER_SET - used);
     elSubstitutionRemaining.textContent = String(remaining);
   }
   if (elSubstitutionRemainingOpp) {
     const used = getSubstitutionCountForSet(setNum, "opponent");
-    const remaining = Math.max(0, 6 - used);
+    const remaining = Math.max(0, MAX_SUBSTITUTIONS_PER_SET - used);
     elSubstitutionRemainingOpp.textContent = String(remaining);
   }
 }

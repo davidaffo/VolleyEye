@@ -1,4 +1,6 @@
 const STORAGE_KEY = "volleyScoutV1";
+const MAX_TIMEOUTS_PER_SET = 2;
+const MAX_SUBSTITUTIONS_PER_SET = 8;
 const SKILLS = [
   { id: "serve", label: "Battuta", badgeClass: "badge-serve" },
   { id: "pass", label: "Ricezione", badgeClass: "badge-pass" },
