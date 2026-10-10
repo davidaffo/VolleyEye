@@ -24,10 +24,10 @@ function bindModalAndGlobalControls() {
   if (elBtnNetBlockPrompt) {
     elBtnNetBlockPrompt.addEventListener("click", triggerNetBlockPrompt);
   }
-  if (elBaseModalClose) {
+  if (elBaseModalClose && elBaseModalClose.dataset.reactManaged !== "true") {
     elBaseModalClose.addEventListener("click", closeBaseModal);
   }
-  if (elBaseModal) {
+  if (elBaseModal && elBaseModal.dataset.reactManaged !== "true") {
     elBaseModal.addEventListener("click", e => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
@@ -38,7 +38,7 @@ function bindModalAndGlobalControls() {
       }
     });
   }
-  if (elBaseModalGrid) {
+  if (elBaseModalGrid && elBaseModalGrid.dataset.reactManaged !== "true") {
     elBaseModalGrid.addEventListener("click", e => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
@@ -50,10 +50,10 @@ function bindModalAndGlobalControls() {
       }
     });
   }
-  if (elAttackTypeModalClose) {
+  if (elAttackTypeModalClose && elAttackTypeModalClose.dataset.reactManaged !== "true") {
     elAttackTypeModalClose.addEventListener("click", closeAttackTypeModal);
   }
-  if (elAttackTypeModal) {
+  if (elAttackTypeModal && elAttackTypeModal.dataset.reactManaged !== "true") {
     elAttackTypeModal.addEventListener("click", e => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
@@ -64,7 +64,7 @@ function bindModalAndGlobalControls() {
       }
     });
   }
-  if (elAttackTypeModalGrid) {
+  if (elAttackTypeModalGrid && elAttackTypeModalGrid.dataset.reactManaged !== "true") {
     elAttackTypeModalGrid.addEventListener("click", e => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
@@ -76,10 +76,10 @@ function bindModalAndGlobalControls() {
       }
     });
   }
-  if (elAttackSetterModalClose) {
+  if (elAttackSetterModalClose && elAttackSetterModalClose.dataset.reactManaged !== "true") {
     elAttackSetterModalClose.addEventListener("click", closeAttackSetterModal);
   }
-  if (elAttackSetterModal) {
+  if (elAttackSetterModal && elAttackSetterModal.dataset.reactManaged !== "true") {
     elAttackSetterModal.addEventListener("click", e => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
@@ -90,10 +90,10 @@ function bindModalAndGlobalControls() {
       }
     });
   }
-  if (elBlockNumberModalClose) {
+  if (elBlockNumberModalClose && elBlockNumberModalClose.dataset.reactManaged !== "true") {
     elBlockNumberModalClose.addEventListener("click", closeBlockNumberModal);
   }
-  if (elBlockNumberModal) {
+  if (elBlockNumberModal && elBlockNumberModal.dataset.reactManaged !== "true") {
     elBlockNumberModal.addEventListener("click", e => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
@@ -104,7 +104,7 @@ function bindModalAndGlobalControls() {
       }
     });
   }
-  if (elBlockNumberModalGrid) {
+  if (elBlockNumberModalGrid && elBlockNumberModalGrid.dataset.reactManaged !== "true") {
     elBlockNumberModalGrid.addEventListener("click", e => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
@@ -119,17 +119,17 @@ function bindModalAndGlobalControls() {
       }
     });
   }
-  if (elSkillModalCancel) {
+  if (elSkillModalCancel && elSkillModalCancel.dataset.reactManaged !== "true") {
     elSkillModalCancel.addEventListener("click", e => {
       e.preventDefault();
       e.stopPropagation();
       cancelSkillModalFlow();
     });
   }
-  if (elSkillModalClose) {
+  if (elSkillModalClose && elSkillModalClose.dataset.reactManaged !== "true") {
     elSkillModalClose.addEventListener("click", closeSkillModal);
   }
-  if (elSkillModal) {
+  if (elSkillModal && elSkillModal.dataset.reactManaged !== "true") {
     elSkillModal.addEventListener("click", e => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
@@ -143,10 +143,10 @@ function bindModalAndGlobalControls() {
       }
     });
   }
-  if (elAggSkillModalClose) {
+  if (elAggSkillModalClose && elAggSkillModalClose.dataset.reactManaged !== "true") {
     elAggSkillModalClose.addEventListener("click", closeAggSkillModal);
   }
-  if (elAggSkillModal) {
+  if (elAggSkillModal && elAggSkillModal.dataset.reactManaged !== "true") {
     elAggSkillModal.addEventListener("click", e => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;

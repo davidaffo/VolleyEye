@@ -26,30 +26,30 @@ function bindDataAndNavigationControls() {
     });
   }
   if (elBtnResetMatch) elBtnResetMatch.addEventListener("click", resetMatch);
-  if (elVideoFilterPresetSave) {
+  if (elVideoFilterPresetSave && elVideoFilterPresetSave.dataset?.reactManaged !== "true") {
     elVideoFilterPresetSave.addEventListener("click", saveCurrentVideoFilterPreset);
   }
-  if (elVideoFilterPresetName) {
+  if (elVideoFilterPresetName && elVideoFilterPresetName.dataset?.reactManaged !== "true") {
     elVideoFilterPresetName.addEventListener("keydown", e => {
       if (e.key !== "Enter") return;
       e.preventDefault();
       saveCurrentVideoFilterPreset();
     });
   }
-  if (elBtnForceSyncLog) {
+  if (elBtnForceSyncLog && elBtnForceSyncLog.dataset?.reactManaged !== "true") {
     elBtnForceSyncLog.addEventListener("click", () => {
       forceSyncDataFromLog();
       alert("Dati riallineati dal log.");
     });
   }
-  if (elBtnBackfillPlayerIds) {
+  if (elBtnBackfillPlayerIds && elBtnBackfillPlayerIds.dataset?.reactManaged !== "true") {
     elBtnBackfillPlayerIds.addEventListener("click", () => {
       const ok = confirm("Scrivere gli ID giocatrici in tutti i match salvati?");
       if (!ok) return;
       backfillPlayerIdsInSavedMatches();
     });
   }
-  if (elBtnToggleTopbar) {
+  if (elBtnToggleTopbar && elBtnToggleTopbar.dataset?.reactManaged !== "true") {
     elBtnToggleTopbar.addEventListener("click", () => {
       state.uiTopBarHidden = !state.uiTopBarHidden;
       applyTopBarVisibility();
@@ -73,7 +73,7 @@ function bindDataAndNavigationControls() {
     updateDefaultDemoDeleteButtonVisibility();
   }
   const elBtnForceRefreshApp = document.getElementById("btn-force-refresh-app");
-  if (elBtnForceRefreshApp) {
+  if (elBtnForceRefreshApp && elBtnForceRefreshApp.dataset?.reactManaged !== "true") {
     elBtnForceRefreshApp.addEventListener("click", forceRefreshAppAssets);
   }
   if (elBtnUndo) elBtnUndo.addEventListener("click", undoLastEvent);

@@ -1,3 +1,4 @@
+import { readAppHtml } from './helpers/app-html.mjs';
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -7,7 +8,7 @@ import { readScoutSource } from "./helpers/scout-source.mjs";
 const demo = JSON.parse(readFileSync(new URL("../match_demo.json", import.meta.url), "utf8"));
 const state = demo.state;
 const source = readScoutSource();
-const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+const html = readAppHtml();
 
 const playerName = player => [player.lastName, player.firstName].filter(Boolean).join(" ").trim();
 const activeTeamNames = team =>

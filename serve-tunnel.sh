@@ -11,7 +11,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo ">> Starting local server on http://127.0.0.1:${PORT}"
-npx serve . --listen "$PORT" &
+npm run dev -- --port "$PORT" --strictPort &
 SERVE_PID=$!
 sleep 1
 

@@ -359,6 +359,7 @@ function getActiveServeSelectionScope() {
 }
 function renderLogServeTrajectories() {
   if (!elLogServeTrajectory) return;
+  if(elLogServeTrajectory.dataset?.reactManaged==="true"&&typeof publishReactLogServeTrajectories==="function")return publishReactLogServeTrajectories();
   const selectionScope = getActiveServeSelectionScope();
   const servingScope = getServingScopeForLogTrajectory() || selectionScope;
   const allowOur = !!state.showServeTrajectoryLogOur;
@@ -441,6 +442,7 @@ function getFilteredServeTrajectoryEvents() {
 }
 function renderTrajectoryAnalysis() {
   if (!elTrajectoryGrid) return;
+  if(elTrajectoryGrid.dataset?.reactManaged==="true"&&typeof publishReactGlobalAttackGrid==="function")return publishReactGlobalAttackGrid();
   renderTrajectoryLegend(elTrajectoryGrid, "attack");
   renderTrajectoryFilters();
   renderAttackMetricsSummary(elTrajectoryAttackSummary, getFilteredAttackSummaryEvents());
@@ -528,6 +530,7 @@ function getFilteredAttackSummaryEvents() {
 }
 function renderAttackMetricsSummary(target, events, compareEvents = null) {
   if (!target) return;
+  if(target.dataset?.reactManaged==="true"&&typeof publishReactAttackSummary==="function")return publishReactAttackSummary(target,events,compareEvents);
   const list = Array.isArray(events) ? events.filter(ev => ev && ev.skillId === "attack") : [];
   const compareList = Array.isArray(compareEvents)
     ? compareEvents.filter(ev => ev && ev.skillId === "attack")
@@ -658,6 +661,7 @@ function renderAttackMetricsSummary(target, events, compareEvents = null) {
 }
 function renderServeTrajectoryAnalysis() {
   if (!elServeTrajectoryGrid) return;
+  if(elServeTrajectoryGrid.dataset?.reactManaged==="true"&&typeof publishReactGlobalServeGrid==="function")return publishReactGlobalServeGrid();
   renderServeTrajectoryFilters();
   const events = getFilteredServeTrajectoryEvents();
   const analysisScope = getAnalysisTeamScope();

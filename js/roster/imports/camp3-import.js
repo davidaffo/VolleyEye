@@ -314,6 +314,7 @@ function formatCamp3ImportPreview(changes) {
   return lines.join("\n");
 }
 function renderCamp3ConfirmSummary(draft) {
+  if(elCamp3ConfirmSummary?.dataset.reactManaged === "true" && typeof publishCamp3ConfirmView === "function"){publishCamp3ConfirmView(draft);return;}
   if (!elCamp3ConfirmSummary) return;
   elCamp3ConfirmSummary.innerHTML = "";
   const title = document.createElement("p");
@@ -468,7 +469,8 @@ function closeCamp3ConfirmModal(result = false) {
   if (!elCamp3ConfirmModal) return;
   const resolver = elCamp3ConfirmModal._camp3Resolve;
   elCamp3ConfirmModal._camp3Resolve = null;
-  elCamp3ConfirmModal.classList.add("hidden");
+  if(elCamp3ConfirmModal.dataset.reactManaged === "true" && typeof setCamp3ConfirmOpen === "function")setCamp3ConfirmOpen(false);
+  else elCamp3ConfirmModal.classList.add("hidden");
   if (typeof resolver === "function") resolver(!!result);
 }
 function showCamp3ImportConfirm(draft) {
@@ -477,7 +479,8 @@ function showCamp3ImportConfirm(draft) {
     return Promise.resolve(confirm(formatCamp3ImportPreview(plan ? plan.changes : {})) ? draft : null);
   }
   renderCamp3ConfirmSummary(draft);
-  elCamp3ConfirmModal.classList.remove("hidden");
+  if(elCamp3ConfirmModal.dataset.reactManaged === "true" && typeof setCamp3ConfirmOpen === "function")setCamp3ConfirmOpen(true);
+  else elCamp3ConfirmModal.classList.remove("hidden");
   return new Promise(resolve => {
     elCamp3ConfirmModal._camp3Resolve = result => resolve(result ? draft : null);
   });

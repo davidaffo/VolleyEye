@@ -8,16 +8,16 @@ function bindScoreAndSetControls() {
   if (elBtnResetPoints) {
     elBtnResetPoints.addEventListener("click", resetPointRulesToDefault);
   }
-  if (elBtnScoreForPlus) {
+  if (elBtnScoreForPlus && elBtnScoreForPlus.dataset.reactManaged !== "true") {
     elBtnScoreForPlus.addEventListener("click", () => handleManualScore("for", 1));
   }
-  if (elBtnScoreForMinus) {
+  if (elBtnScoreForMinus && elBtnScoreForMinus.dataset.reactManaged !== "true") {
     elBtnScoreForMinus.addEventListener("click", () => handleManualScore("for", -1));
   }
-  if (elBtnScoreAgainstPlus) {
+  if (elBtnScoreAgainstPlus && elBtnScoreAgainstPlus.dataset.reactManaged !== "true") {
     elBtnScoreAgainstPlus.addEventListener("click", () => handleManualScore("against", 1));
   }
-  if (elBtnScoreAgainstMinus) {
+  if (elBtnScoreAgainstMinus && elBtnScoreAgainstMinus.dataset.reactManaged !== "true") {
     elBtnScoreAgainstMinus.addEventListener("click", () => handleManualScore("against", -1));
   }
   if (elBtnScoreTeamPoint) {
@@ -38,10 +38,10 @@ function bindScoreAndSetControls() {
   if (elBtnScoreOppPointSingle) {
     elBtnScoreOppPointSingle.addEventListener("click", handleOpponentPoint);
   }
-  if (elBtnNextSet) {
+  if (elBtnNextSet && elBtnNextSet.dataset.reactManaged !== "true") {
     elBtnNextSet.addEventListener("click", () => openNextSetModal((state.currentSet || 1) + 1));
   }
-  if (elBtnEndMatch) {
+  if (elBtnEndMatch && elBtnEndMatch.dataset.reactManaged !== "true") {
     elBtnEndMatch.addEventListener("click", endMatch);
   }
   if (elBtnScoreTeamErrorModal) {
@@ -54,13 +54,13 @@ function bindScoreAndSetControls() {
     },
     true
   );
-  if (elSetStartModalClose) {
+  if (elSetStartModalClose && elSetStartModalClose.dataset.reactManaged !== "true") {
     elSetStartModalClose.addEventListener("click", closeSetStartModal);
   }
-  if (elSetStartModalCancel) {
+  if (elSetStartModalCancel && elSetStartModalCancel.dataset.reactManaged !== "true") {
     elSetStartModalCancel.addEventListener("click", closeSetStartModal);
   }
-  if (elSetStartModalSave) {
+  if (elSetStartModalSave && elSetStartModalSave.dataset.reactManaged !== "true") {
     elSetStartModalSave.addEventListener("click", applySetStartDraft);
   }
   if (elBtnNextSetModal) {
@@ -69,7 +69,7 @@ function bindScoreAndSetControls() {
   if (elBtnEndMatchModal) {
     elBtnEndMatchModal.addEventListener("click", endMatch);
   }
-  if (elNextSetDefaultOur) {
+  if (elNextSetDefaultOur && elNextSetDefaultOur.dataset.reactManaged !== "true") {
     elNextSetDefaultOur.addEventListener("click", () => {
       if (!nextSetDraft) return;
       const defaults = getRawDefaultStartForScope("our");
@@ -78,18 +78,18 @@ function bindScoreAndSetControls() {
       renderNextSetLineups();
     });
   }
-  if (elNextSetRotateCwOur) {
+  if (elNextSetRotateCwOur && elNextSetRotateCwOur.dataset.reactManaged !== "true") {
     elNextSetRotateCwOur.addEventListener("click", () => rotateNextSetCourt("our", "cw"));
   }
-  if (elNextSetRotateCcwOur) {
+  if (elNextSetRotateCcwOur && elNextSetRotateCcwOur.dataset.reactManaged !== "true") {
     elNextSetRotateCcwOur.addEventListener("click", () => rotateNextSetCourt("our", "ccw"));
   }
-  if (elNextSetRotationSelectOur) {
+  if (elNextSetRotationSelectOur && elNextSetRotationSelectOur.dataset.reactManaged !== "true") {
     elNextSetRotationSelectOur.addEventListener("change", () => {
       setNextSetRotation("our", elNextSetRotationSelectOur.value);
     });
   }
-  if (elNextSetDefaultOpp) {
+  if (elNextSetDefaultOpp && elNextSetDefaultOpp.dataset.reactManaged !== "true") {
     elNextSetDefaultOpp.addEventListener("click", () => {
       if (!nextSetDraft) return;
       const defaults = getRawDefaultStartForScope("opponent");
@@ -98,25 +98,25 @@ function bindScoreAndSetControls() {
       renderNextSetLineups();
     });
   }
-  if (elNextSetRotateCwOpp) {
+  if (elNextSetRotateCwOpp && elNextSetRotateCwOpp.dataset.reactManaged !== "true") {
     elNextSetRotateCwOpp.addEventListener("click", () => rotateNextSetCourt("opponent", "cw"));
   }
-  if (elNextSetRotateCcwOpp) {
+  if (elNextSetRotateCcwOpp && elNextSetRotateCcwOpp.dataset.reactManaged !== "true") {
     elNextSetRotateCcwOpp.addEventListener("click", () => rotateNextSetCourt("opponent", "ccw"));
   }
-  if (elNextSetRotationSelectOpp) {
+  if (elNextSetRotationSelectOpp && elNextSetRotationSelectOpp.dataset.reactManaged !== "true") {
     elNextSetRotationSelectOpp.addEventListener("change", () => {
       setNextSetRotation("opponent", elNextSetRotationSelectOpp.value);
     });
   }
-  if (elNextSetSwapCourt) {
+  if (elNextSetSwapCourt && elNextSetSwapCourt.dataset.reactManaged !== "true") {
     elNextSetSwapCourt.addEventListener("change", () => {
       if (nextSetDraft) {
         nextSetDraft.swapCourt = !!elNextSetSwapCourt.checked;
       }
     });
   }
-  if (elNextSetSideOur) {
+  if (elNextSetSideOur && elNextSetSideOur.dataset.reactManaged !== "true") {
     elNextSetSideOur.addEventListener("change", () => {
       if (!nextSetDraft) return;
       if (elNextSetSideOur.checked) {
@@ -124,7 +124,7 @@ function bindScoreAndSetControls() {
       }
     });
   }
-  if (elNextSetSideOpp) {
+  if (elNextSetSideOpp && elNextSetSideOpp.dataset.reactManaged !== "true") {
     elNextSetSideOpp.addEventListener("change", () => {
       if (!nextSetDraft) return;
       if (elNextSetSideOpp.checked) {
@@ -132,27 +132,27 @@ function bindScoreAndSetControls() {
       }
     });
   }
-  if (elNextSetServeOur) {
+  if (elNextSetServeOur && elNextSetServeOur.dataset.reactManaged !== "true") {
     elNextSetServeOur.addEventListener("change", () => {
       if (nextSetDraft && elNextSetServeOur.checked) {
         nextSetDraft.isServing = true;
       }
     });
   }
-  if (elNextSetServeOpp) {
+  if (elNextSetServeOpp && elNextSetServeOpp.dataset.reactManaged !== "true") {
     elNextSetServeOpp.addEventListener("change", () => {
       if (nextSetDraft && elNextSetServeOpp.checked) {
         nextSetDraft.isServing = false;
       }
     });
   }
-  if (elNextSetStart) {
+  if (elNextSetStart && elNextSetStart.dataset.reactManaged !== "true") {
     elNextSetStart.addEventListener("click", applyNextSetDraft);
   }
-  if (elNextSetCancel) {
+  if (elNextSetCancel && elNextSetCancel.dataset.reactManaged !== "true") {
     elNextSetCancel.addEventListener("click", closeNextSetModal);
   }
-  if (elNextSetClose) {
+  if (elNextSetClose && elNextSetClose.dataset.reactManaged !== "true") {
     elNextSetClose.addEventListener("click", closeNextSetModal);
   }
 }

@@ -8,14 +8,14 @@ context.self = context;
 context.window = context;
 vm.runInNewContext(
   readFileSync(new URL("../js/shared/namespace.js", import.meta.url), "utf8"),
-  context
+  context,
 );
 vm.runInNewContext(
   readFileSync(new URL("../js/match-settings.js", import.meta.url), "utf8"),
-  context
+  context,
 );
 
-const field = value => ({ value, disabled: false });
+const field = (value) => ({ value, disabled: false });
 
 function setup(overrides = {}) {
   const state = {
@@ -26,7 +26,7 @@ function setup(overrides = {}) {
     currentSet: 1,
     players: ["A"],
     opponentPlayers: ["B"],
-    ...overrides
+    ...overrides,
   };
   const calls = { saved: 0, set: [] };
   const elements = {
@@ -37,7 +37,7 @@ function setup(overrides = {}) {
     elLeg: field("andata"),
     elCurrentSet: field("3"),
     elPlayersInput: field(""),
-    elOpponentPlayersInput: field("")
+    elOpponentPlayersInput: field(""),
   };
   const api = context.VolleyEye.matchSettings.createMatchSettings({
     state,
@@ -48,9 +48,9 @@ function setup(overrides = {}) {
       state.match.matchType ||= "amichevole";
     },
     setCurrentSet: (value, options) => calls.set.push([value, options]),
-    syncCurrentSetUI: value => calls.syncedSet = value,
-    saveState: () => calls.saved += 1,
-    ...elements
+    syncCurrentSetUI: (value) => (calls.syncedSet = value),
+    saveState: () => (calls.saved += 1),
+    ...elements,
   });
   return { state, calls, elements, api };
 }
@@ -62,7 +62,9 @@ test("salva avversario manuale senza toccare la squadra selezionata", () => {
   assert.equal(state.match.opponent, "Manuale");
   assert.equal(state.match.opponentManual, "Manuale");
   assert.equal(state.match.date, "2026-09-09");
-  assert.deepEqual(JSON.parse(JSON.stringify(calls.set)), [["3", { save: false }]]);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls.set)), [
+    ["3", { save: false }],
+  ]);
   assert.equal(calls.saved, 1);
 });
 
@@ -77,7 +79,13 @@ test("in modalità doppia squadra usa l'avversaria selezionata", () => {
 test("la UI blocca il campo avversario solo quando è collegato a una squadra", () => {
   const { state, elements, api } = setup({
     useOpponentTeam: true,
-    match: { opponent: "Ospiti", category: "U16", date: "2026-01-02", matchType: "torneo", leg: "ritorno" }
+    match: {
+      opponent: "Ospiti",
+      category: "U16",
+      date: "2026-01-02",
+      matchType: "torneo",
+      leg: "ritorno",
+    },
   });
   api.applyMatchInfoToUI();
   assert.equal(elements.elOpponent.value, "Ospiti");
@@ -89,9 +97,33 @@ test("la UI blocca il campo avversario solo quando è collegato a una squadra", 
 });
 
 test("le textarea sono sempre ricostruite dallo stato del rispettivo roster", () => {
-  const { elements, api } = setup({ players: ["A", "C"], opponentPlayers: ["B", "D"] });
+  const { elements, api } = setup({
+    players: ["A", "C"],
+    opponentPlayers: ["B", "D"],
+  });
   api.applyPlayersFromStateToTextarea();
   api.applyOpponentPlayersFromStateToTextarea();
   assert.equal(elements.elPlayersInput.value, "A\nC");
   assert.equal(elements.elOpponentPlayersInput.value, "B\nD");
+});
+
+test("caricare i dati del match non sovrascrive la bozza dei campi gestiti da React", () => {
+  const { elements, api } = setup({
+    match: {
+      category: "Salvata",
+      date: "2026-10-10",
+      matchType: "torneo",
+      leg: "ritorno",
+    },
+  });
+  const names = ["elCategory", "elDate", "elMatchType", "elLeg"];
+  const draft = names.map((name) => elements[name].value);
+  names.forEach((name) => {
+    elements[name].dataset = { reactManaged: "true" };
+  });
+  api.applyMatchInfoToUI();
+  assert.deepEqual(
+    names.map((name) => elements[name].value),
+    draft,
+  );
 });

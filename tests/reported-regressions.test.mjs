@@ -1,3 +1,4 @@
+import { readAppHtml } from './helpers/app-html.mjs';
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -9,7 +10,7 @@ import { readStyleSource } from "./helpers/style-source.mjs";
 const scout = readScoutSource();
 const roster = readRosterSource();
 const css = readStyleSource();
-const index = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+const index = readAppHtml();
 const viewer = readFileSync(new URL("../docs/markdown-viewer.html", import.meta.url), "utf8");
 const teamEditor = readFileSync(new URL("../js/roster/editor/team-editor.js", import.meta.url), "utf8");
 
@@ -230,7 +231,7 @@ test("il taglia e cuci ffmpeg offre CPU e GPU conservando gli overlay", () => {
 });
 
 test("il dialogo ffmpeg permette di copiare il comando CPU o GPU", () => {
-  const index = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const index = readAppHtml();
   assert.match(index, /id="ffmpeg-encoder-modal"/);
   assert.match(index, /id="ffmpeg-copy-gpu"/);
   assert.match(index, /id="ffmpeg-copy-cpu"/);
@@ -385,7 +386,7 @@ test("il libero automatico usa il centrale come default senza rendere impossibil
   assert.equal(context.normalize("", 0), "C");
   assert.equal(context.normalize("", 1), "");
   assert.equal(context.normalize("P", 1), "P");
-  assert.equal((index.match(/<option value="C" selected>C<\/option>/g) || []).length, 3);
+  assert.equal((index.match(/<option value="C" selected(?:="")?>C<\/option>/g) || []).length, 3);
 });
 
 test("le formazioni usano i numeri del proprio roster e sezioni blu e rossa", () => {

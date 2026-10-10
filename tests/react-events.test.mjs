@@ -1,0 +1,256 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import vm from "node:vm";
+import test from "node:test";
+import { JSDOM } from "jsdom";
+const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
+const old = read("../js/scout/video/event-editor.js"),
+  model = read("../src/compat/event-table-adapter.js"),
+  live = read("../js/scout/live/live-entry.js"),
+  adapter = read("../src/compat/runtime-adapter.js");
+function setup() {
+  const dom = new JSDOM('<div id="target"></div>'),
+    state = {
+      selectedTeam: "Casa",
+      selectedOpponentTeam: "Ospite",
+      players: ["Rossi Sara", "Verdi Anna"],
+      opponentPlayers: ["Avversaria Uno"],
+      playerNumbers: {},
+      opponentPlayerNumbers: {},
+      events: [],
+    };
+  let latest;
+  const context = vm.createContext({
+    document: dom.window.document,
+    HTMLElement: dom.window.HTMLElement,
+    state,
+    selectedEventIds: new Set(),
+    lastSelectedEventId: null,
+    bulkEditActive: true,
+    eventTableContexts: {},
+    SKILLS: [
+      { id: "serve", label: "Battuta" },
+      { id: "pass", label: "Ricezione" },
+      { id: "manual", label: "Manuale" },
+    ],
+    RESULT_CODES: ["#", "+", "!", "-", "=", "/"],
+    ERROR_TYPES: [{ id: "net", label: "Rete" }],
+    DEFAULT_BASE_OPTIONS: [{ value: "K1", label: "K1" }],
+    DEFAULT_SET_TYPE_OPTIONS: [{ value: "Fast", label: "Fast" }],
+    DEFAULT_PHASE_OPTIONS: [
+      { value: "bp", label: "BP" },
+      { value: "so", label: "SO" },
+    ],
+    BULK_EDIT_CONFIG: new Proxy({}, { get: () => ({}) }),
+    getTeamScopeFromEvent: (ev) =>
+      ev.team === "opponent" ? "opponent" : "our",
+    getPlayersForScope: (scope) =>
+      scope === "opponent" ? state.opponentPlayers : state.players,
+    getPlayerNumbersForScope: () => ({}),
+    formatNameWithNumber: (name) => name,
+    formatNameWithNumberFor: (name) => name,
+    resolvePlayerIdx: (ev) => ev.playerIdx ?? -1,
+    formatVideoTimestamp: (time) => String(time),
+    computeEventVideoTime: (ev) => ev.videoTime ?? 0,
+    getErrorTypeLabel: (type) => type,
+    getEventKey: (ev, index) => ev.eventId ?? index,
+    formatAttackPhaseLabel: (value) =>
+      value === true ? "BP" : value === false ? "SO" : "",
+    normalizePhaseValue: (value) =>
+      value === true ? "bp" : value === false ? "so" : "",
+    getPlayerIdForScope: (scope, index) => scope + index,
+    getTeamNameForScope: (scope) => (scope === "our" ? "Casa" : "Ospite"),
+    makeEditableCell: () => {},
+    removeEventTableContext: () => {},
+    registerEventTableContext: () => {},
+    handleSeekForSelection: () => {},
+    updateSelectionStyles: () => {},
+    scrollRowIntoView: () => {},
+    refreshAfterVideoEdit: () => {},
+    markVideoUndoCapture: () => {},
+    pushVideoUndoSnapshot: () => {},
+    setSelectionForContext: () => {},
+    closeCurrentEdit: () => {},
+    eventTableStore: {
+      publish: (id, view) => {
+        latest = view;
+      },
+    },
+    console,
+  });
+  vm.runInContext(
+    live.slice(0, live.indexOf("function createCheckboxInput")) +
+      old +
+      adapter.slice(
+        adapter.indexOf("function buildReactBulkControl"),
+        adapter.indexOf("function openReactBulkEditor"),
+      ) +
+      model,
+    context,
+  );
+  return { context, dom, view: () => latest };
+}
+const events = [
+  {
+    eventId: 1,
+    t: 1,
+    set: 1,
+    team: "our",
+    playerIdx: 0,
+    skillId: "serve",
+    code: "+",
+    homeScore: 0,
+    visitorScore: 1,
+    serveType: "JF",
+    serveStart: { x: 0.15, y: 0.7 },
+    serveEnd: { x: 0.8, y: 0.4 },
+    durationMs: 0,
+  },
+  {
+    eventId: 2,
+    set: 2,
+    team: "opponent",
+    playerName: "Avversaria Uno",
+    skillId: "attack",
+    code: "=",
+    fromFreeball: true,
+    setterName: "Setter",
+    attackBp: false,
+    attackDirection: { start: { x: 0.4, y: 0.2 }, end: { x: 0.8, y: 0.9 } },
+    relatedEvents: [1, 3],
+  },
+  {
+    eventId: 3,
+    skillId: "manual",
+    code: "error",
+    errorType: "net",
+    playerName: "Rossi Sara",
+    teamName: "Storica",
+  },
+  { eventId: 4, actionType: "timeout", set: 3 },
+  {
+    eventId: 5,
+    actionType: "substitution",
+    playerIn: "Verdi Anna",
+    playerOut: "Rossi Sara",
+    durationMs: 1200,
+  },
+];
+for (const flags of [
+  { showVideoTime: true },
+  { showIndex: false, showCheckbox: false },
+  { showVideoTime: true, enableSelection: false },
+])
+  test(
+    "tabella React conserva intestazioni e valori: " + JSON.stringify(flags),
+    () => {
+      const { context, dom, view } = setup(),
+        target = dom.window.document.getElementById("target");
+      const input = structuredClone(events);
+      context.state.events = input;
+      context.renderEventTableRows(target, input, flags);
+      const oldRows = [...target.querySelectorAll("tbody tr")].map((row) =>
+        [...row.querySelectorAll("td")].map((cell) => cell.textContent),
+      );
+      const oldHeads = [...target.querySelectorAll("th")].map(
+        (cell) => cell.textContent,
+      );
+      context.publishReactEventTable(target, input, flags);
+      const native = view();
+      assert.deepEqual(
+        JSON.parse(
+          JSON.stringify(
+            native.rows.map((row) => [
+              ...(native.showCheckbox ? [""] : []),
+              ...row.cells.map((cell) => cell.text),
+              "✕",
+            ]),
+          ),
+        ),
+        oldRows,
+      );
+      assert.deepEqual(
+        JSON.parse(
+          JSON.stringify(
+            native.headers.map((header) =>
+              header.checkbox ? "" : header.label,
+            ),
+          ),
+        ),
+        oldHeads,
+      );
+    },
+  );
+for (const field of [
+  "player",
+  "setter",
+  "skill",
+  "code",
+  "rotation",
+  "base",
+  "setType",
+  "serveType",
+  "receiveEvaluation",
+  "attackEvaluation",
+  "attackBp",
+  "playerIn",
+  "durationMs",
+  "combination",
+  "relatedEvents",
+  "errorType",
+  "fromFreeball",
+  "team",
+  "homeScore",
+])
+  test("editor React conserva la modifica del campo " + field, () => {
+    const { context, dom } = setup(),
+      first = { ...events[0], rotation: 1 },
+      second = structuredClone(first),
+      scope = context;
+    const factory = {
+      player: () => scope.createPlayerSelect(first),
+      setter: () => scope.createPlayerSelect(first, null, { target: "setter" }),
+      skill: () => scope.createSkillSelect(first),
+      code: () => scope.createCodeSelect(first),
+      rotation: () => scope.createNumberSelect(first, "rotation", 1, 6),
+      base: () => scope.createBaseSelect(first),
+      setType: () => scope.createSetTypeSelect(first),
+      serveType: () => scope.createServeTypeSelect(first),
+      receiveEvaluation: () =>
+        scope.createEvalSelect(first, "receiveEvaluation", null, {
+          includeFb: true,
+        }),
+      attackEvaluation: () => scope.createEvalSelect(first, "attackEvaluation"),
+      attackBp: () => scope.createPhaseSelect(first),
+      playerIn: () => scope.createPlayerNameSelect(first, "playerIn"),
+      durationMs: () => scope.createNumberInput(first, "durationMs", 0),
+      combination: () => scope.createTextInput(first, "combination"),
+      relatedEvents: () => scope.createRelatedEventsInput(first),
+      errorType: () => scope.createErrorTypeSelect(first),
+      fromFreeball: () => scope.createBooleanInput(first, "fromFreeball"),
+      team: () => scope.createEventTeamSelect(first),
+      homeScore: () => scope.createNumberInput(first, "homeScore", 0),
+    }[field];
+    const control = factory(),
+      view = scope.buildReactEventControl(second, field, null, 0),
+      value =
+        field === "fromFreeball"
+          ? true
+          : field === "relatedEvents"
+            ? "12; 13"
+            : field === "combination"
+              ? '["K1"]'
+              : field === "team"
+                ? "opponent"
+                : view.type === "select"
+                  ? view.options.at(-1).value
+                  : "2750";
+    if (control.type === "checkbox") control.checked = value;
+    else control.value = value;
+    control.dispatchEvent(new dom.window.Event("change"));
+    view.onChange(value);
+    assert.deepEqual(
+      JSON.parse(JSON.stringify(second)),
+      JSON.parse(JSON.stringify(first)),
+    );
+  });

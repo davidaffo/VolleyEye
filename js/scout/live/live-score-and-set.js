@@ -1,7 +1,7 @@
 function renderLiveScore() {
   const summary = computePointsSummary(state.currentSet || 1);
   const totalLabel = summary.totalFor + " - " + summary.totalAgainst;
-  if (elLiveScore) {
+  if (elLiveScore && (!elLiveScore.dataset || elLiveScore.dataset.reactManaged !== "true")) {
     elLiveScore.textContent = totalLabel;
     elLiveScore.classList.add("emph");
   }
@@ -10,6 +10,7 @@ function renderLiveScore() {
   }
   updateSetScoreDisplays();
   updateMatchStatusUI();
+  if (typeof publishRuntimeView === "function") publishRuntimeView();
 }
 function handleAutoRotationFromEvent(eventObj, scope = "our") {
   if (!state || !state.autoRotate) {
@@ -394,6 +395,7 @@ function updateMatchStatusUI() {
   const label = finished ? "Riprendi partita" : "Pausa/Termina";
   const mainBtns = [elBtnEndMatch, elBtnEndMatchModal].filter(Boolean);
   mainBtns.forEach(btn => {
+    if (btn.dataset && btn.dataset.reactManaged === "true") return;
     btn.textContent = label;
     btn.classList.toggle("danger", !finished);
     btn.classList.toggle("resume-btn", finished);
@@ -406,6 +408,7 @@ function updateMatchStatusUI() {
   document.body.dataset.matchFinished = finished ? "true" : "false";
 }
 function setScoutControlsDisabled(disabled) {
+  if (typeof publishScoutControlState === "function") publishScoutControlState(disabled);
   const allowIds = new Set([
     "btn-end-match",
     "btn-end-match-modal",
@@ -417,6 +420,7 @@ function setScoutControlsDisabled(disabled) {
   if (!scope) return;
   scope.querySelectorAll("button").forEach(btn => {
     if (!btn || allowIds.has(btn.id)) return;
+    if (btn.dataset && btn.dataset.reactManaged === "true") return;
     if (btn.closest("#next-set-inline")) return;
     btn.disabled = !!disabled;
   });
@@ -545,6 +549,7 @@ function endMatch() {
   }
 }
 function renderScoreAndRotations(summary, teamScope = "our", options = {}) {
+  if(elAggSetCards?.dataset?.reactManaged==="true"&&typeof publishReactAggregatedScore==="function")return publishReactAggregatedScore(summary,teamScope,options);
   const scoreSummary = summary || computePointsSummary(null, { teamScope, events: options.events });
   const effectiveSummary = scoreSummary;
   const totalLabel = scoreSummary.totalFor + " - " + scoreSummary.totalAgainst;

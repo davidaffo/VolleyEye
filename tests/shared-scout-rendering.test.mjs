@@ -1,3 +1,4 @@
+import { readAppHtml } from './helpers/app-html.mjs';
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -7,7 +8,7 @@ import { readScoutSource } from "./helpers/scout-source.mjs";
 import { readRosterSource } from "./helpers/roster-source.mjs";
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
-const html = read("index.html");
+const html = readAppHtml();
 const scout = readScoutSource();
 const roster = readRosterSource();
 function load(context, source, names) {

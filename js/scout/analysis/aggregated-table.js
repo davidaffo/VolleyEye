@@ -1,5 +1,6 @@
 function renderAggregatedTable() {
   if (!elAggTableBody) return;
+  if (elAggTableBody.dataset?.reactManaged === "true" && typeof publishReactAggregatedTable === "function") return publishReactAggregatedTable();
   const { table, thead } = getAggTableElements();
   ensureAggTableHeadCache(thead);
   renderAnalysisTeamFilter();

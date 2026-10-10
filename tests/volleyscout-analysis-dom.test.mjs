@@ -1,3 +1,5 @@
+import { dvwFixtureRoot } from './helpers/dvw-fixtures.mjs';
+import { readAppHtml } from './helpers/app-html.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -7,7 +9,7 @@ import { IDBFactory } from 'fake-indexeddb';
 import { runtimeFiles } from './helpers/browser-runtime-files.mjs';
 
 async function browser(options = {}) {
-  const html = readFileSync('index.html', 'utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
+  const html = readAppHtml().replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
   const dom = new JSDOM(html, { url: 'https://volleyeye.test/', runScripts: 'outside-only' });
   const { window } = dom;
   await new Promise(resolve => window.document.addEventListener('DOMContentLoaded', resolve, { once: true }));
@@ -50,7 +52,7 @@ for (const [file, count] of [['Castenaso - Budrio.dvw', 144], ['Finale Villanova
   test(`DOM analisi VolleyScout: ${file}`, async () => {
     const { dom, window, context, strokes } = await browser();
     try {
-      window.importText = readFileSync(`resources/data volley da volleyscout/${file}`, 'utf8');
+      window.importText = readFileSync(dvwFixtureRoot('resources/data volley da volleyscout') + '/' + file, 'utf8');
       await vm.runInContext(`(async () => {
         const parsed = parseDataVolleyDvwToMatchState(importText);
         // Simulate a match stored before score reconciliation was introduced.

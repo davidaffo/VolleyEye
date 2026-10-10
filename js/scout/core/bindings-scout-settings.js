@@ -46,12 +46,12 @@ function bindScoutSettingsControls() {
   if (elAutoRotateToggle) {
     elAutoRotateToggle.addEventListener("change", () => {
       setAutoRotateEnabled(elAutoRotateToggle.checked);
-      if (elAutoRotateToggleSettings) {
+      if (elAutoRotateToggleSettings && elAutoRotateToggleSettings.dataset.reactManaged !== "true") {
         elAutoRotateToggleSettings.checked = elAutoRotateToggle.checked;
       }
     });
   }
-  if (elAutoRotateToggleSettings) {
+  if (elAutoRotateToggleSettings && elAutoRotateToggleSettings.dataset.reactManaged !== "true") {
     elAutoRotateToggleSettings.checked = !!state.autoRotate;
     elAutoRotateToggleSettings.addEventListener("change", () => {
       setAutoRotateEnabled(elAutoRotateToggleSettings.checked);
@@ -67,7 +67,7 @@ function bindScoutSettingsControls() {
     elAutoRoleToggle.checked = !!state.autoRolePositioning;
     elAutoRoleToggle.addEventListener("change", () => {
       const enabled = elAutoRoleToggle.checked;
-      if (elAutoRoleToggleSettings) {
+      if (elAutoRoleToggleSettings && elAutoRoleToggleSettings.dataset.reactManaged !== "true") {
         elAutoRoleToggleSettings.checked = enabled;
       }
       if (typeof setAutoRolePositioning === "function") {
@@ -81,7 +81,7 @@ function bindScoutSettingsControls() {
       }
     });
   }
-  if (elAutoRoleToggleSettings) {
+  if (elAutoRoleToggleSettings && elAutoRoleToggleSettings.dataset.reactManaged !== "true") {
     elAutoRoleToggleSettings.checked = !!state.autoRolePositioning;
     elAutoRoleToggleSettings.addEventListener("change", () => {
       const enabled = elAutoRoleToggleSettings.checked;
@@ -105,12 +105,12 @@ function bindScoutSettingsControls() {
   const elLiberoToBench = document.getElementById("btn-libero-to-bench");
   syncAutoLiberoSelects();
   ["our", "opponent"].forEach(scope => {
-    getAutoLiberoSelectsForScope(scope).forEach(select => {
+    getAutoLiberoSelectsForScope(scope).filter(select => select.dataset?.reactManaged !== "true").forEach(select => {
       select.addEventListener("change", () => setAutoLiberoRole(select.value, scope));
     });
   });
   [elSwapLibero, elSwapLiberoSettings].forEach(btn => {
-    if (!btn) return;
+    if (!btn || btn.dataset?.reactManaged === "true") return;
     btn.addEventListener("click", () => {
       if (typeof swapPreferredLibero === "function") {
         swapPreferredLibero();
@@ -141,7 +141,7 @@ function bindScoutSettingsControls() {
   if (elAutoRoleP1AmericanToggle) {
     elAutoRoleP1AmericanToggle.checked = !!state.autoRoleP1American;
     elAutoRoleP1AmericanToggle.addEventListener("change", () => {
-      if (elAutoRoleP1AmericanToggleSettings) {
+      if (elAutoRoleP1AmericanToggleSettings && elAutoRoleP1AmericanToggleSettings.dataset.reactManaged !== "true") {
         elAutoRoleP1AmericanToggleSettings.checked = elAutoRoleP1AmericanToggle.checked;
       }
       if (typeof setAutoRoleP1American === "function") {
@@ -152,7 +152,7 @@ function bindScoutSettingsControls() {
       }
     });
   }
-  if (elAutoRoleP1AmericanToggleSettings) {
+  if (elAutoRoleP1AmericanToggleSettings && elAutoRoleP1AmericanToggleSettings.dataset.reactManaged !== "true") {
     elAutoRoleP1AmericanToggleSettings.checked = !!state.autoRoleP1American;
     elAutoRoleP1AmericanToggleSettings.addEventListener("change", () => {
       if (elAutoRoleP1AmericanToggle) {
@@ -178,7 +178,7 @@ function bindScoutSettingsControls() {
   if (elPredictiveSkillToggle) {
     elPredictiveSkillToggle.checked = !!state.predictiveSkillFlow;
     elPredictiveSkillToggle.addEventListener("change", () => {
-      if (elPredictiveSkillToggleSettings) {
+      if (elPredictiveSkillToggleSettings && elPredictiveSkillToggleSettings.dataset.reactManaged !== "true") {
         elPredictiveSkillToggleSettings.checked = elPredictiveSkillToggle.checked;
       }
       state.predictiveSkillFlow = !!elPredictiveSkillToggle.checked;
@@ -187,7 +187,7 @@ function bindScoutSettingsControls() {
       renderPlayers();
     });
   }
-  if (elPredictiveSkillToggleSettings) {
+  if (elPredictiveSkillToggleSettings && elPredictiveSkillToggleSettings.dataset.reactManaged !== "true") {
     elPredictiveSkillToggleSettings.checked = !!state.predictiveSkillFlow;
     elPredictiveSkillToggleSettings.addEventListener("change", () => {
       if (elPredictiveSkillToggle) {
@@ -209,7 +209,7 @@ function bindScoutSettingsControls() {
   if (elAttackTrajectoryToggle) {
     elAttackTrajectoryToggle.checked = !!state.attackTrajectoryEnabled;
     elAttackTrajectoryToggle.addEventListener("change", () => {
-      if (elAttackTrajectoryToggleSettings) {
+      if (elAttackTrajectoryToggleSettings && elAttackTrajectoryToggleSettings.dataset.reactManaged !== "true") {
         elAttackTrajectoryToggleSettings.checked = elAttackTrajectoryToggle.checked;
       }
       state.attackTrajectoryEnabled = !!elAttackTrajectoryToggle.checked;
@@ -223,7 +223,7 @@ function bindScoutSettingsControls() {
       saveState();
     });
   }
-  if (elAttackTrajectoryToggleSettings) {
+  if (elAttackTrajectoryToggleSettings && elAttackTrajectoryToggleSettings.dataset.reactManaged !== "true") {
     elAttackTrajectoryToggleSettings.checked = !!state.attackTrajectoryEnabled;
     elAttackTrajectoryToggleSettings.addEventListener("change", () => {
       if (elAttackTrajectoryToggle) {
@@ -236,14 +236,14 @@ function bindScoutSettingsControls() {
   if (elAttackTrajectorySimpleToggle) {
     elAttackTrajectorySimpleToggle.checked = !!state.attackTrajectorySimplified;
     elAttackTrajectorySimpleToggle.addEventListener("change", () => {
-      if (elAttackTrajectorySimpleToggleSettings) {
+      if (elAttackTrajectorySimpleToggleSettings && elAttackTrajectorySimpleToggleSettings.dataset.reactManaged !== "true") {
         elAttackTrajectorySimpleToggleSettings.checked = elAttackTrajectorySimpleToggle.checked;
       }
       state.attackTrajectorySimplified = !!elAttackTrajectorySimpleToggle.checked;
       saveState();
     });
   }
-  if (elAttackTrajectorySimpleToggleSettings) {
+  if (elAttackTrajectorySimpleToggleSettings && elAttackTrajectorySimpleToggleSettings.dataset.reactManaged !== "true") {
     elAttackTrajectorySimpleToggleSettings.checked = !!state.attackTrajectorySimplified;
     elAttackTrajectorySimpleToggleSettings.addEventListener("change", () => {
       if (elAttackTrajectorySimpleToggle) {
@@ -440,12 +440,12 @@ function bindScoutSettingsControls() {
       if (typeof openSettingsModal === "function") openSettingsModal();
     });
   }
-  if (elSettingsClose) {
+  if (elSettingsClose && elSettingsClose.dataset.reactManaged !== "true") {
     elSettingsClose.addEventListener("click", () => {
       if (typeof closeSettingsModal === "function") closeSettingsModal();
     });
   }
-  if (elSettingsModal) {
+  if (elSettingsModal && elSettingsModal.dataset.reactManaged !== "true") {
     elSettingsModal.addEventListener("click", e => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
@@ -454,7 +454,7 @@ function bindScoutSettingsControls() {
       }
     });
   }
-  if (elOffsetModal) {
+  if (elOffsetModal && elOffsetModal.dataset.reactManaged !== "true") {
     elOffsetModal.addEventListener("click", e => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
@@ -463,7 +463,7 @@ function bindScoutSettingsControls() {
       }
     });
   }
-  if (elUnifyTimesModal) {
+  if (elUnifyTimesModal && elUnifyTimesModal.dataset.reactManaged !== "true") {
     elUnifyTimesModal.addEventListener("click", e => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
@@ -472,7 +472,7 @@ function bindScoutSettingsControls() {
       }
     });
   }
-  if (elSkillDurationModal) {
+  if (elSkillDurationModal && elSkillDurationModal.dataset.reactManaged !== "true") {
     elSkillDurationModal.addEventListener("click", e => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
@@ -481,25 +481,25 @@ function bindScoutSettingsControls() {
       }
     });
   }
-  if (elOffsetClose) {
+  if (elOffsetClose && elOffsetClose.dataset.reactManaged !== "true") {
     elOffsetClose.addEventListener("click", closeOffsetModal);
   }
-  if (elUnifyTimesClose) {
+  if (elUnifyTimesClose && elUnifyTimesClose.dataset.reactManaged !== "true") {
     elUnifyTimesClose.addEventListener("click", closeUnifyTimesModal);
   }
-  if (elSkillDurationClose) {
+  if (elSkillDurationClose && elSkillDurationClose.dataset.reactManaged !== "true") {
     elSkillDurationClose.addEventListener("click", closeSkillDurationModal);
   }
-  if (elOffsetApply) {
+  if (elOffsetApply && elOffsetApply.dataset.reactManaged !== "true") {
     elOffsetApply.addEventListener("click", applyOffsetsToSelectedSkills);
   }
-  if (elUnifyTimesApply) {
+  if (elUnifyTimesApply && elUnifyTimesApply.dataset.reactManaged !== "true") {
     elUnifyTimesApply.addEventListener("click", applyUnifyTimes);
   }
-  if (elSkillDurationApply) {
+  if (elSkillDurationApply && elSkillDurationApply.dataset.reactManaged !== "true") {
     elSkillDurationApply.addEventListener("click", applySkillDurationDefaults);
   }
-  if (elAttackTrajectoryModal) {
+  if (elAttackTrajectoryModal && elAttackTrajectoryModal.dataset?.reactManaged !== "true") {
     const handleCloseTrajectory = () => closeAttackTrajectoryModal(null);
     const getPos = e => {
       if (!elAttackTrajectoryCanvas) return null;

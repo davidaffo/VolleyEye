@@ -1,3 +1,4 @@
+import { readAppHtml } from './helpers/app-html.mjs';
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -5,7 +6,7 @@ import { readScoutSource } from "./helpers/scout-source.mjs";
 import { readStyleSource } from "./helpers/style-source.mjs";
 
 const source = readScoutSource();
-const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+const html = readAppHtml();
 const css = readStyleSource();
 
 const modalIds = ["base-modal", "attack-type-modal", "attack-setter-modal", "block-number-modal"];

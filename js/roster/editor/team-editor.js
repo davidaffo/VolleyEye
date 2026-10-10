@@ -183,6 +183,7 @@ function buildTeamManagerStateFromSource(source, scope = "our") {
 }
 function renderTeamManagerTable() {
   if (!elTeamManagerBody || !teamManagerState) return;
+  if (elTeamManagerBody.dataset.reactManaged === "true" && typeof publishTeamEditorView === "function") { publishTeamEditorView(); return; }
   elTeamManagerBody.innerHTML = "";
   const isEmpty = !teamManagerState.players || teamManagerState.players.length === 0;
   if (elTeamManagerTemplate) {
@@ -595,6 +596,7 @@ function handleDefaultLineupTouchCancel() {
 }
 function renderDefaultLineupEditor() {
   if (!elDefaultLineupGrid || !elDefaultLineupBench || !teamManagerState) return;
+  if (elDefaultLineupGrid.dataset.reactManaged === "true" && typeof publishTeamEditorView === "function") { publishTeamEditorView(); return; }
   if (elDefaultLineupRotation) {
     const rawRotation = parseInt(teamManagerState.defaultRotation, 10);
     const rotation =
@@ -808,6 +810,7 @@ function refreshTeamManagerFromSelection() {
   const selected = state.selectedTeam || (elTeamsSelect && elTeamsSelect.value) || "";
   const source = selected ? loadTeamFromStorage(selected) : null;
   teamManagerState = buildTeamManagerStateFromSource(source, "our");
+  if (elTeamManagerModal?.dataset.reactManaged === "true" && typeof openReactTeamEditor === "function") { openReactTeamEditor({ isNew: false }); return; }
   if (elTeamMetaName) elTeamMetaName.value = teamManagerState.name || "";
   if (elTeamMetaName) {
     elTeamMetaName.disabled = true;
@@ -842,6 +845,7 @@ function openTeamManagerModal(scope = "our") {
           : loadTeamFromStorage(selected)
         : null);
   teamManagerState = buildTeamManagerStateFromSource(source, scope);
+  if (elTeamManagerModal?.dataset.reactManaged === "true" && typeof openReactTeamEditor === "function") { openReactTeamEditor({ isNew: false }); return; }
   if (elTeamMetaName) elTeamMetaName.value = teamManagerState.name || "";
   if (elTeamMetaName) {
     elTeamMetaName.disabled = true;
@@ -877,6 +881,7 @@ function openNewTeamManager() {
     defaultRotation: 1,
     preferredLibero: ""
   };
+  if (elTeamManagerModal?.dataset.reactManaged === "true" && typeof openReactTeamEditor === "function") { openReactTeamEditor({ isNew: true }); return; }
   if (elTeamMetaName) elTeamMetaName.value = "";
   if (elTeamMetaName) {
     elTeamMetaName.disabled = false;
@@ -898,7 +903,8 @@ function openNewTeamManager() {
 }
 function closeTeamManagerModal() {
   if (elTeamManagerModal) {
-    elTeamManagerModal.classList.add("hidden");
+    if (elTeamManagerModal.dataset.reactManaged === "true" && typeof closeReactTeamEditor === "function") closeReactTeamEditor();
+    else elTeamManagerModal.classList.add("hidden");
   }
   teamManagerLiveEditMode = false;
   teamManagerStorageOnly = false;
@@ -907,8 +913,9 @@ function closeTeamManagerModal() {
 }
 function collectTeamManagerPayload() {
   if (!teamManagerState) return null;
-  const name = elTeamMetaName && elTeamMetaName.value ? elTeamMetaName.value.trim() : teamManagerState.name;
-  const staff = {
+  const meta = elTeamMetaName?.dataset.reactManaged === "true" && typeof getReactTeamEditorMetadata === "function" ? getReactTeamEditorMetadata() : null;
+  const name = meta ? (meta.name ? meta.name.trim() : teamManagerState.name) : elTeamMetaName && elTeamMetaName.value ? elTeamMetaName.value.trim() : teamManagerState.name;
+  const staff = meta ? { headCoach: meta.headCoach || "", assistantCoach: meta.assistantCoach || "", manager: meta.manager || "" } : {
     headCoach: (elTeamMetaHead && elTeamMetaHead.value) || "",
     assistantCoach: (elTeamMetaAssistant && elTeamMetaAssistant.value) || "",
     manager: (elTeamMetaManager && elTeamMetaManager.value) || ""

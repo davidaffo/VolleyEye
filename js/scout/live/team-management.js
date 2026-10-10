@@ -51,20 +51,25 @@ function resetAttackShortcutModals() {
   attackTypeModalTargetEvents = [];
   blockNumberModalTargetEvents = [];
   if (elBaseModal) {
-    elBaseModal.classList.add("hidden");
+    if (elBaseModal.dataset.reactManaged === "true" && typeof setAttackShortcutOpen === "function") setAttackShortcutOpen("base",false);
+    else elBaseModal.classList.add("hidden");
   }
   if (elAttackSetterModal) {
-    elAttackSetterModal.classList.add("hidden");
+    if (elAttackSetterModal.dataset.reactManaged === "true" && typeof setAttackShortcutOpen === "function") setAttackShortcutOpen("setter",false);
+    else elAttackSetterModal.classList.add("hidden");
   }
   if (elAttackTypeModal) {
-    elAttackTypeModal.classList.add("hidden");
+    if (elAttackTypeModal.dataset.reactManaged === "true" && typeof setAttackShortcutOpen === "function") setAttackShortcutOpen("type",false);
+    else elAttackTypeModal.classList.add("hidden");
   }
   if (elBlockNumberModal) {
-    elBlockNumberModal.classList.add("hidden");
+    if (elBlockNumberModal.dataset.reactManaged === "true" && typeof setAttackShortcutOpen === "function") setAttackShortcutOpen("block",false);
+    else elBlockNumberModal.classList.add("hidden");
   }
   setGlobalModalState(false);
 }
 function isAttackShortcutModalOpen(modal) {
+  if (modal?.dataset.reactManaged === "true" && typeof getAttackShortcutOpen === "function") return getAttackShortcutOpen(modal.id);
   return !!modal && !modal.classList.contains("hidden");
 }
 function toggleBaseModal() {
@@ -128,7 +133,8 @@ function openBaseModal() {
     return;
   }
   baseModalTargetEvents = targetEvents;
-  elBaseModal.classList.remove("hidden");
+  if (elBaseModal.dataset.reactManaged === "true" && typeof setAttackShortcutOpen === "function") setAttackShortcutOpen("base",true);
+  else elBaseModal.classList.remove("hidden");
   setGlobalModalState(true, { forcePopup: true });
 }
 function closeBaseModal() {
@@ -136,6 +142,7 @@ function closeBaseModal() {
 }
 function renderSetterModalOptions(scope, setterIdx) {
   if (!elAttackSetterModalGrid) return;
+  if (elAttackSetterModalGrid.dataset.reactManaged === "true" && typeof publishAttackSetterOptions === "function") { publishAttackSetterOptions(scope,setterIdx);return; }
   const players = getPlayersForScope(scope) || [];
   const isVideoModal = document && document.body && document.body.dataset.activeTab === "video";
   const baseCourt = scope === "opponent" ? state.opponentCourt : state.court;
@@ -226,7 +233,8 @@ function openAttackSetterModal() {
   const seed = targetEvents[0];
   const setterIdx = typeof seed.setterIdx === "number" ? seed.setterIdx : null;
   renderSetterModalOptions(scope, setterIdx);
-  elAttackSetterModal.classList.remove("hidden");
+  if (elAttackSetterModal.dataset.reactManaged === "true" && typeof setAttackShortcutOpen === "function") setAttackShortcutOpen("setter",true);
+  else elAttackSetterModal.classList.remove("hidden");
   setGlobalModalState(true, { forcePopup: true });
 }
 function closeAttackSetterModal() {
@@ -254,7 +262,7 @@ function openAttackTypeModal() {
     return;
   }
   attackTypeModalTargetEvents = targetEvents;
-  if (elAttackTypeModalGrid) {
+  if (elAttackTypeModalGrid && elAttackTypeModalGrid.dataset.reactManaged !== "true") {
     elAttackTypeModalGrid.querySelectorAll(".base-modal-btn").forEach(btn => {
       if (btn._attackTypeBound) return;
       btn._attackTypeBound = true;
@@ -266,7 +274,8 @@ function openAttackTypeModal() {
       });
     });
   }
-  elAttackTypeModal.classList.remove("hidden");
+  if (elAttackTypeModal.dataset.reactManaged === "true" && typeof setAttackShortcutOpen === "function") setAttackShortcutOpen("type",true);
+  else elAttackTypeModal.classList.remove("hidden");
   setGlobalModalState(true, { forcePopup: true });
 }
 function closeAttackTypeModal() {
@@ -296,7 +305,8 @@ function openBlockNumberModal() {
     return;
   }
   blockNumberModalTargetEvents = targetEvents;
-  elBlockNumberModal.classList.remove("hidden");
+  if (elBlockNumberModal.dataset.reactManaged === "true" && typeof setAttackShortcutOpen === "function") setAttackShortcutOpen("block",true);
+  else elBlockNumberModal.classList.remove("hidden");
   setGlobalModalState(true, { forcePopup: true });
 }
 function closeBlockNumberModal() {
@@ -358,6 +368,7 @@ function renderPlayersDbMergeControls(entries) {
 }
 function renderPlayersDbList() {
   if (!elPlayersDbBody || !elPlayersDbCount) return;
+  if (elPlayersDbBody.dataset.reactManaged === "true" && typeof publishPlayersDbView === "function") { publishPlayersDbView();return; }
   const db = state.playersDb || {};
   const teamsMap = typeof loadTeamsMapFromStorage === "function" ? loadTeamsMapFromStorage() : state.savedTeams || {};
   const usage = buildPlayersDbUsage(teamsMap);
@@ -460,22 +471,24 @@ function renderPlayersDbList() {
 function openPlayersDbModal() {
   if (!elPlayersDbModal) return;
   renderPlayersDbList();
-  elPlayersDbModal.classList.remove("hidden");
+  if (elPlayersDbModal.dataset.reactManaged === "true" && typeof setPlayersDbOpen === "function") setPlayersDbOpen(true);
+  else elPlayersDbModal.classList.remove("hidden");
   setGlobalModalState(true);
 }
 function closePlayersDbModal() {
   if (!elPlayersDbModal) return;
-  elPlayersDbModal.classList.add("hidden");
+  if (elPlayersDbModal.dataset.reactManaged === "true" && typeof setPlayersDbOpen === "function") setPlayersDbOpen(false);
+  else elPlayersDbModal.classList.add("hidden");
   setGlobalModalState(false);
 }
 function openDebugModal() {
   if (!elDebugModal) return;
-  elDebugModal.classList.remove("hidden");
+  if(elDebugModal.dataset?.reactManaged==="true"&&typeof debugStore!=="undefined")debugStore.publish({open:true});else elDebugModal.classList.remove("hidden");
   setGlobalModalState(true);
 }
 function closeDebugModal() {
   if (!elDebugModal) return;
-  elDebugModal.classList.add("hidden");
+  if(elDebugModal.dataset?.reactManaged==="true"&&typeof debugStore!=="undefined")debugStore.publish({open:false});else elDebugModal.classList.add("hidden");
   setGlobalModalState(false);
 }
 function syncOpponentSettingsUI() {
@@ -545,6 +558,10 @@ function renderTeamsManagerList() {
   if (!names.includes(teamsManagerSelectedName)) {
     teamsManagerSelectedName = "";
   }
+  if (elTeamsManagerList.dataset.reactManaged === "true" && typeof publishTeamsManagerView === "function") {
+    publishTeamsManagerView();
+    return;
+  }
   elTeamsManagerList.innerHTML = "";
   if (names.length === 0) {
     const empty = document.createElement("li");
@@ -575,12 +592,14 @@ function openTeamsManagerModal() {
   if (!elTeamsManagerModal) return;
   teamsManagerSelectedName = state.selectedTeam || "";
   renderTeamsManagerList();
-  elTeamsManagerModal.classList.remove("hidden");
+  if (elTeamsManagerModal.dataset.reactManaged === "true" && typeof setTeamsManagerOpen === "function") setTeamsManagerOpen(true);
+  else elTeamsManagerModal.classList.remove("hidden");
   setGlobalModalState(true);
 }
 function closeTeamsManagerModal() {
   if (!elTeamsManagerModal) return;
-  elTeamsManagerModal.classList.add("hidden");
+  if (elTeamsManagerModal.dataset.reactManaged === "true" && typeof setTeamsManagerOpen === "function") setTeamsManagerOpen(false);
+  else elTeamsManagerModal.classList.add("hidden");
   setGlobalModalState(false);
 }
 function importTeamToStorageOnly(file) {

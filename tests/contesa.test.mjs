@@ -1,3 +1,4 @@
+import { readAppHtml } from './helpers/app-html.mjs';
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -89,7 +90,7 @@ test("contesa annulla anche la sola battuta con set importato come stringa", () 
 });
 
 test("il tasto rosso Contesa precede Annulla ultimo sulla rete", () => {
-  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const html = readAppHtml();
   assert.match(html, /id="btn-contesa" class="small danger net-action-btn"[^>]*>Contesa<\/button>\s*<button id="btn-undo"/);
   const bindings = readFileSync(new URL("../js/scout/core/bindings-data.js", import.meta.url), "utf8");
   assert.match(bindings, /elBtnContesa\.addEventListener\("click", undoContestedRally\)/);

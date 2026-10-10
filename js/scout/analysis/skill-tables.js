@@ -391,7 +391,7 @@ if (elSetStartModalClose) {
 if (elSetStartModalCancel) {
   elSetStartModalCancel.addEventListener("click", closeSetStartModal);
 }
-  if (elBtnOpenMultiscout && !elBtnOpenMultiscout._bound) {
+  if (elBtnOpenMultiscout && elBtnOpenMultiscout.dataset?.reactManaged !== "true" && !elBtnOpenMultiscout._bound) {
     elBtnOpenMultiscout.addEventListener("click", () => {
       renderMultiscoutModal();
       if (elMultiscoutModal) {
@@ -401,21 +401,21 @@ if (elSetStartModalCancel) {
     });
     elBtnOpenMultiscout._bound = true;
   }
-if (elMultiscoutClose && !elMultiscoutClose._bound) {
+if (elMultiscoutClose && elMultiscoutClose.dataset?.reactManaged !== "true" && !elMultiscoutClose._bound) {
   elMultiscoutClose.addEventListener("click", () => {
     if (elMultiscoutModal) elMultiscoutModal.classList.add("hidden");
     setModalOpenState(false, true);
   });
   elMultiscoutClose._bound = true;
 }
-if (elMultiscoutCancel && !elMultiscoutCancel._bound) {
+if (elMultiscoutCancel && elMultiscoutCancel.dataset?.reactManaged !== "true" && !elMultiscoutCancel._bound) {
   elMultiscoutCancel.addEventListener("click", () => {
     if (elMultiscoutModal) elMultiscoutModal.classList.add("hidden");
     setModalOpenState(false, true);
   });
   elMultiscoutCancel._bound = true;
 }
-if (elMultiscoutModal && !elMultiscoutModal._backdropBound) {
+if (elMultiscoutModal && elMultiscoutModal.dataset?.reactManaged !== "true" && !elMultiscoutModal._backdropBound) {
   const backdrop = elMultiscoutModal.querySelector("[data-close-multiscout]");
   if (backdrop) {
     backdrop.addEventListener("click", () => {
@@ -1174,6 +1174,7 @@ function renderPlayerAnalysisHero() {
 }
 function renderPlayerAnalysis() {
   if (!elPlayerAnalysisBody) return;
+  if(elPlayerAnalysisBody.dataset?.reactManaged==="true"&&typeof publishReactPlayerAnalysis==="function")return publishReactPlayerAnalysis();
   renderPlayerAnalysisControls();
   renderPlayerAnalysisTable();
   renderPlayerAnalysisHero();
@@ -1194,6 +1195,7 @@ function renderPlayerAnalysis() {
   }
 }
 function renderAggSkillModal(skillId, playerIdx) {
+ if(elAggSkillModalBody?.dataset.reactManaged === "true" && typeof publishReactAggSkillModal === "function"){publishReactAggSkillModal(skillId,playerIdx);return;}
   if (!elAggSkillModalBody) return;
   ensureAnalysisStatsCache();
   const skillLabel = getSkillLabel(skillId);
@@ -1268,11 +1270,13 @@ function renderAggSkillModal(skillId, playerIdx) {
 function openAggSkillModal(skillId, playerIdx) {
   if (!elAggSkillModal || !elAggSkillModalBody) return;
   renderAggSkillModal(skillId, playerIdx);
-  elAggSkillModal.classList.remove("hidden");
+if(elAggSkillModal.dataset.reactManaged === "true" && typeof setReactAggSkillOpen === "function")setReactAggSkillOpen(true);
+ else elAggSkillModal.classList.remove("hidden");
   setModalOpenState(true);
 }
 function closeAggSkillModal() {
   if (!elAggSkillModal) return;
-  elAggSkillModal.classList.add("hidden");
+if(elAggSkillModal.dataset.reactManaged === "true" && typeof setReactAggSkillOpen === "function")setReactAggSkillOpen(false);
+ else elAggSkillModal.classList.add("hidden");
   setModalOpenState(false);
 }

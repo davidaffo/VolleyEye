@@ -1,8 +1,10 @@
+import { readAppHtml } from './helpers/app-html.mjs';
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const index = readFileSync("index.html", "utf8");
+const index = readAppHtml();
+const entrypoint = readFileSync("src/main.jsx", "utf8");
 const themeCss = readFileSync("styles/light-theme.css", "utf8");
 const skillPaletteCss = readFileSync("styles/skill-palette.css", "utf8");
 const skillChartsCss = readFileSync("styles/skill-charts.css", "utf8");
@@ -33,9 +35,9 @@ function contrast(foreground, background) {
 }
 
 test("il completamento del tema chiaro viene caricato dopo tutti i componenti e resta offline", () => {
-  const componentPosition = index.indexOf('"styles/scout-live.css"');
-  const lightPosition = index.indexOf('"styles/light-theme.css"');
-  const printPosition = index.indexOf('"styles/print.css"');
+  const componentPosition = entrypoint.indexOf("../styles/scout-live.css");
+  const lightPosition = entrypoint.indexOf("../styles/light-theme.css");
+  const printPosition = entrypoint.indexOf("../styles/print.css");
   assert.ok(componentPosition >= 0 && componentPosition < lightPosition);
   assert.ok(lightPosition < printPosition);
   assert.match(serviceWorker, /withVersion\("\.\/styles\/light-theme\.css"\)/);

@@ -142,11 +142,12 @@ function updateOpponentTeamButtonsState() {
 }
 function updateMatchButtonsState() {
   if (!elSavedMatchesSelect && !elSavedMatchesList) return;
-  const selected = elSavedMatchesSelect ? elSavedMatchesSelect.value || "" : "";
-  if (elBtnLoadMatch) {
+  const selected = getSelectedArchivedMatch();
+  if (typeof publishRuntimeView === "function") publishRuntimeView();
+  if (elBtnLoadMatch && elBtnLoadMatch.dataset.reactManaged !== "true") {
     elBtnLoadMatch.disabled = !selected;
   }
-  if (elBtnDeleteMatch) {
+  if (elBtnDeleteMatch && elBtnDeleteMatch.dataset.reactManaged !== "true") {
     elBtnDeleteMatch.disabled = !selected;
   }
 }

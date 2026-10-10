@@ -1,6 +1,6 @@
 # Architettura del frontend
 
-VolleyEye usa ancora script classici caricati in ordine, perché lo stato applicativo esistente è condiviso globalmente. Il codice non è però più raccolto in due bundle monolitici: ogni responsabilità ha un file riconoscibile. L'ordine dichiarato in `index.html` è parte del contratto applicativo.
+VolleyEye parte da React e Vite in `src/main.jsx`. La struttura delle pagine è in `src/components/layout/`. Durante la migrazione, il motore esistente viene compilato in un modulo di compatibilità seguendo l'ordine dichiarato in `config/runtime-files.mjs`. Gran parte di campo, tabelle, analisi e dialoghi è gestita da React; player video, alcuni controlli e il motore conservano parti imperative. Vedi [stato della migrazione](react-migration.md).
 
 ## Scout live e analisi
 
@@ -35,15 +35,15 @@ I file sono raggruppati per dominio in `js/roster/`:
 
 ## Stili
 
-`style.css` contiene fondamenta, variabili e componenti comuni. I fogli in `styles/` separano match/formazioni, analisi, metriche, video, modali, gestione squadra, responsive, Scout Live e stampa. Devono essere caricati nell'ordine indicato in `index.html`, così la cascata rimane deterministica.
+`style.css` contiene fondamenta, variabili e componenti comuni. I fogli in `styles/` separano match/formazioni, analisi, metriche, video, modali, gestione squadra, responsive, Scout Live e stampa. Devono essere caricati nell'ordine degli import in `src/main.jsx`, così la cascata rimane deterministica.
 
 ## Regole per le modifiche
 
 1. Una nuova funzione va nel modulo della sua responsabilità, non nel file entrypoint.
 2. Un modulo JavaScript applicativo non deve superare 1.500 righe; un foglio CSS non deve superare 1.800.
-3. Ogni nuovo asset runtime deve comparire sia in `index.html` sia nel service worker.
+3. I nuovi moduli React si importano dall’entrypoint o dal loro componente. I moduli del motore temporaneo vanno in `config/runtime-files.mjs`; gli asset statici devono essere inclusi da `build/static-assets-plugin.mjs`. La build genera il precache del service worker.
 4. Le estrazioni strutturali devono mantenere l'ordine del codice e passare l'intera suite prima di ulteriori refactor logici.
-5. La migrazione futura a moduli ES deve partire dalle primitive pure, senza mescolarla a correzioni funzionali.
+5. La conversione dei rendering imperativi deve mantenere i confini tra DOM gestito da React e DOM ancora gestito dal motore. Estrarre prima le primitive pure.
 
 ## API condivise
 

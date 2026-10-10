@@ -6,7 +6,7 @@ import { SCOUT_SOURCE_FILES } from "./helpers/scout-source.mjs";
 import { STYLE_SOURCE_FILES } from "./helpers/style-source.mjs";
 
 const rootUrl = new URL("../", import.meta.url);
-const index = readFileSync(new URL("index.html", rootUrl), "utf8");
+const index = readFileSync(new URL("config/runtime-files.mjs", rootUrl), "utf8");
 const worker = readFileSync(new URL("service-worker.js", rootUrl), "utf8");
 const read = path => readFileSync(new URL(path, rootUrl), "utf8");
 

@@ -232,6 +232,7 @@ function renderVideoFilters(events) {
   if (showBothTeams) {
     const renderSplitFilter = (container, groups, selectedSet) => {
       if (!container) return;
+      if(container.dataset?.reactManaged === "true" && typeof publishReactSplitFilter === "function"){publishReactSplitFilter(container,groups,selectedSet);return;}
       container.innerHTML = "";
       groups.forEach(group => {
         const groupEl = document.createElement("div");
@@ -312,7 +313,8 @@ function renderVideoFilters(events) {
   });
 
   toggleFilterVisibility(els.prev, true);
-  if (els.prev) {
+  if (els.prev?.dataset?.reactManaged === "true" && typeof publishReactPreviousSkill === "function")publishReactPreviousSkill(els.prev,videoFilterState.prevSkill,handleVideoFilterChange);
+  else if (els.prev) {
     els.prev.value = videoFilterState.prevSkill || "any";
     if (!els.prev._videoPrevBound) {
       els.prev.addEventListener("change", handleVideoFilterChange);

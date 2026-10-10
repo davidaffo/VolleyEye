@@ -68,6 +68,10 @@ function renderScoutTeamCourt(scope, { nextSkillId = null, animate = false } = {
   const compact = !!state.forceMobileLayout || window.matchMedia("(max-width: 900px)").matches;
   const activeScope = compact ? getMobileActiveScope() : null;
   const hidden = (scope === "opponent" && !state.useOpponentTeam) || (activeScope && activeScope !== scope);
+  if (container.dataset.reactManaged === "true" && typeof publishScoutCourtView === "function") {
+    publishScoutCourtView(scope, { hidden: !!hidden, compact, nextSkillId, animate });
+    return;
+  }
   container.classList.toggle("hidden", !!hidden);
   if (hidden) {
     container.innerHTML = "";

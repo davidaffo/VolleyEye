@@ -155,6 +155,7 @@ function resetPointRulesToDefault() {
 }
 function renderMetricsConfig() {
   if (!elMetricsConfig) return;
+  if (elMetricsConfig.dataset?.reactManaged === "true" && typeof publishReactMetrics === "function") return publishReactMetrics();
   ensureMetricsConfigDefaults();
   ensurePointRulesDefaults();
   elMetricsConfig.innerHTML = "";

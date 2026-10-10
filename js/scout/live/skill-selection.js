@@ -30,6 +30,7 @@ function setLineupModalPreferredLibero(name) {
   }
 }
 function syncLineupPreferredLiberoSelect() {
+  if (elLineupPreferredLibero?.dataset.reactManaged === "true" && typeof publishLineupView === "function") { publishLineupView(); return; }
   if (!elLineupPreferredLibero) return;
   const liberos = getLineupModalLiberos();
   const numbers = getLineupModalNumbers();
@@ -52,27 +53,7 @@ function syncLineupPreferredLiberoSelect() {
   elLineupPreferredLibero.value = preferred && ordered.includes(preferred) ? preferred : "";
   elLineupPreferredLibero.disabled = ordered.length === 0;
   if (!elLineupPreferredLibero._preferredBound) {
-    elLineupPreferredLibero.addEventListener("change", () => {
-      const next = elLineupPreferredLibero.value || "";
-      setLineupModalPreferredLibero(next);
-      saveState();
-      if (lineupModalScope === "opponent") {
-        if (typeof renderOpponentPlayers === "function") renderOpponentPlayers();
-        if (typeof renderOpponentLiberoChipsInline === "function") renderOpponentLiberoChipsInline();
-        if (typeof updateOpponentRotationDisplay === "function") updateOpponentRotationDisplay();
-      } else {
-        if (typeof renderPlayers === "function") renderPlayers();
-        if (typeof renderLineupChips === "function") renderLineupChips();
-        if (typeof renderLiberoChipsInline === "function") renderLiberoChipsInline();
-        if (typeof updateRotationDisplay === "function") updateRotationDisplay();
-      }
-      if (typeof renderLiberoChipsInline === "function") {
-        renderLiberoChipsInline();
-      }
-      if (typeof renderOpponentLiberoChipsInline === "function") {
-        renderOpponentLiberoChipsInline();
-      }
-    });
+    elLineupPreferredLibero.addEventListener("change", () => changeLineupPreferredLibero(elLineupPreferredLibero.value));
     elLineupPreferredLibero._preferredBound = true;
   }
 }
@@ -102,6 +83,7 @@ function getBenchForLineupWithRoster(court, rosterNames, liberos, numbersMap) {
   return bench;
 }
 function updateLineupModalControls() {
+  if (elLineupModal?.dataset.reactManaged === "true" && typeof publishLineupView === "function") { publishLineupView(); return; }
   const isNextSet = lineupModalContext === "next-set";
   const isSetStartEdit = lineupModalContext === "set-start";
     if (elLineupModalSaveOverride) {
@@ -278,13 +260,14 @@ function setServeTypeSelection(type) {
   const normalized = t === "F" || t === "S" ? t : "JF";
   serveTrajectoryType = normalized;
   if (!elServeTypeButtons) return;
+  if(elServeTypeButtons.dataset?.reactManaged==="true"&&typeof trajectoryModalStore!=="undefined"){trajectoryModalStore.publish({serveType:normalized});return;}
   const btns = elServeTypeButtons.querySelectorAll("[data-serve-type]");
   btns.forEach(btn => {
     const isActive = (btn.dataset.serveType || "").toUpperCase() === normalized;
     btn.classList.toggle("active", isActive);
   });
 }
-if (elServeTypeButtons) {
+if (elServeTypeButtons && elServeTypeButtons.dataset?.reactManaged !== "true") {
   elServeTypeButtons.addEventListener("click", e => {
     const target = e.target;
     if (!(target instanceof HTMLElement)) return;
@@ -541,4 +524,27 @@ async function collectServeTrajectory(prefill = {}) {
     }
   }
   return { serveType, serveStart, serveEnd, videoTime };
+}
+
+function changeLineupPreferredLibero(next) {
+      next = next || "";
+      setLineupModalPreferredLibero(next);
+      saveState();
+      if (lineupModalScope === "opponent") {
+        if (typeof renderOpponentPlayers === "function") renderOpponentPlayers();
+        if (typeof renderOpponentLiberoChipsInline === "function") renderOpponentLiberoChipsInline();
+        if (typeof updateOpponentRotationDisplay === "function") updateOpponentRotationDisplay();
+      } else {
+        if (typeof renderPlayers === "function") renderPlayers();
+        if (typeof renderLineupChips === "function") renderLineupChips();
+        if (typeof renderLiberoChipsInline === "function") renderLiberoChipsInline();
+        if (typeof updateRotationDisplay === "function") updateRotationDisplay();
+      }
+      if (typeof renderLiberoChipsInline === "function") {
+        renderLiberoChipsInline();
+      }
+      if (typeof renderOpponentLiberoChipsInline === "function") {
+        renderOpponentLiberoChipsInline();
+      }
+  if (typeof publishLineupView === "function") publishLineupView();
 }

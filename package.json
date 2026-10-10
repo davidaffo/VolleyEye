@@ -7,15 +7,25 @@
     "release": "node scripts/release.mjs",
     "test": "node --test --test-isolation=none tests/*.test.mjs",
     "version:sync": "node scripts/sync-version.mjs",
-    "dev": "npm run serve",
-    "serve": "npx serve . --listen ${PORT:-3000}",
-    "tunnel": "PORT=${PORT:-3000} bash serve-tunnel.sh"
+    "dev": "vite --host 0.0.0.0",
+    "serve": "vite --host 0.0.0.0",
+    "tunnel": "PORT=${PORT:-3000} bash serve-tunnel.sh",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
-    "marked": "^18.0.13"
+    "marked": "^18.0.13",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "esbuild": "^0.28.2",
     "fake-indexeddb": "^6.2.5",
-    "jsdom": "^30.1.1"
+    "jsdom": "^30.1.1",
+    "prettier": "^3.9.10",
+    "vite": "^8.3.4"
   }
 }

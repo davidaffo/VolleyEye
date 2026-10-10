@@ -1,3 +1,4 @@
+import { dvwFixtureRoot } from './helpers/dvw-fixtures.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -22,7 +23,7 @@ function harness() {
   context.normalizePointRule = () => ({ for: ['#'], against: ['='] });
   return context;
 }
-const root = 'resources/data volley';
+const root = dvwFixtureRoot('resources/data volley');
 const files = [`${root}/data volley example file.dvw`, ...readdirSync(`${root}/files scout`).filter(f => f.endsWith('.dvw')).map(f => `${root}/files scout/${f}`)];
 for (const file of files) {
   test(`DataVolley originale: ${file}`, () => {
@@ -81,7 +82,7 @@ test('export DVW usa le colonne standard per orario, set e formazioni', () => {
 for (const [name, count, date] of [['Castenaso - Budrio.dvw', 144, '2026-09-23'], ['Finale Villanova-Budrio.dvw', 174, '2026-10-01']]) {
   test(`VolleyScout: attacchi e coordinate originali di ${name}`, () => {
     const ctx = harness();
-    const text = readFileSync(`resources/data volley da volleyscout/${name}`, 'utf8');
+    const text = readFileSync(dvwFixtureRoot('resources/data volley da volleyscout') + '/' + name, 'utf8');
     const result = ctx.parseDataVolleyDvwToMatchState(text);
     const rows = ctx.parseDvwSections(text).get('3SCOUT').map(ctx.parseDvwRow).filter(row => /^a\d{2}A/.test(row[0]));
     const attacks = result.events.filter(event => event.skillId === 'attack');

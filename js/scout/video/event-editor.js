@@ -606,6 +606,7 @@ function makeEditableCell(td, _title, factory, guard = null) {
   });
 }
 function renderEventTableRows(target, events, options = {}) {
+ if(target?.dataset.reactManaged === "true" && typeof publishReactEventTable === "function"){publishReactEventTable(target,events,options);return;}
   if (!target) return;
   const append = !!options.append;
   const contextKey = options.contextKey || target.id || (target.closest && target.closest("[data-context-key]")?.dataset.contextKey) || "events";
@@ -1141,9 +1142,11 @@ function renderEventTableRows(target, events, options = {}) {
 }
 function closeBulkEditModal() {
   if (!elBulkEditModal) return;
-  elBulkEditModal.classList.add("hidden");
+  if(elBulkEditModal.dataset.reactManaged === "true" && typeof closeReactBulkEditor === "function")closeReactBulkEditor();
+  else {elBulkEditModal.classList.add("hidden");
   if (elBulkEditBody) elBulkEditBody.innerHTML = "";
-  if (elBulkEditHint) elBulkEditHint.textContent = "";
+  if (elBulkEditHint) elBulkEditHint.textContent = "";}
+
   setModalOpenState(false);
   bulkEditActive = false;
   bulkEditSession = null;
@@ -1177,6 +1180,7 @@ function openBulkEditModal(contextKey, bulkKey) {
     get: (_obj, prop) => seed[prop]
   });
   const ctx = eventTableContexts[contextKey] || {};
+  if(elBulkEditBody.dataset.reactManaged === "true" && typeof openReactBulkEditor === "function"){openReactBulkEditor(config,proxy,events,ctx,bulkKey);return;}
   const control = config.build({ proxy, events, context: ctx });
   elBulkEditBody.innerHTML = "";
   elBulkEditBody.appendChild(control);
@@ -1189,7 +1193,13 @@ function openBulkEditModal(contextKey, bulkKey) {
   elBulkEditModal.classList.remove("hidden");
   setModalOpenState(true);
   if (elBulkEditApply) {
-    elBulkEditApply.onclick = () => {
+    elBulkEditApply.onclick = applyBulkEditSession;
+  }
+  const focusable = control && typeof control.querySelector === "function" ? control.querySelector("input,select") : null;
+  if (focusable && typeof focusable.focus === "function") focusable.focus();
+}
+
+function applyBulkEditSession() {
       if (!bulkEditSession) {
         closeBulkEditModal();
         return;
@@ -1210,8 +1220,4 @@ function openBulkEditModal(contextKey, bulkKey) {
       closeBulkEditModal();
       refreshAfterVideoEdit(shouldRecalc);
       renderEventsLog({ suppressScroll: true });
-    };
-  }
-  const focusable = control && typeof control.querySelector === "function" ? control.querySelector("input,select") : null;
-  if (focusable && typeof focusable.focus === "function") focusable.focus();
 }

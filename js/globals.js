@@ -330,7 +330,8 @@ function syncPlayerPhotoBaseScale() {
 }
 function setPlayerPhotoModalOpen(isOpen) {
   if (!elPlayerPhotoModal) return;
-  elPlayerPhotoModal.classList.toggle("hidden", !isOpen);
+  if(elPlayerPhotoModal.dataset.reactManaged === "true" && typeof setReactPlayerPhotoOpen === "function")setReactPlayerPhotoOpen(isOpen);
+  else elPlayerPhotoModal.classList.toggle("hidden", !isOpen);
 }
 function clampPlayerPhotoOffsets() {
   if (!playerPhotoEditorState.image || !elPlayerPhotoStage) return;
@@ -347,6 +348,7 @@ function renderPlayerPhotoEditor() {
   if (!elPlayerPhotoImage || !elPlayerPhotoStage || !playerPhotoEditorState.image) return;
   syncPlayerPhotoBaseScale();
   clampPlayerPhotoOffsets();
+  if(elPlayerPhotoImage.dataset.reactManaged === "true" && typeof publishPlayerPhotoView === "function"){publishPlayerPhotoView();return;}
   const scale = playerPhotoEditorState.baseScale * playerPhotoEditorState.zoom;
   elPlayerPhotoImage.style.transform =
     `translate(calc(-50% + ${playerPhotoEditorState.offsetX}px), calc(-50% + ${playerPhotoEditorState.offsetY}px)) scale(${scale})`;
@@ -365,10 +367,10 @@ function closePlayerPhotoEditor(result = null) {
   playerPhotoEditorState.offsetY = 0;
   playerPhotoEditorState.pointerId = null;
   playerPhotoEditorState.allowRemove = false;
-  if (elPlayerPhotoRemove) {
+  if (elPlayerPhotoRemove && elPlayerPhotoRemove.dataset.reactManaged !== "true") {
     elPlayerPhotoRemove.classList.add("hidden");
   }
-  if (elPlayerPhotoImage) {
+  if (elPlayerPhotoImage && elPlayerPhotoImage.dataset.reactManaged !== "true") {
     elPlayerPhotoImage.removeAttribute("src");
     elPlayerPhotoImage.style.transform = "";
   }
@@ -418,15 +420,18 @@ async function openPlayerPhotoEditor(sourceUrl, options = {}) {
   playerPhotoEditorState.offsetX = 0;
   playerPhotoEditorState.offsetY = 0;
   playerPhotoEditorState.allowRemove = !!options.allowRemove;
-  if (elPlayerPhotoRemove) {
+  if (elPlayerPhotoRemove && elPlayerPhotoRemove.dataset.reactManaged !== "true") {
     elPlayerPhotoRemove.classList.toggle("hidden", !playerPhotoEditorState.allowRemove);
   }
+  if(elPlayerPhotoModal.dataset.reactManaged !== "true") {
   elPlayerPhotoImage.src = sourceUrl;
   elPlayerPhotoZoom.min = "1";
   elPlayerPhotoZoom.max = options.maxZoom ? String(options.maxZoom) : "3";
   elPlayerPhotoZoom.step = "0.01";
   elPlayerPhotoZoom.value = "1";
-  setPlayerPhotoModalOpen(true);
+  }
+  if(elPlayerPhotoModal.dataset.reactManaged === "true" && typeof setReactPlayerPhotoOpen === "function")setReactPlayerPhotoOpen(true,options);
+  else setPlayerPhotoModalOpen(true);
   requestAnimationFrame(() => renderPlayerPhotoEditor());
   return new Promise(resolve => {
     playerPhotoEditorState.resolve = resolve;
@@ -478,14 +483,14 @@ function handlePlayerPhotoPointerUp(ev) {
     elPlayerPhotoStage.classList.remove("dragging");
   }
 }
-if (elPlayerPhotoStage && !elPlayerPhotoStage._playerPhotoBound) {
+if (elPlayerPhotoStage && elPlayerPhotoStage.dataset.reactManaged !== "true" && !elPlayerPhotoStage._playerPhotoBound) {
   elPlayerPhotoStage.addEventListener("pointerdown", handlePlayerPhotoPointerDown);
   elPlayerPhotoStage.addEventListener("pointermove", handlePlayerPhotoPointerMove);
   elPlayerPhotoStage.addEventListener("pointerup", handlePlayerPhotoPointerUp);
   elPlayerPhotoStage.addEventListener("pointercancel", handlePlayerPhotoPointerUp);
   elPlayerPhotoStage._playerPhotoBound = true;
 }
-if (elPlayerPhotoZoom && !elPlayerPhotoZoom._playerPhotoBound) {
+if (elPlayerPhotoZoom && elPlayerPhotoZoom.dataset.reactManaged !== "true" && !elPlayerPhotoZoom._playerPhotoBound) {
   elPlayerPhotoZoom.addEventListener("input", () => {
     const nextZoom = parseFloat(elPlayerPhotoZoom.value);
     playerPhotoEditorState.zoom = Number.isFinite(nextZoom) ? Math.max(1, nextZoom) : 1;
@@ -493,19 +498,19 @@ if (elPlayerPhotoZoom && !elPlayerPhotoZoom._playerPhotoBound) {
   });
   elPlayerPhotoZoom._playerPhotoBound = true;
 }
-if (elPlayerPhotoClose && !elPlayerPhotoClose._playerPhotoBound) {
+if (elPlayerPhotoClose && elPlayerPhotoClose.dataset.reactManaged !== "true" && !elPlayerPhotoClose._playerPhotoBound) {
   elPlayerPhotoClose.addEventListener("click", () => closePlayerPhotoEditor(null));
   elPlayerPhotoClose._playerPhotoBound = true;
 }
-if (elPlayerPhotoCancel && !elPlayerPhotoCancel._playerPhotoBound) {
+if (elPlayerPhotoCancel && elPlayerPhotoCancel.dataset.reactManaged !== "true" && !elPlayerPhotoCancel._playerPhotoBound) {
   elPlayerPhotoCancel.addEventListener("click", () => closePlayerPhotoEditor(null));
   elPlayerPhotoCancel._playerPhotoBound = true;
 }
-if (elPlayerPhotoRemove && !elPlayerPhotoRemove._playerPhotoBound) {
+if (elPlayerPhotoRemove && elPlayerPhotoRemove.dataset.reactManaged !== "true" && !elPlayerPhotoRemove._playerPhotoBound) {
   elPlayerPhotoRemove.addEventListener("click", () => closePlayerPhotoEditor(PLAYER_PHOTO_REMOVE_RESULT));
   elPlayerPhotoRemove._playerPhotoBound = true;
 }
-if (elPlayerPhotoSave && !elPlayerPhotoSave._playerPhotoBound) {
+if (elPlayerPhotoSave && elPlayerPhotoSave.dataset.reactManaged !== "true" && !elPlayerPhotoSave._playerPhotoBound) {
   elPlayerPhotoSave.addEventListener("click", () => {
     try {
       closePlayerPhotoEditor(exportPlayerPhotoDataUrl());
@@ -516,7 +521,7 @@ if (elPlayerPhotoSave && !elPlayerPhotoSave._playerPhotoBound) {
   });
   elPlayerPhotoSave._playerPhotoBound = true;
 }
-if (elPlayerPhotoModal && !elPlayerPhotoModal._playerPhotoBound) {
+if (elPlayerPhotoModal && elPlayerPhotoModal.dataset.reactManaged !== "true" && !elPlayerPhotoModal._playerPhotoBound) {
   elPlayerPhotoModal.addEventListener("click", ev => {
     const target = ev.target;
     if (!(target instanceof HTMLElement)) return;

@@ -93,7 +93,7 @@ function applyPlayersToTeamManagerDraft(names, numbers, liberos, mode = "append"
 function applyPlayersFromTextarea(options = {}) {
   if (!elPlayersInput) return false;
   const { mode = "append" } = options;
-  const raw = elPlayersInput.value;
+  const raw = elPlayersInput.dataset.reactManaged === "true" && typeof pastePlayersStore !== "undefined" ? pastePlayersStore.getSnapshot().text : elPlayersInput.value;
   const parsed = parseDelimitedTeamText(raw);
   const currentPlayers = normalizePlayers(state.players || []);
   const appendPlayers = parsed && parsed.players && parsed.players.length > 0

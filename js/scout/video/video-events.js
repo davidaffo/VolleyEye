@@ -43,13 +43,14 @@ function updateSelectionStyles() {
     }
     ctx.rows.forEach(r => {
       const selected = selectedEventIds.has(r.key);
-      r.tr.dataset.selected = selected ? "true" : "false";
-      r.tr.classList.toggle("selected", selected);
+      if(r.tr){r.tr.dataset.selected = selected ? "true" : "false";
+      r.tr.classList.toggle("selected", selected);}
       if (r.checkbox) {
         r.checkbox.checked = selected;
       }
     });
   });
+  if(typeof publishReactEventSelection === "function")publishReactEventSelection();
   updateVideoSelectionCount();
 }
 function updateVideoSelectionCount() {
@@ -364,6 +365,7 @@ function openVideoScoreModal() {
     seed && typeof seed.homeScore === "number" && isFinite(seed.homeScore) ? seed.homeScore : 0;
   const seedAway =
     seed && typeof seed.visitorScore === "number" && isFinite(seed.visitorScore) ? seed.visitorScore : 0;
+  if(elVideoScoreModal.dataset.reactManaged === "true" && typeof openReactVideoScore === "function"){openReactVideoScore(seedHome,seedAway);return;}
   if (elVideoScoreHome) elVideoScoreHome.value = String(seedHome);
   if (elVideoScoreAway) elVideoScoreAway.value = String(seedAway);
   elVideoScoreModal.classList.remove("hidden");
@@ -372,7 +374,8 @@ function openVideoScoreModal() {
 }
 function closeVideoScoreModal() {
   if (!elVideoScoreModal) return;
-  elVideoScoreModal.classList.add("hidden");
+  if(elVideoScoreModal.dataset.reactManaged === "true" && typeof closeReactVideoScore === "function")closeReactVideoScore();
+  else elVideoScoreModal.classList.add("hidden");
   setModalOpenState(false);
 }
 function correctVideoScoresFromSelection(startHome, startAway) {
@@ -623,6 +626,7 @@ function chooseFfmpegEncoder() {
   const gpuButton = document.getElementById("ffmpeg-copy-gpu");
   const cpuButton = document.getElementById("ffmpeg-copy-cpu");
   if (!modal || !gpuButton || !cpuButton) return Promise.resolve("cpu");
+  if(modal.dataset?.reactManaged==="true"&&typeof chooseReactFfmpegEncoder==="function")return chooseReactFfmpegEncoder();
   return new Promise(resolve => {
     let settled = false;
     const finish = choice => {
@@ -689,8 +693,9 @@ function renderEventsLog(options = {}) {
   let summaryText = "Nessun evento";
   const suppressScroll = !!options.suppressScroll;
   if (!state.events || state.events.length === 0) {
-    if (elEventsLog) elEventsLog.innerHTML = "";
-    if (elEventsLog) elEventsLog.textContent = "Nessun evento ancora registrato.";
+    if(elEventsLog?.dataset.reactManaged === "true" && typeof publishReactEventTable === "function")publishReactEventTable(elEventsLog,[],{contextKey:"log",empty:"Nessun evento ancora registrato."});
+    else{if (elEventsLog) elEventsLog.innerHTML = "";
+    if (elEventsLog) elEventsLog.textContent = "Nessun evento ancora registrato.";}
     if (elEventsLogSummary) elEventsLogSummary.textContent = summaryText;
     lastLogRenderedKey = null;
     updateLiveDvwMirror();
@@ -743,7 +748,10 @@ function renderEventsLog(options = {}) {
   const skillEvents = getVideoSkillEvents();
   const baseMs = getVideoBaseTimeMs(skillEvents);
   let didAppend = false;
-  if (append && elEventsLog && lastLogRenderedKey) {
+  if(elEventsLog?.dataset.reactManaged === "true" && typeof publishReactEventTable === "function"){
+   renderEventTableRows(elEventsLog,recent,{showSeek:false,showVideoTime:true,baseMs,enableSelection:true,contextKey:"log",onSelectionChange:(_rows,_ctx,opts)=>handleSeekForSelection("log",opts)});didAppend=true;
+  }
+  if (!didAppend && append && elEventsLog && lastLogRenderedKey) {
     const lastIdx = recent.findIndex(ev => getEventKey(ev) === lastLogRenderedKey);
     if (lastIdx !== -1) {
       const toAppend = recent.slice(lastIdx + 1);
@@ -822,6 +830,10 @@ function getSubstitutionCountForSet(setNum, scope = "our") {
   ).length;
 }
 function updateTeamCounters() {
+  if (elTimeoutCount && elTimeoutCount.dataset && elTimeoutCount.dataset.reactManaged === "true") {
+    if (typeof publishRuntimeView === "function") publishRuntimeView();
+    return;
+  }
   const setNum = state.currentSet || 1;
   if (elTimeoutCount) {
     const used = getTimeoutCountForSet(setNum);
@@ -879,6 +891,7 @@ function recordSubstitutionEvent({ playerIn, playerOut, teamScope = "our" }) {
   updateRotationDisplay();
 }
 function openOffsetModal() {
+  if(elOffsetModal?.dataset.reactManaged === "true" && typeof openReactVideoEdit === "function"){openReactVideoEdit("offset");return;}
   if (!elOffsetModal || !elOffsetSkillGrid) return;
   elOffsetSkillGrid.innerHTML = "";
   SKILLS.forEach(skill => {
@@ -911,6 +924,7 @@ function openOffsetModal() {
   setGlobalModalState(true);
 }
 function closeOffsetModal() {
+  if(elOffsetModal?.dataset.reactManaged === "true" && typeof closeReactVideoEdit === "function"){closeReactVideoEdit("offset");return;}
   if (!elOffsetModal) return;
   elOffsetModal.classList.add("hidden");
   setGlobalModalState(false);
@@ -944,12 +958,14 @@ function renderSkillDurationGrid() {
   });
 }
 function openSkillDurationModal() {
+  if(elSkillDurationModal?.dataset.reactManaged === "true" && typeof openReactVideoEdit === "function"){openReactVideoEdit("duration");return;}
   if (!elSkillDurationModal) return;
   renderSkillDurationGrid();
   elSkillDurationModal.classList.remove("hidden");
   setGlobalModalState(true);
 }
 function closeSkillDurationModal() {
+  if(elSkillDurationModal?.dataset.reactManaged === "true" && typeof closeReactVideoEdit === "function"){closeReactVideoEdit("duration");return;}
   if (!elSkillDurationModal) return;
   elSkillDurationModal.classList.add("hidden");
   setGlobalModalState(false);
@@ -957,7 +973,7 @@ function closeSkillDurationModal() {
 function applySkillDurationDefaults() {
   if (!elSkillDurationGrid) return;
   const defaults = {};
-  elSkillDurationGrid.querySelectorAll("input[data-skill-id]").forEach(input => {
+  (elSkillDurationGrid.dataset.reactManaged === "true" && typeof readVideoEditInputs === "function" ? readVideoEditInputs("duration") : elSkillDurationGrid.querySelectorAll("input[data-skill-id]")).forEach(input => {
     const id = input.dataset.skillId;
     const value = parseFloat(input.value || "0");
     if (!id || !isFinite(value) || value <= 0) return;
@@ -1055,12 +1071,14 @@ function renderUnifyTimesOptions() {
   });
 }
 function openUnifyTimesModal() {
+  if(elUnifyTimesModal?.dataset.reactManaged === "true" && typeof openReactVideoEdit === "function"){openReactVideoEdit("unify");return;}
   if (!elUnifyTimesModal) return;
   renderUnifyTimesOptions();
   elUnifyTimesModal.classList.remove("hidden");
   setGlobalModalState(true);
 }
 function closeUnifyTimesModal() {
+  if(elUnifyTimesModal?.dataset.reactManaged === "true" && typeof closeReactVideoEdit === "function"){closeReactVideoEdit("unify");return;}
   if (!elUnifyTimesModal) return;
   elUnifyTimesModal.classList.add("hidden");
   setGlobalModalState(false);
@@ -1085,6 +1103,9 @@ function applyUnifyTimes() {
   if (!elUnifyTimesGrid) return;
   const enabledTypes = new Set();
   const preferredSources = {};
+  if(elUnifyTimesGrid.dataset.reactManaged === "true" && typeof readVideoEditInputs === "function"){
+    readVideoEditInputs("unify").forEach(input=>{if(input.checked)enabledTypes.add(input.dataset.linkType);preferredSources[input.dataset.linkType]=input.value;});
+  }else{
   elUnifyTimesGrid.querySelectorAll("input[type=\"checkbox\"][data-link-type]").forEach(input => {
     if (input.checked) enabledTypes.add(input.dataset.linkType);
   });
@@ -1092,6 +1113,7 @@ function applyUnifyTimes() {
     const selected = elUnifyTimesGrid.querySelector(`input[name="unify-source-${opt.type}"]:checked`);
     preferredSources[opt.type] = selected ? selected.value : opt.source.id;
   });
+  }
   if (!enabledTypes.size) {
     alert("Seleziona almeno un collegamento da unificare.");
     return;
@@ -1150,7 +1172,7 @@ function applyOffsetsToSelectedSkills() {
   if (!elOffsetSkillGrid) return;
   const offsets = {};
   let manualErrorOffset = 0;
-  elOffsetSkillGrid.querySelectorAll("input[data-skill-id]").forEach(input => {
+  (elOffsetSkillGrid.dataset.reactManaged === "true" && typeof readVideoEditInputs === "function" ? readVideoEditInputs("offset") : elOffsetSkillGrid.querySelectorAll("input[data-skill-id]")).forEach(input => {
     const id = input.dataset.skillId;
     const value = parseFloat(input.value || "0");
     if (!id || isNaN(value) || value === 0) return;

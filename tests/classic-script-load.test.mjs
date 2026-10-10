@@ -1,3 +1,4 @@
+import { dvwFixtureRoot } from './helpers/dvw-fixtures.mjs';
 import { IDBFactory } from "fake-indexeddb";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
@@ -5,9 +6,9 @@ import test from "node:test";
 import vm from "node:vm";
 import { runtimeFiles } from "./helpers/browser-runtime-files.mjs";
 
-const dvwRoot = 'resources/data volley';
+const dvwRoot = dvwFixtureRoot('resources/data volley');
 const dvwFiles = [`${dvwRoot}/data volley example file.dvw`, ...readdirSync(`${dvwRoot}/files scout`).filter(file => file.endsWith('.dvw')).map(file => `${dvwRoot}/files scout/${file}`)];
-dvwFiles.push(...readdirSync('resources/data volley da volleyscout').filter(file => file.endsWith('.dvw')).map(file => `resources/data volley da volleyscout/${file}`));
+dvwFiles.push(...readdirSync(dvwFixtureRoot('resources/data volley da volleyscout')).filter(file => file.endsWith('.dvw')).map(file => dvwFixtureRoot('resources/data volley da volleyscout') + '/' + file));
 const rootUrl = new URL("../", import.meta.url);
 
 
@@ -286,7 +287,7 @@ for (const [file, count] of [['Castenaso - Budrio.dvw', 144], ['Finale Villanova
     const context = buildBrowserContext();
     runtimeFiles.forEach(path => vm.runInContext(readFileSync(new URL(path, rootUrl), 'utf8'), context, { filename: path }));
     await context.initializePersistentStorage();
-    context.importText = readFileSync(`resources/data volley da volleyscout/${file}`, 'utf8');
+    context.importText = readFileSync(dvwFixtureRoot('resources/data volley da volleyscout') + '/' + file, 'utf8');
     vm.runInContext(`
       ensureAnalysisTeamFilterDefault();
       analysisSummaryFilterState.sets.add(99);

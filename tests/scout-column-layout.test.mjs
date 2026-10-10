@@ -1,3 +1,4 @@
+import { readAppHtml } from './helpers/app-html.mjs';
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -7,7 +8,7 @@ import { readStyleSource } from "./helpers/style-source.mjs";
 import { readRosterSource } from "./helpers/roster-source.mjs";
 
 const scoutSource = readScoutSource();
-const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
+const html = readAppHtml();
 const css = readStyleSource();
 const rosterSource = readRosterSource();
 

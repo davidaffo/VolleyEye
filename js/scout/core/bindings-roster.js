@@ -1,10 +1,10 @@
 function bindRosterAndArchiveControls() {
   [elCurrentSet].forEach(select => {
-    if (!select) return;
+    if (!select || select.dataset.reactManaged === "true") return;
     select.addEventListener("change", () => setCurrentSet(select.value));
   });
   if (elThemeToggles.length) {
-    elThemeToggles.forEach(button => button.addEventListener("click", () => {
+    elThemeToggles.filter(button => !button.dataset || button.dataset.reactManaged !== "true").forEach(button => button.addEventListener("click", () => {
       applyTheme(button.dataset.themeChoice);
       saveState();
     }));
@@ -17,7 +17,7 @@ function bindRosterAndArchiveControls() {
     if (elTeamManagerModal && !elTeamManagerModal.classList.contains("hidden")) return;
     setGlobalModalState(false);
   };
-  if (elBtnApplyPlayers) {
+  if (elBtnApplyPlayers && elBtnApplyPlayers.dataset.reactManaged !== "true") {
     elBtnApplyPlayers.addEventListener("click", () => {
       if (applyPlayersFromTextarea({ mode: "append" })) {
         closePastePlayersModal();
@@ -28,7 +28,7 @@ function bindRosterAndArchiveControls() {
     });
   }
   const elBtnReplacePlayers = document.getElementById("btn-replace-players");
-  if (elBtnReplacePlayers) {
+  if (elBtnReplacePlayers && elBtnReplacePlayers.dataset.reactManaged !== "true") {
     elBtnReplacePlayers.addEventListener("click", () => {
       if (applyPlayersFromTextarea({ mode: "replace" })) {
         closePastePlayersModal();
@@ -128,14 +128,8 @@ function bindRosterAndArchiveControls() {
     }
   }
   const elBtnNewTeam = document.getElementById("btn-new-team");
-  if (elBtnNewTeam) {
-    elBtnNewTeam.addEventListener("click", () => {
-      if (typeof openNewTeamManager === "function") {
-        openNewTeamManager();
-        return;
-      }
-      openTeamManagerModal("our");
-    });
+  if (elBtnNewTeam && elBtnNewTeam.dataset.reactManaged !== "true") {
+    elBtnNewTeam.addEventListener("click", createManagedTeam);
   }
   const elBtnDuplicateTeam = document.getElementById("btn-duplicate-team");
   if (elBtnDuplicateTeam) {
@@ -148,32 +142,32 @@ function bindRosterAndArchiveControls() {
   if (elBtnOpenOpponentTeamManager) {
     elBtnOpenOpponentTeamManager.addEventListener("click", () => openTeamManagerModal("opponent"));
   }
-  if (elLineupModalClose) {
+  if (elLineupModalClose && elLineupModalClose.dataset.reactManaged !== "true") {
     elLineupModalClose.addEventListener("click", closeLineupModal);
   }
-  if (elLineupModalCancel) {
+  if (elLineupModalCancel && elLineupModalCancel.dataset.reactManaged !== "true") {
     elLineupModalCancel.addEventListener("click", closeLineupModal);
   }
-  if (elLineupModalSaveOverride) {
+  if (elLineupModalSaveOverride && elLineupModalSaveOverride.dataset.reactManaged !== "true") {
     elLineupModalSaveOverride.addEventListener("click", () => {
       saveLineupModal({ countSubstitutions: false });
     });
   }
-  if (elLineupModalSaveSubstitution) {
+  if (elLineupModalSaveSubstitution && elLineupModalSaveSubstitution.dataset.reactManaged !== "true") {
     elLineupModalSaveSubstitution.addEventListener("click", () => {
       saveLineupModal({ countSubstitutions: true });
     });
   }
-  if (elLineupModalApplyDefault) {
+  if (elLineupModalApplyDefault && elLineupModalApplyDefault.dataset.reactManaged !== "true") {
     elLineupModalApplyDefault.addEventListener("click", applyDefaultLineupToModal);
   }
-  if (elLineupModalToggleNumbers) {
+  if (elLineupModalToggleNumbers && elLineupModalToggleNumbers.dataset.reactManaged !== "true") {
     elLineupModalToggleNumbers.addEventListener("click", () => {
       lineupNumberMode = !lineupNumberMode;
       renderLineupModal();
     });
   }
-  if (elLineupModal) {
+  if (elLineupModal && elLineupModal.dataset.reactManaged !== "true") {
     elLineupModal.addEventListener("click", e => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
@@ -182,42 +176,21 @@ function bindRosterAndArchiveControls() {
       }
     });
   }
-  if (elTeamManagerClose) {
+  if (elTeamManagerClose && elTeamManagerClose.dataset.reactManaged !== "true") {
     elTeamManagerClose.addEventListener("click", closeTeamManagerModal);
   }
-  if (elTeamManagerCancel) {
+  if (elTeamManagerCancel && elTeamManagerCancel.dataset.reactManaged !== "true") {
     elTeamManagerCancel.addEventListener("click", closeTeamManagerModal);
   }
-  if (elTeamManagerAdd) {
-    elTeamManagerAdd.addEventListener("click", () => {
-      if (!teamManagerState) {
-        openTeamManagerModal(teamManagerScope || "our");
-        return;
-      }
-      const nextPlayer = {
-        id: typeof generatePlayerId === "function" ? generatePlayerId() : Date.now() + "_" + Math.random(),
-        name: "",
-        firstName: "",
-        lastName: "",
-        number: "",
-        role: "",
-        isCaptain: false,
-        out: false
-      };
-      if (typeof teamManagerLiveEditMode !== "undefined" && teamManagerLiveEditMode) {
-        teamManagerState.players.push(nextPlayer);
-      } else {
-        teamManagerState.players.unshift(nextPlayer);
-      }
-      renderTeamManagerTable();
-    });
+  if (elTeamManagerAdd && elTeamManagerAdd.dataset.reactManaged !== "true") {
+    elTeamManagerAdd.addEventListener("click", addManagedTeamPlayer);
   }
-  if (elTeamManagerSave) {
+  if (elTeamManagerSave && elTeamManagerSave.dataset.reactManaged !== "true") {
     elTeamManagerSave.addEventListener("click", () => {
       saveTeamManagerPayload();
     });
   }
-  if (elTeamManagerModal) {
+  if (elTeamManagerModal && elTeamManagerModal.dataset.reactManaged !== "true") {
     elTeamManagerModal.addEventListener("click", e => {
       const target = e.target;
       if (target === elTeamManagerModal || (target && target.classList && target.classList.contains("team-modal__backdrop"))) {
@@ -226,21 +199,10 @@ function bindRosterAndArchiveControls() {
     });
   }
   const elBtnOpenPlayersPaste = document.getElementById("btn-open-players-paste");
-  if (elBtnOpenPlayersPaste) {
-    elBtnOpenPlayersPaste.addEventListener("click", () => {
-      if (elPlayersInput) {
-        elPlayersInput.value = "";
-      }
-      if (elPastePlayersModal) {
-        elPastePlayersModal.classList.remove("hidden");
-        setGlobalModalState(true);
-      }
-      if (elPlayersInput) {
-        elPlayersInput.focus();
-      }
-    });
+  if (elBtnOpenPlayersPaste && elBtnOpenPlayersPaste.dataset.reactManaged !== "true") {
+    elBtnOpenPlayersPaste.addEventListener("click", openManagedPlayersPaste);
   }
-  if (typeof elBtnImportCamp3 !== "undefined" && elBtnImportCamp3 && typeof elCamp3FileInput !== "undefined" && elCamp3FileInput) {
+  if (typeof elBtnImportCamp3 !== "undefined" && elBtnImportCamp3 && elBtnImportCamp3.dataset.reactManaged !== "true" && typeof elCamp3FileInput !== "undefined" && elCamp3FileInput) {
     elBtnImportCamp3.addEventListener("click", () => {
       elCamp3FileInput.value = "";
       elCamp3FileInput.click();
@@ -264,16 +226,16 @@ function bindRosterAndArchiveControls() {
       }
     });
   }
-  if (typeof elCamp3ConfirmApply !== "undefined" && elCamp3ConfirmApply) {
+  if (typeof elCamp3ConfirmApply !== "undefined" && elCamp3ConfirmApply && elCamp3ConfirmApply.dataset.reactManaged !== "true") {
     elCamp3ConfirmApply.addEventListener("click", () => closeCamp3ConfirmModal(true));
   }
-  if (typeof elCamp3ConfirmCancel !== "undefined" && elCamp3ConfirmCancel) {
+  if (typeof elCamp3ConfirmCancel !== "undefined" && elCamp3ConfirmCancel && elCamp3ConfirmCancel.dataset.reactManaged !== "true") {
     elCamp3ConfirmCancel.addEventListener("click", () => closeCamp3ConfirmModal(false));
   }
-  if (typeof elCamp3ConfirmClose !== "undefined" && elCamp3ConfirmClose) {
+  if (typeof elCamp3ConfirmClose !== "undefined" && elCamp3ConfirmClose && elCamp3ConfirmClose.dataset.reactManaged !== "true") {
     elCamp3ConfirmClose.addEventListener("click", () => closeCamp3ConfirmModal(false));
   }
-  if (typeof elCamp3ConfirmModal !== "undefined" && elCamp3ConfirmModal) {
+  if (typeof elCamp3ConfirmModal !== "undefined" && elCamp3ConfirmModal && elCamp3ConfirmModal.dataset.reactManaged !== "true") {
     elCamp3ConfirmModal.addEventListener("click", e => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
@@ -282,7 +244,7 @@ function bindRosterAndArchiveControls() {
       }
     });
   }
-  if (elPastePlayersModal) {
+  if (elPastePlayersModal && elPastePlayersModal.dataset.reactManaged !== "true") {
     elPastePlayersModal.addEventListener("click", e => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
@@ -291,57 +253,11 @@ function bindRosterAndArchiveControls() {
       }
     });
   }
-  if (elTeamManagerDup) {
-    elTeamManagerDup.addEventListener("click", () => {
-      if (!teamManagerState) {
-        openTeamManagerModal(teamManagerScope || "our");
-        return;
-      }
-      const clone = JSON.parse(JSON.stringify(teamManagerState.players || []));
-      teamManagerState.players = clone.map(p =>
-        (() => {
-          const firstName = String(p.firstName || "").trim();
-          const lastName = (String(p.lastName || "").trim() || (!firstName ? String(p.name || "").trim() : "")) + " (dup)";
-          return Object.assign({}, p, {
-            id: typeof generatePlayerId === "function" ? generatePlayerId() : Date.now() + "_" + Math.random(),
-            name: buildFullName(lastName, firstName),
-            firstName,
-            lastName
-          });
-        })()
-      );
-      renderTeamManagerTable();
-    });
+  if (elTeamManagerDup && elTeamManagerDup.dataset.reactManaged !== "true") {
+    elTeamManagerDup.addEventListener("click", duplicateManagedTeamPlayers);
   }
-  if (elTeamManagerTemplate) {
-    elTeamManagerTemplate.addEventListener("click", () => {
-      const playersDetailed =
-        typeof buildTemplatePlayersDetailed === "function"
-          ? buildTemplatePlayersDetailed()
-          : TEMPLATE_TEAM.players.map((name, idx) => {
-              return {
-                id: typeof generatePlayerId === "function" ? generatePlayerId() : idx + "_" + name,
-                name,
-                firstName: "",
-                lastName: name,
-                number: String(idx + 1),
-                role: TEMPLATE_TEAM.liberos.includes(name) ? "L" : "",
-                isCaptain: idx === 0,
-                out: false
-              };
-            });
-      teamManagerState = {
-        name: teamManagerScope === "opponent" ? state.selectedOpponentTeam || "Avversaria" : state.selectedTeam || "Squadra",
-        staff: Object.assign({}, DEFAULT_STAFF),
-        players: playersDetailed,
-        defaultRotation: 1,
-        defaultLineup:
-          typeof buildRoleBasedDefaultLineup === "function"
-            ? buildRoleBasedDefaultLineup(TEMPLATE_TEAM.players)
-            : TEMPLATE_TEAM.players.slice(0, 6)
-      };
-      renderTeamManagerTable();
-    });
+  if (elTeamManagerTemplate && elTeamManagerTemplate.dataset.reactManaged !== "true") {
+    elTeamManagerTemplate.addEventListener("click", generateManagedTeamTemplate);
   }
   if (elBtnDeleteTeam) {
     elBtnDeleteTeam.addEventListener("click", deleteSelectedTeam);
@@ -352,7 +268,7 @@ function bindRosterAndArchiveControls() {
   if (elBtnRenameOpponentTeam) {
     elBtnRenameOpponentTeam.addEventListener("click", renameSelectedOpponentTeam);
   }
-  if (elBtnExportTeam) {
+  if (elBtnExportTeam && elBtnExportTeam.dataset.reactManaged !== "true") {
     elBtnExportTeam.addEventListener("click", exportCurrentTeamToFile);
   }
   if (elBtnExportOpponentTeam) {
@@ -380,7 +296,7 @@ function bindRosterAndArchiveControls() {
       if (file) importOpponentTeamFromFile(file);
     });
   }
-  if (elBtnDeleteMatch) {
+  if (elBtnDeleteMatch && elBtnDeleteMatch.dataset.reactManaged !== "true") {
     elBtnDeleteMatch.addEventListener("click", deleteSelectedMatch);
   }
   if (elBtnExportDb) {
@@ -416,13 +332,13 @@ function bindRosterAndArchiveControls() {
   if (elMatchManagerClose) {
     elMatchManagerClose.addEventListener("click", closeMatchManagerModal);
   }
-  if (elPlayersDbClose) {
+  if (elPlayersDbClose && elPlayersDbClose.dataset.reactManaged !== "true") {
     elPlayersDbClose.addEventListener("click", closePlayersDbModal);
   }
-  if (elPlayersDbClean) {
+  if (elPlayersDbClean && elPlayersDbClean.dataset.reactManaged !== "true") {
     elPlayersDbClean.addEventListener("click", removeOrphanPlayersFromDb);
   }
-  if (elBtnMergePlayers) {
+  if (elBtnMergePlayers && elBtnMergePlayers.dataset.reactManaged !== "true") {
     elBtnMergePlayers.addEventListener("click", async () => {
       if (!elPlayersDbMergePrimary || !elPlayersDbMergeSecondary) return;
       const primaryId = elPlayersDbMergePrimary.value || "";
@@ -445,14 +361,191 @@ function bindRosterAndArchiveControls() {
   if (elBtnOpenDebugModal) {
     elBtnOpenDebugModal.addEventListener("click", openDebugModal);
   }
-  if (elDebugModalClose) {
+  if (elDebugModalClose && elDebugModalClose.dataset?.reactManaged !== "true") {
     elDebugModalClose.addEventListener("click", closeDebugModal);
   }
-  if (elTeamsManagerClose) {
+  if (elTeamsManagerClose && elTeamsManagerClose.dataset.reactManaged !== "true") {
     elTeamsManagerClose.addEventListener("click", closeTeamsManagerModal);
   }
-  if (elTeamsManagerOpenTeam) {
-    elTeamsManagerOpenTeam.addEventListener("click", () => {
+  if (elTeamsManagerOpenTeam && elTeamsManagerOpenTeam.dataset.reactManaged !== "true") {
+    elTeamsManagerOpenTeam.addEventListener("click", openSelectedManagedTeam);
+  }
+  if (elMatchManagerModal) {
+    elMatchManagerModal.addEventListener("click", e => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (target.dataset.closeMatchManager !== undefined) {
+        closeMatchManagerModal();
+      }
+    });
+  }
+  if (elPlayersDbModal && elPlayersDbModal.dataset.reactManaged !== "true") {
+    elPlayersDbModal.addEventListener("click", e => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (target.dataset.closePlayersDb !== undefined) {
+        closePlayersDbModal();
+      }
+    });
+  }
+  if (elDebugModal && elDebugModal.dataset?.reactManaged !== "true") {
+    elDebugModal.addEventListener("click", e => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (target.dataset.closeDebugModal !== undefined || target.classList.contains("settings-modal__backdrop")) {
+        closeDebugModal();
+      }
+    });
+  }
+  if (elTeamsManagerModal && elTeamsManagerModal.dataset.reactManaged !== "true") {
+    elTeamsManagerModal.addEventListener("click", e => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (target.dataset.closeTeamsManager !== undefined) {
+        closeTeamsManagerModal();
+      }
+    });
+  }
+  if (elTeamsManagerDelete && elTeamsManagerDelete.dataset.reactManaged !== "true") {
+    elTeamsManagerDelete.addEventListener("click", deleteSelectedManagedTeam);
+  }
+  if (elTeamsManagerDuplicate && elTeamsManagerDuplicate.dataset.reactManaged !== "true") {
+    elTeamsManagerDuplicate.addEventListener("click", duplicateSelectedManagedTeam);
+  }
+  if (elTeamsManagerExport && elTeamsManagerExport.dataset.reactManaged !== "true") {
+    elTeamsManagerExport.addEventListener("click", exportSelectedManagedTeam);
+  }
+  if (elTeamsManagerImport && elTeamsManagerFileInput && elTeamsManagerImport.dataset.reactManaged !== "true") {
+    elTeamsManagerImport.addEventListener("click", () => {
+      elTeamsManagerFileInput.value = "";
+      elTeamsManagerFileInput.click();
+    });
+    elTeamsManagerFileInput.addEventListener("change", e => {
+      const input = e.target;
+      const file = input && input.files && input.files[0];
+      if (file) {
+        importTeamToStorageOnly(file);
+      }
+      renderTeamsManagerList();
+    });
+  }
+  if (elTeamsManagerOpenPlayersDb && elTeamsManagerOpenPlayersDb.dataset.reactManaged !== "true") {
+    elTeamsManagerOpenPlayersDb.addEventListener("click", openPlayersDbModal);
+  }
+  if (elSavedMatchesList && elSavedMatchesList.dataset.reactManaged !== "true") {
+    elSavedMatchesList.addEventListener("click", e => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+      const btn = target.closest(".match-list-open");
+      if (!btn) return;
+      const name = btn.dataset.matchName || "";
+      if (elSavedMatchesSelect && elSavedMatchesSelect.dataset.reactManaged !== "true") {
+        elSavedMatchesSelect.value = name;
+      }
+      state.selectedMatch = name;
+      renderMatchesList(Object.keys(state.savedMatches || {}), name);
+      updateMatchButtonsState();
+    });
+  }
+  document.querySelectorAll("[data-edit-match]").forEach(button => {
+    if (button.dataset.reactManaged === "true") return;
+    button.addEventListener("click", () => openNewMatchModal("edit"));
+  });
+  if (elBtnNewMatch && elBtnNewMatch.dataset.reactManaged !== "true") {
+    elBtnNewMatch.addEventListener("click", () => {
+      if (typeof createNewMatchFromPrompt === "function") {
+        createNewMatchFromPrompt();
+        return;
+      }
+      if (!elSavedMatchesSelect) return;
+      elSavedMatchesSelect.value = "";
+      loadSelectedMatch();
+    });
+  }
+  const newMatchModal = document.getElementById("new-match-modal");
+  const newMatchTeam = document.getElementById("new-match-team");
+  const newMatchConfirm = document.getElementById("new-match-confirm");
+  if (newMatchModal && newMatchModal.dataset.reactManaged !== "true") {
+    newMatchModal.addEventListener("click", e => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (target.dataset.closeNewMatch !== undefined || target.id === "new-match-close") {
+        if (typeof closeNewMatchModal === "function") closeNewMatchModal();
+      }
+    });
+    newMatchModal.querySelectorAll('input[name="new-match-mode"]').forEach(input => {
+      input.addEventListener("change", () => {
+        if (typeof updateNewMatchModeUI === "function") updateNewMatchModeUI();
+      });
+    });
+  }
+  if (newMatchTeam && newMatchModal && newMatchModal.dataset.reactManaged !== "true") {
+    newMatchTeam.addEventListener("change", () => {
+      if (typeof populateNewMatchTeamSelects === "function") populateNewMatchTeamSelects();
+    });
+  }
+  if (newMatchConfirm && newMatchModal && newMatchModal.dataset.reactManaged !== "true") {
+    newMatchConfirm.addEventListener("click", () => {
+      const selectedMode = document.querySelector('input[name="new-match-mode"]:checked');
+      const setup = {
+        teamName: (document.getElementById("new-match-team") || {}).value || "",
+        mode: selectedMode ? selectedMode.value : "single",
+        opponentTeam: (document.getElementById("new-match-opponent-team") || {}).value || "",
+        opponentManual: (document.getElementById("new-match-opponent-name") || {}).value || "",
+        category: elCategory.value,
+        date: elDate.value,
+        matchType: elMatchType.value,
+        leg: elLeg.value
+      };
+      const created = newMatchModal.dataset.mode === "edit"
+        ? saveMatchDetailsFromSetup(setup)
+        : createNewMatchFromSetup(setup);
+      if (created && typeof closeNewMatchModal === "function") closeNewMatchModal();
+    });
+  }
+  const newMatchManageTeams = document.getElementById("new-match-manage-teams");
+  if (newMatchManageTeams && newMatchModal && newMatchModal.dataset.reactManaged !== "true") {
+    newMatchManageTeams.addEventListener("click", () => {
+      if (typeof closeNewMatchModal === "function") closeNewMatchModal();
+      if (typeof setActiveTab === "function") setActiveTab("info");
+      if (typeof openTeamsManagerModal === "function") openTeamsManagerModal();
+    });
+  }
+  if (elBtnLoadMatch && elBtnLoadMatch.dataset.reactManaged !== "true") {
+    elBtnLoadMatch.addEventListener("click", () => {
+      if (typeof enterSelectedMatch === "function") {
+        enterSelectedMatch();
+      } else {
+        loadSelectedMatch();
+      }
+    });
+  }
+  document.querySelectorAll("[data-exit-match]").forEach(exitButton => {
+    if (exitButton.dataset.reactManaged === "true") return;
+    exitButton.addEventListener("click", () => {
+      if (typeof exitCurrentMatch === "function") exitCurrentMatch();
+    });
+  });
+  if (elTeamsSelect) {
+    elTeamsSelect.addEventListener("change", handleTeamSelectChange);
+  }
+  if (elOpponentTeamsSelect) {
+    elOpponentTeamsSelect.addEventListener("change", () => {
+      handleOpponentTeamSelectChange();
+    });
+  }
+  if (elSavedMatchesSelect && elSavedMatchesSelect.dataset.reactManaged !== "true") {
+    elSavedMatchesSelect.addEventListener("change", () => {
+      updateMatchButtonsState();
+      state.selectedMatch = elSavedMatchesSelect.value || "";
+      if (typeof renderMatchesList === "function") {
+        renderMatchesList(Object.keys(state.savedMatches || {}), state.selectedMatch);
+      }
+    });
+  }
+}
+
+function openSelectedManagedTeam() {
       const name = teamsManagerSelectedName;
       if (!name) return;
       const team = typeof loadTeamFromStorage === "function" ? loadTeamFromStorage(name) : null;
@@ -469,46 +562,9 @@ function bindRosterAndArchiveControls() {
       if (typeof renderTeamsSelect === "function") renderTeamsSelect();
       closeTeamsManagerModal();
       openTeamManagerModal("our");
-    });
-  }
-  if (elMatchManagerModal) {
-    elMatchManagerModal.addEventListener("click", e => {
-      const target = e.target;
-      if (!(target instanceof HTMLElement)) return;
-      if (target.dataset.closeMatchManager !== undefined) {
-        closeMatchManagerModal();
-      }
-    });
-  }
-  if (elPlayersDbModal) {
-    elPlayersDbModal.addEventListener("click", e => {
-      const target = e.target;
-      if (!(target instanceof HTMLElement)) return;
-      if (target.dataset.closePlayersDb !== undefined) {
-        closePlayersDbModal();
-      }
-    });
-  }
-  if (elDebugModal) {
-    elDebugModal.addEventListener("click", e => {
-      const target = e.target;
-      if (!(target instanceof HTMLElement)) return;
-      if (target.dataset.closeDebugModal !== undefined || target.classList.contains("settings-modal__backdrop")) {
-        closeDebugModal();
-      }
-    });
-  }
-  if (elTeamsManagerModal) {
-    elTeamsManagerModal.addEventListener("click", e => {
-      const target = e.target;
-      if (!(target instanceof HTMLElement)) return;
-      if (target.dataset.closeTeamsManager !== undefined) {
-        closeTeamsManagerModal();
-      }
-    });
-  }
-  if (elTeamsManagerDelete) {
-    elTeamsManagerDelete.addEventListener("click", () => {
+}
+
+function deleteSelectedManagedTeam() {
       const name = teamsManagerSelectedName;
       if (!name) return;
       const ok = confirm("Eliminare la squadra \"" + name + "\"?");
@@ -520,10 +576,9 @@ function bindRosterAndArchiveControls() {
       if (typeof renderTeamsSelect === "function") renderTeamsSelect();
       if (typeof renderOpponentTeamsSelect === "function") renderOpponentTeamsSelect();
       renderTeamsManagerList();
-    });
-  }
-  if (elTeamsManagerDuplicate) {
-    elTeamsManagerDuplicate.addEventListener("click", () => {
+}
+
+function duplicateSelectedManagedTeam() {
       const name = teamsManagerSelectedName;
       if (!name) return;
       const team = typeof loadTeamFromStorage === "function" ? loadTeamFromStorage(name) : null;
@@ -554,10 +609,9 @@ function bindRosterAndArchiveControls() {
       if (typeof renderOpponentTeamsSelect === "function") renderOpponentTeamsSelect();
       teamsManagerSelectedName = newName;
       renderTeamsManagerList();
-    });
-  }
-  if (elTeamsManagerExport) {
-    elTeamsManagerExport.addEventListener("click", () => {
+}
+
+function exportSelectedManagedTeam() {
       const name = teamsManagerSelectedName;
       if (!name) return;
       const team = typeof loadTeamFromStorage === "function" ? loadTeamFromStorage(name) : null;
@@ -572,132 +626,102 @@ function bindRosterAndArchiveControls() {
       if (typeof downloadBlob === "function") {
         downloadBlob(blob, "squadra_" + (slug || "export") + ".json");
       }
-    });
-  }
-  if (elTeamsManagerImport && elTeamsManagerFileInput) {
-    elTeamsManagerImport.addEventListener("click", () => {
-      elTeamsManagerFileInput.value = "";
-      elTeamsManagerFileInput.click();
-    });
-    elTeamsManagerFileInput.addEventListener("change", e => {
-      const input = e.target;
-      const file = input && input.files && input.files[0];
-      if (file) {
-        importTeamToStorageOnly(file);
-      }
-      renderTeamsManagerList();
-    });
-  }
-  if (elTeamsManagerOpenPlayersDb) {
-    elTeamsManagerOpenPlayersDb.addEventListener("click", openPlayersDbModal);
-  }
-  if (elSavedMatchesList) {
-    elSavedMatchesList.addEventListener("click", e => {
-      const target = e.target;
-      if (!(target instanceof HTMLElement)) return;
-      const btn = target.closest(".match-list-open");
-      if (!btn) return;
-      const name = btn.dataset.matchName || "";
-      if (elSavedMatchesSelect) {
-        elSavedMatchesSelect.value = name;
-      }
-      state.selectedMatch = name;
-      renderMatchesList(Object.keys(state.savedMatches || {}), name);
-      updateMatchButtonsState();
-    });
-  }
-  document.querySelectorAll("[data-edit-match]").forEach(button => {
-    button.addEventListener("click", () => openNewMatchModal("edit"));
-  });
-  if (elBtnNewMatch) {
-    elBtnNewMatch.addEventListener("click", () => {
-      if (typeof createNewMatchFromPrompt === "function") {
-        createNewMatchFromPrompt();
+}
+
+function createManagedTeam() {
+      if (typeof openNewTeamManager === "function") {
+        openNewTeamManager();
         return;
       }
-      if (!elSavedMatchesSelect) return;
-      elSavedMatchesSelect.value = "";
-      loadSelectedMatch();
-    });
-  }
-  const newMatchModal = document.getElementById("new-match-modal");
-  const newMatchTeam = document.getElementById("new-match-team");
-  const newMatchConfirm = document.getElementById("new-match-confirm");
-  if (newMatchModal) {
-    newMatchModal.addEventListener("click", e => {
-      const target = e.target;
-      if (!(target instanceof HTMLElement)) return;
-      if (target.dataset.closeNewMatch !== undefined || target.id === "new-match-close") {
-        if (typeof closeNewMatchModal === "function") closeNewMatchModal();
+      openTeamManagerModal("our");
+}
+
+function addManagedTeamPlayer() {
+      if (!teamManagerState) {
+        openTeamManagerModal(teamManagerScope || "our");
+        return;
       }
-    });
-    newMatchModal.querySelectorAll('input[name="new-match-mode"]').forEach(input => {
-      input.addEventListener("change", () => {
-        if (typeof updateNewMatchModeUI === "function") updateNewMatchModeUI();
-      });
-    });
-  }
-  if (newMatchTeam) {
-    newMatchTeam.addEventListener("change", () => {
-      if (typeof populateNewMatchTeamSelects === "function") populateNewMatchTeamSelects();
-    });
-  }
-  if (newMatchConfirm) {
-    newMatchConfirm.addEventListener("click", () => {
-      const selectedMode = document.querySelector('input[name="new-match-mode"]:checked');
-      const setup = {
-        teamName: (document.getElementById("new-match-team") || {}).value || "",
-        mode: selectedMode ? selectedMode.value : "single",
-        opponentTeam: (document.getElementById("new-match-opponent-team") || {}).value || "",
-        opponentManual: (document.getElementById("new-match-opponent-name") || {}).value || "",
-        category: elCategory.value,
-        date: elDate.value,
-        matchType: elMatchType.value,
-        leg: elLeg.value
+      const nextPlayer = {
+        id: typeof generatePlayerId === "function" ? generatePlayerId() : Date.now() + "_" + Math.random(),
+        name: "",
+        firstName: "",
+        lastName: "",
+        number: "",
+        role: "",
+        isCaptain: false,
+        out: false
       };
-      const created = newMatchModal.dataset.mode === "edit"
-        ? saveMatchDetailsFromSetup(setup)
-        : createNewMatchFromSetup(setup);
-      if (created && typeof closeNewMatchModal === "function") closeNewMatchModal();
-    });
-  }
-  const newMatchManageTeams = document.getElementById("new-match-manage-teams");
-  if (newMatchManageTeams) {
-    newMatchManageTeams.addEventListener("click", () => {
-      if (typeof closeNewMatchModal === "function") closeNewMatchModal();
-      if (typeof setActiveTab === "function") setActiveTab("info");
-      if (typeof openTeamsManagerModal === "function") openTeamsManagerModal();
-    });
-  }
-  if (elBtnLoadMatch) {
-    elBtnLoadMatch.addEventListener("click", () => {
-      if (typeof enterSelectedMatch === "function") {
-        enterSelectedMatch();
+      if (typeof teamManagerLiveEditMode !== "undefined" && teamManagerLiveEditMode) {
+        teamManagerState.players.push(nextPlayer);
       } else {
-        loadSelectedMatch();
+        teamManagerState.players.unshift(nextPlayer);
       }
-    });
-  }
-  document.querySelectorAll("[data-exit-match]").forEach(exitButton => {
-    exitButton.addEventListener("click", () => {
-      if (typeof exitCurrentMatch === "function") exitCurrentMatch();
-    });
-  });
-  if (elTeamsSelect) {
-    elTeamsSelect.addEventListener("change", handleTeamSelectChange);
-  }
-  if (elOpponentTeamsSelect) {
-    elOpponentTeamsSelect.addEventListener("change", () => {
-      handleOpponentTeamSelectChange();
-    });
-  }
-  if (elSavedMatchesSelect) {
-    elSavedMatchesSelect.addEventListener("change", () => {
-      updateMatchButtonsState();
-      state.selectedMatch = elSavedMatchesSelect.value || "";
-      if (typeof renderMatchesList === "function") {
-        renderMatchesList(Object.keys(state.savedMatches || {}), state.selectedMatch);
+      renderTeamManagerTable();
+}
+
+function duplicateManagedTeamPlayers() {
+      if (!teamManagerState) {
+        openTeamManagerModal(teamManagerScope || "our");
+        return;
       }
-    });
+      const clone = JSON.parse(JSON.stringify(teamManagerState.players || []));
+      teamManagerState.players = clone.map(p =>
+        (() => {
+          const firstName = String(p.firstName || "").trim();
+          const lastName = (String(p.lastName || "").trim() || (!firstName ? String(p.name || "").trim() : "")) + " (dup)";
+          return Object.assign({}, p, {
+            id: typeof generatePlayerId === "function" ? generatePlayerId() : Date.now() + "_" + Math.random(),
+            name: buildFullName(lastName, firstName),
+            firstName,
+            lastName
+          });
+        })()
+      );
+      renderTeamManagerTable();
+}
+
+function generateManagedTeamTemplate() {
+      const playersDetailed =
+        typeof buildTemplatePlayersDetailed === "function"
+          ? buildTemplatePlayersDetailed()
+          : TEMPLATE_TEAM.players.map((name, idx) => {
+              return {
+                id: typeof generatePlayerId === "function" ? generatePlayerId() : idx + "_" + name,
+                name,
+                firstName: "",
+                lastName: name,
+                number: String(idx + 1),
+                role: TEMPLATE_TEAM.liberos.includes(name) ? "L" : "",
+                isCaptain: idx === 0,
+                out: false
+              };
+            });
+      teamManagerState = {
+        name: teamManagerScope === "opponent" ? state.selectedOpponentTeam || "Avversaria" : state.selectedTeam || "Squadra",
+        staff: Object.assign({}, DEFAULT_STAFF),
+        players: playersDetailed,
+        defaultRotation: 1,
+        defaultLineup:
+          typeof buildRoleBasedDefaultLineup === "function"
+            ? buildRoleBasedDefaultLineup(TEMPLATE_TEAM.players)
+            : TEMPLATE_TEAM.players.slice(0, 6)
+      };
+      renderTeamManagerTable();
+}
+
+function openManagedPlayersPaste() {
+  const elPastePlayersModal=document.getElementById("paste-players-modal");
+  if(elPastePlayersModal?.dataset.reactManaged === "true" && typeof pastePlayersStore !== "undefined"){
+    pastePlayersStore.publish({open:true,text:""});setGlobalModalState(true);return;
   }
+      if (elPlayersInput) {
+        elPlayersInput.value = "";
+      }
+      if (elPastePlayersModal) {
+        elPastePlayersModal.classList.remove("hidden");
+        setGlobalModalState(true);
+      }
+      if (elPlayersInput) {
+        elPlayersInput.focus();
+      }
 }

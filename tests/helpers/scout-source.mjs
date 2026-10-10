@@ -12,6 +12,7 @@ export const SCOUT_SOURCE_FILES = [
   "scout/live/live-entry.js",
   "scout/live/roster-entry.js",
   "scout/live/court-rendering.js",
+  "scout/live/court-view-model.js",
   "scout/live/team-rendering.js",
   "scout/live/event-recording.js",
   "scout/analysis/skill-analysis.js",

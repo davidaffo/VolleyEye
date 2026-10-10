@@ -653,7 +653,9 @@ async function exportAnalysisHtml() {
         "#analysis-score-summary.hidden{display:none;}"
       ].join("\n");
     }
-    const scripts = Array.from(document.querySelectorAll("script[src]"));
+    const scripts = window.__APP_ANALYSIS_RUNTIME_URL__
+      ? [{ getAttribute: () => window.__APP_ANALYSIS_RUNTIME_URL__ }]
+      : Array.from(document.querySelectorAll("script[src]"));
     const scriptChunks = [];
     const failedScripts = [];
     for (const script of scripts) {

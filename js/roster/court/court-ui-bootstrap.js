@@ -671,17 +671,6 @@ function syncSkillFlowButtons() {
     });
   });
 }
-function forceNextSkill(skillId) {
-  if (!skillId) return;
-  state.predictiveSkillFlow = true;
-  state.skillFlowOverride = skillId;
-  syncPredictiveSkillToggle();
-  saveState();
-  renderPlayers();
-  if (typeof updateNextSkillIndicator === "function") {
-    updateNextSkillIndicator(skillId);
-  }
-}
 function syncAutoRoleP1AmericanToggle() {
   if (elAutoRoleP1AmericanToggle) {
     elAutoRoleP1AmericanToggle.checked = !!state.autoRoleP1American;
@@ -882,13 +871,15 @@ function rotateCourt(direction) {
 }
 function openSettingsModal() {
   if (!elSettingsModal) return;
-  elSettingsModal.classList.remove("hidden");
+  if(elSettingsModal.dataset.reactManaged === "true" && typeof setReactSettingsOpen === "function")setReactSettingsOpen(true);
+  else elSettingsModal.classList.remove("hidden");
   document.body.style.overflow = "hidden";
   setGlobalModalState(true);
 }
 function closeSettingsModal() {
   if (!elSettingsModal) return;
-  elSettingsModal.classList.add("hidden");
+  if(elSettingsModal.dataset.reactManaged === "true" && typeof setReactSettingsOpen === "function")setReactSettingsOpen(false);
+  else elSettingsModal.classList.add("hidden");
   document.body.style.overflow = "";
   setGlobalModalState(false);
 }

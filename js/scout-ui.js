@@ -509,7 +509,7 @@ function bindViewportResizeUpdates() {
 function applyTopBarVisibility() {
   const hidden = !!state.uiTopBarHidden;
   document.body.classList.toggle("top-bar-hidden", hidden);
-  if (elBtnToggleTopbar) {
+  if (elBtnToggleTopbar && elBtnToggleTopbar.dataset?.reactManaged !== "true") {
     elBtnToggleTopbar.textContent = hidden ? "▾" : "▴";
     elBtnToggleTopbar.title = hidden ? "Mostra barra" : "Nascondi barra";
     elBtnToggleTopbar.setAttribute("aria-label", hidden ? "Mostra barra" : "Nascondi barra");

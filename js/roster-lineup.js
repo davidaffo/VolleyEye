@@ -119,10 +119,10 @@ let teamManagerState = null;
 let teamManagerScope = "our";
 let teamManagerLiveEditMode = false;
 let teamManagerStorageOnly = false;
-if (elDefaultLineupRotateCw) {
+if (elDefaultLineupRotateCw && elDefaultLineupRotateCw.dataset.reactManaged !== "true") {
   elDefaultLineupRotateCw.addEventListener("click", () => rotateDefaultLineup("cw"));
 }
-if (elDefaultLineupRotateCcw) {
+if (elDefaultLineupRotateCcw && elDefaultLineupRotateCcw.dataset.reactManaged !== "true") {
   elDefaultLineupRotateCcw.addEventListener("click", () => rotateDefaultLineup("ccw"));
 }
 const elBtnExportDb = document.getElementById("btn-export-db");

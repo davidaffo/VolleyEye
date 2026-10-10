@@ -1,8 +1,9 @@
+import { readAppHtml } from './helpers/app-html.mjs';
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+const html = readAppHtml();
 const lifecycle = readFileSync(new URL("../js/scout/core/app-lifecycle.js", import.meta.url), "utf8");
 const bindings = readFileSync(new URL("../js/scout/core/bindings-roster.js", import.meta.url), "utf8");
 const stateStore = readFileSync(new URL("../js/roster/core/state-store.js", import.meta.url), "utf8");
@@ -11,7 +12,7 @@ const matchIo = readFileSync(new URL("../js/scout/io/match-io.js", import.meta.u
 
 test("la lobby separa la scelta partita dagli strumenti del match", () => {
   assert.match(html, /data-tab-target="match">Partite<\/button>/);
-  assert.match(html, /id="btn-load-match">Entra nella partita<\/button>/);
+  assert.match(html, /id="btn-load-match"[^>]*>Entra nella partita<\/button>/);
   assert.match(html, /class="tab-btn match-session-only" data-tab-target="scout"/);
   assert.match(html, /class="tab-btn match-session-only" data-tab-target="aggregated"/);
   assert.match(html, /class="tab-btn match-session-only" data-tab-target="video"/);
@@ -28,7 +29,7 @@ test("entrare e uscire dalla partita è un passaggio esplicito e persistito", ()
 
 test("selezionare una riga in lobby non carica la partita", () => {
   const listHandler = bindings.slice(
-    bindings.indexOf('if (elSavedMatchesList)'),
+    bindings.indexOf('if (elSavedMatchesList &&'),
     bindings.indexOf('document.querySelectorAll("[data-edit-match]")')
   );
   assert.doesNotMatch(listHandler, /loadSelectedMatch\(\)/);
@@ -47,8 +48,8 @@ test("le squadre vengono scelte soltanto nel flusso di creazione", () => {
   assert.match(lobby, /<h4>Archivio squadre<\/h4>/);
   assert.match(lobby, /id="btn-open-teams-manager"/);
   assert.match(html, /id="new-match-team"/);
-  assert.match(html, /name="new-match-mode" value="single"/);
-  assert.match(html, /name="new-match-mode" value="double"/);
+  assert.match(html, /name="new-match-mode"[^>]*value="single"/);
+  assert.match(html, /name="new-match-mode"[^>]*value="double"/);
   assert.match(archive, /function createNewMatchFromSetup\(setup = \{\}\)/);
   assert.match(archive, /handleTeamSelectChange\(teamName\)/);
   assert.match(archive, /handleOpponentTeamSelectChange\(opponentTeam\)/);

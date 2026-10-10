@@ -263,7 +263,7 @@ function applyMatchPayload(payload, opts = {}) {
 }
 function loadSelectedMatch() {
   if (!elSavedMatchesSelect) return;
-  const name = elSavedMatchesSelect.value;
+  const name = getSelectedArchivedMatch();
   if (!isLoadingMatch && (state.loadedMatchName || "").trim()) {
     persistCurrentMatch({ allowCreate: false });
   }
@@ -390,12 +390,15 @@ function openNewMatchModal(dialogMode = "create") {
   if (!modal) return false;
   const editing = dialogMode === "edit";
   matchDetailsArchiveName = editing && !state.uiMatchSessionActive
-    ? (elSavedMatchesSelect && elSavedMatchesSelect.value) || "" : "";
+    ? getSelectedArchivedMatch() : "";
   const archived = matchDetailsArchiveName ? loadMatchFromStorage(matchDetailsArchiveName) : null;
   const details = archived && archived.state ? archived.state : state;
   if (editing && !state.loadedMatchName && !state.selectedMatch) {
     alert("Seleziona prima una partita.");
     return false;
+  }
+  if (modal.dataset.reactManaged === "true" && typeof openReactMatchDialog === "function") {
+    return openReactMatchDialog(dialogMode, details, matchDetailsArchiveName);
   }
   modal.dataset.mode = editing ? "edit" : "create";
   populateNewMatchTeamSelects();
@@ -432,6 +435,10 @@ function openNewMatchModal(dialogMode = "create") {
 }
 function closeNewMatchModal() {
   const modal = document.getElementById("new-match-modal");
+  if (modal && modal.dataset.reactManaged === "true" && typeof closeReactMatchDialog === "function") {
+    closeReactMatchDialog();
+    return;
+  }
   if (modal) modal.classList.add("hidden");
   if (typeof setGlobalModalState === "function") setGlobalModalState(false);
 }
@@ -572,7 +579,7 @@ function createNewMatchFromSetup(setup = {}) {
 }
 function deleteSelectedMatch() {
   if (!elSavedMatchesSelect && !elSavedMatchesList) return;
-  const name = elSavedMatchesSelect ? elSavedMatchesSelect.value : "";
+  const name = getSelectedArchivedMatch();
   if (!name) return;
   const ok = confirm('Eliminare il match "' + name + '"?');
   if (!ok) return;

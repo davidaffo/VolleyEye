@@ -10,3 +10,7 @@ android/capacitor-cordova-android-plugins/build/
 intelliscout*
 resources/
 .codex
+
+dist/
+playwright-report/
+test-results/

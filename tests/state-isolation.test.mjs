@@ -1,3 +1,4 @@
+import { readAppHtml } from './helpers/app-html.mjs';
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -125,7 +126,7 @@ test("sanitizeRosterScope impedisce duplicati e coppie autoreferenziali in campo
 test("i confini applicativi non reintroducono sincronizzazioni implicite", () => {
   const scout = readScoutSource();
   const roster = readRosterSource();
-  const index = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const index = readFileSync(new URL("../config/runtime-files.mjs", import.meta.url), "utf8");
   const serviceWorker = readFileSync(new URL("../service-worker.js", import.meta.url), "utf8");
   const renderPlayersBody = scout.slice(
     scout.indexOf("function renderPlayers()"),

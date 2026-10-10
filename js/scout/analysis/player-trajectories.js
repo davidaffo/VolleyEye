@@ -8,7 +8,7 @@ function syncPlayerTrajectoryFilterState() {
   playerTrajectoryFilterState.phases = new Set(getCheckedValues(elPlayerTrajFilterPhases));
   playerTrajectoryFilterState.receiveEvaluations = new Set(getCheckedValues(elPlayerTrajFilterReceiveEvals));
   playerTrajectoryFilterState.receiveZones = new Set(getCheckedValues(elPlayerTrajFilterReceiveZones, { asNumber: true }));
-  playerTrajectoryFilterState.prevSkill = (elPlayerTrajFilterPrev && elPlayerTrajFilterPrev.value) || "any";
+  playerTrajectoryFilterState.prevSkill = (elPlayerTrajFilterPrev?.dataset?.reactManaged === "true" && typeof readReactFilterSelect === "function" ? readReactFilterSelect(elPlayerTrajFilterPrev) : elPlayerTrajFilterPrev && elPlayerTrajFilterPrev.value) || "any";
 }
 function handlePlayerTrajectoryFilterChange() {
   syncPlayerTrajectoryFilterState();
@@ -166,7 +166,8 @@ function renderPlayerTrajectoryFilters() {
   );
   toggleFilterVisibility(elPlayerTrajFilterPrev, true);
   toggleFilterVisibility(elPlayerTrajFilterReset, visibleFilters.some(Boolean));
-  if (elPlayerTrajFilterPrev) {
+  if(elPlayerTrajFilterPrev?.dataset?.reactManaged === "true" && typeof publishReactPreviousSkill === "function")publishReactPreviousSkill(elPlayerTrajFilterPrev,playerTrajectoryFilterState.prevSkill,handlePlayerTrajectoryFilterChange);
+  else if (elPlayerTrajFilterPrev) {
     elPlayerTrajFilterPrev.value = playerTrajectoryFilterState.prevSkill || "any";
     if (!elPlayerTrajFilterPrev._playerTrajPrevBound) {
       elPlayerTrajFilterPrev.addEventListener("change", handlePlayerTrajectoryFilterChange);
@@ -255,6 +256,7 @@ function renderPlayerTrajectoryAnalysis() {
 }
 function renderAttackTrajectoryGridForPlayer(targetGrid, playerIdx) {
   if (!targetGrid) return;
+  if(targetGrid.dataset?.reactManaged==="true"&&typeof publishReactPlayerAttackGrid==="function")return publishReactPlayerAttackGrid(targetGrid,playerIdx);
   renderTrajectoryLegend(targetGrid, "attack");
   const canvases = targetGrid.querySelectorAll("canvas[data-traj-canvas]");
   if (!canvases || canvases.length === 0) return;
@@ -489,6 +491,7 @@ function renderPlayerServeTrajectoryAnalysis() {
 }
 function renderServeTrajectoryGridForPlayer(targetGrid, playerIdx) {
   if (!targetGrid) return;
+  if(targetGrid.dataset?.reactManaged==="true"&&typeof publishReactPlayerServeGrid==="function")return publishReactPlayerServeGrid(targetGrid,playerIdx);
   const events = getFilteredPlayerServeTrajectoryEventsForPlayer(playerIdx);
   targetGrid.innerHTML = "";
   if (playerIdx === null) return;

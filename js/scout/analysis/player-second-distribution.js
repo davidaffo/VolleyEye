@@ -174,6 +174,7 @@ function getFilteredPlayerAttacksForSecondDistribution(playerIdx = getPlayerAnal
 }
 function renderDistributionGrid(targetEl, events, compareEvents = null) {
   if (!targetEl) return;
+  if(targetEl.dataset?.reactManaged==="true"&&typeof publishReactDistributionGrid==="function")return publishReactDistributionGrid(targetEl,events,compareEvents);
   targetEl.innerHTML = "";
   const dist = computeAttackDistribution(events);
   const compareDist = Array.isArray(compareEvents) ? computeAttackDistribution(compareEvents) : null;
@@ -304,6 +305,7 @@ function renderAttackOutcomesSummaryTable(targetBody, rows, {
   totalLabel = "Totale attacchi"
 } = {}) {
   if (!targetBody) return;
+  if(targetBody.dataset?.reactManaged==="true"&&typeof publishReactAttackOutcomes==="function")return publishReactAttackOutcomes(targetBody,rows,{emptyText,totalLabel});
   targetBody.innerHTML = "";
   if (!rows || rows.length === 0) {
     const tr = document.createElement("tr");
@@ -367,6 +369,7 @@ function renderAttackOutcomesSummaryTable(targetBody, rows, {
 }
 function renderSecondTableForPlayer(targetBody, targetDistribution, playerIdx, targetAttackBody = null, comparePlayerIdx = null) {
   if (!targetBody) return;
+  if(targetBody.dataset?.reactManaged==="true"&&typeof publishReactPlayerSecondTable==="function")return publishReactPlayerSecondTable(targetBody,targetDistribution,playerIdx,targetAttackBody,comparePlayerIdx);
   targetBody.innerHTML = "";
   const attackOutcomeBody = targetAttackBody;
   const analysisScope = getAnalysisTeamScope();

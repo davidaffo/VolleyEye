@@ -164,6 +164,7 @@ function getNearestTrajectoryNetPointId(start) {
 function setTrajectoryNetPointId(id) {
   trajectoryNetPointId = id;
   if (!elAttackTrajectoryNetpoints) return;
+  if(elAttackTrajectoryNetpoints.dataset?.reactManaged==="true"&&typeof trajectoryModalStore!=="undefined"){trajectoryModalStore.publish({netPoint:id});return;}
   const buttons = elAttackTrajectoryNetpoints.querySelectorAll("[data-net-point]");
   buttons.forEach(btn => {
     btn.classList.toggle("active", btn.dataset.netPoint === id);
@@ -182,7 +183,7 @@ function updateTrajectoryImageFromStart() {
   const imgSrc = getTrajectoryImageForZone(startZoneRaw, trajectoryMirror || trajectoryForceFar);
   if (elAttackTrajectoryImage.dataset.activeSrc !== imgSrc) {
     elAttackTrajectoryImage.dataset.activeSrc = imgSrc;
-    elAttackTrajectoryImage.src = imgSrc;
+    if(elAttackTrajectoryImage.dataset?.reactManaged==="true"&&typeof publishReactTrajectoryImage==="function")publishReactTrajectoryImage(imgSrc);else elAttackTrajectoryImage.src = imgSrc;
   }
 }
 function applyTrajectoryStartFromNetPoint() {
@@ -239,15 +240,15 @@ function openAttackTrajectoryModal(prefill = null) {
     const simplified = !!state.attackTrajectorySimplified;
     if (elAttackTrajectoryNetpoints) {
       const shouldShowNet = mode === "attack" && simplified;
-      elAttackTrajectoryNetpoints.classList.toggle("hidden", !shouldShowNet);
+      if(elAttackTrajectoryNetpoints.dataset?.reactManaged!=="true")elAttackTrajectoryNetpoints.classList.toggle("hidden", !shouldShowNet);
     }
     if (elServeTypeButtons) {
-      elServeTypeButtons.classList.toggle("hidden", mode !== "serve-start");
+      if(elServeTypeButtons.dataset?.reactManaged!=="true")elServeTypeButtons.classList.toggle("hidden", mode !== "serve-start");
       if (mode === "serve-start") {
         setServeTypeSelection("JF");
       }
     }
-    if (elAttackTrajectoryInstructions) {
+    if (elAttackTrajectoryInstructions && elAttackTrajectoryInstructions.dataset?.reactManaged !== "true") {
       const hideInstructions = mode === "serve-start" || mode === "serve-end";
       elAttackTrajectoryInstructions.textContent = hideInstructions
         ? ""
@@ -267,7 +268,7 @@ function openAttackTrajectoryModal(prefill = null) {
       return trajectoryMirror ? TRAJECTORY_IMG_FAR : TRAJECTORY_IMG_NEAR;
     };
     elAttackTrajectoryImage.dataset.activeSrc = getInitialImage();
-    elAttackTrajectoryImage.src = getInitialImage();
+    if(elAttackTrajectoryImage.dataset?.reactManaged==="true"&&typeof publishReactTrajectoryImage==="function")publishReactTrajectoryImage(getInitialImage());else elAttackTrajectoryImage.src = getInitialImage();
     if (serveTypeKeyHandler) {
       window.removeEventListener("keydown", serveTypeKeyHandler);
     }
@@ -297,6 +298,7 @@ function openAttackTrajectoryModal(prefill = null) {
     };
     window.addEventListener("keydown", trajectoryEscapeHandler);
     elAttackTrajectoryModal.classList.remove("hidden");
+    if(elAttackTrajectoryModal.dataset?.reactManaged==="true"&&typeof publishReactTrajectoryModal==="function")publishReactTrajectoryModal(true);
     setModalOpenState(true, forcePopup);
     renderLogServeTrajectories();
     const applyPrefill = () => {
@@ -381,6 +383,7 @@ function closeAttackTrajectoryModal(result = null) {
     trajectoryResolver(result);
     trajectoryResolver = null;
   }
+  if(elAttackTrajectoryModal.dataset?.reactManaged==="true"&&typeof publishReactTrajectoryModal==="function")publishReactTrajectoryModal(false);
   renderLogServeTrajectories();
 }
 async function captureServeTrajectory(event, { forcePopup = false } = {}) {

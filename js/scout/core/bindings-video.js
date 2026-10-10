@@ -1,9 +1,9 @@
 function bindVideoControls() {
   if (elVideoMobileSourceOpen) elVideoMobileSourceOpen.addEventListener("click", () => openVideoMobileSourceModal());
-  if (elVideoMobileSourceClose) elVideoMobileSourceClose.addEventListener("click", closeVideoMobileSourceModal);
-  if (elVideoMobileSourceBackdrop) elVideoMobileSourceBackdrop.addEventListener("click", closeVideoMobileSourceModal);
-  if (elVideoMobileSourceLater) elVideoMobileSourceLater.addEventListener("click", closeVideoMobileSourceModal);
-  if (elVideoMobileFilePicker) {
+  if (elVideoMobileSourceClose && elVideoMobileSourceClose.dataset?.reactManaged !== "true") elVideoMobileSourceClose.addEventListener("click", closeVideoMobileSourceModal);
+  if (elVideoMobileSourceBackdrop && elVideoMobileSourceBackdrop.dataset?.reactManaged !== "true") elVideoMobileSourceBackdrop.addEventListener("click", closeVideoMobileSourceModal);
+  if (elVideoMobileSourceLater && elVideoMobileSourceLater.dataset?.reactManaged !== "true") elVideoMobileSourceLater.addEventListener("click", closeVideoMobileSourceModal);
+  if (elVideoMobileFilePicker && elVideoMobileFilePicker.dataset?.reactManaged !== "true") {
     elVideoMobileFilePicker.addEventListener("click", () => openLocalVideoPicker(elVideoFileInput));
   }
   const loadMobileYoutube = () => {
@@ -15,8 +15,8 @@ function bindVideoControls() {
     }
     handleYoutubeUrlLoad(url);
   };
-  if (elVideoMobileYoutubeLoad) elVideoMobileYoutubeLoad.addEventListener("click", loadMobileYoutube);
-  if (elVideoMobileYoutubeUrl) {
+  if (elVideoMobileYoutubeLoad && elVideoMobileYoutubeLoad.dataset?.reactManaged !== "true") elVideoMobileYoutubeLoad.addEventListener("click", loadMobileYoutube);
+  if (elVideoMobileYoutubeUrl && elVideoMobileYoutubeUrl.dataset?.reactManaged !== "true") {
     elVideoMobileYoutubeUrl.addEventListener("keydown", event => {
       if (event.key !== "Enter") return;
       event.preventDefault();
@@ -35,7 +35,7 @@ function bindVideoControls() {
   if (elVideoMobilePrev) elVideoMobilePrev.addEventListener("click", () => selectVideoMobileEvent(-1));
   if (elVideoMobileNext) elVideoMobileNext.addEventListener("click", () => selectVideoMobileEvent(1));
   if (elAggTabButtons && typeof elAggTabButtons.forEach === "function") {
-    elAggTabButtons.forEach(btn => {
+    Array.from(elAggTabButtons).filter(btn=>btn.dataset?.reactManaged!=="true").forEach(btn => {
       btn.addEventListener("click", () => {
         if (btn.dataset.aggTabTarget) {
           setActiveAggTab(btn.dataset.aggTabTarget);
@@ -110,23 +110,23 @@ function bindVideoControls() {
       elBtnFixVideoScore._fixScoreBound = true;
     }
   }
-  if (elVideoScoreClose) {
+  if (elVideoScoreClose && elVideoScoreClose.dataset.reactManaged !== "true") {
     elVideoScoreClose.addEventListener("click", closeVideoScoreModal);
   }
-  if (elVideoScoreCancel) {
+  if (elVideoScoreCancel && elVideoScoreCancel.dataset.reactManaged !== "true") {
     elVideoScoreCancel.addEventListener("click", closeVideoScoreModal);
   }
-  if (elVideoScoreBackdrop) {
+  if (elVideoScoreBackdrop && elVideoScoreModal?.dataset.reactManaged !== "true") {
     elVideoScoreBackdrop.addEventListener("click", closeVideoScoreModal);
   }
-  if (elVideoScoreApply) {
+  if (elVideoScoreApply && elVideoScoreApply.dataset.reactManaged !== "true") {
     elVideoScoreApply.addEventListener("click", () => {
       const homeVal = elVideoScoreHome ? elVideoScoreHome.value : "";
       const awayVal = elVideoScoreAway ? elVideoScoreAway.value : "";
       correctVideoScoresFromSelection(homeVal, awayVal);
     });
   }
-  [elVideoScoreHome, elVideoScoreAway].forEach(input => {
+  [elVideoScoreHome, elVideoScoreAway].filter(input => input?.dataset.reactManaged !== "true").forEach(input => {
     if (!input) return;
     input.addEventListener("keydown", e => {
       if (e.key !== "Enter") return;

@@ -233,6 +233,7 @@ function updateVideoMobileSourceButton() {
 function openVideoMobileSourceModal(options = {}) {
   if (!elVideoMobileSourceModal || !isVideoMobileViewport()) return;
   if (options.automatic && videoMobileSourcePromptDismissed) return;
+  if(elVideoMobileSourceModal.dataset?.reactManaged==="true"&&typeof mobileVideoSourceStore!=="undefined"){mobileVideoSourceStore.publish({open:true,url:state.video?.youtubeUrl||""});setModalOpenState(true,true);return;}
   if (elVideoMobileYoutubeUrl) {
     elVideoMobileYoutubeUrl.value = state.video && state.video.youtubeUrl ? state.video.youtubeUrl : "";
   }
@@ -243,7 +244,7 @@ function openVideoMobileSourceModal(options = {}) {
 function closeVideoMobileSourceModal(options = {}) {
   if (!elVideoMobileSourceModal) return;
   if (options.dismiss !== false) videoMobileSourcePromptDismissed = true;
-  elVideoMobileSourceModal.classList.add("hidden");
+  if(elVideoMobileSourceModal.dataset?.reactManaged==="true"&&typeof mobileVideoSourceStore!=="undefined")mobileVideoSourceStore.publish({open:false});else elVideoMobileSourceModal.classList.add("hidden");
   setModalOpenState(false, true);
 }
 
@@ -282,6 +283,9 @@ function renderVideoAnalysis() {
     } catch (err) {
       console.error("Video filters error", err);
     }
+    if(elVideoSkillsContainer.dataset.reactManaged === "true" && typeof publishReactEventTable === "function"){
+      publishReactEventTable(elVideoSkillsContainer,[],{contextKey:"video",tableClass:"video-skills-table event-edit-table",empty:"Registra alcune skill per vederle qui."});updateVideoAnalysisOverlay();updateVideoSelectionCount();renderVideoMobileReview();return;
+    }
     elVideoSkillsContainer.innerHTML = "";
     updateVideoAnalysisOverlay();
     const tr = document.createElement("tr");
@@ -318,6 +322,9 @@ function renderVideoAnalysis() {
   const sortedEvents = sortVideoEvents(filteredEvents, baseMs);
   if (!filteredEvents.length) {
     if (state.videoPlayByPlay) stopPlayByPlay();
+    if(elVideoSkillsContainer.dataset.reactManaged === "true" && typeof publishReactEventTable === "function"){
+      publishReactEventTable(elVideoSkillsContainer,[],{contextKey:"video",tableClass:"video-skills-table event-edit-table",empty:"Nessuna skill con i filtri attivi."});updateVideoAnalysisOverlay();updateVideoSelectionCount();renderVideoMobileReview();return;
+    }
     elVideoSkillsContainer.innerHTML = "";
     updateVideoAnalysisOverlay();
     const tr = document.createElement("tr");

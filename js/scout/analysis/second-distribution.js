@@ -11,7 +11,7 @@ function syncSecondFilterState() {
   secondFilterState.receiveEvaluations = new Set(getCheckedValues(els.receiveEvals));
   secondFilterState.receiveZones = new Set(getCheckedValues(els.receiveZones, { asNumber: true }));
   secondFilterState.sets = new Set(getCheckedValues(els.sets, { asNumber: true }));
-  secondFilterState.prevSkill = (els.prev && els.prev.value) || "any";
+  secondFilterState.prevSkill = (els.prev?.dataset?.reactManaged === "true" && typeof readReactFilterSelect === "function" ? readReactFilterSelect(els.prev) : els.prev && els.prev.value) || "any";
 }
 function handleSecondFilterChange() {
   syncSecondFilterState();
@@ -194,7 +194,8 @@ function renderSecondFilters() {
   );
   toggleFilterVisibility(els.prev, attackEvents.length > 0);
   toggleFilterVisibility(els.reset, visibleFilters.some(Boolean));
-  if (els.prev) {
+  if(els.prev?.dataset?.reactManaged === "true" && typeof publishReactPreviousSkill === "function")publishReactPreviousSkill(els.prev,secondFilterState.prevSkill,handleSecondFilterChange);
+  else if (els.prev) {
     els.prev.value = secondFilterState.prevSkill || "any";
     if (!els.prev._secondPrevBound) {
       els.prev.addEventListener("change", handleSecondFilterChange);
@@ -236,6 +237,7 @@ function getFilteredAttacksForSecondDistribution() {
 }
 function renderSecondTable() {
   if (!elAggSecondBody) return;
+  if(elAggSecondBody.dataset?.reactManaged==="true"&&typeof publishReactSecondTable==="function")return publishReactSecondTable();
   elAggSecondBody.innerHTML = "";
   const aggSecondAttackBody = document.getElementById("agg-second-attack-body");
   renderSecondFilters();

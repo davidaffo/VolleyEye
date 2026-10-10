@@ -103,6 +103,7 @@ function mergeFilterOptions(defaultOptions, extraValues, normalizeFn, labelBuild
 }
 function buildFilterOptions(container, options, selectedSet, { asNumber = false, onChange } = {}) {
   if (!container) return;
+  if(container.dataset?.reactManaged === "true" && typeof publishReactFilter === "function"){publishReactFilter(container,options,selectedSet,{asNumber,onChange});return;}
   container.innerHTML = "";
   options.forEach(opt => {
     const val = asNumber ? Number(opt.value) : opt.value;
@@ -147,7 +148,8 @@ function renderDynamicFilter(container, options, selectedSet, config = {}) {
   const shouldShow = Array.isArray(options) && options.length > 0;
   if (!shouldShow) {
     if (selectedSet && typeof selectedSet.clear === "function") selectedSet.clear();
-    if (container) container.innerHTML = "";
+    if(container?.dataset?.reactManaged === "true" && typeof publishReactFilter === "function")publishReactFilter(container,[],selectedSet,config);
+    else if (container) container.innerHTML = "";
   }
   toggleFilterVisibility(container, shouldShow);
   if (shouldShow) {
@@ -162,12 +164,14 @@ function getOptionLabel(options, value) {
 }
 function getCheckedValues(container, { asNumber = false } = {}) {
   if (!container) return [];
+  if(container.dataset?.reactManaged === "true" && typeof readReactFilterValues === "function")return readReactFilterValues(container,asNumber);
   return Array.from(container.querySelectorAll("input[type=checkbox]:checked")).map(inp =>
     asNumber ? Number(inp.value) : inp.value
   );
 }
 function getCheckedRadioValue(container) {
   if (!container) return null;
+  if(container.dataset?.reactManaged === "true" && typeof readReactFilterSelect === "function")return readReactFilterSelect(container);
   const input = container.querySelector("input[type=radio]:checked");
   return input ? input.value : null;
 }
@@ -388,6 +392,7 @@ function renderAnalysisCourtSideRadios(container, selectedValue, onChange, group
     { value: "near", label: "Vicino" },
     { value: "far", label: "Lontano" }
   ];
+  if(container.dataset?.reactManaged === "true" && typeof publishReactFilter === "function"){publishReactFilter(container,options,new Set([selectedValue]),{type:"radio",name,onChange});return;}
   container.innerHTML = "";
   options.forEach((opt, idx) => {
     const label = document.createElement("label");
@@ -524,6 +529,7 @@ function renderAnalysisMatchFilter() {
   updateMultiscoutButton();
 }
 function updateMultiscoutButton() {
+ if(elBtnOpenMultiscout?.dataset?.reactManaged === "true" && typeof publishReactMultiscoutCount === "function"){publishReactMultiscoutCount();return;}
   if (!elBtnOpenMultiscout) return;
   const scope = state.useOpponentTeam
     ? multiscoutTeamScope === "opponent"
@@ -551,6 +557,7 @@ function updateAnalysisExtraMatchesFromContainer(container, scopeOverride) {
   renderPlayerAnalysis();
 }
 function renderMultiscoutModal() {
+ if(elMultiscoutModal?.dataset?.reactManaged === "true" && typeof publishReactMultiscout === "function"){publishReactMultiscout();return;}
   if (!elMultiscoutList || !elMultiscoutModal) return;
   elMultiscoutList.innerHTML = "";
   const scope = state.useOpponentTeam
@@ -1003,7 +1010,7 @@ function syncTrajectoryFilterState() {
   trajectoryFilterState.phases = new Set(getCheckedValues(elTrajFilterPhases));
   trajectoryFilterState.receiveEvaluations = new Set(getCheckedValues(elTrajFilterReceiveEvals));
   trajectoryFilterState.receiveZones = new Set(getCheckedValues(elTrajFilterReceiveZones, { asNumber: true }));
-  trajectoryFilterState.prevSkill = (elTrajFilterPrev && elTrajFilterPrev.value) || "any";
+  trajectoryFilterState.prevSkill = (elTrajFilterPrev?.dataset?.reactManaged === "true" && typeof readReactFilterSelect === "function" ? readReactFilterSelect(elTrajFilterPrev) : elTrajFilterPrev && elTrajFilterPrev.value) || "any";
 }
 function syncServeTrajectoryFilterState() {
   serveTrajectoryFilterState.players = new Set(getCheckedValues(elServeTrajFilterPlayers, { asNumber: true }));
@@ -1024,7 +1031,7 @@ function syncVideoFilterState() {
   videoFilterState.setters = new Set(getCheckedValues(els.setters));
   videoFilterState.skills = new Set(getCheckedValues(els.skills));
   videoFilterState.codes = new Set(getCheckedValues(els.codes));
-  videoFilterState.prevSkill = (els.prev && els.prev.value) || "any";
+  videoFilterState.prevSkill = (els.prev?.dataset?.reactManaged === "true" && typeof readReactFilterSelect === "function" ? readReactFilterSelect(els.prev) : els.prev && els.prev.value) || "any";
   videoFilterState.sets = new Set(getCheckedValues(els.sets, { asNumber: true }));
   videoFilterState.rotations = new Set(getCheckedValues(els.rotations, { asNumber: true }));
   videoFilterState.zones = new Set(getCheckedValues(els.zones, { asNumber: true }));
@@ -1232,6 +1239,7 @@ function reorderVideoFilterPresetsByDom(container) {
   saveState({ persistLocal: true });
 }
 function renderVideoFilterPresets() {
+ if(elVideoFilterPresetsList?.dataset?.reactManaged === "true" && typeof publishReactVideoPresets === "function"){publishReactVideoPresets();return;}
   if (!elVideoFilterPresetsList) return;
   const presets = ensureVideoFilterPresetsState();
   elVideoFilterPresetsList.innerHTML = "";
@@ -1358,9 +1366,9 @@ function renderVideoFilterPresets() {
     elVideoFilterPresetsList.appendChild(card);
   });
 }
-function saveCurrentVideoFilterPreset() {
+function saveCurrentVideoFilterPreset(nameOverride) {
   const presets = ensureVideoFilterPresetsState();
-  const rawName = elVideoFilterPresetName ? String(elVideoFilterPresetName.value || "").trim() : "";
+  const rawName = typeof nameOverride === "string" ? nameOverride.trim() : elVideoFilterPresetName ? String(elVideoFilterPresetName.value || "").trim() : "";
   const name = rawName || ("Preset " + (presets.length + 1));
   const entry = {
     id: "vf_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 7),
@@ -1368,7 +1376,7 @@ function saveCurrentVideoFilterPreset() {
     filters: snapshotVideoFilters()
   };
   presets.push(entry);
-  if (elVideoFilterPresetName) {
+  if (elVideoFilterPresetName && elVideoFilterPresetName.dataset?.reactManaged !== "true") {
     elVideoFilterPresetName.value = "";
   }
   saveState({ persistLocal: true });

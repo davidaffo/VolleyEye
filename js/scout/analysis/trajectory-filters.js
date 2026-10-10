@@ -179,7 +179,8 @@ function renderTrajectoryFilters() {
   );
   toggleFilterVisibility(elTrajFilterPrev, true);
   toggleFilterVisibility(elTrajFilterReset, visibleFilters.some(Boolean));
-  if (elTrajFilterPrev) {
+  if(elTrajFilterPrev?.dataset?.reactManaged === "true" && typeof publishReactPreviousSkill === "function")publishReactPreviousSkill(elTrajFilterPrev,trajectoryFilterState.prevSkill,handleTrajectoryFilterChange);
+  else if (elTrajFilterPrev) {
     elTrajFilterPrev.value = trajectoryFilterState.prevSkill || "any";
     if (!elTrajFilterPrev._trajPrevBound) {
       elTrajFilterPrev.addEventListener("change", handleTrajectoryFilterChange);

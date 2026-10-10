@@ -728,13 +728,13 @@ function initStats() {
 }
 function syncCurrentSetUI(value) {
   const setValue = String(value || 1);
-  if (elCurrentSet) {
+  if (elCurrentSet && elCurrentSet.dataset.reactManaged !== "true") {
     elCurrentSet.value = setValue;
   }
   if (typeof document !== "undefined") {
     const label = "Set " + setValue;
     const display = document.getElementById("current-set-display");
-    if (display) display.textContent = label;
+    if (display && display.dataset.reactManaged !== "true") display.textContent = label;
   }
 }
 const matchSettings = (typeof window !== "undefined" &&

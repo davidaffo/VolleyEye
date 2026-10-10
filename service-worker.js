@@ -1,4 +1,4 @@
-const APP_CACHE_VERSION = "v0.19.13-426-e1038ce";
+const APP_CACHE_VERSION = "v0.19.18-428-de8c850";
 const withVersion = asset => `${asset}?v=${encodeURIComponent(APP_CACHE_VERSION || "dev")}`;
 
 importScripts(withVersion("./js/app-version.js"));
@@ -61,6 +61,7 @@ const ASSETS = [
   withVersion("./js/scout/live/live-entry.js"),
   withVersion("./js/scout/live/roster-entry.js"),
   withVersion("./js/scout/live/court-rendering.js"),
+  withVersion("./js/scout/live/court-view-model.js"),
   withVersion("./js/scout/live/team-rendering.js"),
   withVersion("./js/scout/live/event-recording.js"),
   withVersion("./js/scout/analysis/skill-analysis.js"),

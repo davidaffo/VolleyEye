@@ -446,6 +446,7 @@ function getMatchSheetDefenseGroups(scope) {
 function renderMatchSheetAnalysis() {
   const page = getMatchSheetPageEl();
   if (!page) return;
+  if (page.dataset?.reactManaged === "true" && typeof publishReactMatchSheet === "function") return publishReactMatchSheet();
   const scope = getAnalysisTeamScope();
   const filters = ensureMatchSheetFiltersState();
   const players = getMatchSheetPlayers(scope);

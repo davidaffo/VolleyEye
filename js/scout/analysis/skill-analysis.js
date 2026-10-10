@@ -851,6 +851,7 @@ function renderAnalysisSkillChartsPanel() {
   if (!elAnalysisSkillChartGrid) return;
   if (!isAggSubtabVisible("skill-charts")) return;
   if (deferSkillChartRenderWhilePaused()) return;
+  if(elAnalysisSkillChartGrid.dataset.reactManaged === "true" && typeof publishReactGlobalSkillCharts === "function"){publishReactGlobalSkillCharts();return;}
   skillChartToneColorCache = null;
   const ui = ensureSkillChartsUiState();
   fillSkillChartMetricSelect(elAnalysisSkillChartMetric, ui.globalMetric, () => {
@@ -881,6 +882,7 @@ function renderPlayerAnalysisSkillCharts() {
   if (!elPlayerAnalysisSkillChartGrid) return;
   if (!isAggSubtabVisible("player")) return;
   if (deferSkillChartRenderWhilePaused()) return;
+  if(elPlayerAnalysisSkillChartGrid.dataset.reactManaged === "true" && typeof publishReactPlayerSkillCharts === "function"){publishReactPlayerSkillCharts(getPlayerAnalysisPlayerIdx());return;}
   skillChartToneColorCache = null;
   const ui = ensureSkillChartsUiState();
   fillSkillChartMetricSelect(elPlayerAnalysisChartMetric, ui.playerMetric, () => {

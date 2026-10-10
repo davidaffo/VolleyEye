@@ -286,11 +286,30 @@ function restoreMatchInfoAfterReset(preserved) {
   renderMatchSummary();
   saveState();
 }
+function getSelectedArchivedMatch() {
+  if (elSavedMatchesSelect && elSavedMatchesSelect.dataset.reactManaged === "true") return state.selectedMatch || "";
+  return elSavedMatchesSelect ? elSavedMatchesSelect.value || "" : "";
+}
+function selectArchivedMatch(name) {
+  if (name && !Object.hasOwn(state.savedMatches || {}, name)) return;
+  state.selectedMatch = name || "";
+  if (elSavedMatchesSelect && elSavedMatchesSelect.dataset.reactManaged !== "true") elSavedMatchesSelect.value = state.selectedMatch;
+  renderMatchesList(Object.keys(state.savedMatches || {}), state.selectedMatch);
+  updateMatchButtonsState();
+}
 function renderMatchesSelect() {
   if (!elSavedMatchesSelect) return;
   syncMatchesFromStorage();
   const names = Object.keys(state.savedMatches || {});
-  const prev = elSavedMatchesSelect.value || state.selectedMatch || "";
+  const prev = getSelectedArchivedMatch() || state.selectedMatch || "";
+  if (elSavedMatchesSelect.dataset.reactManaged === "true") {
+    state.selectedMatch = names.includes(prev) ? prev : "";
+    renderMatchesList(names, state.selectedMatch);
+    applyMatchRequirementLock();
+    renderMatchSummary();
+    updateMatchButtonsState();
+    return;
+  }
   elSavedMatchesSelect.innerHTML = "";
   const placeholder = document.createElement("option");
   placeholder.value = "";
@@ -318,6 +337,10 @@ function renderMatchesSelect() {
 }
 function renderMatchesList(names, selected) {
   if (!elSavedMatchesList) return;
+  if (elSavedMatchesList.dataset.reactManaged === "true") {
+    if (typeof publishRuntimeView === "function") publishRuntimeView();
+    return;
+  }
   elSavedMatchesList.innerHTML = "";
   if (!names || names.length === 0) {
     const empty = document.createElement("div");

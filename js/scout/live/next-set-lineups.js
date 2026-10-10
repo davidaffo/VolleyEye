@@ -225,6 +225,10 @@ function renderNextSetLineup(scope, courtEl, benchEl) {
 }
 function renderNextSetLineups() {
   if (!nextSetDraft) return;
+  if (elNextSetInline?.dataset.reactManaged === "true" && typeof publishNextSetView === "function") {
+    publishNextSetView();
+    return;
+  }
   updateNextSetRotationUI();
   renderNextSetLineup("opponent", elNextSetCourtOpp, elNextSetBenchOpp);
   renderNextSetLineup("our", elNextSetCourtOur, elNextSetBenchOur);
@@ -232,6 +236,7 @@ function renderNextSetLineups() {
   syncNextSetPreferredLiberoSelects();
 }
 function syncNextSetPreferredLiberoSelects() {
+  if (elNextSetInline?.dataset.reactManaged === "true" && typeof publishNextSetView === "function") { publishNextSetView(); return; }
   const applyPreferredLiberoSelection = (scope, next) => {
     if (typeof setTeamPreferredLibero === "function") {
       setTeamPreferredLibero(scope, next);
@@ -308,6 +313,7 @@ function updateNextSetDefaultButtons() {
   }
 }
 function updateNextSetRotationUI() {
+  if (elNextSetInline?.dataset.reactManaged === "true" && typeof publishNextSetView === "function") { publishNextSetView(); return; }
   if (!nextSetDraft) return;
   if (elNextSetRotationSelectOur) {
     elNextSetRotationSelectOur.value = String(nextSetDraft.our && nextSetDraft.our.rotation ? nextSetDraft.our.rotation : 1);
@@ -408,8 +414,9 @@ function computeSetWinScore() {
 function updateSetScoreDisplays() {
   const score = computeSetWinScore();
   const label = score.for + " - " + score.against;
-  if (elLiveSetScore) elLiveSetScore.textContent = label;
-  if (elAggSetScore) elAggSetScore.textContent = label;
+  if (elLiveSetScore && (elLiveSetScore.dataset.reactManaged !== "true" || typeof publishRuntimeView !== "function")) elLiveSetScore.textContent = label;
+  if (elAggSetScore && (elAggSetScore.dataset.reactManaged !== "true" || typeof publishRuntimeView !== "function")) elAggSetScore.textContent = label;
+  if (typeof publishRuntimeView === "function") publishRuntimeView();
 }
 function getDerivedServeForSetStart(setNum) {
   const targetSet = Math.min(5, Math.max(1, parseInt(setNum, 10) || 1));
@@ -504,7 +511,8 @@ function openNextSetLineupModal(scope = "our") {
       setCourtAreaLocked(true);
     }
     updateCourtModalPlacement();
-    elLineupModal.classList.remove("hidden");
+    if (elLineupModal.dataset.reactManaged === "true" && typeof setLineupOpen === "function") setLineupOpen(true);
+    else elLineupModal.classList.remove("hidden");
     setModalOpenState(true);
   }
 }
@@ -513,6 +521,7 @@ function openNextSetModal(setNum) {
   const activeTab = document && document.body ? document.body.dataset.activeTab : "";
   if (activeTab !== "scout") return;
   nextSetDraft = buildNextSetDraft(setNum);
+  if (elNextSetInline.dataset.reactManaged !== "true" || typeof publishNextSetView !== "function") {
   if (elNextSetServeOurLabel) {
     elNextSetServeOurLabel.textContent = getTeamNameForScope("our");
   }
@@ -554,6 +563,7 @@ function openNextSetModal(setNum) {
   if (title) title.textContent = "Preparazione set " + nextSetDraft.setNum;
   elNextSetInline.classList.remove("hidden");
   elNextSetInline.setAttribute("aria-hidden", "false");
+  }
   nextSetModalOpen = true;
   setScoutControlsDisabled(true);
   const courtArea = document.getElementById("court-area");
@@ -566,10 +576,13 @@ function openNextSetModal(setNum) {
 function closeNextSetModal({ force = false } = {}) {
   if (!elNextSetInline) return;
   if (!force && nextSetDraft && nextSetDraft.setNum === 1) return;
-  elNextSetInline.classList.add("hidden");
-  elNextSetInline.setAttribute("aria-hidden", "true");
+  if (elNextSetInline.dataset.reactManaged !== "true" || typeof publishNextSetView !== "function") {
+    elNextSetInline.classList.add("hidden");
+    elNextSetInline.setAttribute("aria-hidden", "true");
+  }
   nextSetDraft = null;
   nextSetModalOpen = false;
+  if (typeof publishNextSetView === "function") publishNextSetView();
   setScoutControlsDisabled(!!state.matchFinished);
   nextSetDragName = "";
   nextSetDragFromIdx = null;

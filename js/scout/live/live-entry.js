@@ -467,7 +467,8 @@ function buildBaseEventPayload(base) {
 }
 function setSkillModalCancelVisibility(visible) {
   if (!elSkillModalCancel) return;
-  elSkillModalCancel.classList.toggle("hidden", !visible);
+  if (elSkillModalCancel.dataset.reactManaged === "true" && typeof publishSkillModalCancel === "function") publishSkillModalCancel(visible);
+  else elSkillModalCancel.classList.toggle("hidden", !visible);
 }
 function renderSkillChoice(playerIdx, playerName, scope = "our") {
   if (state.matchFinished) {
@@ -475,6 +476,7 @@ function renderSkillChoice(playerIdx, playerName, scope = "our") {
     return;
   }
   if (!elSkillModalBody) return;
+  if (elSkillModalBody.dataset.reactManaged === "true" && typeof publishSkillModalChoice === "function") { publishSkillModalChoice(playerIdx, playerName, scope); return; }
   setSkillModalCancelVisibility(false);
   activeSkillModalContext = { playerIdx, playerName: playerName || null, skillId: null, scope };
   updateSetTypeVisibility(getPredictedSkillIdForScope(scope) || getPredictedSkillId());
@@ -511,6 +513,7 @@ function renderSkillChoice(playerIdx, playerName, scope = "our") {
 }
 function renderSkillCodes(playerIdx, playerName, skillId, scope = "our") {
   if (!elSkillModalBody) return;
+  if (elSkillModalBody.dataset.reactManaged === "true" && typeof publishSkillModalCodes === "function") { publishSkillModalCodes(playerIdx, playerName, skillId, scope); return; }
   setSkillModalCancelVisibility(true);
   activeSkillModalContext = { playerIdx, playerName: playerName || null, skillId, scope };
   const predicted = getPredictedSkillIdForScope(scope) || getPredictedSkillId();
@@ -708,7 +711,8 @@ function openSkillModal(playerIdx, playerName, scope = "our") {
   const players = getPlayersForScope(scope);
   if (isNaN(idx) || !players[idx]) return;
   renderSkillChoice(idx, playerName, scope);
-  elSkillModal.classList.remove("hidden");
+  if (elSkillModal.dataset.reactManaged === "true" && typeof setSkillModalOpen === "function") setSkillModalOpen(true);
+  else elSkillModal.classList.remove("hidden");
   setModalOpenState(true);
 }
 function openSkillCodesModal(playerIdx, playerName, skillId, scope = "our") {
@@ -722,7 +726,8 @@ function openSkillCodesModal(playerIdx, playerName, skillId, scope = "our") {
   if (isNaN(idx) || !players[idx]) return;
   if (!skillId) return;
   renderSkillCodes(idx, playerName, skillId, scope);
-  elSkillModal.classList.remove("hidden");
+  if (elSkillModal.dataset.reactManaged === "true" && typeof setSkillModalOpen === "function") setSkillModalOpen(true);
+  else elSkillModal.classList.remove("hidden");
   setModalOpenState(true);
 }
 function cancelSkillModalFlow() {
@@ -733,7 +738,8 @@ function cancelSkillModalFlow() {
 }
 function closeSkillModal() {
   if (!elSkillModal) return;
-  elSkillModal.classList.add("hidden");
+  if (elSkillModal.dataset.reactManaged === "true" && typeof setSkillModalOpen === "function") setSkillModalOpen(false);
+  else elSkillModal.classList.add("hidden");
   setModalOpenState(false);
   activeSkillModalContext = null;
   setSkillModalCancelVisibility(false);
@@ -812,6 +818,7 @@ function getBenchEntriesForScope(scope) {
 // esponi per gli handler inline (fallback mobile)
 function renderErrorModal() {
   if (!elErrorModalBody) return;
+  if (elErrorModalBody.dataset.reactManaged === "true" && typeof publishAttributionView === "function") { publishAttributionView("error"); return; }
   elErrorModalBody.innerHTML = "";
   const scope = (errorModalPrefillPlayer && errorModalPrefillPlayer.scope) || "our";
   const isPlayerPrefilled =
@@ -933,6 +940,7 @@ function renderErrorModal() {
 }
 function renderPointModal() {
   if (!elPointModalBody) return;
+  if (elPointModalBody.dataset.reactManaged === "true" && typeof publishAttributionView === "function") { publishAttributionView("point"); return; }
   elPointModalBody.innerHTML = "";
   const note = document.createElement("p");
   note.className = "section-note";
@@ -979,12 +987,14 @@ function openErrorModal(prefill = null) {
     setCourtAreaLocked(true);
   }
   updateCourtModalPlacement();
-  elErrorModal.classList.remove("hidden");
+  if (elErrorModal.dataset.reactManaged === "true" && typeof setAttributionOpen === "function") setAttributionOpen("error", true);
+  else elErrorModal.classList.remove("hidden");
   setModalOpenState(true);
 }
 function closeErrorModal() {
   if (!elErrorModal) return;
-  elErrorModal.classList.add("hidden");
+  if (elErrorModal.dataset.reactManaged === "true" && typeof setAttributionOpen === "function") setAttributionOpen("error", false);
+  else elErrorModal.classList.add("hidden");
   errorModalPrefillPlayer = null;
   setModalOpenState(false);
 }
@@ -995,12 +1005,14 @@ function openPointModal() {
     setCourtAreaLocked(true);
   }
   updateCourtModalPlacement();
-  elPointModal.classList.remove("hidden");
+  if (elPointModal.dataset.reactManaged === "true" && typeof setAttributionOpen === "function") setAttributionOpen("point", true);
+  else elPointModal.classList.remove("hidden");
   setModalOpenState(true);
 }
 function closePointModal() {
   if (!elPointModal) return;
-  elPointModal.classList.add("hidden");
+  if (elPointModal.dataset.reactManaged === "true" && typeof setAttributionOpen === "function") setAttributionOpen("point", false);
+  else elPointModal.classList.add("hidden");
   setModalOpenState(false);
 }
 function attachModalCloseHandlers() {
@@ -1014,13 +1026,13 @@ function attachModalCloseHandlers() {
   const events = ["click", "pointerup", "pointerdown", "touchend", "touchstart"];
   const closeButtons = [elSkillModalClose, document.querySelector(".skill-modal__close-abs")];
   closeButtons.forEach(btn => {
-    if (!btn) return;
+    if (!btn || btn.dataset.reactManaged === "true") return;
     events.forEach(evt => {
       btn.addEventListener(evt, closeHandler, { passive: false, capture: true });
     });
     btn.onclick = closeHandler;
   });
-  if (elSkillModalBackdrop) {
+  if (elSkillModalBackdrop && elSkillModal.dataset.reactManaged !== "true") {
     events.forEach(evt =>
       elSkillModalBackdrop.addEventListener(evt, closeHandler, { passive: false })
     );
@@ -1032,7 +1044,7 @@ function attachModalCloseHandlers() {
     }
     closeAggSkillModal();
   };
-  if (elAggSkillModalClose) {
+  if (elAggSkillModalClose && elAggSkillModalClose.dataset.reactManaged !== "true") {
     events.forEach(evt => {
       elAggSkillModalClose.addEventListener(evt, closeAggSkillHandler, {
         passive: false,
@@ -1041,7 +1053,7 @@ function attachModalCloseHandlers() {
     });
     elAggSkillModalClose.onclick = closeAggSkillHandler;
   }
-  if (elAggSkillModalBackdrop) {
+  if (elAggSkillModalBackdrop && elAggSkillModal?.dataset.reactManaged !== "true") {
     events.forEach(evt =>
       elAggSkillModalBackdrop.addEventListener(evt, closeAggSkillHandler, { passive: false })
     );
@@ -1062,31 +1074,31 @@ function attachModalCloseHandlers() {
   };
   const errorCloseButtons = [elErrorModalClose];
   errorCloseButtons.forEach(btn => {
-    if (!btn) return;
+    if (!btn || btn.dataset.reactManaged === "true") return;
     events.forEach(evt => {
       btn.addEventListener(evt, closeErrorHandler, { passive: false, capture: true });
     });
     btn.onclick = closeErrorHandler;
   });
-  if (elErrorModalBackdrop) {
+  if (elErrorModalBackdrop && elErrorModal.dataset.reactManaged !== "true") {
     events.forEach(evt =>
       elErrorModalBackdrop.addEventListener(evt, closeErrorHandler, { passive: false })
     );
   }
   const pointCloseButtons = [elPointModalClose];
   pointCloseButtons.forEach(btn => {
-    if (!btn) return;
+    if (!btn || btn.dataset.reactManaged === "true") return;
     events.forEach(evt => {
       btn.addEventListener(evt, closePointHandler, { passive: false, capture: true });
     });
     btn.onclick = closePointHandler;
   });
-  if (elPointModalBackdrop) {
+  if (elPointModalBackdrop && elPointModal.dataset.reactManaged !== "true") {
     events.forEach(evt =>
       elPointModalBackdrop.addEventListener(evt, closePointHandler, { passive: false })
     );
   }
-  if (elSkillModal) {
+  if (elSkillModal && elSkillModal.dataset.reactManaged !== "true") {
     elSkillModal.addEventListener(
       "click",
       e => {
@@ -1099,7 +1111,7 @@ function attachModalCloseHandlers() {
       true
     );
   }
-  if (elErrorModal) {
+  if (elErrorModal && elErrorModal.dataset.reactManaged !== "true") {
     elErrorModal.addEventListener(
       "click",
       e => {
@@ -1112,7 +1124,7 @@ function attachModalCloseHandlers() {
       true
     );
   }
-  if (elPointModal) {
+  if (elPointModal && elPointModal.dataset.reactManaged !== "true") {
     elPointModal.addEventListener(
       "click",
       e => {
@@ -1132,7 +1144,7 @@ function attachModalCloseHandlers() {
     }
     closeBulkEditModal();
   };
-  const bulkCloseButtons = [elBulkEditClose, elBulkEditCancel];
+  const bulkCloseButtons = [elBulkEditClose, elBulkEditCancel].filter(btn=>btn?.dataset.reactManaged !== "true");
   bulkCloseButtons.forEach(btn => {
     if (!btn) return;
     events.forEach(evt => {
@@ -1140,12 +1152,12 @@ function attachModalCloseHandlers() {
     });
     btn.onclick = closeBulkHandler;
   });
-  if (elBulkEditBackdrop) {
+  if (elBulkEditBackdrop && elBulkEditModal?.dataset.reactManaged !== "true") {
     events.forEach(evt =>
       elBulkEditBackdrop.addEventListener(evt, closeBulkHandler, { passive: false })
     );
   }
-  if (elBulkEditModal) {
+  if (elBulkEditModal && elBulkEditModal.dataset.reactManaged !== "true") {
     elBulkEditModal.addEventListener(
       "click",
       e => {

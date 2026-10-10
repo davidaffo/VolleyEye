@@ -90,10 +90,12 @@ function applyTheme(theme, options = {}) {
   const textColor = (THEME_TEXT && THEME_TEXT[resolvedTheme]) || "#ffffff";
   document.documentElement.style.setProperty("--text-color", textColor);
   elThemeToggles.forEach(button => {
+    if (button.dataset && button.dataset.reactManaged === "true") return;
     const isActive = button.dataset.themeChoice === preference;
     button.classList.toggle("active", isActive);
     button.setAttribute("aria-pressed", String(isActive));
   });
+  if (typeof publishRuntimeView === "function") publishRuntimeView();
 }
 const SKILL_COLUMN_MAP = {
   serve: [4, 5, 6, 7, 8],
@@ -500,6 +502,7 @@ async function loadStateFromIndexedDb() {
   return false;
 }
 function saveState(options = {}) {
+  if (typeof publishRuntimeView === "function") publishRuntimeView();
   if (typeof window !== "undefined" && window.__EXPORT_ANALYSIS_HTML__) return;
   const { persistLocal = false, skipMatchPersist = false } = options || {};
   try {

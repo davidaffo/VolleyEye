@@ -185,10 +185,10 @@ function syncMatchInfoInputs(match) {
   const matchType = document.getElementById("match-type");
   const leg = document.getElementById("match-leg");
   if (opponent) opponent.value = match.opponent || "";
-  if (category) category.value = match.category || "";
-  if (date) date.value = match.date || "";
-  if (matchType) matchType.value = match.matchType || "amichevole";
-  if (leg) leg.value = match.leg || "";
+  if (category && category.dataset.reactManaged !== "true") category.value = match.category || "";
+  if (date && date.dataset.reactManaged !== "true") date.value = match.date || "";
+  if (matchType && matchType.dataset.reactManaged !== "true") matchType.value = match.matchType || "amichevole";
+  if (leg && leg.dataset.reactManaged !== "true") leg.value = match.leg || "";
 }
 function getMatchInfoFromInputs() {
   const opponent = document.getElementById("match-opponent");

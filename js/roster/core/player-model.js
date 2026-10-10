@@ -350,6 +350,7 @@ function applyLiveOpponentTeamManagerPayload(payload, currentPayloadOverride = n
   return true;
 }
 function syncTeamManagerModeUI() {
+  if (elTeamManagerModal?.dataset.reactManaged === "true" && typeof publishTeamEditorMode === "function") { publishTeamEditorMode(); return; }
   if (elTeamManagerDialog) {
     elTeamManagerDialog.classList.toggle("team-modal__dialog--live-edit", !!teamManagerLiveEditMode);
   }

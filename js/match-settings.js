@@ -28,10 +28,10 @@
         elOpponent.value = opponentName;
         elOpponent.disabled = !!state.useOpponentTeam;
       }
-      if (elCategory) elCategory.value = state.match.category || "";
-      if (elDate) elDate.value = state.match.date || "";
-      if (elMatchType) elMatchType.value = state.match.matchType || "amichevole";
-      if (elLeg) elLeg.value = state.match.leg || "";
+      if (elCategory && (!elCategory.dataset || elCategory.dataset.reactManaged !== "true")) elCategory.value = state.match.category || "";
+      if (elDate && (!elDate.dataset || elDate.dataset.reactManaged !== "true")) elDate.value = state.match.date || "";
+      if (elMatchType && (!elMatchType.dataset || elMatchType.dataset.reactManaged !== "true")) elMatchType.value = state.match.matchType || "amichevole";
+      if (elLeg && (!elLeg.dataset || elLeg.dataset.reactManaged !== "true")) elLeg.value = state.match.leg || "";
       if (syncCurrentSetUI) syncCurrentSetUI(state.currentSet || 1);
     }
 

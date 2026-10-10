@@ -242,6 +242,7 @@ function handleLineupTouchCancel() {
 }
 function renderLineupModal() {
   if (!elLineupModalCourt || !elLineupModalBench) return;
+  if (elLineupModalCourt.dataset.reactManaged === "true" && typeof publishLineupView === "function") { publishLineupView(); return; }
   elLineupModalCourt.innerHTML = "";
   syncLineupPreferredLiberoSelect();
   const court = getCourtShape(lineupModalCourt);
@@ -441,12 +442,14 @@ function openMobileLineupModal(scope = "our") {
       setCourtAreaLocked(true);
     }
     updateCourtModalPlacement();
-    elLineupModal.classList.remove("hidden");
+    if (elLineupModal.dataset.reactManaged === "true" && typeof setLineupOpen === "function") setLineupOpen(true);
+    else elLineupModal.classList.remove("hidden");
     setModalOpenState(true);
   }
 }
 function renderSetStartModal() {
   if (!elSetStartModalBody) return;
+  if (elSetStartModalBody.dataset.reactManaged === "true" && typeof publishSetStartView === "function") { publishSetStartView(); return; }
   const setNum = setStartModalSetNum || state.currentSet || 1;
   const scope = setStartModalScope || "our";
   ensureSetStartSnapshot(setNum);
@@ -585,13 +588,15 @@ function openSetStartEditor(setNum, scope = "our") {
   ensureSetStartDraft(targetSet, setStartModalScope);
   renderSetStartModal();
   if (elSetStartModal) {
-    elSetStartModal.classList.remove("hidden");
+    if (elSetStartModal.dataset.reactManaged === "true" && typeof setSetStartOpen === "function") setSetStartOpen(true);
+    else elSetStartModal.classList.remove("hidden");
     setModalOpenState(true, true);
   }
 }
 function closeLineupModal() {
   if (elLineupModal) {
-    elLineupModal.classList.add("hidden");
+    if (elLineupModal.dataset.reactManaged === "true" && typeof setLineupOpen === "function") setLineupOpen(false);
+    else elLineupModal.classList.add("hidden");
     elLineupModal.classList.remove("force-popup");
     setModalOpenState(false);
   }
@@ -603,7 +608,8 @@ function closeLineupModal() {
 }
 function closeSetStartModal() {
   if (elSetStartModal) {
-    elSetStartModal.classList.add("hidden");
+    if (elSetStartModal.dataset.reactManaged === "true" && typeof setSetStartOpen === "function") setSetStartOpen(false);
+    else elSetStartModal.classList.add("hidden");
   }
   setStartModalSetNum = null;
   setStartModalScope = "our";

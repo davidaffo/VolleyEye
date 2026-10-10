@@ -461,14 +461,14 @@ function registerServiceWorker() {
   const secureContext =
     window.isSecureContext || location.protocol === "https:" || location.hostname === "localhost";
   const isLocalDevHost =
-    location.hostname === "localhost" ||
-    location.hostname === "127.0.0.1" ||
-    location.hostname === "::1";
+    (location.hostname === "localhost" ||
+      location.hostname === "127.0.0.1" ||
+      location.hostname === "::1") && window.__APP_PRODUCTION__ !== true;
   const appVersionMeta =
     typeof window !== "undefined" && window.__APP_VERSION__ ? window.__APP_VERSION__ : null;
   const currentVersion = appVersionMeta && appVersionMeta.version ? appVersionMeta.version : "";
   const versionLabel = document.getElementById("app-version-label");
-  if (versionLabel && currentVersion) {
+  if (versionLabel && currentVersion && versionLabel.dataset?.reactManaged!=="true") {
     versionLabel.textContent = currentVersion;
   }
   const banner = document.getElementById("update-banner");
@@ -483,10 +483,11 @@ function registerServiceWorker() {
   };
   const setBannerMessage = msg => {
     if (!bannerText) return;
-    bannerText.textContent = msg || "Aggiornamento disponibile.";
+    if(banner?.dataset?.reactManaged==="true"&&typeof updateBannerStore!=="undefined")updateBannerStore.publish({message:msg||"Aggiornamento disponibile."});else bannerText.textContent = msg || "Aggiornamento disponibile.";
   };
   const showBanner = () => {
     if (!banner) return;
+    if(banner.dataset?.reactManaged==="true"&&typeof updateBannerStore!=="undefined"){updateBannerStore.publish({visible:true});return;}
     banner.classList.remove("hidden");
     requestAnimationFrame(() => {
       const height = banner.getBoundingClientRect().height || 0;
@@ -495,23 +496,13 @@ function registerServiceWorker() {
   };
   const hideBanner = () => {
     if (!banner) return;
-    banner.classList.add("hidden");
+    if(banner.dataset?.reactManaged==="true"&&typeof updateBannerStore!=="undefined")updateBannerStore.publish({visible:false});else banner.classList.add("hidden");
     document.documentElement.style.setProperty("--update-banner-offset", "0px");
   };
-  if (bannerRefresh && !bannerRefresh._swBound) {
-    bannerRefresh.addEventListener("click", () => {
-      if (!waitingWorker) {
-        reloadWithCacheBust();
-        return;
-      }
-      sessionStorage.setItem("sw-refresh-requested", "1");
-      waitingWorker.postMessage({ type: "SKIP_WAITING" });
-    });
-    bannerRefresh._swBound = true;
-  }
-  if (bannerDismiss && !bannerDismiss._swBound) {
-    bannerDismiss.addEventListener("click", hideBanner);
-    bannerDismiss._swBound = true;
+  const refresh=()=>{if(!waitingWorker){reloadWithCacheBust();return;}sessionStorage.setItem("sw-refresh-requested","1");waitingWorker.postMessage({type:"SKIP_WAITING"});};
+  if(banner?.dataset?.reactManaged==="true"&&typeof updateBannerStore!=="undefined")updateBannerStore.publish({refresh,dismiss:hideBanner});else{
+    if(bannerRefresh&&!bannerRefresh._swBound){bannerRefresh.addEventListener("click",refresh);bannerRefresh._swBound=true;}
+    if(bannerDismiss&&!bannerDismiss._swBound){bannerDismiss.addEventListener("click",hideBanner);bannerDismiss._swBound=true;}
   }
   const checkRemoteVersion = async () => {
     if (!currentVersion) return;
@@ -546,7 +537,7 @@ function registerServiceWorker() {
     checkRemoteVersion();
     return;
   }
-  window.addEventListener("load", () => {
+  const register = () => {
     const swUrl = `service-worker.js?v=${encodeURIComponent(
       (appVersionMeta && appVersionMeta.cacheVersion) || window.__APP_CACHE_VERSION__ || "dev"
     )}`;
@@ -583,7 +574,9 @@ function registerServiceWorker() {
         checkRemoteVersion();
       })
       .catch(err => console.error("SW registration failed", err));
-  });
+  };
+  if (document.readyState === "complete") register();
+  else window.addEventListener("load", register, { once: true });
 }
 function setActiveAggTab(target) {
   const desired = target || "summary";
@@ -595,7 +588,7 @@ function setActiveAggTab(target) {
   }
   if (elAggTabButtons && typeof elAggTabButtons.forEach === "function") {
     elAggTabButtons.forEach(btn => {
-      btn.classList.toggle("active", btn.dataset.aggTabTarget === desired);
+      if(btn.dataset?.reactManaged!=="true")btn.classList.toggle("active", btn.dataset.aggTabTarget === desired);
     });
   }
   if (elAggSubPanels && typeof elAggSubPanels.forEach === "function") {
@@ -710,6 +703,7 @@ function setActiveTab(target) {
   }
   syncMatchSessionUI();
   tabButtons.forEach(btn => {
+    if (btn.dataset && btn.dataset.reactManaged === "true") return;
     btn.classList.toggle("active", btn.dataset.tabTarget === target);
   });
   tabPanels.forEach(panel => {
@@ -763,25 +757,27 @@ function setActiveTab(target) {
   if (target === "video" && typeof scheduleVideoMobileSourcePrompt === "function") {
     scheduleVideoMobileSourcePrompt();
   }
+  if (typeof publishRuntimeView === "function") publishRuntimeView();
+}
+function navigateToTab(target) {
+  if (!target) return;
+  if (
+    !["match", "info"].includes(target) &&
+    typeof hasUsableMatch === "function" &&
+    !hasUsableMatch()
+  ) {
+    alert("Crea e seleziona una partita prima di usare le altre sezioni.");
+    setActiveTab("match");
+    return;
+  }
+  setActiveTab(target);
 }
 function initTabs() {
   if (!tabButtons || !tabPanels) return;
   tabButtons.forEach(btn => {
+    if (btn.dataset && btn.dataset.reactManaged === "true") return;
     btn.addEventListener("click", () => {
-      const target = btn.dataset.tabTarget;
-      if (target) {
-        if (
-          !["match", "info"].includes(target) &&
-          typeof window !== "undefined" &&
-          typeof hasUsableMatch === "function" &&
-          !hasUsableMatch()
-        ) {
-          alert("Crea e seleziona una partita prima di usare le altre sezioni.");
-          setActiveTab("match");
-          return;
-        }
-        setActiveTab(target);
-      }
+      navigateToTab(btn.dataset.tabTarget);
     });
   });
   setActiveTab("match");
@@ -799,13 +795,15 @@ function syncMatchSessionUI() {
   const label = document.getElementById("active-match-name");
   if (label) {
     const displayName = typeof buildMatchDisplayName === "function" ? buildMatchDisplayName(state.match || {}) : "";
-    label.textContent = displayName || state.loadedMatchName || state.selectedMatch || "Partita";
-    if (document && document.body) document.body.dataset.matchLabel = label.textContent;
+    const text = displayName || state.loadedMatchName || state.selectedMatch || "Partita";
+    if (label.dataset.reactManaged !== "true") label.textContent = text;
+    if (document && document.body) document.body.dataset.matchLabel = text;
+    if (typeof publishRuntimeView === "function") publishRuntimeView();
   }
 }
 
 function enterSelectedMatch() {
-  if (!elSavedMatchesSelect || !elSavedMatchesSelect.value) return false;
+  if (!getSelectedArchivedMatch()) return false;
   loadSelectedMatch();
   if (!hasUsableMatch()) return false;
   state.uiMatchSessionActive = true;

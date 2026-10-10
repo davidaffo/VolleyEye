@@ -576,6 +576,7 @@ function renderSetTrendChartCard(group) {
 function renderSetTrendAnalysis() {
   if (!elSetTrendGrid) return;
   if (!isAggSubtabVisible("set-trend")) return;
+  if (elSetTrendGrid.dataset?.reactManaged === "true" && typeof publishReactSetTrend === "function") return publishReactSetTrend();
   const groups = buildSetTrendGroups(getAnalysisTeamScope());
   elSetTrendGrid.innerHTML = "";
   if (!groups.length) {
@@ -794,6 +795,7 @@ function buildPlayByPlayRallies(scope = getAnalysisTeamScope()) {
 function renderPlayByPlayAnalysis() {
   if (!elAnalysisPlayByPlay) return;
   if (!isAggSubtabVisible("play-by-play")) return;
+  if (elAnalysisPlayByPlay.dataset?.reactManaged === "true" && typeof publishReactPlayByPlay === "function") return publishReactPlayByPlay();
   const scope = getAnalysisTeamScope();
   const rallies = buildPlayByPlayRallies(scope);
   elAnalysisPlayByPlay.innerHTML = "";
