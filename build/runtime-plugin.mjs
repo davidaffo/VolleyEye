@@ -60,8 +60,13 @@ export function runtimePlugin() {
           );
         })
         .join("\n");
+      const effectsPath = resolve(root, "src/compat/runtime-effects.js");
+      this.addWatchFile(effectsPath);
+      const effects = readFileSync(effectsPath, "utf8");
       const adapters = [
         "runtime-adapter.js",
+        "dvw-entry-adapter.js",
+        "database-controls-adapter.js",
         "video-view-adapter.js",
         "filter-adapter.js",
         "match-sheet-adapter.js",
@@ -83,7 +88,22 @@ export function runtimePlugin() {
         this.addWatchFile(path);
         return readFileSync(path, "utf8");
       });
-      return [imports, source, ...adapters].join("\n");
+      // Global browser listeners are explicitly scoped; element handlers in the
+      // standalone analysis renderer remain available for exported reports.
+      const scopedSource = source
+        .replace(
+          /\b(window|document)\.addEventListener\(/g,
+          "listenRuntime($1, ",
+        )
+        .replace(
+          /\b(window|document)\.removeEventListener\(/g,
+          "unlistenRuntime($1, ",
+        )
+        .replace(
+          /\bwindow\.(setTimeout|clearTimeout|setInterval|clearInterval)\(/g,
+          "$1(",
+        );
+      return [imports, effects, scopedSource, ...adapters].join("\n");
     },
     handleHotUpdate(context) {
       // Existing listeners and DOM references need a fresh document on engine or shell edits.

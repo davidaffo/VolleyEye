@@ -249,6 +249,7 @@ function hasDefaultDemoData() {
 function updateDefaultDemoDeleteButtonVisibility() {
   if (!elBtnDeleteDemoData) return;
   const visible = getDefaultDemoPreference() !== "removed" && hasDefaultDemoData();
+  if (elBtnDeleteDemoData.dataset.reactManaged === "true" && typeof demoActionStore !== "undefined") { demoActionStore.publish({ visible }); return; }
   elBtnDeleteDemoData.classList.toggle("hidden", !visible);
   elBtnDeleteDemoData.disabled = !visible;
 }

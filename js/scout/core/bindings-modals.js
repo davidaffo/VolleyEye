@@ -9,19 +9,19 @@ function bindModalAndGlobalControls() {
       }
     });
   }
-  if (elBtnAttackBase) {
+  if (elBtnAttackBase && elBtnAttackBase.dataset.reactManaged !== "true") {
     elBtnAttackBase.addEventListener("click", toggleBaseModal);
   }
-  if (elBtnAttackSetter) {
+  if (elBtnAttackSetter && elBtnAttackSetter.dataset.reactManaged !== "true") {
     elBtnAttackSetter.addEventListener("click", toggleAttackSetterModal);
   }
-  if (elBtnAttackType) {
+  if (elBtnAttackType && elBtnAttackType.dataset.reactManaged !== "true") {
     elBtnAttackType.addEventListener("click", toggleAttackTypeModal);
   }
-  if (elBtnBlockNumber) {
+  if (elBtnBlockNumber && elBtnBlockNumber.dataset.reactManaged !== "true") {
     elBtnBlockNumber.addEventListener("click", toggleBlockNumberModal);
   }
-  if (elBtnNetBlockPrompt) {
+  if (elBtnNetBlockPrompt && elBtnNetBlockPrompt.dataset.reactManaged !== "true") {
     elBtnNetBlockPrompt.addEventListener("click", triggerNetBlockPrompt);
   }
   if (elBaseModalClose && elBaseModalClose.dataset.reactManaged !== "true") {

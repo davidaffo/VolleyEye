@@ -197,7 +197,7 @@ function renderTrajectoryFilters() {
       renderTrajectoryAnalysis();
     }, "analysis-court-side");
   }
-  if (elTrajFilterReset && !elTrajFilterReset._trajResetBound) {
+  if (elTrajFilterReset && elTrajFilterReset.dataset.reactManaged !== "true" && !elTrajFilterReset._trajResetBound) {
     elTrajFilterReset.addEventListener("click", resetTrajectoryFilters);
     elTrajFilterReset._trajResetBound = true;
   }
@@ -343,7 +343,7 @@ function renderServeTrajectoryFilters() {
       renderServeTrajectoryAnalysis();
     }, "analysis-serve-court-side");
   }
-  if (elServeTrajFilterReset && !elServeTrajFilterReset._serveTrajResetBound) {
+  if (elServeTrajFilterReset && elServeTrajFilterReset.dataset.reactManaged !== "true" && !elServeTrajFilterReset._serveTrajResetBound) {
     elServeTrajFilterReset.addEventListener("click", resetServeTrajectoryFilters);
     elServeTrajFilterReset._serveTrajResetBound = true;
   }

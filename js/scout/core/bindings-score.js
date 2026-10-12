@@ -20,22 +20,22 @@ function bindScoreAndSetControls() {
   if (elBtnScoreAgainstMinus && elBtnScoreAgainstMinus.dataset.reactManaged !== "true") {
     elBtnScoreAgainstMinus.addEventListener("click", () => handleManualScore("against", -1));
   }
-  if (elBtnScoreTeamPoint) {
+  if (elBtnScoreTeamPoint && elBtnScoreTeamPoint.dataset.reactManaged !== "true") {
     elBtnScoreTeamPoint.addEventListener("click", () => startPointPickMode("our"));
   }
-  if (elBtnScoreOppError) {
+  if (elBtnScoreOppError && elBtnScoreOppError.dataset.reactManaged !== "true") {
     elBtnScoreOppError.addEventListener("click", handleOpponentErrorPoint);
   }
-  if (elBtnScoreTeamError) {
+  if (elBtnScoreTeamError && elBtnScoreTeamError.dataset.reactManaged !== "true") {
     elBtnScoreTeamError.addEventListener("click", () => startErrorPickMode("our"));
   }
-  if (elBtnScoreOppPoint) {
+  if (elBtnScoreOppPoint && elBtnScoreOppPoint.dataset.reactManaged !== "true") {
     elBtnScoreOppPoint.addEventListener("click", handleOpponentPoint);
   }
-  if (elBtnScoreOppErrorSingle) {
+  if (elBtnScoreOppErrorSingle && elBtnScoreOppErrorSingle.dataset.reactManaged !== "true") {
     elBtnScoreOppErrorSingle.addEventListener("click", handleOpponentErrorPoint);
   }
-  if (elBtnScoreOppPointSingle) {
+  if (elBtnScoreOppPointSingle && elBtnScoreOppPointSingle.dataset.reactManaged !== "true") {
     elBtnScoreOppPointSingle.addEventListener("click", handleOpponentPoint);
   }
   if (elBtnNextSet && elBtnNextSet.dataset.reactManaged !== "true") {

@@ -612,7 +612,7 @@ function startVideoResizeDrag(event, kind) {
   window.addEventListener("pointercancel", onUp);
 }
 function bindVideoResizeHandle(handle, kind) {
-  if (!handle || handle.dataset.resizeBound === "true") return;
+  if (!handle || handle.dataset.reactManaged === "true" || handle.dataset.resizeBound === "true") return;
   handle.dataset.resizeBound = "true";
   handle.addEventListener("pointerdown", event => startVideoResizeDrag(event, kind));
   handle.addEventListener("dblclick", event => {
@@ -730,7 +730,7 @@ function startScoutColumnResize(event, side) {
   window.addEventListener("pointercancel", onUp);
 }
 function bindScoutColumnResizeHandle(handle, side) {
-  if (!handle || handle.dataset.resizeBound === "true") return;
+  if (!handle || handle.dataset.reactManaged === "true" || handle.dataset.resizeBound === "true") return;
   handle.dataset.resizeBound = "true";
   handle.addEventListener("pointerdown", event => startScoutColumnResize(event, side));
   handle.addEventListener("dblclick", event => {
@@ -1103,6 +1103,11 @@ function updateCourtModalPlacement() {
     document.body.classList.toggle("desktop-court-modal", useCourt);
   }
   if (!playersArea) return;
+  if (typeof courtPlacementStore !== "undefined" && courtModalElements.some(modal => modal?.parentElement?.dataset.courtModalHost === "true")) {
+    courtOverlayEl = document.getElementById("court-overlay");
+    courtPlacementStore.publish({ useCourt, popupIds: courtModalElements.filter(modal => modal?.classList.contains("force-popup")).map(modal => modal.id) });
+    return;
+  }
   if (useCourt) {
     if (!courtOverlayEl) {
       courtOverlayEl = document.createElement("div");
@@ -1158,6 +1163,11 @@ function updateCourtModalPlacement() {
 }
 function restoreModalToPopup(modal) {
   if (!modal) return;
+  if (typeof courtPlacementStore !== "undefined" && modal.parentElement?.dataset.courtModalHost === "true") {
+    const current = courtPlacementStore.getSnapshot();
+    courtPlacementStore.publish({ popupIds: [...new Set([...current.popupIds, modal.id])] });
+    return;
+  }
   const movable = getCourtModalMovable(modal);
   if (!movable.__originalParent) {
     movable.__originalParent = movable.parentElement || document.body;

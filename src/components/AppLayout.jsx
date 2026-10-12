@@ -1,3 +1,4 @@
+import { StartupError } from "./StartupError.jsx";
 import { memo } from "react";
 import { CourtModalPortal } from "./CourtModalPortal.jsx";
 import { UpdateBanner } from "./layout/UpdateBanner.jsx";
@@ -45,6 +46,7 @@ import { AppFooter } from "./layout/AppFooter.jsx";
 export const AppLayout = memo(function AppLayout() {
   return (
     <>
+      <StartupError />
       <UpdateBanner />
       <AppNavigation />
       <MobileNavigation />

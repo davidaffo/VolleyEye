@@ -343,7 +343,7 @@ function renderVideoFilters(events) {
     els.wrap.style.display = visibleFilters.some(Boolean) ? "" : "none";
   }
   toggleFilterVisibility(els.reset, visibleFilters.some(Boolean));
-  if (els.reset && !els.reset._videoResetBound) {
+  if (els.reset && els.reset.dataset.reactManaged !== "true" && !els.reset._videoResetBound) {
     els.reset.addEventListener("click", resetVideoFilters);
     els.reset._videoResetBound = true;
   }

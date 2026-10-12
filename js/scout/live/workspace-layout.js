@@ -226,7 +226,7 @@ function bindScoutWidgetLayout() {
     widget.insertBefore(handle, widget.firstChild);
   });
   const reset = document.getElementById("btn-reset-scout-widgets");
-  if (reset && reset.dataset.layoutBound !== "true") {
+  if (reset && reset.dataset.reactManaged !== "true" && reset.dataset.layoutBound !== "true") {
     reset.dataset.layoutBound = "true";
     reset.addEventListener("click", () => {
       state.uiScoutWidgetLayout = null;

@@ -1,3 +1,5 @@
+import { PanelResizeHandle } from "../PanelResizeHandle.jsx";
+import { DvwEntry } from "../DvwEntry.jsx";
 import {
   AppActionButton,
   ScoutDrawerButton,
@@ -5,6 +7,7 @@ import {
 } from "../AppActions.jsx";
 import {
   ScoutToggle,
+  SetTypeShortcuts,
   ScoutActionButton,
   ScoutRotationSelect,
   ScoutLiberoSelect,
@@ -25,7 +28,6 @@ import {
 import { LiveScoreValue } from "../RuntimeControls.jsx";
 import { TeamCounter } from "../TeamCounter.jsx";
 
-// The compatibility engine owns dynamic descendants until their renderer is migrated.
 export function ScoutPage() {
   return (
     <div className={"tab-panel scout-live"} data-tab={"scout"}>
@@ -209,7 +211,7 @@ export function ScoutPage() {
             >
               <div className={"panel-title-row"}>
                 <h3 className={"panel-title"}>{"Impostazioni squadra"}</h3>
-                <button
+                <AppActionButton
                   id={"btn-open-live-team-editor"}
                   className={"icon-button team-panel-edit-btn"}
                   type={"button"}
@@ -217,7 +219,7 @@ export function ScoutPage() {
                   title={"Modifica squadra in partita"}
                 >
                   {"✎"}
-                </button>
+                </AppActionButton>
               </div>
               <div className={"rotation-toggles"}>
                 <label className={"auto-rotate-toggle"}>
@@ -259,12 +261,18 @@ export function ScoutPage() {
                 </label>
               </div>
               <div className={"team-timeout-block"}>
-                <button id={"btn-timeout"} className={"small secondary"}>
+                <AppActionButton
+                  id={"btn-timeout"}
+                  className={"small secondary"}
+                >
                   {"Timeout"}
-                </button>
-                <button id={"btn-open-lineup"} className={"secondary small"}>
+                </AppActionButton>
+                <AppActionButton
+                  id={"btn-open-lineup"}
+                  className={"secondary small"}
+                >
                   {"Formazione/Sostituzione"}
-                </button>
+                </AppActionButton>
                 <span className={"team-counter"}>
                   {"TO: "}
                   <strong id={"timeout-count"} data-react-managed="true">
@@ -288,7 +296,7 @@ export function ScoutPage() {
             >
               <div className={"panel-title-row"}>
                 <h3 className={"panel-title"}>{"Impostazioni avversaria"}</h3>
-                <button
+                <AppActionButton
                   id={"btn-open-live-opponent-team-editor"}
                   className={"icon-button team-panel-edit-btn"}
                   type={"button"}
@@ -296,7 +304,7 @@ export function ScoutPage() {
                   title={"Modifica squadra avversaria in partita"}
                 >
                   {"✎"}
-                </button>
+                </AppActionButton>
               </div>
               <div className={"rotation-toggles"}>
                 <label className={"auto-rotate-toggle"}>
@@ -338,15 +346,18 @@ export function ScoutPage() {
                 </label>
               </div>
               <div className={"team-timeout-block"}>
-                <button id={"btn-timeout-opp"} className={"secondary small"}>
+                <AppActionButton
+                  id={"btn-timeout-opp"}
+                  className={"secondary small"}
+                >
                   {"Timeout"}
-                </button>
-                <button
+                </AppActionButton>
+                <AppActionButton
                   id={"btn-open-lineup-opp"}
                   className={"secondary small"}
                 >
                   {"Formazione/Sostituzione"}
-                </button>
+                </AppActionButton>
                 <span className={"team-counter"}>
                   {"TO: "}
                   <strong id={"timeout-opp-count"} data-react-managed="true">
@@ -366,7 +377,8 @@ export function ScoutPage() {
             </div>
           </div>
         </div>
-        <button
+        <PanelResizeHandle
+          panel="left"
           id={"scout-resize-left"}
           className={"scout-column-resizer"}
           type={"button"}
@@ -374,7 +386,7 @@ export function ScoutPage() {
           aria-orientation={"vertical"}
           aria-label={"Ridimensiona colonna partita"}
           title={"Trascina per ridimensionare. Doppio clic per ripristinare."}
-        ></button>
+        ></PanelResizeHandle>
         <div className={"section scout-col-center"} data-scout-panel={"team"}>
           <div className={"set-type-wrapper"}>
             <div
@@ -387,57 +399,7 @@ export function ScoutPage() {
                   {"Tipo alzata"}
                 </span>
               </div>
-              <div className={"set-type-shortcuts__buttons"}>
-                <button
-                  className={"set-type-btn"}
-                  data-settype={"mezza"}
-                  type={"button"}
-                >
-                  {"Mezza"}
-                </button>
-                <button
-                  className={"set-type-btn"}
-                  data-settype={"super"}
-                  type={"button"}
-                >
-                  {"Super"}
-                </button>
-                <button
-                  className={"set-type-btn"}
-                  data-settype={"quick"}
-                  type={"button"}
-                >
-                  {"Quick"}
-                </button>
-                <button
-                  className={"set-type-btn"}
-                  data-settype={"veloce"}
-                  type={"button"}
-                >
-                  {"Veloce"}
-                </button>
-                <button
-                  className={"set-type-btn"}
-                  data-settype={"fast"}
-                  type={"button"}
-                >
-                  {"Fast"}
-                </button>
-                <button
-                  className={"set-type-btn"}
-                  data-settype={"alta"}
-                  type={"button"}
-                >
-                  {"Alta"}
-                </button>
-                <button
-                  className={"set-type-btn secondary"}
-                  data-clear-settype={""}
-                  type={"button"}
-                >
-                  {"Nessuna"}
-                </button>
-              </div>
+              <SetTypeShortcuts />
             </div>
           </div>
           <div
@@ -469,18 +431,20 @@ export function ScoutPage() {
                       data-youtube-guard={""}
                     ></div>
                   </div>
-                  <button
+                  <PanelResizeHandle
+                    panel="scoutHeight"
                     id={"video-scout-resize-handle"}
                     className={"video-resize-handle"}
                     type={"button"}
                     aria-label={"Allarga finestra video scout"}
                     title={"Trascina per allargare. Doppio click per reset."}
-                  ></button>
+                  ></PanelResizeHandle>
                 </div>
               </div>
             </div>
           </div>
           <div className={"players-area"} id={"court-area"}>
+            <div id="court-overlay" data-react-managed="true" />
             <div
               className={"team-panel team-panel--far team-panel--opponent"}
               data-team-panel={"opponent"}
@@ -523,18 +487,18 @@ export function ScoutPage() {
                   <div
                     className={"score-actions court-game-actions sl-action-row"}
                   >
-                    <button
+                    <AppActionButton
                       id={"btn-score-opp-point"}
                       className={"small success"}
                     >
                       {"Punto"}
-                    </button>
-                    <button
+                    </AppActionButton>
+                    <AppActionButton
                       id={"btn-score-opp-error"}
                       className={"small danger"}
                     >
                       {"Errore"}
-                    </button>
+                    </AppActionButton>
                     <ScoutActionButton
                       id={"btn-freeball-opp"}
                       className={"secondary small"}
@@ -633,36 +597,36 @@ export function ScoutPage() {
             <div className={"court-net-divider"}>
               <span>{"Rete"}</span>
               <div id={"net-actions-default"} className={"net-actions-default"}>
-                <button
+                <AppActionButton
                   id={"btn-attack-base"}
                   className={"small secondary net-action-btn"}
                   type={"button"}
                 >
                   {"Base (K)"}
-                </button>
-                <button
+                </AppActionButton>
+                <AppActionButton
                   id={"btn-attack-setter"}
                   className={"small secondary net-action-btn"}
                   type={"button"}
                 >
                   {"Alzatore (A)"}
-                </button>
-                <button
+                </AppActionButton>
+                <AppActionButton
                   id={"btn-attack-type"}
                   className={"small secondary net-action-btn"}
                   type={"button"}
                 >
                   {"Tipo attacco (T)"}
-                </button>
-                <button
+                </AppActionButton>
+                <AppActionButton
                   id={"btn-block-number"}
                   className={"small secondary net-action-btn"}
                   type={"button"}
                 >
                   {"N° muro (N)"}
-                </button>
+                </AppActionButton>
               </div>
-              <button
+              <AppActionButton
                 id={"btn-net-block-prompt"}
                 className={
                   "small net-action-btn net-action-btn--block-prompt hidden"
@@ -670,7 +634,7 @@ export function ScoutPage() {
                 type={"button"}
               >
                 {"Muro"}
-              </button>
+              </AppActionButton>
               <AppActionButton
                 id={"btn-contesa"}
                 className={"small danger net-action-btn"}
@@ -729,31 +693,34 @@ export function ScoutPage() {
                   <div
                     className={"score-actions court-game-actions sl-action-row"}
                   >
-                    <button id={"btn-score-team-point"} className={"small"}>
+                    <AppActionButton
+                      id={"btn-score-team-point"}
+                      className={"small"}
+                    >
                       {"Punto"}
-                    </button>
-                    <button
+                    </AppActionButton>
+                    <AppActionButton
                       id={"btn-score-team-error"}
                       className={"small danger"}
                     >
                       {"Errore"}
-                    </button>
+                    </AppActionButton>
                     <div
                       id={"single-team-score-actions"}
                       className={"score-actions-inline hidden"}
                     >
-                      <button
+                      <AppActionButton
                         id={"btn-score-opp-point-single"}
                         className={"small success"}
                       >
                         {"Punto avv"}
-                      </button>
-                      <button
+                      </AppActionButton>
+                      <AppActionButton
                         id={"btn-score-opp-error-single"}
                         className={"small danger"}
                       >
                         {"Errore avv"}
-                      </button>
+                      </AppActionButton>
                     </div>
                     <div className={"freeball-actions-inline"}>
                       <ScoutActionButton
@@ -865,7 +832,8 @@ export function ScoutPage() {
             data-scout-widget-zone={"center-bottom"}
           ></div>
         </div>
-        <button
+        <PanelResizeHandle
+          panel="right"
           id={"scout-resize-right"}
           className={"scout-column-resizer"}
           type={"button"}
@@ -873,7 +841,7 @@ export function ScoutPage() {
           aria-orientation={"vertical"}
           aria-label={"Ridimensiona colonna log"}
           title={"Trascina per ridimensionare. Doppio clic per ripristinare."}
-        ></button>
+        ></PanelResizeHandle>
         <div
           className={"section log-section scout-col-right"}
           data-log-section={""}
@@ -887,92 +855,19 @@ export function ScoutPage() {
           >
             {"Chiudi"}
           </ScoutDrawerButton>
-          <button
+          <AppActionButton
             id={"btn-reset-scout-widgets"}
             className={"secondary small scout-widgets-reset"}
             type={"button"}
           >
             {"Ripristina disposizione"}
-          </button>
+          </AppActionButton>
           <div
             id={"scout-widgets-right"}
             className={"scout-widget-zone scout-widget-zone--right"}
             data-scout-widget-zone={"right"}
           >
-            <div
-              className={"scout-dvw-bar scout-widget"}
-              data-scout-widget={"dvw"}
-            >
-              <div className={"scout-dvw-bar__top"}>
-                <div className={"scout-dvw-bar__title-row"}>
-                  <label htmlFor={"dvw-scout-input"}>
-                    {"Scout da codice DataVolley"}
-                  </label>
-                  <button
-                    id={"btn-dvw-scout-help"}
-                    className={"icon-button scout-dvw-help-btn"}
-                    type={"button"}
-                    aria-label={"Apri manuale codici scouting"}
-                    title={"Apri manuale codici scouting"}
-                  >
-                    {"?"}
-                  </button>
-                </div>
-                <div
-                  id={"dvw-scout-last-code"}
-                  className={"scout-dvw-bar__last"}
-                  aria-live={"polite"}
-                >
-                  {"Ultimo codice: —"}
-                </div>
-              </div>
-              <div className={"scout-dvw-bar__controls"}>
-                <input
-                  id={"dvw-scout-input"}
-                  type={"text"}
-                  autoComplete={"off"}
-                  spellCheck={"false"}
-                  placeholder={
-                    "Esempio: *08SM#~~~15C oppure più token separati da spazio"
-                  }
-                />
-                <button
-                  id={"btn-dvw-scout-apply"}
-                  className={"secondary"}
-                  type={"button"}
-                >
-                  {"Applica"}
-                </button>
-                <button
-                  id={"btn-dvw-scout-clear"}
-                  className={"secondary"}
-                  type={"button"}
-                >
-                  {"Pulisci"}
-                </button>
-              </div>
-              <div
-                id={"dvw-scout-breakdown"}
-                className={"scout-dvw-bar__breakdown"}
-                aria-live={"polite"}
-              >
-                {
-                  "\n            Main: squadra · numero · skill · tipo · valutazione. Advanced: combinazione / zone. Extended: skill type / players / special.\n          "
-                }
-              </div>
-              <div
-                id={"dvw-scout-pending"}
-                className={"scout-dvw-bar__pending"}
-                aria-live={"polite"}
-              ></div>
-              <div
-                id={"dvw-scout-status"}
-                className={"scout-dvw-bar__status"}
-                aria-live={"polite"}
-              >
-                {"Pronto."}
-              </div>
-            </div>
+            <DvwEntry />
             <LogServeTrajectories />
             <div
               className={"scout-widget scout-events-widget"}

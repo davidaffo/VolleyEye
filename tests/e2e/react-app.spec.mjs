@@ -1695,7 +1695,9 @@ test("video React mobile: filtri, navigazione e scelta sorgente aggiornano la vi
   await expect(page.locator("#video-mobile-source-modal")).toBeVisible();
   await page.locator("#video-mobile-source-later").click();
   await page.evaluate(() => window.VolleyEye.app.invoke("clearLoadedVideo"));
-  await expect(page.locator("#video-mobile-source-open")).toHaveText("Scegli video");
+  await expect(page.locator("#video-mobile-source-open")).toHaveText(
+    "Scegli video",
+  );
   expect(errors).toEqual([]);
 });
 
@@ -1874,5 +1876,100 @@ test("portal React: traiettoria passa dal campo al popup mantenendo canvas e com
     .click({ position: { x: 100, y: 80 } });
   await expect(page.locator("#attack-trajectory-modal")).toBeHidden();
   expect(await page.evaluate(() => window.portalResult.serveType)).toBe("F");
+  expect(errors).toEqual([]);
+});
+
+test("DataVolley React: anteprima, coda, rimozione e tempi oltre il limite", async ({
+  page,
+}) => {
+  test.setTimeout(30000);
+  const errors = await openApp(page);
+  const demo = JSON.parse(readFileSync("match_demo.json", "utf8"));
+  const match = demo.state || demo;
+  Object.assign(match, {
+    events: [],
+    currentSet: 1,
+    setResults: {},
+    scoreOverrides: {},
+    matchFinished: false,
+    matchEndSetSnapshot: null,
+    matchEndSetRecorded: null,
+  });
+  await page.evaluate(async (snapshot) => {
+    await window.VolleyEye.app.invoke("applyImportedMatch", snapshot, {
+      silent: true,
+    });
+    await window.VolleyEye.app.invoke("saveState", { persistLocal: true });
+    await window.VolleyEye.app.invoke("enterSelectedMatch");
+    await window.VolleyEye.app.invoke("closeNextSetModal");
+  }, match);
+  const input = page.locator("#dvw-scout-input");
+  await input.fill("*T");
+  await expect(page.locator("#dvw-scout-breakdown")).toContainText("Timeout");
+  await input.press("Space");
+  await expect(input).toHaveValue("");
+  await expect(page.locator(".scout-dvw-chip:not(.is-draft)")).toHaveCount(1);
+  await page.locator(".scout-dvw-chip__remove").click();
+  await expect(page.locator(".scout-dvw-chip")).toHaveCount(0);
+  for (let i = 0; i < 3; i++) {
+    await input.fill("*T");
+    await input.press("Enter");
+    await expect(input).toHaveValue("");
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            window.VolleyEye.app
+              .getMatchSnapshot()
+              .events.filter((event) => event.actionType === "timeout").length,
+        ),
+      )
+      .toBe(i + 1);
+  }
+  await expect(page.locator("#timeout-count")).toHaveText("0");
+  await input.fill("codice-errato");
+  await input.press("Enter");
+  await expect(page.locator("#dvw-scout-status")).toHaveClass(/is-error/);
+  await page.locator("#btn-dvw-scout-clear").click();
+  await expect(input).toHaveValue("");
+  await expect(page.locator(".scout-dvw-chip")).toHaveCount(0);
+  await expect(
+    page.locator('[data-scout-widget="serve-trajectories"]'),
+  ).toHaveCount(1);
+  expect(errors).toEqual([]);
+});
+
+test("database React: selettore file conserva il gesto e backup esportabile", async ({
+  page,
+}) => {
+  test.setTimeout(30000);
+  const errors = await openApp(page);
+  const chooser = page.waitForEvent("filechooser");
+  await page.locator("#btn-import-db").click();
+  await chooser;
+  const downloadPromise = page.waitForEvent("download");
+  await page.locator("#btn-export-db").click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/\.json$/);
+  await page.locator("#btn-open-teams-manager").click();
+  await expect(page.locator("#teams-manager-modal")).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test("azioni database React: cancellazione demo aggiorna visibilità e archivio", async ({
+  page,
+}) => {
+  test.setTimeout(30000);
+  const errors = await openApp(page);
+  const button = page.locator("#btn-delete-demo-data");
+  await expect(button).toBeVisible();
+  await button.click();
+  await expect(button).toBeHidden();
+  await expect(page.locator("#saved-matches-list")).not.toContainText("Aurora");
+  await page.reload();
+  await page.waitForFunction(
+    () => document.documentElement.dataset.appReady === "true",
+  );
+  await expect(button).toBeHidden();
   expect(errors).toEqual([]);
 });

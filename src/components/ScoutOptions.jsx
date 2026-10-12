@@ -1,6 +1,9 @@
 import { useSyncExternalStore } from "react";
 import { runtimeStore } from "../state/runtime-store.mjs";
-import { settingsStore } from "../state/roster-import-store.mjs";
+import {
+  settingsStore,
+  setTypeShortcutsStore,
+} from "../state/roster-import-store.mjs";
 import { invokeRuntime } from "../compat/runtime.js";
 const fields = {
   "auto-rotate-toggle": "autoRotate",
@@ -144,5 +147,61 @@ export function ForceSkillButton({ scope, children, ...props }) {
     >
       {children}
     </button>
+  );
+}
+
+export function OpponentSkillToggle({ id, ...props }) {
+  const view = useSettings();
+  const skill = id.replace("opponent-skill-", "");
+  return (
+    <input
+      {...props}
+      id={id}
+      type="checkbox"
+      data-react-managed="true"
+      checked={view.values.opponentSkillConfig?.[skill] !== false}
+      onChange={(event) =>
+        run("changeReactOpponentSkill", skill, event.target.checked)
+      }
+    />
+  );
+}
+
+export function SetTypeShortcuts() {
+  const view = useSyncExternalStore(
+    setTypeShortcutsStore.subscribe,
+    setTypeShortcutsStore.getSnapshot,
+    setTypeShortcutsStore.getSnapshot,
+  );
+  const controls = useControls();
+  return (
+    <div className="set-type-shortcuts__buttons">
+      {view.choices.map((choice) => (
+        <button
+          key={choice.value}
+          type="button"
+          data-react-managed="true"
+          className={
+            "set-type-btn" + (view.selected === choice.value ? " active" : "")
+          }
+          data-settype={choice.value}
+          aria-pressed={view.selected === choice.value}
+          disabled={!!controls.scoutControlsDisabled}
+          onClick={() => run("changeReactSetType", choice.value)}
+        >
+          {choice.label}
+        </button>
+      ))}
+      <button
+        className="set-type-btn secondary"
+        data-clear-settype=""
+        data-react-managed="true"
+        type="button"
+        disabled={!!controls.scoutControlsDisabled}
+        onClick={() => run("changeReactSetType", "")}
+      >
+        Nessuna (N)
+      </button>
+    </div>
   );
 }

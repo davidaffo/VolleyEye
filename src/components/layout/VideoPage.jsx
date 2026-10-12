@@ -1,3 +1,5 @@
+import { PanelResizeHandle } from "../PanelResizeHandle.jsx";
+import { AppActionButton } from "../AppActions.jsx";
 import {
   VideoActionButton,
   VideoSourceControls,
@@ -11,7 +13,6 @@ import {
 import { VideoPresets, VideoPresetCreate } from "../VideoPresets.jsx";
 import { AnalysisFilter, PreviousSkillSelect } from "../AnalysisFilter.jsx";
 import { EventTable } from "../EventTable.jsx";
-// The compatibility engine owns dynamic descendants until their renderer is migrated.
 export function VideoPage() {
   return (
     <div className={"tab-panel"} data-tab={"video"} id={"video-panel"}>
@@ -133,13 +134,14 @@ export function VideoPage() {
                   </VideoMobileNavigation>
                 </div>
               </div>
-              <button
+              <PanelResizeHandle
+                panel="analysisHeight"
                 id={"video-analysis-resize-handle"}
                 className={"video-resize-handle"}
                 type={"button"}
                 aria-label={"Allarga finestra video"}
                 title={"Trascina per allargare. Doppio click per reset."}
-              ></button>
+              ></PanelResizeHandle>
               <div className={"video-frame-actions"}>
                 <VideoActionButton
                   id={"btn-video-frame-prev"}
@@ -332,13 +334,13 @@ export function VideoPage() {
                     />
                   </div>
                   <div className={"analysis-filter filter-actions"}>
-                    <button
+                    <AppActionButton
                       id={"video-filter-reset"}
                       className={"secondary small"}
                       type={"button"}
                     >
                       {"Reset filtri"}
-                    </button>
+                    </AppActionButton>
                   </div>
                 </div>
               </div>

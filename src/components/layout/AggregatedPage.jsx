@@ -25,7 +25,6 @@ import { MultiscoutButton } from "./MultiscoutModal.jsx";
 import { AnalysisFilter, PreviousSkillSelect } from "../AnalysisFilter.jsx";
 import { ChartMetricSelect, SkillChartGrid } from "../SkillChart.jsx";
 import { SetWinScore } from "../ScoreControls.jsx";
-// The compatibility engine owns dynamic descendants until their renderer is migrated.
 export function AggregatedPage() {
   return (
     <div
@@ -299,13 +298,13 @@ export function AggregatedPage() {
                 />
               </div>
               <div className={"analysis-filter filter-actions"}>
-                <button
+                <AppActionButton
                   id={"traj-filter-reset"}
                   className={"secondary small"}
                   type={"button"}
                 >
                   {"Reset filtri"}
-                </button>
+                </AppActionButton>
               </div>
             </div>
             <TrajectoryGrid id="trajectory-grid" variant="attack" />
@@ -393,13 +392,13 @@ export function AggregatedPage() {
                 />
               </div>
               <div className={"analysis-filter filter-actions"}>
-                <button
+                <AppActionButton
                   id={"serve-traj-filter-reset"}
                   className={"secondary small"}
                   type={"button"}
                 >
                   {"Reset filtri"}
-                </button>
+                </AppActionButton>
               </div>
             </div>
             <TrajectoryGrid id="serve-trajectory-grid" variant="serve" />
@@ -493,13 +492,13 @@ export function AggregatedPage() {
                 <PreviousSkillSelect id="second-filter-prev" />
               </div>
               <div className={"analysis-filter filter-actions"}>
-                <button
+                <AppActionButton
                   id={"second-filter-reset"}
                   className={"secondary small"}
                   type={"button"}
                 >
                   {"Reset filtri"}
-                </button>
+                </AppActionButton>
               </div>
             </div>
             <div className={"distribution-section"}>
@@ -771,13 +770,13 @@ export function AggregatedPage() {
                         <PreviousSkillSelect id="player-traj-filter-prev" />
                       </div>
                       <div className={"analysis-filter filter-actions"}>
-                        <button
+                        <AppActionButton
                           id={"player-traj-filter-reset"}
                           className={"secondary small"}
                           type={"button"}
                         >
                           {"Reset filtri"}
-                        </button>
+                        </AppActionButton>
                       </div>
                     </div>
                   </div>
@@ -863,13 +862,13 @@ export function AggregatedPage() {
                         />
                       </div>
                       <div className={"analysis-filter filter-actions"}>
-                        <button
+                        <AppActionButton
                           id={"player-serve-traj-filter-reset"}
                           className={"secondary small"}
                           type={"button"}
                         >
                           {"Reset filtri"}
-                        </button>
+                        </AppActionButton>
                       </div>
                     </div>
                   </div>
@@ -996,31 +995,16 @@ export function AggregatedPage() {
                         <div className={"analysis-filter__label"}>
                           {"Skill precedente"}
                         </div>
-                        <select id={"player-second-filter-prev"}>
-                          <option value={"any"}>{"Tutte"}</option>
-                          <option value={"freeball-positive"}>
-                            {"Freeball o ricezione positiva"}
-                          </option>
-                          <option value={"receive-positive"}>
-                            {"Solo ricezione positiva"}
-                          </option>
-                          <option value={"defense-negative"}>
-                            {"Difesa + ricezione negativa"}
-                          </option>
-                          <option value={"freeball-only"}>
-                            {"Solo freeball"}
-                          </option>
-                          <option value={"dig-only"}>{"Solo difesa"}</option>
-                        </select>
+                        <PreviousSkillSelect id="player-second-filter-prev" />
                       </div>
                       <div className={"analysis-filter filter-actions"}>
-                        <button
+                        <AppActionButton
                           id={"player-second-filter-reset"}
                           className={"secondary small"}
                           type={"button"}
                         >
                           {"Reset filtri"}
-                        </button>
+                        </AppActionButton>
                       </div>
                     </div>
                   </div>

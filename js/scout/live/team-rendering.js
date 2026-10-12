@@ -1,4 +1,5 @@
 function updateFloatingServeErrorButton(isCompactMobile) {
+  if (elFloatingServeErrorBtn?.dataset.reactManaged === "true" && typeof publishReactFloatingServeError === "function") { publishReactFloatingServeError(isCompactMobile); return; }
   if (!elFloatingServeErrorBtn) return;
   if (!isCompactMobile || !state.useOpponentTeam || !state.predictiveSkillFlow) {
     elFloatingServeErrorBtn.classList.add("hidden");

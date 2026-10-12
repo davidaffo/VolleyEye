@@ -1,8 +1,8 @@
+import { OpponentSkillToggle } from "../ScoutOptions.jsx";
 import { AppActionButton } from "../AppActions.jsx";
 import { MetricsConfig } from "../MetricsConfig.jsx";
 import { ThemeButton } from "../RuntimeControls.jsx";
 
-// The compatibility engine owns dynamic descendants until their renderer is migrated.
 export function InfoPage() {
   return (
     <div className={"tab-panel"} data-tab={"info"}>
@@ -54,31 +54,31 @@ export function InfoPage() {
             </p>
             <div className={"opponent-skill-toggles"}>
               <label className={"auto-rotate-toggle skill-serve"}>
-                <input type={"checkbox"} id={"opponent-skill-serve"} />
+                <OpponentSkillToggle id={"opponent-skill-serve"} />
                 {" Battuta"}
               </label>
               <label className={"auto-rotate-toggle skill-pass"}>
-                <input type={"checkbox"} id={"opponent-skill-pass"} />
+                <OpponentSkillToggle id={"opponent-skill-pass"} />
                 {" Ricezione"}
               </label>
               <label className={"auto-rotate-toggle skill-freeball"}>
-                <input type={"checkbox"} id={"opponent-skill-freeball"} />
+                <OpponentSkillToggle id={"opponent-skill-freeball"} />
                 {" Freeball"}
               </label>
               <label className={"auto-rotate-toggle skill-second"}>
-                <input type={"checkbox"} id={"opponent-skill-second"} />
+                <OpponentSkillToggle id={"opponent-skill-second"} />
                 {" Alzata"}
               </label>
               <label className={"auto-rotate-toggle skill-attack"}>
-                <input type={"checkbox"} id={"opponent-skill-attack"} />
+                <OpponentSkillToggle id={"opponent-skill-attack"} />
                 {" Attacco"}
               </label>
               <label className={"auto-rotate-toggle skill-defense"}>
-                <input type={"checkbox"} id={"opponent-skill-defense"} />
+                <OpponentSkillToggle id={"opponent-skill-defense"} />
                 {" Difesa"}
               </label>
               <label className={"auto-rotate-toggle skill-block"}>
-                <input type={"checkbox"} id={"opponent-skill-block"} />
+                <OpponentSkillToggle id={"opponent-skill-block"} />
                 {" Muro"}
               </label>
             </div>

@@ -283,7 +283,7 @@ function bindScoutSettingsControls() {
   const syncOpponentSkillToggles = () => {
     state.opponentSkillConfig = state.opponentSkillConfig || {};
     opponentSkillToggles.forEach(item => {
-      if (!item.el) return;
+      if (!item.el || item.el.dataset.reactManaged === "true") return;
       const enabled = state.opponentSkillConfig[item.id] !== false;
       item.el.checked = enabled;
     });
@@ -306,7 +306,7 @@ function bindScoutSettingsControls() {
     );
   }
   opponentSkillToggles.forEach(item => {
-    if (!item.el) return;
+    if (!item.el || item.el.dataset.reactManaged === "true") return;
     item.el.addEventListener("change", () => updateOpponentSkillToggle(item.id, item.el.checked));
   });
   syncOpponentSkillToggles();
@@ -415,12 +415,12 @@ function bindScoutSettingsControls() {
       renderPlayers();
     });
   }
-  if (elBtnTimeout) {
+  if (elBtnTimeout && elBtnTimeout.dataset.reactManaged !== "true") {
     elBtnTimeout.addEventListener("click", () => {
       recordTimeoutEvent();
     });
   }
-  if (elBtnTimeoutOpp) {
+  if (elBtnTimeoutOpp && elBtnTimeoutOpp.dataset.reactManaged !== "true") {
     elBtnTimeoutOpp.addEventListener("click", () => {
       recordOpponentTimeoutEvent();
     });

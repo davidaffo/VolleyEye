@@ -1,7 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { mobileVideoSourceStore } from "../../state/roster-import-store.mjs";
 import { invokeRuntime, invokeRuntimeEvent } from "../../compat/runtime.js";
-// The compatibility engine owns dynamic descendants until their renderer is migrated.
 export function VideoMobileSourceModal() {
   const view = useSyncExternalStore(
       mobileVideoSourceStore.subscribe,

@@ -1,12 +1,14 @@
 import {
   AppActionButton,
+  DatabaseImportInput,
+  DatabaseUrlInput,
+  DemoDeleteButton,
   MatchImportButton,
   MatchImportInput,
 } from "../AppActions.jsx";
 import { MatchArchiveList, MatchActionButton } from "../MatchArchive.jsx";
 import { ThemeButton } from "../RuntimeControls.jsx";
 
-// The compatibility engine owns dynamic descendants until their renderer is migrated.
 export function MatchPage() {
   return (
     <div className={"tab-panel active"} data-tab={"match"}>
@@ -129,30 +131,33 @@ export function MatchPage() {
                   }
                 </p>
                 <div className={"controls-row"}>
-                  <button id={"btn-open-teams-manager"} className={"secondary"}>
+                  <AppActionButton
+                    id={"btn-open-teams-manager"}
+                    className={"secondary"}
+                  >
                     {"Gestione squadre"}
-                  </button>
+                  </AppActionButton>
                 </div>
               </div>
               <div
                 className={"match-manager-panel match-manager-panel--actions"}
               >
                 <h4>{"Azioni database"}</h4>
-                <button
+                <AppActionButton
                   id={"btn-open-debug-modal"}
                   className={"secondary"}
                   type={"button"}
                 >
                   {"Debug"}
-                </button>
+                </AppActionButton>
                 <div className={"controls-row match-actions-row"}>
-                  <button id={"btn-export-db"} className={"secondary"}>
+                  <AppActionButton id={"btn-export-db"} className={"secondary"}>
                     {"Esporta database completo"}
-                  </button>
-                  <button id={"btn-import-db"} className={"secondary"}>
+                  </AppActionButton>
+                  <AppActionButton id={"btn-import-db"} className={"secondary"}>
                     {"Importa database"}
-                  </button>
-                  <input
+                  </AppActionButton>
+                  <DatabaseImportInput
                     id={"db-file-input"}
                     type={"file"}
                     accept={"application/json,text/plain"}
@@ -164,31 +169,34 @@ export function MatchPage() {
                     "controls-row match-actions-row match-actions-row--url"
                   }
                 >
-                  <input
+                  <DatabaseUrlInput
                     id={"import-db-url"}
                     type={"url"}
                     className={"match-url-input"}
                     placeholder={"https://.../backup.json"}
                   />
-                  <button id={"btn-import-db-url"} className={"secondary"}>
+                  <AppActionButton
+                    id={"btn-import-db-url"}
+                    className={"secondary"}
+                  >
                     {"Importa database da URL"}
-                  </button>
+                  </AppActionButton>
                 </div>
                 <div className={"controls-row match-actions-row"}>
-                  <button
+                  <DemoDeleteButton
                     id={"btn-delete-demo-data"}
                     className={"secondary hidden"}
                     type={"button"}
                   >
                     {"Cancella dati demo"}
-                  </button>
-                  <button
+                  </DemoDeleteButton>
+                  <AppActionButton
                     id={"btn-reset-app"}
                     className={"danger"}
                     type={"button"}
                   >
                     {"Cancella dati app"}
-                  </button>
+                  </AppActionButton>
                 </div>
                 <p className={"section-note"}>
                   {

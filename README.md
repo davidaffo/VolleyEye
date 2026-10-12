@@ -13,7 +13,7 @@ Sito: https://davidaffo.github.io/VolleyEye/
 - `npm run preview` — verifica la build su /VolleyEye/.
 - `npx playwright install chromium` e `npm run test:e2e` — verifiche nel browser dopo la build.
 
-La conversione a React è progressiva: [stato della migrazione](docs/react-migration.md).
+L’interfaccia è React; il motore di scouting esistente conserva calcoli e dati. Vedi [architettura e verifiche](docs/react-migration.md).
 
 ## GitHub Pages
 

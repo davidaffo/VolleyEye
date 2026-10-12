@@ -130,3 +130,29 @@ export const updateBannerStore = createStore({
   refresh: null,
   dismiss: null,
 });
+
+export const dvwEntryStore = createStore({
+  text: "",
+  tokens: [],
+  status: "Pronto.",
+  tone: "",
+  lastCode: "Ultimo codice: —",
+  breakdown: null,
+});
+
+export const setTypeShortcutsStore = createStore({ choices: [], selected: "" });
+export const courtPlacementStore = createStore({
+  useCourt: false,
+  popupIds: [],
+});
+
+export const floatingServeErrorStore = createStore({
+  visible: false,
+  scope: "",
+  playerIdx: null,
+  playerName: "",
+});
+
+export const demoActionStore = createStore({ visible: false });
+
+export const databaseImportStore = createStore({ url: "" });

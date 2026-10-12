@@ -1,5 +1,4 @@
 import { invokeRuntime } from "../../compat/runtime.js";
-// The compatibility engine owns dynamic descendants until their renderer is migrated.
 export function AppFooter() {
   return (
     <footer className={"app-footer"} role={"contentinfo"}>

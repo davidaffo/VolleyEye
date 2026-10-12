@@ -1,6 +1,13 @@
 // Appended to the compatibility engine by Vite, sharing its private lexical scope.
 // runtimeStore is imported by the virtual entrypoint; domain functions remain private.
 const commands = {
+  recordReactFloatingServeError,
+  changeReactSetType,
+  changeReactOpponentSkill,
+  handleImportDatabaseFile,
+  applyDvwScoutInput,
+  clearReactDvwEntry,
+  removeReactDvwToken,
   handleImportMatchFile,
   rotateCourt,
   rotateOpponentCourt,
@@ -527,6 +534,10 @@ function setNextSetPreferredLibero(scope, next) {
 
 export function invokeEvent(name, ...args) {
   const eventCommands = {
+    resizeReactPanel,
+    changeReactDvwText,
+    queueCurrentDvwScoutToken,
+    openDvwScoutHelp,
     runReactAppAction,
     openReactMatchFilePicker,
     changeReactScoutDrawer,
@@ -913,6 +924,7 @@ function publishReactSettings() {
   });
   values.autoLiberoRole = getTeamAutoLiberoRole("our");
   values.opponentAutoLiberoRole = getTeamAutoLiberoRole("opponent");
+  values.opponentSkillConfig = Object.freeze({ ...state.opponentSkillConfig });
   values.rotation = state.rotation || 1;
   values.opponentRotation = state.opponentRotation || 1;
   values.skillVisibility = Object.freeze(
@@ -1285,6 +1297,36 @@ function backfillReactPlayerIds() {
 
 function runReactAppAction(name) {
   const actions = {
+    resetTrajectoryFilters,
+    resetServeTrajectoryFilters,
+    resetSecondFilters,
+    resetPlayerTrajectoryFilters,
+    resetPlayerServeTrajectoryFilters,
+    resetPlayerSecondFilters,
+    resetVideoFilters,
+    recordTimeoutEvent,
+    recordOpponentTimeoutEvent,
+    startReactPointPick,
+    startReactErrorPick,
+    handleOpponentPoint,
+    handleOpponentErrorPoint,
+    resetReactScoutWidgets,
+    openTeamsManagerModal,
+    openDebugModal,
+    exportDatabaseToFile,
+    openReactDatabasePicker,
+    importReactDatabaseUrl,
+    removeDefaultDemoData,
+    resetAppData,
+    openReactLiveTeam,
+    openReactLiveOpponent,
+    openMobileLineupModal,
+    openReactOpponentLineup,
+    toggleBaseModal,
+    toggleAttackSetterModal,
+    toggleAttackTypeModal,
+    toggleBlockNumberModal,
+    triggerNetBlockPrompt,
     exportAnalysisPdf,
     exportAnalysisHtml,
     exportMatchToFile,

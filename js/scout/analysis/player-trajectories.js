@@ -174,7 +174,7 @@ function renderPlayerTrajectoryFilters() {
       elPlayerTrajFilterPrev._playerTrajPrevBound = true;
     }
   }
-  if (elPlayerTrajFilterReset && !elPlayerTrajFilterReset._playerTrajResetBound) {
+  if (elPlayerTrajFilterReset && elPlayerTrajFilterReset.dataset.reactManaged !== "true" && !elPlayerTrajFilterReset._playerTrajResetBound) {
     elPlayerTrajFilterReset.addEventListener("click", resetPlayerTrajectoryFilters);
     elPlayerTrajFilterReset._playerTrajResetBound = true;
   }
@@ -457,7 +457,7 @@ function renderPlayerServeTrajectoryFilters() {
     })
   );
   toggleFilterVisibility(elPlayerServeTrajFilterReset, visibleFilters.some(Boolean));
-  if (elPlayerServeTrajFilterReset && !elPlayerServeTrajFilterReset._playerServeResetBound) {
+  if (elPlayerServeTrajFilterReset && elPlayerServeTrajFilterReset.dataset.reactManaged !== "true" && !elPlayerServeTrajFilterReset._playerServeResetBound) {
     elPlayerServeTrajFilterReset.addEventListener("click", resetPlayerServeTrajectoryFilters);
     elPlayerServeTrajFilterReset._playerServeResetBound = true;
   }

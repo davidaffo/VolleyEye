@@ -1,7 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { debugStore } from "../../state/roster-import-store.mjs";
 import { invokeRuntime } from "../../compat/runtime.js";
-// The compatibility engine owns dynamic descendants until their renderer is migrated.
 export function DebugModal() {
   const view = useSyncExternalStore(
       debugStore.subscribe,

@@ -56,7 +56,7 @@ function bindDataAndNavigationControls() {
       saveState({ persistLocal: true });
     });
   }
-  if (elBtnResetApp) {
+  if (elBtnResetApp && elBtnResetApp.dataset.reactManaged !== "true") {
     elBtnResetApp.addEventListener("click", e => {
       if (e) {
         e.preventDefault();
@@ -65,13 +65,13 @@ function bindDataAndNavigationControls() {
       resetAppData();
     });
   }
-  if (elBtnDeleteDemoData) {
+  if (elBtnDeleteDemoData && elBtnDeleteDemoData.dataset.reactManaged !== "true") {
     elBtnDeleteDemoData.addEventListener("click", e => {
       if (e) e.preventDefault();
       removeDefaultDemoData();
     });
-    updateDefaultDemoDeleteButtonVisibility();
   }
+  updateDefaultDemoDeleteButtonVisibility();
   const elBtnForceRefreshApp = document.getElementById("btn-force-refresh-app");
   if (elBtnForceRefreshApp && elBtnForceRefreshApp.dataset?.reactManaged !== "true") {
     elBtnForceRefreshApp.addEventListener("click", forceRefreshAppAssets);
@@ -79,15 +79,15 @@ function bindDataAndNavigationControls() {
   if (elBtnUndo && elBtnUndo.dataset?.reactManaged !== "true") elBtnUndo.addEventListener("click", undoLastEvent);
   const elBtnContesa = document.getElementById("btn-contesa");
   if (elBtnContesa && elBtnContesa.dataset?.reactManaged !== "true") elBtnContesa.addEventListener("click", undoContestedRally);
-  if (elBtnDvwScoutApply) {
+  if (elBtnDvwScoutApply && elBtnDvwScoutApply.dataset?.reactManaged !== "true") {
     elBtnDvwScoutApply.addEventListener("click", () => {
       applyDvwScoutInput();
     });
   }
-  if (elBtnDvwScoutClear) {
+  if (elBtnDvwScoutClear && elBtnDvwScoutClear.dataset?.reactManaged !== "true") {
     elBtnDvwScoutClear.addEventListener("click", () => {
       dvwScoutPendingTokens = [];
-      if (elDvwScoutInput) {
+      if (elDvwScoutInput && elDvwScoutInput.dataset?.reactManaged !== "true") {
         elDvwScoutInput.value = "";
         elDvwScoutInput.focus();
       }
@@ -95,12 +95,12 @@ function bindDataAndNavigationControls() {
       setDvwScoutStatus("Pronto.");
     });
   }
-  if (elBtnDvwScoutHelp) {
+  if (elBtnDvwScoutHelp && elBtnDvwScoutHelp.dataset?.reactManaged !== "true") {
     elBtnDvwScoutHelp.addEventListener("click", () => {
       openDvwScoutHelp();
     });
   }
-  if (elDvwScoutInput) {
+  if (elDvwScoutInput && elDvwScoutInput.dataset?.reactManaged !== "true") {
     elDvwScoutInput.addEventListener("input", () => {
       renderDvwScoutPending();
     });

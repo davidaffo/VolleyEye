@@ -202,7 +202,7 @@ function renderSecondFilters() {
       els.prev._secondPrevBound = true;
     }
   }
-  if (els.reset && !els.reset._secondResetBound) {
+  if (els.reset && els.reset.dataset.reactManaged !== "true" && !els.reset._secondResetBound) {
     els.reset.addEventListener("click", resetSecondFilters);
     els.reset._secondResetBound = true;
   }

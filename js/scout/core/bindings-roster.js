@@ -96,13 +96,13 @@ function bindRosterAndArchiveControls() {
       saveCurrentTeam();
     });
   }
-  if (elBtnOpenLineup) {
+  if (elBtnOpenLineup && elBtnOpenLineup.dataset.reactManaged !== "true") {
     elBtnOpenLineup.addEventListener("click", () => {
       openMobileLineupModal();
     });
   }
   const elBtnOpenLineupOpp = document.getElementById("btn-open-lineup-opp");
-  if (elBtnOpenLineupOpp) {
+  if (elBtnOpenLineupOpp && elBtnOpenLineupOpp.dataset.reactManaged !== "true") {
     elBtnOpenLineupOpp.addEventListener("click", () => {
       openMobileLineupModal("opponent");
     });
@@ -110,18 +110,18 @@ function bindRosterAndArchiveControls() {
   if (elBtnSaveOpponentTeam) {
     elBtnSaveOpponentTeam.addEventListener("click", saveCurrentOpponentTeam);
   }
-  if (elBtnOpenTeamManager) {
+  if (elBtnOpenTeamManager && elBtnOpenTeamManager.dataset.reactManaged !== "true") {
     elBtnOpenTeamManager.addEventListener("click", () => openTeamManagerModal("our"));
   }
   {
     const elBtnOpenLiveTeamEditor = document.getElementById("btn-open-live-team-editor");
-    if (elBtnOpenLiveTeamEditor) {
+    if (elBtnOpenLiveTeamEditor && elBtnOpenLiveTeamEditor.dataset.reactManaged !== "true") {
       elBtnOpenLiveTeamEditor.addEventListener("click", () => openTeamManagerModal({ scope: "our", liveEdit: true }));
     }
   }
   {
     const elBtnOpenLiveOpponentTeamEditor = document.getElementById("btn-open-live-opponent-team-editor");
-    if (elBtnOpenLiveOpponentTeamEditor) {
+    if (elBtnOpenLiveOpponentTeamEditor && elBtnOpenLiveOpponentTeamEditor.dataset.reactManaged !== "true") {
       elBtnOpenLiveOpponentTeamEditor.addEventListener("click", () =>
         openTeamManagerModal({ scope: "opponent", liveEdit: true })
       );
@@ -299,10 +299,10 @@ function bindRosterAndArchiveControls() {
   if (elBtnDeleteMatch && elBtnDeleteMatch.dataset.reactManaged !== "true") {
     elBtnDeleteMatch.addEventListener("click", deleteSelectedMatch);
   }
-  if (elBtnExportDb) {
+  if (elBtnExportDb && elBtnExportDb.dataset.reactManaged !== "true") {
     elBtnExportDb.addEventListener("click", exportDatabaseToFile);
   }
-  if (elBtnImportDb && elDbFileInput) {
+  if (elBtnImportDb && elBtnImportDb.dataset.reactManaged !== "true" && elDbFileInput) {
     elBtnImportDb.addEventListener("click", () => {
       elDbFileInput.value = "";
       elDbFileInput.click();
@@ -313,7 +313,7 @@ function bindRosterAndArchiveControls() {
       if (file) handleImportDatabaseFile(file);
     });
   }
-  if (elBtnImportDbUrl && elImportDbUrl) {
+  if (elBtnImportDbUrl && elBtnImportDbUrl.dataset.reactManaged !== "true" && elImportDbUrl) {
     elBtnImportDbUrl.addEventListener("click", () => {
       importDatabaseFromUrl(elImportDbUrl.value || "");
     });
@@ -322,7 +322,7 @@ function bindRosterAndArchiveControls() {
     elBtnOpenMatchManager.addEventListener("click", openMatchManagerModal);
   }
   const elBtnOpenTeamsManager = document.getElementById("btn-open-teams-manager");
-  if (elBtnOpenTeamsManager) {
+  if (elBtnOpenTeamsManager && elBtnOpenTeamsManager.dataset.reactManaged !== "true") {
     elBtnOpenTeamsManager.addEventListener("click", openTeamsManagerModal);
   }
   const elBtnOpenPlayersDb = document.getElementById("btn-open-players-db");
@@ -358,7 +358,7 @@ function bindRosterAndArchiveControls() {
       alert("Giocatrici unite. ID aggiornati nei match.");
     });
   }
-  if (elBtnOpenDebugModal) {
+  if (elBtnOpenDebugModal && elBtnOpenDebugModal.dataset.reactManaged !== "true") {
     elBtnOpenDebugModal.addEventListener("click", openDebugModal);
   }
   if (elDebugModalClose && elDebugModalClose.dataset?.reactManaged !== "true") {

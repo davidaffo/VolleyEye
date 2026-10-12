@@ -115,14 +115,15 @@ function renderPlayerSecondFilters() {
   );
   toggleFilterVisibility(elPlayerSecondFilterPrev, attackEvents.length > 0);
   toggleFilterVisibility(elPlayerSecondFilterReset, visibleFilters.some(Boolean));
-  if (elPlayerSecondFilterPrev) {
+  if (elPlayerSecondFilterPrev?.dataset.reactManaged === "true" && typeof publishReactPreviousSkill === "function") publishReactPreviousSkill(elPlayerSecondFilterPrev, playerSecondFilterState.prevSkill, handlePlayerSecondFilterChange);
+  else if (elPlayerSecondFilterPrev) {
     elPlayerSecondFilterPrev.value = playerSecondFilterState.prevSkill || "any";
     if (!elPlayerSecondFilterPrev._playerSecondPrevBound) {
       elPlayerSecondFilterPrev.addEventListener("change", handlePlayerSecondFilterChange);
       elPlayerSecondFilterPrev._playerSecondPrevBound = true;
     }
   }
-  if (elPlayerSecondFilterReset && !elPlayerSecondFilterReset._playerSecondResetBound) {
+  if (elPlayerSecondFilterReset && elPlayerSecondFilterReset.dataset.reactManaged !== "true" && !elPlayerSecondFilterReset._playerSecondResetBound) {
     elPlayerSecondFilterReset.addEventListener("click", resetPlayerSecondFilters);
     elPlayerSecondFilterReset._playerSecondResetBound = true;
   }

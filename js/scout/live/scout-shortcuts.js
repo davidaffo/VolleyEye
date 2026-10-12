@@ -15,6 +15,7 @@ function formatSetTypeLabelWithShortcut(value, label) {
   return shortcut ? `${base} (${shortcut})` : base;
 }
 function renderSetTypeShortcuts() {
+  if (elSetTypeShortcuts?.querySelector("[data-react-managed]") && typeof publishReactSetTypeShortcuts === "function") { publishReactSetTypeShortcuts(); return; }
   const current = normalizeSetTypeValue(state.nextSetType) || "—";
   if (elSetTypeCurrent) {
     elSetTypeCurrent.textContent = current;
@@ -255,7 +256,7 @@ function initSetTypeShortcuts() {
   renderSetTypeShortcuts();
   updateSetTypeVisibility(getPredictedSkillId());
   if (!elSetTypeShortcuts) return;
-  elSetTypeShortcuts.addEventListener("click", e => {
+  if (!elSetTypeShortcuts.querySelector("[data-react-managed]")) elSetTypeShortcuts.addEventListener("click", e => {
     const btn = e.target.closest("[data-settype],[data-clear-settype]");
     if (!btn) return;
     if (btn.hasAttribute("data-clear-settype")) {

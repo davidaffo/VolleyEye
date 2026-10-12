@@ -1,37 +1,35 @@
-# Migrazione React — checkpoint
+# Interfaccia React e build
 
-Stima di avanzamento: circa 80% della conversione complessiva. È una stima funzionale, non una misura delle righe di codice. La migrazione non è completa: React gestisce gran parte della UI, mentre il motore e alcuni controlli usano ancora il runtime di compatibilità.
+L'applicazione usa React per pagine, controlli, dialoghi e viste dinamiche. Vite genera la build statica per GitHub Pages. La logica di scouting, i calcoli, la persistenza e i formati di import/export sono stati conservati per mantenere il comportamento e i dati esistenti.
 
-## Parti convertite
+## Interfaccia
 
-- Avvio React/Vite, struttura delle pagine, navigazione, tema, archivio e dialogo partita.
-- Punteggio, set, contatori, preparazione set, formazioni, campo e dialoghi dei fondamentali.
-- Gestione squadre e giocatrici, editor squadra, foto, import e abbinamenti per unione.
-- Tabelle eventi ed editor, filtri e preset, multiscout, metriche, grafici SVG, play by play, andamento set e match sheet.
-- Tabelle aggregate e analisi giocatrice, confronto, distribuzioni e traiettorie.
-- Dialoghi traiettorie, encoder e sorgente mobile; banner aggiornamenti e controlli della barra.
-- Controlli delle sorgenti locale/YouTube in Scout e Analisi, player locale con sorgente dichiarativa, snapshot di riproduzione, overlay play by play e navigazione/filtri mobile.
-- Opzioni inline dello scout, rotazione, libero, selezione della prossima skill e azioni di import/export, reset metriche e navigazione dei drawer.
-- Portal React per i cinque dialoghi del campo: il contenitore resta stabile durante i cambi di posizione, preservando controlli, canvas e handler.
+- Archivio e creazione/modifica partite, squadre e giocatrici, editor, foto, import CAMP3 e unione delle identità.
+- Scout live: campo, fondamentali, punteggio, set, formazioni, contatori, opzioni e scorciatoie.
+- Inserimento DataVolley: input, anteprima strutturata, coda, rimozione, applicazione e messaggi.
+- Tabelle eventi, modifica singola e multipla, filtri, preset, metriche, grafici SVG, analisi giocatrici, confronto, tabellino e note.
+- Video locale e YouTube, sorgenti condivise, comandi, sincronizzazione, overlay e navigazione mobile.
+- Import/export del database e delle partite, reset, selettori file e dialoghi.
+- Portal per i dialoghi sul campo, con contenitori stabili che preservano controlli e canvas durante il cambio desktop/mobile.
 
-I limiti sono in `js/globals.js`: 8 cambi e 2 tempi. Rimane possibile registrare azioni oltre questi valori. Persistenza e formati di import/export restano compatibili.
+I limiti sono in `js/globals.js`: 8 cambi e 2 tempi. Il superamento rimane consentito. I contatori mostrano zero dopo aver esaurito il limite, conservando tutti gli eventi ulteriori.
 
-## Confine temporaneo e lavoro restante
+## Motore e servizi
 
-`AppLayout` viene montato prima di importare il motore. `config/runtime-files.mjs` dichiara le sorgenti compilate da `build/runtime-plugin.mjs` in un modulo ES isolato, senza eval o document.write. Gli adattatori pubblicano modelli di vista tramite store e mantengono i calcoli esistenti. I renderer classici restano disponibili per report e verifiche di compatibilità.
+`AppLayout` viene montato prima di avviare il motore. `config/runtime-files.mjs` e `build/runtime-plugin.mjs` compilano le sorgenti esistenti in un modulo ES isolato, senza eval o document.write. Gli adattatori espongono comandi e pubblicano modelli di vista negli store React. Le azioni che richiedono un gesto del browser, come apertura file e copia, vengono eseguite sincronicamente.
 
-1. Separare i servizi di riproduzione e YouTube dal runtime. Il player locale e i suoi eventi sono React; l’integrazione SDK YouTube, seek e sincronizzazione restano effetti del servizio esistente.
-2. Completare inserimento DataVolley, scorciatoie, import del database e controlli dello scout ancora collegati tramite listener imperativi. Le opzioni, rotazione e libero sono già React.
-3. Separare stato, persistenza e logica di dominio dai riferimenti DOM; sostituire il modulo di compatibilità con import ES espliciti.
-4. Trasferire la decisione della posizione dei dialoghi dal servizio di layout a React e completare il teardown degli effetti. I cinque dialoghi usano già portal con contenitori stabili; il servizio sposta i contenitori, non i nodi gestiti da React. StrictMode resta disattivato fino al teardown completo.
-5. Verificare la versione finale e attivare il deploy GitHub Pages da Actions.
+Il motore JavaScript è ancora riutilizzato tramite `src/compat/`: non è stato riscritto in hook né suddiviso interamente in servizi ES indipendenti. I renderer classici restano necessari per l'HTML di analisi esportabile senza React. Canvas, ridimensionamento, SDK YouTube e layout della finestra usano effetti imperativi; React gestisce i relativi controlli e le viste.
 
-## Build e pubblicazione
+Listener globali e timer sono circoscritti al runtime. Il teardown rimuove gli effetti, salva il tempo video, disconnette l'observer, ferma i player e libera il blob locale. Il bootstrap resta unico per documento; le modifiche al motore durante lo sviluppo richiedono un ricaricamento completo. StrictMode non è abilitato perché il motore conserva riferimenti agli elementi montati all'avvio.
 
-`npm run build` genera `dist/`, asset e service worker con i chunk effettivi. Il workflow `.github/workflows/pages.yml` prepara verifiche, build e deploy GitHub Pages sotto `/VolleyEye/`. La pubblicazione richiede il push e l'impostazione Pages su GitHub Actions; questo checkpoint non attiva né pubblica il nuovo sito.
+## GitHub Pages
 
-## Verifica
+`npm run build` genera `dist/` con asset e service worker basati sui chunk effettivi. Il percorso di produzione rimane `/VolleyEye/`, mantenendo origine e storage del sito.
 
-I test DOM usano il markup dei componenti React. I confronti differenziali verificano campo, grafici, editor eventi, tabelle aggregate e SVG rispetto ai calcoli precedenti. I test Playwright esercitano la build sotto `/VolleyEye/`, inclusi persistenza, dialoghi, analisi e comportamento oltre i limiti.
+Il workflow `.github/workflows/pages.yml` esegue installazione, test della logica, build e prove browser. Le pull request verso `main` vengono verificate; i push su `main` pubblicano `dist/` con GitHub Pages. Per attivarlo, la Source di Pages deve essere **GitHub Actions**. La configurazione remota verificata durante questa conversione usa ancora `main` dalla radice: non va confusa con un deploy React già eseguito.
 
-Le nuove prove browser usano un video WebM locale di 10 secondi e un SDK YouTube simulato: verificano caricamento condiviso, frame, sincronizzazione e undo, rimozione, bozze URL, navigazione mobile, persistenza delle opzioni e identità del canvas tra campo e popup. La prova YouTube non verifica il servizio esterno reale.
+## Verifiche
+
+Le prove DOM usano il markup dei componenti React. I confronti differenziali verificano campo, grafici, editor, tabelle e anteprima DataVolley rispetto ai calcoli precedenti. Le prove Playwright esercitano la build sotto `/VolleyEye/`, compresi persistenza, riapertura offline, import/export, contatori oltre i limiti e identità del canvas nei portal.
+
+Il video locale usa una fixture WebM di 10 secondi. La prova YouTube usa un SDK simulato e non verifica il servizio esterno reale.

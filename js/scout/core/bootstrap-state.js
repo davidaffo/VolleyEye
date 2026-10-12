@@ -167,7 +167,7 @@ async function initializeApplicationState() {
   renderLiveScore();
   renderPlayers();
   initLogServeTrajectoryControls();
-  if (elFloatingServeErrorBtn && !elFloatingServeErrorBtn._serveErrorBound) {
+  if (elFloatingServeErrorBtn && elFloatingServeErrorBtn.dataset.reactManaged !== "true" && !elFloatingServeErrorBtn._serveErrorBound) {
     elFloatingServeErrorBtn._serveErrorBound = true;
     elFloatingServeErrorBtn.addEventListener("click", async () => {
       const scope = elFloatingServeErrorBtn.dataset.scope || "";

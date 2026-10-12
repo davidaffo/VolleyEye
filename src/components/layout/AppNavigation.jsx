@@ -1,7 +1,6 @@
 import { MatchActionButton, ActiveMatchName } from "../MatchArchive.jsx";
 import { TabButton } from "../RuntimeControls.jsx";
 
-// The compatibility engine owns dynamic descendants until their renderer is migrated.
 export function AppNavigation() {
   return (
     <div className={"tabs-nav centered app-shell-nav"}>

@@ -1,5 +1,6 @@
 function setDvwScoutStatus(message, tone = "") {
   if (!elDvwScoutStatus) return;
+  if(elDvwScoutStatus.dataset?.reactManaged === "true" && typeof dvwEntryStore !== "undefined") { dvwEntryStore.publish({ status: message || "", tone }); return; }
   elDvwScoutStatus.textContent = message || "";
   elDvwScoutStatus.classList.remove("is-error", "is-success");
   if (tone === "error") elDvwScoutStatus.classList.add("is-error");
@@ -283,6 +284,7 @@ function buildDvwScoutBreakdown(rawInput) {
   return `${suggestion}<div class="scout-dvw-breakdown__grid">${main}${advanced}</div>`;
 }
 function renderDvwScoutBreakdown() {
+  if(elDvwScoutBreakdown?.dataset?.reactManaged === "true" && typeof publishReactDvwEntry === "function") { publishReactDvwEntry(); return; }
   if (!elDvwScoutBreakdown) return;
   const draft = elDvwScoutInput ? String(elDvwScoutInput.value || "").trim() : "";
   elDvwScoutBreakdown.innerHTML = buildDvwScoutBreakdown(draft);
@@ -302,6 +304,7 @@ function getDvwScoutChipSkillClass(parsed) {
   return skillId ? `is-skill-${skillId}` : "";
 }
 function renderDvwScoutPending() {
+  if(elDvwScoutPending?.dataset?.reactManaged === "true" && typeof publishReactDvwEntry === "function") { publishReactDvwEntry(); return; }
   if (!elDvwScoutPending) return;
   elDvwScoutPending.innerHTML = "";
   const draft = elDvwScoutInput ? String(elDvwScoutInput.value || "").trim() : "";
@@ -391,6 +394,11 @@ function queueCurrentDvwScoutToken() {
 }
 function updateLiveDvwMirror() {
   if (!elDvwScoutLastCode) return;
+  if(elDvwScoutLastCode.dataset?.reactManaged === "true" && typeof dvwEntryStore !== "undefined") {
+    const last = [...(state.events || [])].reverse().find(event => event && event.skillId !== "manual" && !event.actionType);
+    const code = last ? buildDataVolleySkillCode(last, getDataVolleyTeamPayload(getTeamScopeFromEvent(last))) : "";
+    dvwEntryStore.publish({ lastCode: code ? `Ultimo codice: ${code}` : "Ultimo codice: —" }); return;
+  }
   const events = Array.isArray(state.events) ? state.events : [];
   const last = [...events].reverse().find(ev => ev && ev.skillId !== "manual" && !ev.actionType);
   if (!last) {

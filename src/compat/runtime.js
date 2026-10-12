@@ -24,3 +24,7 @@ export function invokeRuntimeEvent(command, ...args) {
   if (!activeRuntime) return;
   return activeRuntime.invokeEvent(command, ...args);
 }
+
+export function stopRuntime() {
+  activeRuntime?.stop();
+}
