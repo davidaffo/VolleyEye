@@ -1,6 +1,36 @@
 // Appended to the compatibility engine by Vite, sharing its private lexical scope.
 // runtimeStore is imported by the virtual entrypoint; domain functions remain private.
 const commands = {
+  handleImportMatchFile,
+  rotateCourt,
+  rotateOpponentCourt,
+  setRotation,
+  setOpponentRotation,
+  setAutoLiberoRole,
+  swapPreferredLiberoForScope,
+  forceNextSkill,
+  triggerFreeballFlow,
+  handleOpponentFreeballSingle,
+  toggleReactCourtSide: () => {
+    state.courtSideSwapped = !state.courtSideSwapped;
+    state.courtViewMirrored = !!state.courtSideSwapped;
+    state.opponentCourtViewMirrored = !state.courtSideSwapped;
+    saveState({ persistLocal: true });
+    syncCourtSideLayout();
+    renderPlayers();
+  },
+  handleVideoFileChange,
+  handleYoutubeUrlLoad,
+  clearLoadedVideo,
+  syncFirstSkillToVideo,
+  copyFfmpegFromSelection,
+  stepActiveVideoByFrame,
+  addEmptyVideoEventAfterSelection,
+  openVideoMobileFilters,
+  closeVideoMobileFilters,
+  applyReactVideoMobileFilters,
+  selectVideoMobileEvent,
+  changeReactVideoPlayByPlay,
   openDebugModal,
   closeDebugModal,
   forceRefreshAppAssets,
@@ -290,6 +320,7 @@ function publishScoutControlState(disabled) {
 }
 
 export function publishRuntimeView() {
+  if (typeof publishReactVideoView === "function") publishReactVideoView();
   publishReactSettings();
   const names = Object.keys(state.savedMatches || {});
   // Avoid resolving duplicate archive labels on every point/counter update.
@@ -496,6 +527,11 @@ function setNextSetPreferredLibero(scope, next) {
 
 export function invokeEvent(name, ...args) {
   const eventCommands = {
+    runReactAppAction,
+    openReactMatchFilePicker,
+    changeReactScoutDrawer,
+    openReactVideoPicker,
+    updateVideoPlaybackSnapshot,
     handleReactTrajectoryPointer,
     resizeTrajectoryCanvas,
     openReactLocalVideoPicker,
@@ -862,10 +898,32 @@ function publishReactSettings() {
     "attackTrajectorySimplified",
     "predictiveSkillFlow",
     "autoLiberoRole",
+    "opponentAutoRoleP1American",
+    "opponentAttackTrajectoryEnabled",
+    "forceMobileLayout",
+    "videoScoutMode",
+    "setTypePromptEnabled",
+    "opponentSetTypePromptEnabled",
+    "serveTrajectoryEnabled",
+    "opponentServeTrajectoryEnabled",
+    "showServeTrajectoryLogOur",
+    "showServeTrajectoryLogOpp",
   ].forEach((field) => {
     values[field] = state[field];
   });
   values.autoLiberoRole = getTeamAutoLiberoRole("our");
+  values.opponentAutoLiberoRole = getTeamAutoLiberoRole("opponent");
+  values.rotation = state.rotation || 1;
+  values.opponentRotation = state.opponentRotation || 1;
+  values.skillVisibility = Object.freeze(
+    Object.fromEntries(
+      SKILLS.map((skill) => [
+        skill.id,
+        normalizeMetricConfig(skill.id, state.metricsConfig?.[skill.id])
+          .enabled !== false,
+      ]),
+    ),
+  );
   settingsStore.publish({ values: Object.freeze(values) });
 }
 function setReactSettingsOpen(open) {
@@ -878,19 +936,42 @@ function changeReactSetting(field, value) {
     setAutoRolePositioning(!!value);
     if (value) applyAutoRolePositioning();
   } else if (field === "autoRoleP1American") setAutoRoleP1American(!!value);
-  else if (field === "autoLiberoRole") setAutoLiberoRole(value, "our");
+  else if (field === "videoScoutMode") {
+    if (state.videoScoutMode && !value) updateVideoPlaybackSnapshot();
+    state.videoScoutMode = !!value;
+    saveState();
+    updateVideoScoutModeLayout();
+  } else if (field === "forceMobileLayout") {
+    state.forceMobileLayout = !!value;
+    applyForceMobileLayout(state.forceMobileLayout);
+    saveState();
+  } else if (field === "autoLiberoRole") setAutoLiberoRole(value, "our");
   else if (
     [
       "attackTrajectoryEnabled",
       "attackTrajectorySimplified",
       "predictiveSkillFlow",
+      "opponentAutoRoleP1American",
+      "opponentAttackTrajectoryEnabled",
+      "setTypePromptEnabled",
+      "opponentSetTypePromptEnabled",
+      "serveTrajectoryEnabled",
+      "opponentServeTrajectoryEnabled",
+      "showServeTrajectoryLogOur",
+      "showServeTrajectoryLogOpp",
     ].includes(field)
   ) {
     state[field] = !!value;
     if (field === "predictiveSkillFlow" && !value)
       state.skillFlowOverride = null;
     saveState();
-    if (field === "predictiveSkillFlow") renderPlayers();
+    if (field === "predictiveSkillFlow" || field === "setTypePromptEnabled")
+      renderPlayers();
+    if (
+      field === "showServeTrajectoryLogOur" ||
+      field === "showServeTrajectoryLogOpp"
+    )
+      renderLogServeTrajectories();
   } else return;
   publishReactSettings();
   const inlineIds = {
@@ -1200,4 +1281,34 @@ function syncReactDebugLog() {
 function backfillReactPlayerIds() {
   if (confirm("Scrivere gli ID giocatrici in tutti i match salvati?"))
     backfillPlayerIdsInSavedMatches();
+}
+
+function runReactAppAction(name) {
+  const actions = {
+    exportAnalysisPdf,
+    exportAnalysisHtml,
+    exportMatchToFile,
+    exportDataVolleyToFile,
+    resetMatch,
+    undoLastEvent,
+    undoContestedRally,
+    resetMetricsToDefault,
+    resetAllActiveCodes,
+    resetPointRulesToDefault,
+  };
+  if (!Object.hasOwn(actions, name))
+    throw new Error("Unknown app action: " + name);
+  return actions[name]();
+}
+function openReactMatchFilePicker() {
+  elMatchFileInput?.click();
+}
+function changeReactScoutDrawer(drawer) {
+  if (drawer === "menu") {
+    document.body.classList.toggle("drawer-menu-open");
+    document.body.classList.remove("drawer-log-open");
+  } else if (drawer === "log") {
+    document.body.classList.toggle("drawer-log-open");
+    document.body.classList.remove("drawer-menu-open");
+  } else document.body.classList.remove("drawer-menu-open", "drawer-log-open");
 }

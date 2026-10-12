@@ -162,9 +162,13 @@ function renderVideoMobileReview() {
   scheduleVideoMobileSourcePrompt();
   const { rows, row, index } = getVideoMobileCurrentRow();
   const filterCount = countActiveVideoFilters(snapshotVideoFilters());
-  if (elVideoMobileFilterCount) elVideoMobileFilterCount.textContent = String(filterCount);
-  if (elVideoMobileResultsCount) {
+  if (elVideoMobileFilterCount && elVideoMobileFilterCount.dataset?.reactManaged !== "true") elVideoMobileFilterCount.textContent = String(filterCount);
+  if (elVideoMobileResultsCount && elVideoMobileResultsCount.dataset?.reactManaged !== "true") {
     elVideoMobileResultsCount.textContent = `${rows.length} ${rows.length === 1 ? "azione trovata" : "azioni trovate"}`;
+  }
+  if (elVideoMobilePrev?.dataset?.reactManaged === "true" && typeof publishReactVideoMobileReview === "function") {
+    publishReactVideoMobileReview(rows, row, index, filterCount);
+    return;
   }
   const disabled = !row;
   if (elVideoMobilePrev) elVideoMobilePrev.disabled = disabled || index <= 0;
@@ -227,6 +231,7 @@ function isVideoMobileViewport() {
 
 function updateVideoMobileSourceButton() {
   if (!elVideoMobileSourceOpen) return;
+  if (elVideoMobileSourceOpen.dataset?.reactManaged === "true" && typeof publishReactVideoView === "function") { publishReactVideoView(); return; }
   elVideoMobileSourceOpen.textContent = hasPlayableVideoSource() ? "Cambia video" : "Scegli video";
 }
 
@@ -546,10 +551,10 @@ function handleVideoFileChange(file, options = {}) {
   }
   const url = URL.createObjectURL(file);
   videoObjectUrl = url;
-  if (elAnalysisVideo) {
+  if (elAnalysisVideo && elAnalysisVideo.dataset?.reactManaged !== "true") {
     elAnalysisVideo.src = url;
   }
-  if (elAnalysisVideoScout) {
+  if (elAnalysisVideoScout && elAnalysisVideoScout.dataset?.reactManaged !== "true") {
     elAnalysisVideoScout.src = url;
   }
   if (!restoring) persistLocalVideoReference(fileHandle);

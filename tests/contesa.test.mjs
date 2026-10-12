@@ -1,3 +1,4 @@
+import { JSDOM } from "jsdom";
 import { readAppHtml } from './helpers/app-html.mjs';
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -91,7 +92,12 @@ test("contesa annulla anche la sola battuta con set importato come stringa", () 
 
 test("il tasto rosso Contesa precede Annulla ultimo sulla rete", () => {
   const html = readAppHtml();
-  assert.match(html, /id="btn-contesa" class="small danger net-action-btn"[^>]*>Contesa<\/button>\s*<button id="btn-undo"/);
+  const dom = new JSDOM(html);
+  const button = dom.window.document.getElementById("btn-contesa");
+  assert.equal(button.className, "small danger net-action-btn");
+  assert.equal(button.textContent, "Contesa");
+  assert.equal(button.nextElementSibling.id, "btn-undo");
+  dom.window.close();
   const bindings = readFileSync(new URL("../js/scout/core/bindings-data.js", import.meta.url), "utf8");
   assert.match(bindings, /elBtnContesa\.addEventListener\("click", undoContestedRally\)/);
 });

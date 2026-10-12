@@ -1,3 +1,16 @@
+import {
+  AppActionButton,
+  ScoutDrawerButton,
+  ScoutDrawerBackdrop,
+} from "../AppActions.jsx";
+import {
+  ScoutToggle,
+  ScoutActionButton,
+  ScoutRotationSelect,
+  ScoutLiberoSelect,
+  ForceSkillButton,
+} from "../ScoutOptions.jsx";
+import { VideoSourceControls, VideoElement } from "../VideoControls.jsx";
 import { LogServeTrajectories } from "../TrajectoryGrid.jsx";
 import { EventTable } from "../EventTable.jsx";
 import { ScoutCourt } from "../ScoutCourt.jsx";
@@ -17,7 +30,8 @@ export function ScoutPage() {
   return (
     <div className={"tab-panel scout-live"} data-tab={"scout"}>
       <div className={"scout-mobile-bar"}>
-        <button
+        <ScoutDrawerButton
+          drawer="menu"
           id={"btn-open-menu-mobile"}
           className={"secondary small"}
           type={"button"}
@@ -30,29 +44,31 @@ export function ScoutPage() {
               }
             ></path>
           </svg>
-        </button>
-        <button
+        </ScoutDrawerButton>
+        <ScoutDrawerButton
+          drawer="log"
           id={"btn-open-log-mobile"}
           className={"secondary small"}
           type={"button"}
         >
           {"Log"}
-        </button>
+        </ScoutDrawerButton>
       </div>
-      <div
+      <ScoutDrawerBackdrop
         id={"scout-drawer-backdrop"}
         className={"drawer-backdrop"}
         aria-hidden={"true"}
-      ></div>
+      />
       <div className={"scout-grid"}>
         <div className={"section scout-col-left"} data-scout-panel={"match"}>
-          <button
+          <ScoutDrawerButton
+            drawer=""
             className={"drawer-close secondary small"}
             type={"button"}
             data-close-drawer={"menu"}
           >
             {"Chiudi"}
-          </button>
+          </ScoutDrawerButton>
           <div className={"set-controls grid-row"}>
             <div className={"score-card score-card-top"}>
               <div className={"score-top-row"}>
@@ -131,28 +147,28 @@ export function ScoutPage() {
             </div>
             <div className={"rotation-toggles"}>
               <label className={"auto-rotate-toggle"}>
-                <input type={"checkbox"} id={"auto-rotate-toggle"} />
+                <ScoutToggle type={"checkbox"} id={"auto-rotate-toggle"} />
                 {
                   "\n              Rotazione automatica su cambio palla\n            "
                 }
               </label>
               <br />
               <label className={"auto-rotate-toggle"}>
-                <input type={"checkbox"} id={"auto-role-toggle"} />
+                <ScoutToggle type={"checkbox"} id={"auto-role-toggle"} />
                 {
                   "\n                Auto posizionamento per ruolo\n              "
                 }
               </label>
               <br />
               <label className={"auto-rotate-toggle"}>
-                <input type={"checkbox"} id={"predictive-skill-toggle"} />
+                <ScoutToggle type={"checkbox"} id={"predictive-skill-toggle"} />
                 {
                   "\n                Flusso di gioco automatico\n                "
                 }
               </label>
               <br />
               <label className={"auto-rotate-toggle"}>
-                <input
+                <ScoutToggle
                   type={"checkbox"}
                   id={"attack-trajectory-simple-toggle"}
                 />
@@ -162,11 +178,11 @@ export function ScoutPage() {
               </label>
               <br />
               <label className={"auto-rotate-toggle"}>
-                <input type={"checkbox"} id={"force-mobile-toggle"} />
+                <ScoutToggle type={"checkbox"} id={"force-mobile-toggle"} />
                 {"\n                Modalità mobile (test)\n              "}
               </label>
               <label className={"auto-rotate-toggle"}>
-                <input type={"checkbox"} id={"video-scout-toggle"} />
+                <ScoutToggle type={"checkbox"} id={"video-scout-toggle"} />
                 {"\n                Scout da video\n              "}
               </label>
             </div>
@@ -175,39 +191,17 @@ export function ScoutPage() {
               className={"video-scout-controls hidden"}
             >
               <div className={"video-scout-actions"}>
-                <label
-                  id={"video-file-picker-scout"}
-                  className={"file-btn"}
-                  htmlFor={"video-file-input-scout"}
-                >
-                  {"Carica video"}
-                </label>
-                <input
-                  id={"video-file-input-scout"}
-                  type={"file"}
-                  accept={"video/*"}
-                  hidden={true}
-                />
-                <div className={"youtube-input"}>
-                  <input
-                    id={"youtube-url-input-scout"}
-                    type={"url"}
-                    placeholder={"https://youtu.be/..."}
-                  />
-                  <button id={"btn-load-youtube-scout"} className={"secondary"}>
-                    {"Usa YouTube"}
-                  </button>
-                </div>
+                <VideoSourceControls scout />
               </div>
             </div>
             <div className={"set-bottom-actions"}>
-              <button
+              <ScoutActionButton
                 id={"btn-toggle-court-view"}
                 className={"small secondary"}
                 type={"button"}
               >
                 {"Cambia campo"}
-              </button>
+              </ScoutActionButton>
             </div>
             <div
               className={"court-actions-bar team-panel team-panel--home"}
@@ -227,29 +221,35 @@ export function ScoutPage() {
               </div>
               <div className={"rotation-toggles"}>
                 <label className={"auto-rotate-toggle"}>
-                  <input type={"checkbox"} id={"auto-role-p1american-toggle"} />
+                  <ScoutToggle
+                    type={"checkbox"}
+                    id={"auto-role-p1american-toggle"}
+                  />
                   {"\n                  P1 americana\n                "}
                 </label>
                 <label className={"auto-rotate-toggle"}>
-                  <input type={"checkbox"} id={"attack-trajectory-toggle"} />
+                  <ScoutToggle
+                    type={"checkbox"}
+                    id={"attack-trajectory-toggle"}
+                  />
                   {"\n                  Traiettoria attacco\n                "}
                 </label>
                 <label className={"auto-rotate-toggle"}>
-                  <input
+                  <ScoutToggle
                     type={"checkbox"}
                     id={"settype-prompt-toggle-inline"}
                   />
                   {"\n                  Tipo alzata\n                "}
                 </label>
                 <label className={"auto-rotate-toggle"}>
-                  <input
+                  <ScoutToggle
                     type={"checkbox"}
                     id={"serve-trajectory-toggle-inline"}
                   />
                   {"\n                  Traiettoria servizio\n                "}
                 </label>
                 <label className={"auto-rotate-toggle"}>
-                  <input
+                  <ScoutToggle
                     type={"checkbox"}
                     id={"serve-trajectory-log-toggle-inline"}
                   />
@@ -300,35 +300,35 @@ export function ScoutPage() {
               </div>
               <div className={"rotation-toggles"}>
                 <label className={"auto-rotate-toggle"}>
-                  <input
+                  <ScoutToggle
                     type={"checkbox"}
                     id={"auto-role-p1american-toggle-opp"}
                   />
                   {"\n                  P1 americana\n                "}
                 </label>
                 <label className={"auto-rotate-toggle"}>
-                  <input
+                  <ScoutToggle
                     type={"checkbox"}
                     id={"attack-trajectory-toggle-opp"}
                   />
                   {"\n                  Traiettoria attacco\n                "}
                 </label>
                 <label className={"auto-rotate-toggle"}>
-                  <input
+                  <ScoutToggle
                     type={"checkbox"}
                     id={"settype-prompt-toggle-inline-opp"}
                   />
                   {"\n                  Tipo alzata\n                "}
                 </label>
                 <label className={"auto-rotate-toggle"}>
-                  <input
+                  <ScoutToggle
                     type={"checkbox"}
                     id={"serve-trajectory-toggle-inline-opp"}
                   />
                   {"\n                  Traiettoria servizio\n                "}
                 </label>
                 <label className={"auto-rotate-toggle"}>
-                  <input
+                  <ScoutToggle
                     type={"checkbox"}
                     id={"serve-trajectory-log-toggle-inline-opp"}
                   />
@@ -453,11 +453,7 @@ export function ScoutPage() {
               <div className={"video-scout-panel"}>
                 <div className={"video-player-wrap video-player-wrap--scout"}>
                   <div className={"video-media"}>
-                    <video
-                      id={"analysis-video-scout"}
-                      controls={true}
-                      preload={"metadata"}
-                    ></video>
+                    <VideoElement scout />
                     <iframe
                       id={"youtube-frame-scout"}
                       className={"youtube-frame"}
@@ -497,14 +493,14 @@ export function ScoutPage() {
                 >
                   <div className={"rotation-block court-rotation-block"}>
                     <div className={"rotation-controls"}>
-                      <button
+                      <ScoutActionButton
                         id={"btn-rotate-cw-opp"}
                         className={"small rotate-cw"}
                       >
                         {"↺"}
-                      </button>
+                      </ScoutActionButton>
                       <div className={"rotation-display"}>
-                        <select
+                        <ScoutRotationSelect
                           id={"rotation-select-opp"}
                           className={"rotation-select"}
                         >
@@ -514,14 +510,14 @@ export function ScoutPage() {
                           <option value={"4"}>{"P4"}</option>
                           <option value={"5"}>{"P5"}</option>
                           <option value={"6"}>{"P6"}</option>
-                        </select>
+                        </ScoutRotationSelect>
                       </div>
-                      <button
+                      <ScoutActionButton
                         id={"btn-rotate-ccw-opp"}
                         className={"small rotate-ccw"}
                       >
                         {"↻"}
-                      </button>
+                      </ScoutActionButton>
                     </div>
                   </div>
                   <div
@@ -539,12 +535,12 @@ export function ScoutPage() {
                     >
                       {"Errore"}
                     </button>
-                    <button
+                    <ScoutActionButton
                       id={"btn-freeball-opp"}
                       className={"secondary small"}
                     >
                       {"Freeball"}
-                    </button>
+                    </ScoutActionButton>
                   </div>
                   <div className={"team-controls-panel sl-team-controls"}>
                     <div className={"libero-inline"}>
@@ -554,7 +550,7 @@ export function ScoutPage() {
                         className={"libero-tags"}
                       ></div>
                       <label className={"auto-libero-inline"}>
-                        <select
+                        <ScoutLiberoSelect
                           id={"auto-libero-select-opp"}
                           defaultValue={"C"}
                         >
@@ -563,15 +559,15 @@ export function ScoutPage() {
                           <option value={"S"}>{"S"}</option>
                           <option value={"C"}>{"C"}</option>
                           <option value={"O"}>{"O"}</option>
-                        </select>
+                        </ScoutLiberoSelect>
                       </label>
-                      <button
+                      <ScoutActionButton
                         type={"button"}
                         id={"btn-swap-libero-opp"}
                         className={"small secondary"}
                       >
                         {"Cambia L"}
-                      </button>
+                      </ScoutActionButton>
                     </div>
                     <div className={"skill-flow-panel"}>
                       <label>{"Forza prossima skill"}</label>
@@ -579,48 +575,54 @@ export function ScoutPage() {
                         className={"skill-flow-grid skill-flow-inline"}
                         id={"skill-flow-buttons-opp"}
                       >
-                        <button
+                        <ForceSkillButton
+                          scope="opponent"
                           type={"button"}
                           className={"skill-flow-btn badge badge-serve"}
                           data-force-skill={"serve"}
                         >
                           {"Ba"}
-                        </button>
-                        <button
+                        </ForceSkillButton>
+                        <ForceSkillButton
+                          scope="opponent"
                           type={"button"}
                           className={"skill-flow-btn badge badge-pass"}
                           data-force-skill={"pass"}
                         >
                           {"Ri"}
-                        </button>
-                        <button
+                        </ForceSkillButton>
+                        <ForceSkillButton
+                          scope="opponent"
                           type={"button"}
                           className={"skill-flow-btn badge badge-second"}
                           data-force-skill={"second"}
                         >
                           {"Al"}
-                        </button>
-                        <button
+                        </ForceSkillButton>
+                        <ForceSkillButton
+                          scope="opponent"
                           type={"button"}
                           className={"skill-flow-btn badge badge-attack"}
                           data-force-skill={"attack"}
                         >
                           {"At"}
-                        </button>
-                        <button
+                        </ForceSkillButton>
+                        <ForceSkillButton
+                          scope="opponent"
                           type={"button"}
                           className={"skill-flow-btn badge badge-block"}
                           data-force-skill={"block"}
                         >
                           {"Mu"}
-                        </button>
-                        <button
+                        </ForceSkillButton>
+                        <ForceSkillButton
+                          scope="opponent"
                           type={"button"}
                           className={"skill-flow-btn badge badge-defense"}
                           data-force-skill={"defense"}
                         >
                           {"Di"}
-                        </button>
+                        </ForceSkillButton>
                       </div>
                     </div>
                   </div>
@@ -669,17 +671,20 @@ export function ScoutPage() {
               >
                 {"Muro"}
               </button>
-              <button
+              <AppActionButton
                 id={"btn-contesa"}
                 className={"small danger net-action-btn"}
                 type={"button"}
                 title={"Annulla l’azione fino alla battuta inclusa"}
               >
                 {"Contesa"}
-              </button>
-              <button id={"btn-undo"} className={"small danger net-action-btn"}>
+              </AppActionButton>
+              <AppActionButton
+                id={"btn-undo"}
+                className={"small danger net-action-btn"}
+              >
                 {"↩ Annulla ultimo"}
-              </button>
+              </AppActionButton>
             </div>
             <div
               className={"team-panel team-panel--near team-panel--home"}
@@ -694,14 +699,14 @@ export function ScoutPage() {
                 >
                   <div className={"rotation-block court-rotation-block"}>
                     <div className={"rotation-controls"}>
-                      <button
+                      <ScoutActionButton
                         id={"btn-rotate-cw"}
                         className={"small rotate-cw"}
                       >
                         {"↺"}
-                      </button>
+                      </ScoutActionButton>
                       <div className={"rotation-display"}>
-                        <select
+                        <ScoutRotationSelect
                           id={"rotation-select"}
                           className={"rotation-select"}
                         >
@@ -711,14 +716,14 @@ export function ScoutPage() {
                           <option value={"4"}>{"P4"}</option>
                           <option value={"5"}>{"P5"}</option>
                           <option value={"6"}>{"P6"}</option>
-                        </select>
+                        </ScoutRotationSelect>
                       </div>
-                      <button
+                      <ScoutActionButton
                         id={"btn-rotate-ccw"}
                         className={"small rotate-ccw"}
                       >
                         {"↻"}
-                      </button>
+                      </ScoutActionButton>
                     </div>
                   </div>
                   <div
@@ -751,15 +756,18 @@ export function ScoutPage() {
                       </button>
                     </div>
                     <div className={"freeball-actions-inline"}>
-                      <button id={"btn-freeball"} className={"secondary small"}>
+                      <ScoutActionButton
+                        id={"btn-freeball"}
+                        className={"secondary small"}
+                      >
                         {"Freeball"}
-                      </button>
-                      <button
+                      </ScoutActionButton>
+                      <ScoutActionButton
                         id={"btn-freeball-opp-single"}
                         className={"small danger hidden"}
                       >
                         {"Freeball avv"}
-                      </button>
+                      </ScoutActionButton>
                     </div>
                   </div>
                   <div className={"team-controls-panel sl-team-controls"}>
@@ -770,21 +778,24 @@ export function ScoutPage() {
                         className={"libero-tags"}
                       ></div>
                       <label className={"auto-libero-inline"}>
-                        <select id={"auto-libero-select"} defaultValue={"C"}>
+                        <ScoutLiberoSelect
+                          id={"auto-libero-select"}
+                          defaultValue={"C"}
+                        >
                           <option value={""}>{"Nessuno"}</option>
                           <option value={"P"}>{"P"}</option>
                           <option value={"S"}>{"S"}</option>
                           <option value={"C"}>{"C"}</option>
                           <option value={"O"}>{"O"}</option>
-                        </select>
+                        </ScoutLiberoSelect>
                       </label>
-                      <button
+                      <ScoutActionButton
                         type={"button"}
                         id={"btn-swap-libero"}
                         className={"small secondary"}
                       >
                         {"Cambia L"}
-                      </button>
+                      </ScoutActionButton>
                     </div>
                     <div className={"skill-flow-panel"}>
                       <label>{"Forza prossima skill"}</label>
@@ -792,48 +803,54 @@ export function ScoutPage() {
                         className={"skill-flow-grid skill-flow-inline"}
                         id={"skill-flow-buttons"}
                       >
-                        <button
+                        <ForceSkillButton
+                          scope="our"
                           type={"button"}
                           className={"skill-flow-btn badge badge-serve"}
                           data-force-skill={"serve"}
                         >
                           {"Ba"}
-                        </button>
-                        <button
+                        </ForceSkillButton>
+                        <ForceSkillButton
+                          scope="our"
                           type={"button"}
                           className={"skill-flow-btn badge badge-pass"}
                           data-force-skill={"pass"}
                         >
                           {"Ri"}
-                        </button>
-                        <button
+                        </ForceSkillButton>
+                        <ForceSkillButton
+                          scope="our"
                           type={"button"}
                           className={"skill-flow-btn badge badge-second"}
                           data-force-skill={"second"}
                         >
                           {"Al"}
-                        </button>
-                        <button
+                        </ForceSkillButton>
+                        <ForceSkillButton
+                          scope="our"
                           type={"button"}
                           className={"skill-flow-btn badge badge-attack"}
                           data-force-skill={"attack"}
                         >
                           {"At"}
-                        </button>
-                        <button
+                        </ForceSkillButton>
+                        <ForceSkillButton
+                          scope="our"
                           type={"button"}
                           className={"skill-flow-btn badge badge-block"}
                           data-force-skill={"block"}
                         >
                           {"Mu"}
-                        </button>
-                        <button
+                        </ForceSkillButton>
+                        <ForceSkillButton
+                          scope="our"
                           type={"button"}
                           className={"skill-flow-btn badge badge-defense"}
                           data-force-skill={"defense"}
                         >
                           {"Di"}
-                        </button>
+                        </ForceSkillButton>
                       </div>
                     </div>
                   </div>
@@ -862,13 +879,14 @@ export function ScoutPage() {
           data-log-section={""}
           data-scout-panel={"log"}
         >
-          <button
+          <ScoutDrawerButton
+            drawer=""
             className={"drawer-close secondary small"}
             type={"button"}
             data-close-drawer={"log"}
           >
             {"Chiudi"}
-          </button>
+          </ScoutDrawerButton>
           <button
             id={"btn-reset-scout-widgets"}
             className={"secondary small scout-widgets-reset"}

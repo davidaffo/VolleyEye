@@ -1,3 +1,4 @@
+import { AppActionButton } from "../AppActions.jsx";
 import { MetricsConfig } from "../MetricsConfig.jsx";
 import { ThemeButton } from "../RuntimeControls.jsx";
 
@@ -97,15 +98,15 @@ export function InfoPage() {
             }
           </p>
           <div className={"controls-row metrics-actions"}>
-            <button id={"btn-reset-codes"} className={"secondary"}>
+            <AppActionButton id={"btn-reset-codes"} className={"secondary"}>
               {"Riattiva tutte le valutazioni"}
-            </button>
-            <button id={"btn-reset-metrics"} className={"secondary"}>
+            </AppActionButton>
+            <AppActionButton id={"btn-reset-metrics"} className={"secondary"}>
               {"Ripristina criteri calcolo efficienza"}
-            </button>
-            <button id={"btn-reset-points"} className={"secondary"}>
+            </AppActionButton>
+            <AppActionButton id={"btn-reset-points"} className={"secondary"}>
               {"Ripristina punti default"}
-            </button>
+            </AppActionButton>
           </div>
           <MetricsConfig />
         </details>

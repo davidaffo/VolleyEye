@@ -460,7 +460,7 @@ function forceNextSkill(skillId, scope = "our") {
   renderPlayers();
   updateNextSkillIndicator(skillId);
   const toggle = document.getElementById("predictive-skill-toggle");
-  if (toggle) toggle.checked = true;
+  if (toggle && toggle.dataset?.reactManaged !== "true") toggle.checked = true;
 }
 const SCOUT_WIDGET_IDS = ["video", "dvw", "events", "serve-trajectories"];
 const SCOUT_WIDGET_ZONE_IDS = ["center-top", "center-bottom", "right"];

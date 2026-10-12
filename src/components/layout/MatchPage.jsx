@@ -1,3 +1,8 @@
+import {
+  AppActionButton,
+  MatchImportButton,
+  MatchImportInput,
+} from "../AppActions.jsx";
 import { MatchArchiveList, MatchActionButton } from "../MatchArchive.jsx";
 import { ThemeButton } from "../RuntimeControls.jsx";
 
@@ -87,19 +92,28 @@ export function MatchPage() {
                   </MatchActionButton>
                 </div>
                 <div className={"controls-row match-actions-row"}>
-                  <button id={"btn-reset-match"} className={"danger"}>
+                  <AppActionButton id={"btn-reset-match"} className={"danger"}>
                     {"Reset match"}
-                  </button>
-                  <button id={"btn-export-match"} className={"secondary"}>
+                  </AppActionButton>
+                  <AppActionButton
+                    id={"btn-export-match"}
+                    className={"secondary"}
+                  >
                     {"Esporta match"}
-                  </button>
-                  <button id={"btn-export-dvw"} className={"secondary"}>
+                  </AppActionButton>
+                  <AppActionButton
+                    id={"btn-export-dvw"}
+                    className={"secondary"}
+                  >
                     {"Esporta DataVolley"}
-                  </button>
-                  <button id={"btn-import-match"} className={"secondary"}>
+                  </AppActionButton>
+                  <MatchImportButton
+                    id={"btn-import-match"}
+                    className={"secondary"}
+                  >
                     {"Importa match"}
-                  </button>
-                  <input
+                  </MatchImportButton>
+                  <MatchImportInput
                     id={"match-file-input"}
                     type={"file"}
                     accept={".json,.dvw,application/json,text/plain"}

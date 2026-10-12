@@ -365,10 +365,10 @@ function renderLogServeTrajectories() {
   const allowOur = !!state.showServeTrajectoryLogOur;
   const allowOpp = !!state.showServeTrajectoryLogOpp;
   const canShow = !!servingScope;
-  if (elServeTrajectoryLogToggleInline) {
+  if (elServeTrajectoryLogToggleInline && elServeTrajectoryLogToggleInline.dataset?.reactManaged !== "true") {
     elServeTrajectoryLogToggleInline.checked = allowOur;
   }
-  if (elServeTrajectoryLogToggleInlineOpp) {
+  if (elServeTrajectoryLogToggleInlineOpp && elServeTrajectoryLogToggleInlineOpp.dataset?.reactManaged !== "true") {
     elServeTrajectoryLogToggleInlineOpp.checked = allowOpp;
   }
   elLogServeTrajectory.classList.toggle("hidden", !canShow);
@@ -406,7 +406,7 @@ function renderLogServeTrajectories() {
 }
 function initLogServeTrajectoryControls() {
   if (!elLogServeTrajectory) return;
-  if (elServeTrajectoryLogToggleInline && !elServeTrajectoryLogToggleInline._bound) {
+  if (elServeTrajectoryLogToggleInline && elServeTrajectoryLogToggleInline.dataset?.reactManaged !== "true" && !elServeTrajectoryLogToggleInline._bound) {
     elServeTrajectoryLogToggleInline.addEventListener("change", () => {
       state.showServeTrajectoryLogOur = !!elServeTrajectoryLogToggleInline.checked;
       saveState();
@@ -414,7 +414,7 @@ function initLogServeTrajectoryControls() {
     });
     elServeTrajectoryLogToggleInline._bound = true;
   }
-  if (elServeTrajectoryLogToggleInlineOpp && !elServeTrajectoryLogToggleInlineOpp._bound) {
+  if (elServeTrajectoryLogToggleInlineOpp && elServeTrajectoryLogToggleInlineOpp.dataset?.reactManaged !== "true" && !elServeTrajectoryLogToggleInlineOpp._bound) {
     elServeTrajectoryLogToggleInlineOpp.addEventListener("change", () => {
       state.showServeTrajectoryLogOpp = !!elServeTrajectoryLogToggleInlineOpp.checked;
       saveState();

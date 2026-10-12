@@ -1092,6 +1092,10 @@ function isDesktopCourtModalLayout() {
   if (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) return false;
   return true;
 }
+function getCourtModalMovable(modal) {
+  const parent = modal.parentElement;
+  return parent?.dataset?.courtModalHost === "true" ? parent : modal;
+}
 function updateCourtModalPlacement() {
   const playersArea = document.querySelector("#court-area") || document.querySelector(".players-area");
   const useCourt = isDesktopCourtModalLayout();
@@ -1110,12 +1114,13 @@ function updateCourtModalPlacement() {
   }
   courtModalElements.forEach(modal => {
     if (!modal) return;
-    if (!modal.__originalParent) {
-      modal.__originalParent = modal.parentElement || document.body;
+    const movable = getCourtModalMovable(modal);
+    if (!movable.__originalParent) {
+      movable.__originalParent = movable.parentElement || document.body;
     }
     if (modal.classList.contains("force-popup")) {
-      if (modal.__originalParent && modal.parentElement !== modal.__originalParent) {
-        modal.__originalParent.appendChild(modal);
+      if (movable.__originalParent && movable.parentElement !== movable.__originalParent) {
+        movable.__originalParent.appendChild(movable);
       }
       modal.classList.remove("court-modal");
       modal.style.position = "";
@@ -1127,8 +1132,8 @@ function updateCourtModalPlacement() {
       return;
     }
     if (useCourt) {
-      if (courtOverlayEl && modal.parentElement !== courtOverlayEl) {
-        courtOverlayEl.appendChild(modal);
+      if (courtOverlayEl && movable.parentElement !== courtOverlayEl) {
+        courtOverlayEl.appendChild(movable);
       }
       modal.classList.add("court-modal");
       modal.style.position = "absolute";
@@ -1138,8 +1143,8 @@ function updateCourtModalPlacement() {
       modal.style.padding = "0";
       modal.style.overflow = "hidden";
     } else {
-      if (modal.__originalParent && modal.parentElement !== modal.__originalParent) {
-        modal.__originalParent.appendChild(modal);
+      if (movable.__originalParent && movable.parentElement !== movable.__originalParent) {
+        movable.__originalParent.appendChild(movable);
       }
       modal.classList.remove("court-modal");
       modal.style.position = "";
@@ -1153,11 +1158,12 @@ function updateCourtModalPlacement() {
 }
 function restoreModalToPopup(modal) {
   if (!modal) return;
-  if (!modal.__originalParent) {
-    modal.__originalParent = modal.parentElement || document.body;
+  const movable = getCourtModalMovable(modal);
+  if (!movable.__originalParent) {
+    movable.__originalParent = movable.parentElement || document.body;
   }
-  if (modal.__originalParent && modal.parentElement !== modal.__originalParent) {
-    modal.__originalParent.appendChild(modal);
+  if (movable.__originalParent && movable.parentElement !== movable.__originalParent) {
+    movable.__originalParent.appendChild(movable);
   }
   modal.classList.remove("court-modal");
   modal.style.position = "";

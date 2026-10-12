@@ -1,5 +1,5 @@
 function bindVideoControls() {
-  if (elVideoMobileSourceOpen) elVideoMobileSourceOpen.addEventListener("click", () => openVideoMobileSourceModal());
+  if (elVideoMobileSourceOpen && elVideoMobileSourceOpen.dataset?.reactManaged !== "true") elVideoMobileSourceOpen.addEventListener("click", () => openVideoMobileSourceModal());
   if (elVideoMobileSourceClose && elVideoMobileSourceClose.dataset?.reactManaged !== "true") elVideoMobileSourceClose.addEventListener("click", closeVideoMobileSourceModal);
   if (elVideoMobileSourceBackdrop && elVideoMobileSourceBackdrop.dataset?.reactManaged !== "true") elVideoMobileSourceBackdrop.addEventListener("click", closeVideoMobileSourceModal);
   if (elVideoMobileSourceLater && elVideoMobileSourceLater.dataset?.reactManaged !== "true") elVideoMobileSourceLater.addEventListener("click", closeVideoMobileSourceModal);
@@ -23,17 +23,17 @@ function bindVideoControls() {
       loadMobileYoutube();
     });
   }
-  if (elVideoMobileFilterOpen) elVideoMobileFilterOpen.addEventListener("click", openVideoMobileFilters);
-  if (elVideoMobileFilterClose) elVideoMobileFilterClose.addEventListener("click", closeVideoMobileFilters);
-  if (elVideoMobileFilterApply) {
+  if (elVideoMobileFilterOpen && elVideoMobileFilterOpen.dataset?.reactManaged !== "true") elVideoMobileFilterOpen.addEventListener("click", openVideoMobileFilters);
+  if (elVideoMobileFilterClose && elVideoMobileFilterClose.dataset?.reactManaged !== "true") elVideoMobileFilterClose.addEventListener("click", closeVideoMobileFilters);
+  if (elVideoMobileFilterApply && elVideoMobileFilterApply.dataset?.reactManaged !== "true") {
     elVideoMobileFilterApply.addEventListener("click", () => {
       focusFirstFilteredVideoEventMobile({ userAction: true });
       closeVideoMobileFilters();
     });
   }
-  if (elVideoMobileFilterBackdrop) elVideoMobileFilterBackdrop.addEventListener("click", closeVideoMobileFilters);
-  if (elVideoMobilePrev) elVideoMobilePrev.addEventListener("click", () => selectVideoMobileEvent(-1));
-  if (elVideoMobileNext) elVideoMobileNext.addEventListener("click", () => selectVideoMobileEvent(1));
+  if (elVideoMobileFilterBackdrop && elVideoMobileFilterBackdrop.dataset?.reactManaged !== "true") elVideoMobileFilterBackdrop.addEventListener("click", closeVideoMobileFilters);
+  if (elVideoMobilePrev && elVideoMobilePrev.dataset?.reactManaged !== "true") elVideoMobilePrev.addEventListener("click", () => selectVideoMobileEvent(-1));
+  if (elVideoMobileNext && elVideoMobileNext.dataset?.reactManaged !== "true") elVideoMobileNext.addEventListener("click", () => selectVideoMobileEvent(1));
   if (elAggTabButtons && typeof elAggTabButtons.forEach === "function") {
     Array.from(elAggTabButtons).filter(btn=>btn.dataset?.reactManaged!=="true").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -50,7 +50,7 @@ function bindVideoControls() {
   if (elBtnScoreTeamPointModal) {
     elBtnScoreTeamPointModal.addEventListener("click", () => startPointPickMode("our"));
   }
-  if (elVideoFileInput) {
+  if (elVideoFileInput && elVideoFileInput.dataset?.reactManaged !== "true") {
     elVideoFileInput.addEventListener("change", e => {
       const input = e.target;
       const file = input && input.files && input.files[0];
@@ -63,13 +63,13 @@ function bindVideoControls() {
     });
   }
   const videoPicker = document.getElementById("video-file-picker");
-  if (videoPicker && typeof window.showOpenFilePicker === "function") {
+  if (videoPicker && videoPicker.dataset?.reactManaged !== "true" && typeof window.showOpenFilePicker === "function") {
     videoPicker.addEventListener("click", event => {
       event.preventDefault();
       openLocalVideoPicker(elVideoFileInput);
     });
   }
-  if (elVideoFileInputScout) {
+  if (elVideoFileInputScout && elVideoFileInputScout.dataset?.reactManaged !== "true") {
     elVideoFileInputScout.addEventListener("change", e => {
       const input = e.target;
       const file = input && input.files && input.files[0];
@@ -82,27 +82,27 @@ function bindVideoControls() {
     });
   }
   const videoPickerScout = document.getElementById("video-file-picker-scout");
-  if (videoPickerScout && typeof window.showOpenFilePicker === "function") {
+  if (videoPickerScout && videoPickerScout.dataset?.reactManaged !== "true" && typeof window.showOpenFilePicker === "function") {
     videoPickerScout.addEventListener("click", event => {
       event.preventDefault();
       openLocalVideoPicker(elVideoFileInputScout);
     });
   }
-  if (elBtnSyncFirstSkill) {
+  if (elBtnSyncFirstSkill && elBtnSyncFirstSkill.dataset?.reactManaged !== "true") {
     elBtnSyncFirstSkill.addEventListener("click", syncFirstSkillToVideo);
   }
   const videoFramePrevBtn = document.getElementById("btn-video-frame-prev");
-  if (videoFramePrevBtn) {
+  if (videoFramePrevBtn && videoFramePrevBtn.dataset?.reactManaged !== "true") {
     videoFramePrevBtn.addEventListener("click", () => stepActiveVideoByFrame(-1));
   }
   const videoFrameNextBtn = document.getElementById("btn-video-frame-next");
-  if (videoFrameNextBtn) {
+  if (videoFrameNextBtn && videoFrameNextBtn.dataset?.reactManaged !== "true") {
     videoFrameNextBtn.addEventListener("click", () => stepActiveVideoByFrame(1));
   }
-  if (elBtnCopyFfmpeg) {
+  if (elBtnCopyFfmpeg && elBtnCopyFfmpeg.dataset?.reactManaged !== "true") {
     elBtnCopyFfmpeg.addEventListener("click", copyFfmpegFromSelection);
   }
-  if (elBtnFixVideoScore) {
+  if (elBtnFixVideoScore && elBtnFixVideoScore.dataset?.reactManaged !== "true") {
     if (!elBtnFixVideoScore._fixScoreBound) {
       const handler = () => openVideoScoreModal();
       elBtnFixVideoScore.addEventListener("click", handler);
@@ -136,25 +136,25 @@ function bindVideoControls() {
       correctVideoScoresFromSelection(homeVal, awayVal);
     });
   });
-  if (elBtnVideoAddEvent) {
+  if (elBtnVideoAddEvent && elBtnVideoAddEvent.dataset?.reactManaged !== "true") {
     elBtnVideoAddEvent.addEventListener("click", addEmptyVideoEventAfterSelection);
   }
-  if (elBtnLoadYoutube) {
+  if (elBtnLoadYoutube && elBtnLoadYoutube.dataset?.reactManaged !== "true") {
     elBtnLoadYoutube.addEventListener("click", () => {
       const url = (elYoutubeUrlInput && elYoutubeUrlInput.value) || "";
       handleYoutubeUrlLoad(url);
     });
   }
-  if (elBtnClearVideo) {
+  if (elBtnClearVideo && elBtnClearVideo.dataset?.reactManaged !== "true") {
     elBtnClearVideo.addEventListener("click", clearLoadedVideo);
   }
-  if (elBtnLoadYoutubeScout) {
+  if (elBtnLoadYoutubeScout && elBtnLoadYoutubeScout.dataset?.reactManaged !== "true") {
     elBtnLoadYoutubeScout.addEventListener("click", () => {
       const url = (elYoutubeUrlInputScout && elYoutubeUrlInputScout.value) || "";
       handleYoutubeUrlLoad(url);
     });
   }
-  if (elYoutubeUrlInput) {
+  if (elYoutubeUrlInput && elYoutubeUrlInput.dataset?.reactManaged !== "true") {
     elYoutubeUrlInput.addEventListener("keydown", e => {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -162,7 +162,7 @@ function bindVideoControls() {
       }
     });
   }
-  if (elYoutubeUrlInputScout) {
+  if (elYoutubeUrlInputScout && elYoutubeUrlInputScout.dataset?.reactManaged !== "true") {
     elYoutubeUrlInputScout.addEventListener("keydown", e => {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -171,7 +171,7 @@ function bindVideoControls() {
     });
   }
   [elAnalysisVideo, elAnalysisVideoScout].forEach(video => {
-    if (!video) return;
+    if (!video || video.dataset?.reactManaged === "true") return;
     ["timeupdate", "pause", "seeked", "ended"].forEach(evt => {
       video.addEventListener(evt, () => updateVideoPlaybackSnapshot(video.currentTime));
     });

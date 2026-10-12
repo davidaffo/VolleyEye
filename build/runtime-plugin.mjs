@@ -37,6 +37,7 @@ export function runtimePlugin() {
         "analysis-chart-store",
         "analysis-table-store",
         "video-edit-store",
+        "video-view-store",
         "players-db-store",
       ];
       const imports = stateFiles
@@ -61,6 +62,7 @@ export function runtimePlugin() {
         .join("\n");
       const adapters = [
         "runtime-adapter.js",
+        "video-view-adapter.js",
         "filter-adapter.js",
         "match-sheet-adapter.js",
         "play-by-play-adapter.js",

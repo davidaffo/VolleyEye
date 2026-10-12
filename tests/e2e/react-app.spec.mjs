@@ -1556,3 +1556,323 @@ test("dialoghi React: coordinate battuta, traiettoria attacco, encoder e sorgent
   await expect(page.locator("#video-mobile-source-modal")).toBeHidden();
   expect(errors).toEqual([]);
 });
+
+test("video React: sorgente locale condivisa, frame, sincronizzazione e rimozione", async ({
+  page,
+}) => {
+  const errors = await openApp(page);
+  const demo = JSON.parse(readFileSync("match_demo.json", "utf8"));
+  const snapshot = demo.state || demo;
+  snapshot.events = snapshot.events
+    .filter((event) => event.skillId)
+    .slice(0, 3)
+    .map((event, index) => ({
+      ...event,
+      id: "video-react-" + index,
+      videoTime: index + 1,
+    }));
+  snapshot.video = {
+    offsetSeconds: 0,
+    fileName: "",
+    youtubeId: "",
+    youtubeUrl: "",
+    lastPlaybackSeconds: 0,
+  };
+  snapshot.videoPlayByPlay = false;
+  await page.evaluate(async (match) => {
+    await window.VolleyEye.app.invoke("applyImportedMatch", match, {
+      silent: true,
+    });
+    await window.VolleyEye.app.invoke("enterSelectedMatch");
+    await window.VolleyEye.app.invoke("setActiveTab", "video");
+  }, snapshot);
+  await page
+    .locator("#video-file-input")
+    .setInputFiles("tests/fixtures/video/blank.webm");
+  await expect
+    .poll(() =>
+      page.locator("#analysis-video").evaluate((video) => video.duration),
+    )
+    .toBe(10);
+  const source = await page.locator("#analysis-video").getAttribute("src");
+  expect(source).toMatch(/^blob:/);
+  await expect(page.locator("#analysis-video-scout")).toHaveAttribute(
+    "src",
+    source,
+  );
+  await expect(page.locator("#video-file-input")).toHaveValue("");
+  await page
+    .locator("#video-skills-container tbody input[type=checkbox]")
+    .first()
+    .check();
+  await expect(page.locator("#video-selection-count")).toHaveText(
+    "Selezionati: 1",
+  );
+  await page.locator("#analysis-video").evaluate((video) => {
+    video.pause();
+    video.currentTime = 4;
+  });
+  await expect
+    .poll(() =>
+      page.locator("#analysis-video").evaluate((video) => video.currentTime),
+    )
+    .toBe(4);
+  await page.locator("#btn-video-frame-next").click();
+  await expect
+    .poll(() =>
+      page.locator("#analysis-video").evaluate((video) => video.currentTime),
+    )
+    .toBeCloseTo(4 + 1 / 30, 3);
+  await page.locator("#btn-video-frame-prev").click();
+  const beforeSync = await page.evaluate(
+    () => window.VolleyEye.app.getMatchSnapshot().events[0].videoTime,
+  );
+  await page.locator("#btn-sync-first-skill").click();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => window.VolleyEye.app.getMatchSnapshot().events[0].videoTime,
+      ),
+    )
+    .toBeCloseTo(4, 3);
+  await page.locator("#btn-video-undo").click();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => window.VolleyEye.app.getMatchSnapshot().events[0].videoTime,
+      ),
+    )
+    .toBe(beforeSync);
+  await page.locator("#video-playbyplay-toggle").check();
+  await expect(page.locator("#video-analysis-overlay")).toBeVisible();
+  await expect(page.locator("#video-overlay-set")).toContainText("Set");
+  await page.locator("#video-playbyplay-toggle").uncheck();
+  await expect(page.locator("#video-analysis-overlay")).toBeHidden();
+  await page.locator("#btn-clear-video").click();
+  await expect(page.locator("#analysis-video")).not.toHaveAttribute("src");
+  await expect(page.locator("#analysis-video-scout")).not.toHaveAttribute(
+    "src",
+  );
+  expect(errors).toEqual([]);
+});
+
+test("video React mobile: filtri, navigazione e scelta sorgente aggiornano la vista", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const errors = await openApp(page);
+  await page.locator("#btn-load-match").click();
+  await page.evaluate(() =>
+    window.VolleyEye.app.invoke("setActiveTab", "video"),
+  );
+  await page.locator("#video-mobile-source-later").click();
+  await expect(page.locator("#video-mobile-prev")).toBeDisabled();
+  await expect(page.locator("#video-mobile-next")).toBeEnabled();
+  await page.locator("#video-mobile-next").click();
+  await expect(page.locator("#video-selection-count")).toHaveText(
+    "Selezionati: 1",
+  );
+  await page.locator("#video-mobile-next").click();
+  await expect(page.locator("#video-mobile-prev")).toBeEnabled();
+  await page.locator("#video-mobile-filter-open").click();
+  await expect(page.locator("body")).toHaveClass(/video-mobile-filters-open/);
+  await page.locator("#video-filter-skills input").first().check();
+  await expect(page.locator("#video-mobile-filter-count")).not.toHaveText("0");
+  await expect(page.locator("#video-mobile-results-count")).toContainText(
+    "azion",
+  );
+  await page.locator("#video-mobile-filter-apply").click();
+  await expect(page.locator("body")).not.toHaveClass(
+    /video-mobile-filters-open/,
+  );
+  await page
+    .locator("#video-file-input")
+    .setInputFiles("tests/fixtures/video/blank.webm");
+  await expect(page.locator("#video-mobile-source-open")).toHaveText(
+    "Cambia video",
+  );
+  await page.locator("#video-mobile-source-open").click();
+  await expect(page.locator("#video-mobile-source-modal")).toBeVisible();
+  await page.locator("#video-mobile-source-later").click();
+  await page.evaluate(() => window.VolleyEye.app.invoke("clearLoadedVideo"));
+  await expect(page.locator("#video-mobile-source-open")).toHaveText("Scegli video");
+  expect(errors).toEqual([]);
+});
+
+test("video React: YouTube sincronizza le sorgenti e conserva le bozze locali", async ({
+  page,
+}) => {
+  await page.route("https://www.youtube.com/**", (route) => route.abort());
+  await page.addInitScript(() => {
+    window.YT = {
+      Player: class {
+        constructor(id, options) {
+          this.time = 0;
+          this.options = options;
+          queueMicrotask(() => options.events.onReady());
+        }
+        loadVideoById(id, start) {
+          this.time = start;
+        }
+        seekTo(time) {
+          this.time = time;
+        }
+        getCurrentTime() {
+          return this.time;
+        }
+        stopVideo() {}
+        playVideo() {}
+        getPlayerState() {
+          return 2;
+        }
+      },
+    };
+  });
+  const errors = await openApp(page);
+  await page.locator("#btn-load-match").click();
+  await page.evaluate(() =>
+    window.VolleyEye.app.invoke("setActiveTab", "video"),
+  );
+  await page.locator("#youtube-url-input").fill("https://youtu.be/abcdefghi01");
+  await page.locator("#youtube-url-input").press("Enter");
+  await expect(page.locator("#analysis-video")).toBeHidden();
+  await expect(page.locator("#youtube-frame")).toBeVisible();
+  await expect(page.locator("#youtube-url-input-scout")).toHaveValue(
+    "https://youtu.be/abcdefghi01",
+  );
+  await page.locator("#youtube-url-input").fill("bozza non valida");
+  await page
+    .locator("#video-skills-container tbody input[type=checkbox]")
+    .first()
+    .check();
+  await expect(page.locator("#youtube-url-input")).toHaveValue(
+    "bozza non valida",
+  );
+  await page.locator("#btn-load-youtube").click();
+  await expect(page.locator("#youtube-url-input")).toHaveValue(
+    "bozza non valida",
+  );
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => window.VolleyEye.app.getMatchSnapshot().video.youtubeId,
+      ),
+    )
+    .toBe("abcdefghi01");
+  await page.locator("#btn-clear-video").click();
+  await expect(page.locator("#youtube-url-input")).toHaveValue("");
+  await expect(page.locator("#youtube-url-input-scout")).toHaveValue("");
+  await expect(page.locator("#analysis-video")).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test("opzioni scout React: squadre indipendenti, rotazione, libero e impostazioni sincronizzate", async ({
+  page,
+}) => {
+  test.setTimeout(30000);
+  const errors = await openApp(page);
+  // The compact desktop layout keeps these legacy inline options behind the
+  // scout panel; their native React change handlers also serve the settings UI.
+  const toggleInline = async (id, checked) => {
+    const input = page.locator(id);
+    if ((await input.isChecked()) !== checked)
+      await input.evaluate((element) => element.click());
+  };
+  await page.locator("#btn-load-match").click();
+  if (
+    (await page.locator("#btn-end-match").textContent()) === "Riprendi partita"
+  )
+    await page.locator("#btn-end-match").click();
+  await page.evaluate(() => window.VolleyEye.app.invoke("closeNextSetModal"));
+  await toggleInline("#auto-rotate-toggle", false);
+  await page.evaluate(() => window.VolleyEye.app.invoke("openSettingsModal"));
+  await expect(page.locator("#auto-rotate-toggle-settings")).not.toBeChecked();
+  await page.locator("#auto-rotate-toggle-settings").check();
+  await page.locator("#settings-close").click();
+  await expect(page.locator("#auto-rotate-toggle")).toBeChecked();
+  await page.locator("#rotation-select").selectOption("3");
+  await expect
+    .poll(() =>
+      page.evaluate(() => window.VolleyEye.app.getMatchSnapshot().rotation),
+    )
+    .toBe(3);
+  await page.locator("#btn-rotate-cw").click();
+  await expect(page.locator("#rotation-select")).not.toHaveValue("3");
+  await page.locator("#auto-libero-select").selectOption("S");
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => window.VolleyEye.app.getMatchSnapshot().autoLiberoRole,
+      ),
+    )
+    .toBe("S");
+  await toggleInline("#attack-trajectory-toggle-opp", false);
+  await toggleInline("#attack-trajectory-toggle", true);
+  await expect(page.locator("#attack-trajectory-toggle-opp")).not.toBeChecked();
+  await toggleInline("#video-scout-toggle", true);
+  await expect(page.locator("#video-scout-controls")).toBeVisible();
+  await toggleInline("#video-scout-toggle", false);
+  await expect(page.locator("#video-scout-controls")).toBeHidden();
+  await page
+    .locator('#skill-flow-buttons [data-force-skill="pass"]')
+    .evaluate((button) => button.click());
+  await expect(page.locator("#predictive-skill-toggle")).toBeChecked();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => window.VolleyEye.app.getMatchSnapshot().skillFlowOverride,
+      ),
+    )
+    .toBe("pass");
+  await page.reload();
+  await page.waitForFunction(
+    () => document.documentElement.dataset.appReady === "true",
+  );
+  await expect(page.locator("#auto-libero-select")).toHaveValue("S");
+  await expect(page.locator("#attack-trajectory-toggle-opp")).not.toBeChecked();
+  expect(errors).toEqual([]);
+});
+
+test("portal React: traiettoria passa dal campo al popup mantenendo canvas e comandi", async ({
+  page,
+}) => {
+  const errors = await openApp(page);
+  await page.locator("#btn-load-match").click();
+  await page.evaluate(() => {
+    window.portalResult = undefined;
+    window.VolleyEye.app
+      .invoke("openAttackTrajectoryModal", {
+        mode: "serve-start",
+        scope: "our",
+      })
+      .then((result) => (window.portalResult = result));
+    window.portalCanvas = document.getElementById("attack-trajectory-canvas");
+  });
+  await expect(
+    page.locator("#court-overlay #attack-trajectory-modal"),
+  ).toBeVisible();
+  await page.evaluate(() =>
+    window.VolleyEye.app.invoke(
+      "changeReactSetting",
+      "forceMobileLayout",
+      true,
+    ),
+  );
+  await expect(page.locator("#attack-trajectory-modal")).not.toHaveClass(
+    /court-modal/,
+  );
+  expect(
+    await page.evaluate(
+      () =>
+        window.portalCanvas ===
+        document.getElementById("attack-trajectory-canvas"),
+    ),
+  ).toBe(true);
+  await page.locator('#serve-type-buttons [data-serve-type="F"]').click();
+  await page
+    .locator("#attack-trajectory-canvas")
+    .click({ position: { x: 100, y: 80 } });
+  await expect(page.locator("#attack-trajectory-modal")).toBeHidden();
+  expect(await page.evaluate(() => window.portalResult.serveType)).toBe("F");
+  expect(errors).toEqual([]);
+});

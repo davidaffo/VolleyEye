@@ -57,6 +57,7 @@ function updateVideoSelectionCount() {
   if (!elVideoSelectionCount) return;
   const ctx = eventTableContexts.video;
   const count = ctx && ctx.rows ? ctx.rows.filter(r => selectedEventIds.has(r.key)).length : 0;
+  if (elVideoSelectionCount.dataset?.reactManaged === "true" && typeof videoViewStore !== "undefined") { videoViewStore.publish({ selectionCount: count }); return; }
   elVideoSelectionCount.textContent = "Selezionati: " + count;
 }
 function registerEventTableContext(key, ctx) {
@@ -310,6 +311,7 @@ function buildVideoOverlayLinesForEvent(ev) {
   return [[setLine, playerLine, skillLine, rotationLine].filter(Boolean).join(" · ")];
 }
 function updateVideoAnalysisOverlay() {
+  if (elVideoOverlay?.dataset?.reactManaged === "true" && typeof publishReactVideoOverlay === "function") { publishReactVideoOverlay(); return; }
   if (!elVideoOverlay) return;
   const isVideoTab = document && document.body ? document.body.dataset.activeTab === "video" : false;
   if (!state.videoPlayByPlay || !isVideoTab) {

@@ -63,7 +63,7 @@ function getAutoLiberoSelectsForScope(scope = "our") {
 function syncAutoLiberoSelects() {
   ["our", "opponent"].forEach(scope => {
     const role = getTeamAutoLiberoRole(scope);
-    getAutoLiberoSelectsForScope(scope).forEach(select => { select.value = role; });
+    getAutoLiberoSelectsForScope(scope).filter(select => select.dataset?.reactManaged !== "true").forEach(select => { select.value = role; });
   });
 }
 function setAutoLiberoRole(role, scope = "our") {

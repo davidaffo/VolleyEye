@@ -111,7 +111,7 @@ function queueYoutubeSeek(time, autoplay = true) {
 async function renderYoutubePlayer(startSeconds = 0) {
   const id = state.video && state.video.youtubeId;
   const hasYoutube = !!id;
-  if (elAnalysisVideo) {
+  if (elAnalysisVideo && elAnalysisVideo.dataset?.reactManaged !== "true") {
     elAnalysisVideo.style.display = hasYoutube ? "none" : "block";
   }
   if (!elYoutubeFrame) return;
@@ -181,7 +181,7 @@ async function renderYoutubePlayer(startSeconds = 0) {
 async function renderYoutubePlayerScout(startSeconds = 0) {
   const id = state.video && state.video.youtubeId;
   const hasYoutube = !!id;
-  if (elAnalysisVideoScout) {
+  if (elAnalysisVideoScout && elAnalysisVideoScout.dataset?.reactManaged !== "true") {
     elAnalysisVideoScout.style.display = hasYoutube ? "none" : "block";
   }
   if (!elYoutubeFrameScout) return;
@@ -244,10 +244,10 @@ async function renderYoutubePlayerScout(startSeconds = 0) {
 }
 function syncYoutubeUrlInputs(value) {
   const url = value || "";
-  if (elYoutubeUrlInput && elYoutubeUrlInput.value !== url) {
+  if (elYoutubeUrlInput && elYoutubeUrlInput.dataset?.reactManaged !== "true" && elYoutubeUrlInput.value !== url) {
     elYoutubeUrlInput.value = url;
   }
-  if (elYoutubeUrlInputScout && elYoutubeUrlInputScout.value !== url) {
+  if (elYoutubeUrlInputScout && elYoutubeUrlInputScout.dataset?.reactManaged !== "true" && elYoutubeUrlInputScout.value !== url) {
     elYoutubeUrlInputScout.value = url;
   }
 }
@@ -268,13 +268,17 @@ function handleYoutubeUrlLoad(url) {
   clearCachedLocalVideo();
   if (elAnalysisVideo) {
     elAnalysisVideo.pause();
-    elAnalysisVideo.removeAttribute("src");
-    elAnalysisVideo.load();
+    if (elAnalysisVideo.dataset?.reactManaged !== "true") {
+      elAnalysisVideo.removeAttribute("src");
+      elAnalysisVideo.load();
+    }
   }
   if (elAnalysisVideoScout) {
     elAnalysisVideoScout.pause();
-    elAnalysisVideoScout.removeAttribute("src");
-    elAnalysisVideoScout.load();
+    if (elAnalysisVideoScout.dataset?.reactManaged !== "true") {
+      elAnalysisVideoScout.removeAttribute("src");
+      elAnalysisVideoScout.load();
+    }
   }
   state.video = state.video || {
     offsetSeconds: 0,
@@ -348,13 +352,17 @@ function clearLoadedVideo() {
   clearYoutubeSource();
   if (elAnalysisVideo) {
     elAnalysisVideo.pause();
-    elAnalysisVideo.removeAttribute("src");
-    elAnalysisVideo.load();
+    if (elAnalysisVideo.dataset?.reactManaged !== "true") {
+      elAnalysisVideo.removeAttribute("src");
+      elAnalysisVideo.load();
+    }
   }
   if (elAnalysisVideoScout) {
     elAnalysisVideoScout.pause();
-    elAnalysisVideoScout.removeAttribute("src");
-    elAnalysisVideoScout.load();
+    if (elAnalysisVideoScout.dataset?.reactManaged !== "true") {
+      elAnalysisVideoScout.removeAttribute("src");
+      elAnalysisVideoScout.load();
+    }
   }
   state.video = state.video || {
     offsetSeconds: 0,

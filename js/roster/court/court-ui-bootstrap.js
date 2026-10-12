@@ -604,7 +604,7 @@ function updateRotationDisplay() {
   if (elRotationIndicator) {
     elRotationIndicator.textContent = rotationLabel(state.rotation || 1);
   }
-  if (elRotationSelect) {
+  if (elRotationSelect && elRotationSelect.dataset?.reactManaged !== "true") {
     elRotationSelect.value = String(state.rotation || 1);
   }
   syncAutoRotateToggle();
@@ -625,7 +625,7 @@ function getRoleLabelForRotation(index, rotation = 1) {
   return roles[(idx0 - offset + 6) % 6] || roles[idx0] || "";
 }
 function syncAutoRotateToggle() {
-  if (elAutoRotateToggle) {
+  if (elAutoRotateToggle && elAutoRotateToggle.dataset?.reactManaged !== "true") {
     elAutoRotateToggle.checked = !!state.autoRotate;
   }
 }
@@ -638,20 +638,20 @@ function setAutoRotateEnabled(enabled) {
   syncAutoRotateToggle();
 }
 function syncAutoRoleToggle() {
-  if (elAutoRoleToggle) {
+  if (elAutoRoleToggle && elAutoRoleToggle.dataset?.reactManaged !== "true") {
     elAutoRoleToggle.checked = !!state.autoRolePositioning;
   }
 }
 function syncPredictiveSkillToggle() {
-  if (elPredictiveSkillToggle) {
+  if (elPredictiveSkillToggle && elPredictiveSkillToggle.dataset?.reactManaged !== "true") {
     elPredictiveSkillToggle.checked = !!state.predictiveSkillFlow;
   }
 }
 function syncAttackTrajectoryToggle() {
-  if (elAttackTrajectoryToggle) {
+  if (elAttackTrajectoryToggle && elAttackTrajectoryToggle.dataset?.reactManaged !== "true") {
     elAttackTrajectoryToggle.checked = !!state.attackTrajectoryEnabled;
   }
-  if (elAttackTrajectoryToggleOpp) {
+  if (elAttackTrajectoryToggleOpp && elAttackTrajectoryToggleOpp.dataset?.reactManaged !== "true") {
     elAttackTrajectoryToggleOpp.checked = !!state.attackTrajectoryEnabled;
   }
 }
@@ -663,7 +663,7 @@ function syncSkillFlowButtons() {
   containers.forEach(container => {
     Array.from(container.querySelectorAll("[data-force-skill]")).forEach(btn => {
       const skillId = btn.dataset.forceSkill;
-      if (!skillId) return;
+      if (!skillId || btn.dataset?.reactManaged === "true") return;
       const cfg =
         (state.metricsConfig && normalizeMetricConfig(skillId, state.metricsConfig[skillId])) || null;
       const enabled = cfg ? cfg.enabled !== false : true;
@@ -672,10 +672,10 @@ function syncSkillFlowButtons() {
   });
 }
 function syncAutoRoleP1AmericanToggle() {
-  if (elAutoRoleP1AmericanToggle) {
+  if (elAutoRoleP1AmericanToggle && elAutoRoleP1AmericanToggle.dataset?.reactManaged !== "true") {
     elAutoRoleP1AmericanToggle.checked = !!state.autoRoleP1American;
   }
-  if (elAutoRoleP1AmericanToggleOpp) {
+  if (elAutoRoleP1AmericanToggleOpp && elAutoRoleP1AmericanToggleOpp.dataset?.reactManaged !== "true") {
     elAutoRoleP1AmericanToggleOpp.checked = !!state.autoRoleP1American;
   }
 }
@@ -874,14 +874,14 @@ function openSettingsModal() {
   if(elSettingsModal.dataset.reactManaged === "true" && typeof setReactSettingsOpen === "function")setReactSettingsOpen(true);
   else elSettingsModal.classList.remove("hidden");
   document.body.style.overflow = "hidden";
-  setGlobalModalState(true);
+  setGlobalModalState(true, { forcePopup: true });
 }
 function closeSettingsModal() {
   if (!elSettingsModal) return;
   if(elSettingsModal.dataset.reactManaged === "true" && typeof setReactSettingsOpen === "function")setReactSettingsOpen(false);
   else elSettingsModal.classList.add("hidden");
   document.body.style.overflow = "";
-  setGlobalModalState(false);
+  setGlobalModalState(false, { forcePopup: true });
 }
 function resetDragState() {
   draggedPlayerName = "";

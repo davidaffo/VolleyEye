@@ -1,3 +1,13 @@
+import {
+  VideoActionButton,
+  VideoSourceControls,
+  VideoMobileSourceButton,
+  VideoMobileNavigation,
+  VideoViewText,
+  VideoFilterCount,
+  VideoOverlay,
+  VideoElement,
+} from "../VideoControls.jsx";
 import { VideoPresets, VideoPresetCreate } from "../VideoPresets.jsx";
 import { AnalysisFilter, PreviousSkillSelect } from "../AnalysisFilter.jsx";
 import { EventTable } from "../EventTable.jsx";
@@ -15,132 +25,72 @@ export function VideoPage() {
               <h2 className={"video-mobile-only"}>{"Le mie azioni"}</h2>
             </div>
             <div className={"video-mobile-head-actions video-mobile-only"}>
-              <button
-                id={"video-mobile-source-open"}
-                className={"secondary video-mobile-source-open"}
-                type={"button"}
-              >
-                {"Scegli video"}
-              </button>
-              <button
+              <VideoMobileSourceButton />
+              <VideoActionButton
                 id={"video-mobile-filter-open"}
                 className={"secondary video-mobile-filter-open"}
                 type={"button"}
               >
                 {"\n              Filtri "}
-                <span
-                  id={"video-mobile-filter-count"}
-                  className={"video-mobile-filter-count"}
-                >
-                  {"0"}
-                </span>
-              </button>
+                <VideoFilterCount />
+              </VideoActionButton>
             </div>
           </div>
           <div className={"video-analysis__actions"}>
-            <label
-              id={"video-file-picker"}
-              className={"file-btn"}
-              htmlFor={"video-file-input"}
-            >
-              {"Carica video"}
-            </label>
-            <input
-              id={"video-file-input"}
-              type={"file"}
-              accept={"video/*"}
-              hidden={true}
-            />
-            <button id={"btn-clear-video"} className={"danger"} type={"button"}>
-              {"Rimuovi video"}
-            </button>
-            <button id={"btn-sync-first-skill"} className={"secondary"}>
-              {"Sincronizza prima skill"}
-            </button>
-            <button id={"btn-copy-ffmpeg"} className={"secondary"}>
-              {"Copia ffmpeg veloce + overlay"}
-            </button>
-            <label className={"auto-rotate-toggle"}>
-              <input type={"checkbox"} id={"video-playbyplay-toggle"} />
-              {"\n            Play by play\n          "}
-            </label>
-            <div className={"youtube-input"}>
-              <input
-                id={"youtube-url-input"}
-                type={"url"}
-                placeholder={"https://youtu.be/..."}
-              />
-              <button id={"btn-load-youtube"} className={"secondary"}>
-                {"Usa YouTube"}
-              </button>
-            </div>
+            <VideoSourceControls />
           </div>
           <div className={"video-analysis__grid"}>
             <div className={"video-skills"}>
               <div className={"table-wrapper video-table-wrapper"}>
                 <EventTable id="video-skills-container" />
               </div>
-              <div id={"video-selection-count"} className={"section-note"}>
-                {"Selezionati: 0"}
-              </div>
+              <VideoViewText
+                kind="selection"
+                id="video-selection-count"
+                className="section-note"
+              />
               <div className={"video-analysis__footer-actions"}>
-                <button
+                <VideoActionButton
                   id={"btn-fix-video-score"}
                   className={"secondary"}
                   type={"button"}
                 >
                   {"Correggi punteggio"}
-                </button>
-                <button
+                </VideoActionButton>
+                <VideoActionButton
                   id={"btn-video-add-event"}
                   className={"secondary"}
                   type={"button"}
                 >
                   {"Aggiungi evento"}
-                </button>
-                <button id={"btn-offset-skills"} className={"secondary"}>
+                </VideoActionButton>
+                <VideoActionButton
+                  id={"btn-offset-skills"}
+                  className={"secondary"}
+                >
                   {"Offset skill"}
-                </button>
-                <button id={"btn-unify-times"} className={"secondary"}>
+                </VideoActionButton>
+                <VideoActionButton
+                  id={"btn-unify-times"}
+                  className={"secondary"}
+                >
                   {"Unifica tempi"}
-                </button>
-                <button id={"btn-skill-duration"} className={"secondary"}>
+                </VideoActionButton>
+                <VideoActionButton
+                  id={"btn-skill-duration"}
+                  className={"secondary"}
+                >
                   {"Durata skill"}
-                </button>
-                <button id={"btn-video-undo"} className={"danger"}>
+                </VideoActionButton>
+                <VideoActionButton id={"btn-video-undo"} className={"danger"}>
                   {"Annulla ultima"}
-                </button>
+                </VideoActionButton>
               </div>
             </div>
             <div className={"video-player-wrap video-player-wrap--analysis"}>
               <div className={"video-media"}>
-                <div
-                  id={"video-analysis-overlay"}
-                  className={"video-overlay hidden"}
-                  aria-hidden={"true"}
-                >
-                  <div
-                    id={"video-overlay-set"}
-                    className={"video-overlay-line"}
-                  ></div>
-                  <div
-                    id={"video-overlay-player"}
-                    className={"video-overlay-line"}
-                  ></div>
-                  <div
-                    id={"video-overlay-skill"}
-                    className={"video-overlay-line"}
-                  ></div>
-                  <div
-                    id={"video-overlay-rotation"}
-                    className={"video-overlay-line"}
-                  ></div>
-                </div>
-                <video
-                  id={"analysis-video"}
-                  controls={true}
-                  preload={"metadata"}
-                ></video>
+                <VideoOverlay />
+                <VideoElement />
                 <iframe
                   id={"youtube-frame"}
                   className={"youtube-frame"}
@@ -159,7 +109,8 @@ export function VideoPage() {
                   className={"video-mobile-overlay-nav video-mobile-only"}
                   aria-label={"Navigazione azioni"}
                 >
-                  <button
+                  <VideoMobileNavigation
+                    direction={-1}
                     id={"video-mobile-prev"}
                     className={
                       "video-mobile-overlay-nav__button video-mobile-overlay-nav__button--prev"
@@ -168,8 +119,9 @@ export function VideoPage() {
                     aria-label={"Azione precedente"}
                   >
                     {"‹"}
-                  </button>
-                  <button
+                  </VideoMobileNavigation>
+                  <VideoMobileNavigation
+                    direction={1}
                     id={"video-mobile-next"}
                     className={
                       "video-mobile-overlay-nav__button video-mobile-overlay-nav__button--next"
@@ -178,7 +130,7 @@ export function VideoPage() {
                     aria-label={"Azione successiva"}
                   >
                     {"›"}
-                  </button>
+                  </VideoMobileNavigation>
                 </div>
               </div>
               <button
@@ -189,20 +141,20 @@ export function VideoPage() {
                 title={"Trascina per allargare. Doppio click per reset."}
               ></button>
               <div className={"video-frame-actions"}>
-                <button
+                <VideoActionButton
                   id={"btn-video-frame-prev"}
                   className={"secondary"}
                   type={"button"}
                 >
                   {"Frame - (Shift + ←)"}
-                </button>
-                <button
+                </VideoActionButton>
+                <VideoActionButton
                   id={"btn-video-frame-next"}
                   className={"secondary"}
                   type={"button"}
                 >
                   {"Frame + (Shift + →)"}
-                </button>
+                </VideoActionButton>
               </div>
               <p className={"section-note"}>
                 {
@@ -231,21 +183,20 @@ export function VideoPage() {
             <div className={"video-mobile-filter-sheet-head video-mobile-only"}>
               <div>
                 <strong>{"Filtra le azioni"}</strong>
-                <div
-                  id={"video-mobile-results-count"}
-                  className={"section-note"}
-                >
-                  {"0 azioni trovate"}
-                </div>
+                <VideoViewText
+                  kind="results"
+                  id="video-mobile-results-count"
+                  className="section-note"
+                />
               </div>
-              <button
+              <VideoActionButton
                 id={"video-mobile-filter-close"}
                 className={"icon-button"}
                 type={"button"}
                 aria-label={"Chiudi filtri"}
               >
                 {"✕"}
-              </button>
+              </VideoActionButton>
             </div>
             <div className={"video-filters-layout"}>
               <div className={"video-filters-main"}>
@@ -401,21 +352,21 @@ export function VideoPage() {
               </aside>
             </div>
             <div className={"video-mobile-filter-footer video-mobile-only"}>
-              <button
+              <VideoActionButton
                 id={"video-mobile-filter-apply"}
                 className={"primary"}
                 type={"button"}
               >
                 {"Mostra le azioni"}
-              </button>
+              </VideoActionButton>
             </div>
           </div>
-          <button
+          <VideoActionButton
             id={"video-mobile-filter-backdrop"}
             className={"video-mobile-filter-backdrop video-mobile-only"}
             type={"button"}
             aria-label={"Chiudi filtri"}
-          ></button>
+          ></VideoActionButton>
         </div>
       </div>
     </div>

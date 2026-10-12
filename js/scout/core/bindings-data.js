@@ -14,18 +14,18 @@ function bindDataAndNavigationControls() {
     });
   }
   // elementi mobile rimossi
-  if (elBtnExportPdf) elBtnExportPdf.addEventListener("click", exportAnalysisPdf);
-  if (elBtnExportHtml) elBtnExportHtml.addEventListener("click", exportAnalysisHtml);
-  if (elBtnExportMatch) elBtnExportMatch.addEventListener("click", exportMatchToFile);
-  if (elBtnExportDvw) elBtnExportDvw.addEventListener("click", exportDataVolleyToFile);
-  if (elBtnImportMatch && elMatchFileInput) {
+  if (elBtnExportPdf && elBtnExportPdf.dataset?.reactManaged !== "true") elBtnExportPdf.addEventListener("click", exportAnalysisPdf);
+  if (elBtnExportHtml && elBtnExportHtml.dataset?.reactManaged !== "true") elBtnExportHtml.addEventListener("click", exportAnalysisHtml);
+  if (elBtnExportMatch && elBtnExportMatch.dataset?.reactManaged !== "true") elBtnExportMatch.addEventListener("click", exportMatchToFile);
+  if (elBtnExportDvw && elBtnExportDvw.dataset?.reactManaged !== "true") elBtnExportDvw.addEventListener("click", exportDataVolleyToFile);
+  if (elBtnImportMatch && elMatchFileInput && elBtnImportMatch.dataset?.reactManaged !== "true") {
     elBtnImportMatch.addEventListener("click", () => elMatchFileInput.click());
     elMatchFileInput.addEventListener("change", e => {
       const file = e.target && e.target.files && e.target.files[0];
       if (file) handleImportMatchFile(file);
     });
   }
-  if (elBtnResetMatch) elBtnResetMatch.addEventListener("click", resetMatch);
+  if (elBtnResetMatch && elBtnResetMatch.dataset?.reactManaged !== "true") elBtnResetMatch.addEventListener("click", resetMatch);
   if (elVideoFilterPresetSave && elVideoFilterPresetSave.dataset?.reactManaged !== "true") {
     elVideoFilterPresetSave.addEventListener("click", saveCurrentVideoFilterPreset);
   }
@@ -76,9 +76,9 @@ function bindDataAndNavigationControls() {
   if (elBtnForceRefreshApp && elBtnForceRefreshApp.dataset?.reactManaged !== "true") {
     elBtnForceRefreshApp.addEventListener("click", forceRefreshAppAssets);
   }
-  if (elBtnUndo) elBtnUndo.addEventListener("click", undoLastEvent);
+  if (elBtnUndo && elBtnUndo.dataset?.reactManaged !== "true") elBtnUndo.addEventListener("click", undoLastEvent);
   const elBtnContesa = document.getElementById("btn-contesa");
-  if (elBtnContesa) elBtnContesa.addEventListener("click", undoContestedRally);
+  if (elBtnContesa && elBtnContesa.dataset?.reactManaged !== "true") elBtnContesa.addEventListener("click", undoContestedRally);
   if (elBtnDvwScoutApply) {
     elBtnDvwScoutApply.addEventListener("click", () => {
       applyDvwScoutInput();
@@ -126,22 +126,23 @@ function bindDataAndNavigationControls() {
   const closeDrawers = () => {
     document.body.classList.remove("drawer-menu-open", "drawer-log-open");
   };
-  if (elMobileMenuBtn) {
+  if (elMobileMenuBtn && elMobileMenuBtn.dataset?.reactManaged !== "true") {
     elMobileMenuBtn.addEventListener("click", () => {
       document.body.classList.toggle("drawer-menu-open");
       document.body.classList.remove("drawer-log-open");
     });
   }
-  if (elMobileLogBtn) {
+  if (elMobileLogBtn && elMobileLogBtn.dataset?.reactManaged !== "true") {
     elMobileLogBtn.addEventListener("click", () => {
       document.body.classList.toggle("drawer-log-open");
       document.body.classList.remove("drawer-menu-open");
     });
   }
-  if (elDrawerBackdrop) {
+  if (elDrawerBackdrop && elDrawerBackdrop.dataset?.reactManaged !== "true") {
     elDrawerBackdrop.addEventListener("click", closeDrawers);
   }
   document.querySelectorAll("[data-close-drawer]").forEach(btn => {
+    if (btn.dataset?.reactManaged === "true") return;
     btn.addEventListener("click", closeDrawers);
   });
 }

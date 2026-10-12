@@ -1,3 +1,4 @@
+import { AppActionButton } from "../AppActions.jsx";
 import {
   AggregatedTotalScore,
   AggregatedSetCards,
@@ -1052,12 +1053,12 @@ export function AggregatedPage() {
           </div>
         </div>
         <div className={"controls-row agg-actions"}>
-          <button id={"btn-export-pdf"} className={"secondary"}>
+          <AppActionButton id={"btn-export-pdf"} className={"secondary"}>
             {"Stampa / PDF"}
-          </button>
-          <button id={"btn-export-html"} className={"secondary"}>
+          </AppActionButton>
+          <AppActionButton id={"btn-export-html"} className={"secondary"}>
             {"Esporta HTML"}
-          </button>
+          </AppActionButton>
         </div>
       </div>
     </div>

@@ -1,11 +1,11 @@
 function bindScoreAndSetControls() {
-  if (elBtnResetMetrics) {
+  if (elBtnResetMetrics && elBtnResetMetrics.dataset?.reactManaged !== "true") {
     elBtnResetMetrics.addEventListener("click", resetMetricsToDefault);
   }
-  if (elBtnResetCodes) {
+  if (elBtnResetCodes && elBtnResetCodes.dataset?.reactManaged !== "true") {
     elBtnResetCodes.addEventListener("click", resetAllActiveCodes);
   }
-  if (elBtnResetPoints) {
+  if (elBtnResetPoints && elBtnResetPoints.dataset?.reactManaged !== "true") {
     elBtnResetPoints.addEventListener("click", resetPointRulesToDefault);
   }
   if (elBtnScoreForPlus && elBtnScoreForPlus.dataset.reactManaged !== "true") {

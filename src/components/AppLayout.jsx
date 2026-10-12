@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { CourtModalPortal } from "./CourtModalPortal.jsx";
 import { UpdateBanner } from "./layout/UpdateBanner.jsx";
 import { AppNavigation } from "./layout/AppNavigation.jsx";
 import { MobileNavigation } from "./layout/MobileNavigation.jsx";
@@ -58,7 +59,9 @@ export const AppLayout = memo(function AppLayout() {
       <TeamManagerModal />
       <PastePlayersModal />
       <Camp3ConfirmModal />
-      <SkillModal />
+      <CourtModalPortal>
+        <SkillModal />
+      </CourtModalPortal>
       <AggSkillModal />
       <BaseModal />
       <AttackTypeModal />
@@ -67,10 +70,18 @@ export const AppLayout = memo(function AppLayout() {
       <BulkEditModal />
       <VideoScoreModal />
       <SetStartModal />
-      <LineupModal />
-      <ErrorModal />
-      <PointModal />
-      <AttackTrajectoryModal />
+      <CourtModalPortal>
+        <LineupModal />
+      </CourtModalPortal>
+      <CourtModalPortal>
+        <ErrorModal />
+      </CourtModalPortal>
+      <CourtModalPortal>
+        <PointModal />
+      </CourtModalPortal>
+      <CourtModalPortal>
+        <AttackTrajectoryModal />
+      </CourtModalPortal>
       <DebugModal />
       <NewMatchModal />
       <TeamsManagerModal />
