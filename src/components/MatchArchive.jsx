@@ -1,19 +1,19 @@
-import { useSyncExternalStore } from "react";
+import { CommandButton } from "./ui/CommandButton.jsx";
+
+import { useViewStore } from "../hooks/useViewStore.js";
+
 import { runtimeStore } from "../state/runtime-store.mjs";
-import { invokeRuntime } from "../compat/runtime.js";
+import { actions as appActions } from "../app/actions.mjs";
 
 function useArchiveView() {
-  return useSyncExternalStore(
-    runtimeStore.subscribe,
-    runtimeStore.getSnapshot,
-    runtimeStore.getSnapshot,
-  );
+  return useViewStore(runtimeStore);
+}
+function reportMatchArchiveError(error) {
+  console.error("Operazione archivio non riuscita", error);
+  window.alert(error.message);
 }
 function perform(command, ...args) {
-  invokeRuntime(command, ...args).catch((error) => {
-    console.error("Operazione archivio non riuscita", error);
-    window.alert(error.message);
-  });
+  appActions[command]( ...args).catch(reportMatchArchiveError);
 }
 export function MatchArchiveList() {
   const view = useArchiveView();
@@ -25,7 +25,6 @@ export function MatchArchiveList() {
         className="match-list"
         role="listbox"
         aria-label="Match salvati"
-        data-react-managed="true"
       >
         {matches.length ? (
           matches.map((match) => (
@@ -53,7 +52,6 @@ export function MatchArchiveList() {
         className="hidden-select"
         tabIndex={-1}
         aria-hidden="true"
-        data-react-managed="true"
         value={view.selectedMatch || ""}
         onChange={(event) => perform("selectArchivedMatch", event.target.value)}
       >
@@ -75,20 +73,21 @@ export function MatchActionButton({
 }) {
   const view = useArchiveView();
   return (
-    <button
+    <CommandButton
       {...props}
-      data-react-managed="true"
       disabled={requiresSelection && !view.selectedMatch}
-      onClick={() => perform(command)}
+      command={command}
+      args={[]}
+      onError={reportMatchArchiveError}
     >
       {children}
-    </button>
+    </CommandButton>
   );
 }
 export function ActiveMatchName() {
   const view = useArchiveView();
   return (
-    <strong id="active-match-name" data-react-managed="true">
+    <strong id="active-match-name">
       {view.matchLabel || "—"}
     </strong>
   );

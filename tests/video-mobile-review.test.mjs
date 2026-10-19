@@ -1,12 +1,12 @@
 import { readAppHtml } from "./helpers/app-html.mjs";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import test from "node:test";
 import { readScoutSource } from "./helpers/scout-source.mjs";
 import { readStyleSource } from "./helpers/style-source.mjs";
 
 const html = readAppHtml();
-const source = readScoutSource();
+const source = readScoutSource() + readFileSync(new URL("../src/features/video/view.js", import.meta.url), "utf8");
 const css = readStyleSource();
 
 test("la vista video mobile usa il player a tutta larghezza con navigazione sovrapposta", () => {

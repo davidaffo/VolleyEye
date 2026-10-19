@@ -42,12 +42,8 @@
   opacity: 0.8;
   margin-bottom: 0.2rem;
 }
-.metrics-points .metric-toggle.code-positive {
-  border-color: #2f2f2f;
-}
-.metrics-points .metric-toggle.code-negative {
-  border-color: #2f2f2f;
-}
+.metrics-points .metric-toggle.code-positive,
+.metrics-points .metric-toggle.code-negative,
 .metrics-points .metric-toggle.code-neutral {
   border-color: #2f2f2f;
 }
@@ -650,12 +646,7 @@ body[data-theme="light"] .event-row.selected:hover {
   font-weight: 600;
   white-space: nowrap;
 }
-.trajectory-layout {
-  display: grid;
-  grid-template-columns: minmax(260px, 0.9fr) minmax(420px, 1.6fr);
-  gap: 0.6rem;
-  align-items: start;
-}
+.trajectory-layout,
 .second-layout {
   display: grid;
   grid-template-columns: minmax(260px, 0.9fr) minmax(420px, 1.6fr);
@@ -688,9 +679,7 @@ body[data-theme="light"] .event-row.selected:hover {
   justify-content: space-between;
   margin-bottom: 0.5rem;
 }
-.agg-topbar .analysis-filters {
-  margin: 0;
-}
+.agg-topbar .analysis-filters,
 .agg-topbar .agg-subnav {
   margin: 0;
 }

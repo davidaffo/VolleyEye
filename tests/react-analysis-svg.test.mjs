@@ -1,5 +1,6 @@
+import {reference} from "./helpers/ui-reference.mjs";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import { createRequire } from "node:module";
 import vm from "node:vm";
 import test from "node:test";
@@ -20,7 +21,7 @@ function component(name) {
       platform: "node",
       format: "cjs",
       packages: "external",
-      external: ["virtual:volleyeye-runtime"],
+
       jsx: "automatic",
     });
   new Function("require", "module", "exports", result.outputFiles[0].text)(
@@ -91,19 +92,15 @@ for (const options of [
       escapeDvwScoutHtml: (value) => String(value),
     });
     vm.runInContext(
-      read("../js/scout/analysis/match-sheet.js") +
-        read("../src/compat/match-sheet-adapter.js"),
+      read("../src/features/analysis/match-sheet-model.js") +
+        read("../src/features/analysis/match-sheet-view.js"),
       context,
     );
     const trajectories = Array.from({ length: 32 }, (_, index) => ({
         start: { x: 10 + index, y: 30 + index },
         end: { x: 80 - index, y: 160 - index },
         code: index % 2 ? "#" : "=",
-      })),
-      legacy = new JSDOM(
-        context.renderMatchSheetCourtSvg(trajectories, options),
-      ),
-      react = new JSDOM(
+      })), react = new JSDOM(
         renderToStaticMarkup(
           createElement(MatchSheetCourt, {
             court: context.buildReactMatchSheetCourt(trajectories, options),
@@ -112,7 +109,7 @@ for (const options of [
       );
     assert.deepEqual(
       canonical(react.window.document.querySelector("svg")),
-      canonical(legacy.window.document.querySelector("svg")),
+      reference("react-analysis-svg:3247"),
     );
   });
 for (const count of [2, 6, 25])
@@ -127,8 +124,8 @@ for (const count of [2, 6, 25])
           requestAnimationFrame: () => {},
         });
       vm.runInContext(
-        read("../js/scout/live/score-analysis.js") +
-          read("../src/compat/set-trend-adapter.js"),
+        read("../src/features/analysis/timeline-model.js") +
+          read("../src/features/analysis/set-trend-view.js"),
         context,
       );
       const points = Array.from({ length: count }, (_, index) => ({
@@ -138,10 +135,7 @@ for (const count of [2, 6, 25])
           tone: index % 2 ? "positive" : "negative",
           ev: index ? {} : null,
           pointKey: `point${index}`,
-        })),
-        group = { title: "Set 1", points, maxAbs: 3, final: points.at(-1) },
-        legacy = context.renderSetTrendChartCard(group),
-        react = new JSDOM(
+        })), group = { title: "Set 1", points, maxAbs: 3, final: points.at(-1) }, react = new JSDOM(
           renderToStaticMarkup(
             createElement(SetTrendCard, {
               card: context.buildReactSetTrendCard(group),
@@ -151,6 +145,6 @@ for (const count of [2, 6, 25])
         );
       assert.deepEqual(
         canonical(react.window.document.querySelector("svg")),
-        canonical(legacy.querySelector("svg")),
+        reference("react-analysis-svg:4751"),
       );
     });

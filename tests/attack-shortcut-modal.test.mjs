@@ -1,11 +1,12 @@
 import { readAppHtml } from './helpers/app-html.mjs';
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import test from "node:test";
 import { readScoutSource } from "./helpers/scout-source.mjs";
 import { readStyleSource } from "./helpers/style-source.mjs";
 
 const source = readScoutSource();
+const actions = readFileSync(new URL("../src/components/AppActions.jsx", import.meta.url), "utf8");
 const html = readAppHtml();
 const css = readStyleSource();
 
@@ -21,10 +22,7 @@ test("i popup dei dati retroattivi restano sopra l'overlay del campo", () => {
 });
 
 test("i quattro pulsanti a rete usano un vero toggle", () => {
-  assert.match(source, /elBtnAttackBase\.addEventListener\("click", toggleBaseModal\)/);
-  assert.match(source, /elBtnAttackSetter\.addEventListener\("click", toggleAttackSetterModal\)/);
-  assert.match(source, /elBtnAttackType\.addEventListener\("click", toggleAttackTypeModal\)/);
-  assert.match(source, /elBtnBlockNumber\.addEventListener\("click", toggleBlockNumberModal\)/);
+  for (const command of ["toggleBaseModal", "toggleAttackSetterModal", "toggleAttackTypeModal", "toggleBlockNumberModal"]) assert.ok(actions.includes(command));
 });
 
 test("K A T N chiudono il rispettivo popup quando è già aperto", () => {

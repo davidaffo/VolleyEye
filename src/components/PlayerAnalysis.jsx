@@ -1,19 +1,46 @@
-import { Fragment, useLayoutEffect, useRef, useSyncExternalStore } from "react";
+import { SKILL_COLUMNS } from '../domain/analysis-columns.js';
+import { HeaderCells } from './ui/HeaderCells.jsx';
+import { AnalysisCountTable } from './AnalysisCountTable.jsx';
+import { Fragment } from "react";
+import { TrajectoryGrid, AttackSummary } from "./TrajectoryGrid.jsx";
+import { DistributionGrid } from "./AnalysisTable.jsx";
+import { SkillChart } from "./SkillChart.jsx";
+import { useViewStore } from "../hooks/useViewStore.js";
+import { useLayoutEffect, useRef } from "react";
 import { playerAnalysisStore } from "../state/roster-import-store.mjs";
 import { analysisTableStore } from "../state/analysis-table-store.mjs";
-import { invokeRuntime, invokeRuntimeEvent } from "../compat/runtime.js";
-import { TrajectoryGrid, AttackSummary } from "./TrajectoryGrid.jsx";
-import { DistributionGrid, AnalysisTableBody } from "./AnalysisTable.jsx";
-import { SkillChart } from "./SkillChart.jsx";
-function useView() {
-  return useSyncExternalStore(
-    playerAnalysisStore.subscribe,
-    playerAnalysisStore.getSnapshot,
-    playerAnalysisStore.getSnapshot,
+import { actions as appActions, events as appEvents } from "../app/actions.mjs";
+
+const sections = [['', 'Punti', ['Fatti', 'Subiti', 'Δ', 'Falli/Errori']],
+  ...SKILL_COLUMNS.map(({ id, label, columns }) => [id, label, columns])];
+const comparisonClasses = Object.fromEntries(sections.map(([skill, title]) =>
+  [title, 'skill-' + (skill || 'points')]));
+
+export function PlayerAnalysisHeader() {
+  return (
+    <thead>
+      <tr>
+        <th rowSpan="2">Atleta</th>
+        {sections.map(([skill, title, columns]) => (
+          <th key={title} colSpan={columns.length} className={skill ? 'skill-col skill-' + skill : undefined}>
+            {title}
+          </th>
+        ))}
+      </tr>
+      <tr>
+        {sections.map(([skill, title, columns]) => (
+          <HeaderCells key={title} labels={columns} className={skill ? 'skill-col skill-' + skill : undefined} />
+        ))}
+      </tr>
+    </thead>
   );
 }
+
+function useView() {
+  return useViewStore(playerAnalysisStore);
+}
 const change = (field, value) =>
-  invokeRuntime("changeReactPlayerAnalysis", field, value).catch(console.error);
+  appActions.changeReactPlayerAnalysis(field, value).catch(console.error);
 export function PlayerAnalysisSelect({ compare = false }) {
   const view = useView(),
     entries = compare ? view.compareEntries : view.entries,
@@ -23,7 +50,6 @@ export function PlayerAnalysisSelect({ compare = false }) {
   return (
     <select
       id={compare ? "player-analysis-compare-select" : "player-analysis-select"}
-      data-react-managed="true"
       disabled={disabled}
       value={disabled ? "" : compare ? view.compareIdx : view.playerIdx}
       onChange={(event) =>
@@ -54,7 +80,6 @@ export function PlayerAnalysisToggle({ id, field }) {
     <input
       type="checkbox"
       id={id}
-      data-react-managed="true"
       checked={!!view.preferences[field]}
       onChange={(event) => change(field, event.target.checked)}
     />
@@ -90,7 +115,6 @@ export function PlayerAnalysisHero() {
         "player-analysis-hero" +
         (!view.primary || view.compare ? " hidden" : "")
       }
-      data-react-managed="true"
     >
       {view.primary && !view.compare && (
         <div
@@ -114,9 +138,9 @@ export function PlayerAnalysisHero() {
 }
 export function PlayerAnalysisBody() {
   const view = useView(),
-    skills = ["", "serve", "pass", "freeball", "attack", "block", "defense"];
+    skills = sections.map(([skill]) => skill);
   return (
-    <tbody id="player-analysis-body" data-react-managed="true">
+    <tbody id="player-analysis-body">
       {view.primary ? (
         [view.primary, ...(view.compare ? [view.compare] : [])].map(
           (snapshot, index) => (
@@ -158,47 +182,16 @@ export function PlayerAnalysisBody() {
   );
 }
 function CompareCharts({ id }) {
-  useSyncExternalStore(
-    analysisTableStore.subscribe,
-    analysisTableStore.getSnapshot,
-    analysisTableStore.getSnapshot,
-  );
+  useViewStore(analysisTableStore);
   const view = analysisTableStore.getView(id);
   return (
     <div
       id={id}
       className="analysis-skill-chart-grid player-analysis-skill-chart-grid"
-      data-react-managed="true"
     >
       {view.charts?.map((chart, index) => (
         <SkillChart key={index} model={chart} />
       ))}
-    </div>
-  );
-}
-function OutcomeTable({ id, attack = false }) {
-  return (
-    <div className="table-wrapper">
-      <table className="agg-table">
-        <thead>
-          <tr>
-            <th>{attack ? "Attacchi dopo alzata" : "Alzate"}</th>
-            {["Tot", "#", "+", "!", "-", "=", "/", "Pos", "Prf", "Eff"].map(
-              (label) => (
-                <th
-                  key={label}
-                  className={
-                    "skill-col skill-" + (attack ? "attack" : "second")
-                  }
-                >
-                  {label}
-                </th>
-              ),
-            )}
-          </tr>
-        </thead>
-        <AnalysisTableBody id={id} />
-      </table>
     </div>
   );
 }
@@ -208,9 +201,7 @@ function CompareCard({ snapshot, other, view, index }) {
     prefs = view.preferences;
   useLayoutEffect(() => {
     const get = (name) => root.current?.querySelector(`#${prefix}-${name}`);
-    invokeRuntimeEvent(
-      "refreshReactCompareSections",
-      snapshot.playerIdx,
+    appEvents.refreshReactCompareSections(snapshot.playerIdx,
       other.playerIdx,
       {
         attackSummary: get("attack-summary"),
@@ -223,15 +214,6 @@ function CompareCard({ snapshot, other, view, index }) {
       },
     );
   }, [view, snapshot.playerIdx, other.playerIdx, prefix]);
-  const classes = {
-    Punti: "skill-points",
-    Battuta: "skill-serve",
-    Ricezione: "skill-pass",
-    Freeball: "skill-freeball",
-    Attacco: "skill-attack",
-    Muro: "skill-block",
-    Difesa: "skill-defense",
-  };
   return (
     <div
       ref={root}
@@ -247,7 +229,7 @@ function CompareCard({ snapshot, other, view, index }) {
               <tr
                 className={
                   "player-analysis-compare-section-row " +
-                  (classes[section.title] || "")
+                  (comparisonClasses[section.title] || "")
                 }
               >
                 <th colSpan={2}>{section.title}</th>
@@ -301,8 +283,8 @@ function CompareCard({ snapshot, other, view, index }) {
           <section className="player-analysis-compare-subsection">
             <h4>Distribuzione alzate</h4>
             <DistributionGrid id={prefix + "-distribution"} />
-            <OutcomeTable id={prefix + "-second-body"} />
-            <OutcomeTable id={prefix + "-attack-body"} attack />
+            <AnalysisCountTable bodyId={prefix + "-second-body"} title="Alzate" skill="second" />
+            <AnalysisCountTable bodyId={prefix + "-attack-body"} title="Attacchi dopo alzata" skill="attack" />
           </section>
         )}
         <section className="player-analysis-compare-subsection">
@@ -321,7 +303,6 @@ export function PlayerComparison() {
       className={
         "player-analysis-compare-view" + (!view.compare ? " hidden" : "")
       }
-      data-react-managed="true"
     >
       {view.primary && view.compare && (
         <div className="player-analysis-compare-layout">

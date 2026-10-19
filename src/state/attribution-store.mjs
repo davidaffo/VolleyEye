@@ -1,26 +1,15 @@
+import { createKeyedViewStore } from './view-store.mjs';
+
 export function createAttributionStore() {
-  const empty = Object.freeze({
-    open: false,
-    players: Object.freeze([]),
-    types: Object.freeze([]),
-    selectedType: "Generic",
-  });
-  let snapshot = Object.freeze({ point: empty, error: empty });
-  const listeners = new Set();
+  const empty = {
+    open: false, players: Object.freeze([]), types: Object.freeze([]), selectedType: 'Generic',
+  };
+  const store = createKeyedViewStore({ point: empty, error: empty }, {}, { merge: true });
   return {
-    getSnapshot: () => snapshot,
-    subscribe(listener) {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
+    ...store,
     publish(kind, patch) {
-      if (kind !== "point" && kind !== "error")
-        throw new Error("Unknown attribution dialog: " + kind);
-      snapshot = Object.freeze({
-        ...snapshot,
-        [kind]: Object.freeze({ ...snapshot[kind], ...patch }),
-      });
-      listeners.forEach((listener) => listener());
+      if (kind !== 'point' && kind !== 'error') throw new Error('Unknown attribution dialog: ' + kind);
+      store.publish(kind, patch);
     },
   };
 }

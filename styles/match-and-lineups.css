@@ -1260,9 +1260,7 @@ body[data-theme="light"] #next-set-block-opp {
   align-items: stretch;
   flex-wrap: nowrap;
 }
-.court-net-divider.block-prompt-active > span {
-  display: none;
-}
+.court-net-divider.block-prompt-active > span,
 .court-net-divider.block-prompt-active::before,
 .court-net-divider.block-prompt-active::after {
   display: none;

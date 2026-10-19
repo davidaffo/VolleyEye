@@ -1,93 +1,38 @@
-import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
-import test from "node:test";
-import { ROSTER_SOURCE_FILES } from "./helpers/roster-source.mjs";
-import { SCOUT_SOURCE_FILES } from "./helpers/scout-source.mjs";
-import { STYLE_SOURCE_FILES } from "./helpers/style-source.mjs";
+import assert from 'node:assert/strict';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import test from 'node:test';
+import { parsers } from 'prettier/plugins/babel';
+import { resolve, dirname } from 'node:path';
+const root = new URL('../',import.meta.url).pathname;
+const files = dir => readdirSync(resolve(root,dir),{withFileTypes:true}).flatMap(e=>e.isDirectory()?files(`${dir}/${e.name}`):[`${dir}/${e.name}`]);
+const read = path => readFileSync(resolve(root,path),'utf8');
 
-const rootUrl = new URL("../", import.meta.url);
-const index = readFileSync(new URL("config/runtime-files.mjs", rootUrl), "utf8");
-const worker = readFileSync(new URL("service-worker.js", rootUrl), "utf8");
-const read = path => readFileSync(new URL(path, rootUrl), "utf8");
-
-test("tutti i moduli applicativi sono caricati e disponibili offline nello stesso ordine", () => {
-  const runtimeFiles = [
-    ...ROSTER_SOURCE_FILES.map(path => `js/${path}`),
-    ...SCOUT_SOURCE_FILES.map(path => `js/${path}`)
-  ];
-  let previousIndex = -1;
-  runtimeFiles.forEach(path => {
-    assert.equal(existsSync(new URL(path, rootUrl)), true, `${path} non esiste`);
-    const currentIndex = index.indexOf(`"${path}"`);
-    assert.ok(currentIndex > previousIndex, `${path} non rispetta l'ordine di caricamento`);
-    assert.match(worker, new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-    previousIndex = currentIndex;
-  });
+test('React importa un solo grafo di moduli ES senza runtime classico', () => {
+  assert.doesNotMatch(read('vite.config.mjs'), /runtimePlugin|virtual:/);
+  for (const path of ['src/compat','build/runtime-plugin.mjs','build/compatibility-source.mjs','config/runtime-files.mjs']) assert.equal(existsSync(resolve(root,path)),false,path);
+  for (const path of files('src').filter(p=>/\.(js|jsx|mjs)$/.test(p)&&!p.startsWith('src/pwa/'))) {
+    const source = read(path);
+    assert.doesNotMatch(source,/virtual:volleyeye|innerHTML\s*=|insertAdjacentHTML|invokeRuntime|data-react-managed/ ,path);
+    for (const node of parsers.babel.parse(source).program.body.filter(n=>n.type==='ImportDeclaration')) {
+      if (!node.source.value.startsWith('.')) continue;
+      assert.equal(existsSync(resolve(dirname(resolve(root,path)),node.source.value)),true,`${path}: ${node.source.value}`);
+    }
+  }
 });
 
-test("i fogli UI modulari mantengono ordine e disponibilità offline", () => {
-  let previousIndex = -1;
-  STYLE_SOURCE_FILES.forEach(path => {
-    assert.equal(existsSync(new URL(path, rootUrl)), true, `${path} non esiste`);
-    const currentIndex = index.indexOf(`"${path}"`);
-    assert.ok(currentIndex > previousIndex, `${path} non rispetta la cascata dichiarata`);
-    assert.match(worker, new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-    previousIndex = currentIndex;
-  });
+test('le librerie di dominio esportano API native senza namespace del browser', () => {
+  for (const path of files('src/domain')) {
+    const source = read(path);
+    assert.match(source,/export /,path);
+    assert.doesNotMatch(source,/\b(?:window|document)\b|VolleyEye\s*\.|reactManaged/,path);
+  }
 });
 
-test("nessun modulo ricrea i monoliti rimossi", () => {
-  [...ROSTER_SOURCE_FILES, ...SCOUT_SOURCE_FILES].forEach(path => {
-    const lines = read(`js/${path}`).split("\n").length;
-    assert.ok(lines <= 1500, `${path} ha ${lines} righe`);
-  });
-  STYLE_SOURCE_FILES.forEach(path => {
-    const lines = read(path).split("\n").length;
-    assert.ok(lines <= 1800, `${path} ha ${lines} righe`);
-  });
+test('la build Pages include app ed export React e genera il precache dagli asset emessi', () => {
+  assert.match(read('vite.config.mjs'),/\/VolleyEye\//);
+  assert.match(read('build/analysis-export.mjs'),/src\/main\.jsx/);
+  assert.match(read('build/static-assets-plugin.mjs'),/Object\.keys\(bundle\)/);
+  assert.match(read('.github/workflows/pages.yml'),/path: dist/);
+  assert.match(read('src/main.jsx'),/useEffect\(/);
+  assert.match(read('src/components/ui/TabPanel.jsx'),/useViewStore/);
 });
-
-test("il flusso di gioco ha un modulo identificabile e isolato dall'entrypoint", () => {
-  const entrypoint = read("js/scout-ui.js");
-  const flow = read("js/scout/live/game-flow.js");
-  assert.match(flow, /function computeTwoTeamFlowFromEvent/);
-  assert.match(flow, /function getAutoFlowState/);
-  assert.match(flow, /function getPredictedSkillIdForScope/);
-  assert.doesNotMatch(entrypoint, /function getAutoFlowState/);
-});
-
-test("il bootstrap orchestra moduli di binding senza ricreare una init monolitica", () => {
-  const bootstrap = read("js/scout/core/bootstrap.js");
-  assert.ok(bootstrap.split("\n").length < 80);
-  assert.match(bootstrap, /initializeApplicationState\(\)/);
-  assert.match(bootstrap, /bindRosterAndArchiveControls\(\)/);
-  assert.match(bootstrap, /bindScoutSettingsControls\(\)/);
-  assert.match(bootstrap, /bindVideoControls\(\)/);
-  assert.match(bootstrap, /finalizeApplicationBootstrap\(context\)/);
-});
-
-test("le API condivise usano un solo namespace senza alias globali legacy", () => {
-  const shared = [
-    "js/shared/lineup-core.js",
-    "js/shared/auto-role.js",
-    "js/shared/state-isolation.js",
-    "js/shared/team-ui.js",
-    "js/shared/roster-manager.js",
-    "js/match-settings.js",
-    "js/opponent-settings.js"
-  ].map(read).join("\n");
-  assert.match(shared, /VolleyEye\.lineup/);
-  assert.match(shared, /VolleyEye\.stateIsolation/);
-  assert.match(shared, /VolleyEye\.roster/);
-  assert.doesNotMatch(shared, /windowObj\.(?:LineupCore|AutoRole|TeamUI|RosterManager|OpponentSettings)\s*=/);
-  assert.doesNotMatch(shared, /windowObj\.createMatchSettings\s*=/);
-  const runtime = read("js/roster-lineup.js") + readScoutSourceForGlobalGuard();
-  assert.doesNotMatch(
-    runtime,
-    /window\.(?:buildAutoRolePermutation|applyPhasePermutation|setGlobalModalState|hasUsableMatch|createNewMatchFromPrompt|_closeSkillModal)\s*=/
-  );
-});
-
-function readScoutSourceForGlobalGuard() {
-  return SCOUT_SOURCE_FILES.map(path => read(`js/${path}`)).join("\n");
-}

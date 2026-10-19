@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve, join } from "node:path";
 import { createHash } from "node:crypto";
-import { readCompatibilitySources } from "./compatibility-source.mjs";
+import { buildAnalysisExport } from "./analysis-export.mjs";
 
 export function staticAssetsPlugin() {
   let config;
@@ -21,16 +21,18 @@ export function staticAssetsPlugin() {
       },
     },
     configureServer(server) {
-      server.middlewares.use((request, response, next) => {
-        if (request.url?.split("?")[0] !== "/analysis-runtime.js") return next();
-        response.setHeader("Content-Type", "text/javascript");
-        response.end(readCompatibilitySources(config.root, { includeVersion: true }));
+      server.middlewares.use(async (request, response, next) => {
+        if (request.url?.split("?")[0] !== "/analysis-react.js") return next();
+        try {
+          response.setHeader("Content-Type", "text/javascript");
+          response.end(await buildAnalysisExport(config.root));
+        } catch (error) { next(error); }
       });
     },
     // post-order ensures Vite has emitted index.html and all lazy chunks before precaching.
     generateBundle: {
       order: "post",
-      handler(_, bundle) {
+      async handler(_, bundle) {
         const assets = [];
         const addAsset = (fileName, source) => {
           this.emitFile({ type: "asset", fileName, source });
@@ -55,8 +57,8 @@ export function staticAssetsPlugin() {
         ])
           addAsset(path, readFileSync(resolve(config.root, path)));
         addAsset(
-          "analysis-runtime.js",
-          readCompatibilitySources(config.root, { includeVersion: true }),
+          "analysis-react.js",
+          await buildAnalysisExport(config.root),
         );
         const hash = createHash("sha256");
         for (const item of Object.values(bundle).sort((a, b) =>

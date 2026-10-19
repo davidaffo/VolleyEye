@@ -84,10 +84,8 @@
     left: auto;
     transform: translateX(105%);
   }
-  body.drawer-menu-open .scout-col-left {
-    transform: translateX(0);
-  }
-  body.drawer-log-open .scout-col-right {
+  body.drawer-menu-open .scout-col-left,
+body.drawer-log-open .scout-col-right {
     transform: translateX(0);
   }
   .drawer-close {
@@ -181,9 +179,7 @@ body.force-mobile .scout-col-right {
   left: auto;
   transform: translateX(105%);
 }
-body.force-mobile.drawer-menu-open .scout-col-left {
-  transform: translateX(0);
-}
+body.force-mobile.drawer-menu-open .scout-col-left,
 body.force-mobile.drawer-log-open .scout-col-right {
   transform: translateX(0);
 }

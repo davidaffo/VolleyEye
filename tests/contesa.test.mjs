@@ -1,11 +1,11 @@
 import { JSDOM } from "jsdom";
 import { readAppHtml } from './helpers/app-html.mjs';
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import test from "node:test";
 import vm from "node:vm";
 
-const lifecycle = readFileSync(new URL("../js/scout/core/app-lifecycle.js", import.meta.url), "utf8");
+const lifecycle = readFileSync(new URL("../src/features/core/app-lifecycle.js", import.meta.url), "utf8");
 const source = lifecycle.slice(
   lifecycle.indexOf("function captureScoutActionSnapshot"),
   lifecycle.indexOf("function deleteEventByKey")
@@ -98,6 +98,6 @@ test("il tasto rosso Contesa precede Annulla ultimo sulla rete", () => {
   assert.equal(button.textContent, "Contesa");
   assert.equal(button.nextElementSibling.id, "btn-undo");
   dom.window.close();
-  const bindings = readFileSync(new URL("../js/scout/core/bindings-data.js", import.meta.url), "utf8");
-  assert.match(bindings, /elBtnContesa\.addEventListener\("click", undoContestedRally\)/);
+  const bindings = readFileSync(new URL("../src/components/AppActions.jsx", import.meta.url), "utf8");
+  assert.match(bindings, /"btn-contesa": "undoContestedRally"/);
 });

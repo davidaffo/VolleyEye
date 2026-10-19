@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import test from "node:test";
 import { readScoutSource } from "./helpers/scout-source.mjs";
 
@@ -9,7 +9,7 @@ const globals = readFileSync(new URL("../js/globals.js", import.meta.url), "utf8
 test("il resize della finestra usa un solo coordinatore", () => {
   const combined = `${globals}\n${scout}`;
   assert.equal(
-    (combined.match(/window\.addEventListener\(["']resize["']/g) || []).length,
+    (combined.match(/listenRuntime\(window, ["']resize["']/g) || []).length,
     1
   );
   assert.match(scout, /function scheduleViewportLayoutUpdate\(\)/);
@@ -22,7 +22,7 @@ test("il campo viene ricostruito soltanto al cambio desktop mobile", () => {
     scout.indexOf("function flushViewportLayoutUpdate"),
     scout.indexOf("function scheduleViewportLayoutUpdate")
   );
-  assert.match(flush, /if \(compactModeChanged && typeof renderPlayers === "function"\)/);
+  assert.match(flush, /if \(compactModeChanged\)/);
   assert.doesNotMatch(flush, /renderPlayers\(\);[\s\S]*renderPlayers\(\);/);
 });
 

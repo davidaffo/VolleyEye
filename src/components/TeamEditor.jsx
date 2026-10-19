@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { RotationControls } from './ui/RotationControls.jsx';
+import { useLineupInteractions } from "../hooks/useLineupInteractions.js";
+import { LineupSlot, LineupChip } from "./ui/LineupPlayer.jsx";
+
+import { useViewStore } from "../hooks/useViewStore.js";
+import { useEffect, useState } from "react";
 import { teamEditorStore } from "../state/team-editor-store.mjs";
-import { invokeRuntimeEvent } from "../compat/runtime.js";
 function useEditor() {
-  return useSyncExternalStore(
-    teamEditorStore.subscribe,
-    teamEditorStore.getSnapshot,
-    teamEditorStore.getSnapshot,
-  );
+  return useViewStore(teamEditorStore);
 }
 function act(callback, ...args) {
   try {
@@ -44,39 +44,19 @@ function PlayerRow({ player, liveEdit }) {
       }
       data-player-id={player.id}
     >
-      <td>
-        <input
-          className="team-manager-input"
-          type="number"
-          min="0"
-          max="99"
-          value={number}
-          onChange={(event) => setNumber(event.target.value)}
-          onBlur={() => {
+      <RosterInputCell type="number"
+min="0"
+max="99"
+value={number}
+onBlur={() => {
             if (number !== (player.number || "")) act(player.onNumber, number);
-          }}
-        />
-      </td>
-      <td>
-        <input
-          className="team-manager-input"
-          type="text"
-          placeholder="Cognome"
-          value={last}
-          onChange={(event) => setLast(event.target.value)}
-          onBlur={nameChanged}
-        />
-      </td>
-      <td>
-        <input
-          className="team-manager-input"
-          type="text"
-          placeholder="Nome"
-          value={first}
-          onChange={(event) => setFirst(event.target.value)}
-          onBlur={nameChanged}
-        />
-      </td>
+          }} onChange={setNumber} />
+      <RosterInputCell placeholder="Cognome"
+value={last}
+onBlur={nameChanged} onChange={setLast} />
+      <RosterInputCell placeholder="Nome"
+value={first}
+onBlur={nameChanged} onChange={setFirst} />
       <td>
         <div className="team-manager-photo-cell">
           <button
@@ -147,7 +127,7 @@ function PlayerRow({ player, liveEdit }) {
 export function TeamEditorTable() {
   const view = useEditor();
   return (
-    <tbody id="team-manager-body" data-react-managed="true">
+    <tbody id="team-manager-body">
       {view.players.map((player) => (
         <PlayerRow key={player.id} player={player} liveEdit={view.liveEdit} />
       ))}
@@ -156,94 +136,28 @@ export function TeamEditorTable() {
 }
 export function TeamDefaultLineup() {
   const view = useEditor();
-  const root = useRef(null),
-    drag = useRef("");
-  useEffect(() => {
-    const element = root.current;
-    const start = (event) => {
-      const target = event.target.closest(
-        ".default-lineup-slot,.default-lineup-chip",
-      );
-      if (!target || !element.contains(target) || !target.dataset.playerName)
-        return;
-      const index = target.classList.contains("default-lineup-slot")
-        ? Number(target.dataset.slotIndex)
-        : null;
-      invokeRuntimeEvent(
-        "handleDefaultLineupTouchStart",
-        event,
-        target.dataset.playerName,
-        index,
-      );
-    };
-    const end = (event) => {
-      const target = event.target.closest(".default-lineup-slot");
-      if (target && element.contains(target))
-        invokeRuntimeEvent(
-          "finalizeDefaultLineupTouch",
-          event,
-          Number(target.dataset.slotIndex),
-        );
-    };
-    element.addEventListener("touchstart", start, { passive: false });
-    element.addEventListener("touchend", end, { passive: false });
-    return () => {
-      element.removeEventListener("touchstart", start);
-      element.removeEventListener("touchend", end);
-    };
-  }, []);
-  const begin = (event, name) => {
-    drag.current = name;
-    event.dataTransfer.setData("text/plain", name);
-    event.dataTransfer.effectAllowed = "move";
-  };
+  const interactions = useLineupInteractions({
+    context: "default",
+    place: (name, index) => act(view.court.find(slot => slot.index === index).onDrop, name),
+  });
   return (
-    <div ref={root} className="team-manager-default">
+    <div ref={interactions.root} className="team-manager-default">
       <h4>Formazione di default</h4>
       <label className="default-lineup-rotation">
         <span>Rotazione iniziale</span>
-        <div className="rotation-controls default-lineup-rotation-controls">
-          <button
-            id="default-lineup-rotate-cw"
-            className="small rotate-cw"
-            type="button"
-            data-react-managed="true"
-            onClick={() => act(view.onRotate, "cw")}
-          >
-            ↺
-          </button>
-          <div className="rotation-display">
-            <select
-              id="default-lineup-rotation"
-              className="rotation-select"
-              data-react-managed="true"
-              value={view.rotation}
-              onChange={(event) => act(view.onRotation, event.target.value)}
-            >
-              {[1, 2, 3, 4, 5, 6].map((n) => (
-                <option key={n} value={n}>
-                  P{n}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button
-            id="default-lineup-rotate-ccw"
-            className="small rotate-ccw"
-            type="button"
-            data-react-managed="true"
-            onClick={() => act(view.onRotate, "ccw")}
-          >
-            ↻
-          </button>
-        </div>
+        <RotationControls
+          className="rotation-controls default-lineup-rotation-controls"
+          ids={['default-lineup-rotate-cw', 'default-lineup-rotation', 'default-lineup-rotate-ccw']}
+          value={view.rotation}
+          onChange={value => act(view.onRotation, value)}
+          onRotate={direction => act(view.onRotate, direction)}
+        />
       </label>
       <label className="default-lineup-preferred-libero">
         <span>Libero principale</span>
         <select
           id="default-lineup-preferred-libero"
           className="rotation-select"
-          data-react-managed="true"
           value={view.preferredLibero}
           disabled={!view.liberos.length}
           onChange={(event) => act(view.onLibero, event.target.value)}
@@ -259,41 +173,17 @@ export function TeamDefaultLineup() {
       <div
         id="default-lineup-grid"
         className="default-lineup-grid"
-        data-react-managed="true"
       >
         {view.court.map((slot) => (
-          <div
-            key={slot.index}
-            className={"default-lineup-slot" + (!slot.name ? " empty" : "")}
-            data-slot-index={slot.index}
-            data-position={slot.index + 1}
-            data-player-name={slot.name}
-            draggable={!!slot.name}
-            onDragStart={(event) => {
-              if (slot.name) begin(event, slot.name);
-            }}
-            onDragEnd={() => {
-              drag.current = "";
-            }}
-            onClick={() => {
+          <LineupSlot
+                key={slot.index}
+                interactions={interactions}
+                name={slot.name}
+                index={slot.index}
+                onClick={() => {
               if (slot.name) act(slot.onClear);
             }}
-            onDragOver={(event) => {
-              event.preventDefault();
-              event.currentTarget.classList.add("drop-over");
-            }}
-            onDragLeave={(event) =>
-              event.currentTarget.classList.remove("drop-over")
-            }
-            onDrop={(event) => {
-              event.preventDefault();
-              event.currentTarget.classList.remove("drop-over");
-              const name =
-                event.dataTransfer.getData("text/plain") || drag.current;
-              if (name) act(slot.onDrop, name);
-              drag.current = "";
-            }}
-          >
+              >
             <span
               className={
                 "default-lineup-name" + (slot.out ? " default-lineup-out" : "")
@@ -301,7 +191,7 @@ export function TeamDefaultLineup() {
             >
               {slot.label}
             </span>
-          </div>
+          </LineupSlot>
         ))}
       </div>
       <div className="default-lineup-bench">
@@ -311,26 +201,18 @@ export function TeamDefaultLineup() {
         <div
           id="default-lineup-bench"
           className="default-lineup-bench__list"
-          data-react-managed="true"
         >
           {view.bench.length ? (
             view.bench.map((player) => (
-              <div
+              <LineupChip
                 key={player.name}
-                className={
-                  "default-lineup-chip" +
-                  (player.out ? " default-lineup-out" : "")
-                }
-                draggable
-                data-player-name={player.name}
-                onDragStart={(event) => begin(event, player.name)}
-                onDragEnd={() => {
-                  drag.current = "";
-                }}
+                interactions={interactions}
+                name={player.name}
                 onClick={() => act(player.onChoose)}
+                className={player.out ? " default-lineup-out" : ""}
               >
                 {player.label}
-              </div>
+              </LineupChip>
             ))
           ) : (
             <div className="players-empty">Nessuna giocatrice disponibile.</div>
@@ -339,4 +221,9 @@ export function TeamDefaultLineup() {
       </div>
     </div>
   );
+}
+
+function RosterInputCell({ value, onChange, type = 'text', ...props }) {
+  return <td><input className="team-manager-input" type={type} value={value}
+    onChange={event => onChange(event.target.value)} {...props} /></td>;
 }

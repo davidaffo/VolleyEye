@@ -1,7 +1,10 @@
-import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
-import { eventTableStore } from "../state/event-table-store.mjs";
-import { invokeRuntimeEvent } from "../compat/runtime.js";
+
 import { EventControl } from "./EventControl.jsx";
+import { useViewStore } from "../hooks/useViewStore.js";
+import { useLayoutEffect, useRef, useState } from "react";
+import { eventTableStore, eventLogSummaryStore } from "../state/event-table-store.mjs";
+import { events as appEvents } from "../app/actions.mjs";
+
 function Cell({ cell }) {
   const [editor, setEditor] = useState(null),
     ref = useRef(null);
@@ -34,7 +37,7 @@ function Cell({ cell }) {
           commitOnBlur
           onDone={done}
           onFocus={(control) =>
-            invokeRuntimeEvent("registerReactEventEdit", ref.current, control)
+            appEvents.registerReactEventEdit(ref.current, control)
           }
         />
       ) : (
@@ -44,11 +47,7 @@ function Cell({ cell }) {
   );
 }
 export function EventTable({ id, className }) {
-  useSyncExternalStore(
-    eventTableStore.subscribe,
-    eventTableStore.getSnapshot,
-    eventTableStore.getSnapshot,
-  );
+  useViewStore(eventTableStore);
   const view = eventTableStore.getView(id),
     root = useRef(null),
     all = useRef(null);
@@ -57,12 +56,12 @@ export function EventTable({ id, className }) {
   ).length;
   useLayoutEffect(() => {
     if (view.contextKey)
-      invokeRuntimeEvent("bindReactEventTable", id, root.current);
+      appEvents.bindReactEventTable(id, root.current);
     if (all.current)
       all.current.indeterminate = count > 0 && count < view.rows.length;
   }, [id, view, count]);
   return (
-    <div id={id} ref={root} className={className} data-react-managed="true">
+    <div id={id} ref={root} className={className}>
       {view.empty ? (
         <table className={view.tableClass || "event-edit-table"}>
           <tbody>
@@ -180,4 +179,9 @@ export function EventTable({ id, className }) {
       )}
     </div>
   );
+}
+
+export function EventLogSummary() {
+  const view = useViewStore(eventLogSummaryStore);
+  return <div id="events-log-summary" className="events-log-summary" aria-live="polite">{view.text}</div>;
 }

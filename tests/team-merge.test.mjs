@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
-import { readFileSync } from 'node:fs';
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import { readRosterSource } from './helpers/roster-source.mjs';
 const roster = readRosterSource();
-const management = readFileSync(new URL('../js/scout/live/team-management.js', import.meta.url), 'utf8');
+const management = readFileSync(new URL('../src/features/live/team-management.js', import.meta.url), 'utf8');
 const id = n => `11111111-1111-4111-8111-${String(n).padStart(12, '0')}`;
 const player = (n, firstName, number = '') => ({ id: id(n), firstName, lastName: 'Rossi', number });
 function setup() {
@@ -30,11 +30,11 @@ function setup() {
     writes.forEach((value, key) => value === null ? storage.delete(key) : storage.set(key, value));
   } };
   vm.createContext(context);
-  vm.runInContext(roster.slice(roster.indexOf('function normalizePlayers'), roster.indexOf('function replacePlayerNameEverywhere')), context);
+  vm.runInContext(readFileSync('src/domain/player-names.js', 'utf8') + readFileSync('src/features/teams/roster-data.js', 'utf8'), context);
   vm.runInContext(roster.slice(roster.indexOf('function normalizeTeamPayload'), roster.indexOf('function saveTeamToStorage')), context);
   vm.runInContext(roster.slice(roster.indexOf('function buildPlayersDbEntry'), roster.indexOf('function isTemplatePlayerName')), context);
   vm.runInContext(management.slice(management.indexOf('function buildPlayersMergePlan'), management.indexOf('function updatePlayerPhotoInDbAndTeams')), context);
-  vm.runInContext(management.slice(management.indexOf('function buildTeamMerge'), management.indexOf('function renderTeamMergeControls')), context);
+  vm.runInContext(management.slice(management.indexOf('function buildTeamMerge')), context);
   return { context, storage };
 }
 test('merge combines roster, remaps identities and both team scopes without changing historical scoring', async () => {

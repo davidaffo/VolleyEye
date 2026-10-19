@@ -1,14 +1,14 @@
 import { readAppHtml } from './helpers/app-html.mjs';
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import test from "node:test";
 
 const html = readAppHtml();
-const lifecycle = readFileSync(new URL("../js/scout/core/app-lifecycle.js", import.meta.url), "utf8");
-const bindings = readFileSync(new URL("../js/scout/core/bindings-roster.js", import.meta.url), "utf8");
-const stateStore = readFileSync(new URL("../js/roster/core/state-store.js", import.meta.url), "utf8");
-const archive = readFileSync(new URL("../js/roster/storage/archive-actions.js", import.meta.url), "utf8");
-const matchIo = readFileSync(new URL("../js/scout/io/match-io.js", import.meta.url), "utf8");
+const lifecycle = readFileSync(new URL("../src/features/core/app-lifecycle.js", import.meta.url), "utf8");
+const bindings = readFileSync(new URL("../src/features/core/bindings-roster.js", import.meta.url), "utf8");
+const stateStore = readFileSync(new URL("../src/features/storage/state-snapshot.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/teams/core/state-store.js", import.meta.url), "utf8");
+const archive = readFileSync(new URL("../src/features/teams/storage/archive-actions.js", import.meta.url), "utf8");
+const matchIo = readFileSync(new URL("../src/features/io/match-io.js", import.meta.url), "utf8");
 
 test("la lobby separa la scelta partita dagli strumenti del match", () => {
   assert.match(html, /data-tab-target="match">Partite<\/button>/);
@@ -23,7 +23,10 @@ test("entrare e uscire dalla partita è un passaggio esplicito e persistito", ()
   assert.match(lifecycle, /state\.uiMatchSessionActive = true/);
   assert.match(lifecycle, /function exitCurrentMatch\(\)/);
   assert.match(lifecycle, /state\.uiMatchSessionActive = false/);
-  assert.match(bindings, /querySelectorAll\("\[data-exit-match\]"\)/);
+  for (const name of ["AppNavigation", "MobileNavigation"]) {
+    const navigation = readFileSync(new URL(`../src/components/layout/${name}.jsx`, import.meta.url), "utf8");
+    assert.match(navigation, /command="exitCurrentMatch"/);
+  }
   assert.match(stateStore, /uiMatchSessionActive: snapshot\.uiMatchSessionActive === true/);
 });
 

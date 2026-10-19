@@ -1,104 +1,101 @@
-import { useSyncExternalStore } from "react";
+import { ModalFrame, ModalHeader, ModalBody, ModalCloseButton } from "../ui/Modal.jsx";
+import { CommandButton } from "../ui/CommandButton.jsx";
+
+import { useViewStore } from "../../hooks/useViewStore.js";
+
 import { mobileVideoSourceStore } from "../../state/roster-import-store.mjs";
-import { invokeRuntime, invokeRuntimeEvent } from "../../compat/runtime.js";
+import { actions as appActions } from "../../app/actions.mjs";
 export function VideoMobileSourceModal() {
-  const view = useSyncExternalStore(
-      mobileVideoSourceStore.subscribe,
-      mobileVideoSourceStore.getSnapshot,
-      mobileVideoSourceStore.getSnapshot,
-    ),
+  const view = useViewStore(mobileVideoSourceStore),
     run = (command, ...args) =>
-      invokeRuntime(command, ...args).catch(console.error),
+      appActions[command]( ...args).catch(console.error),
     close = () => run("closeVideoMobileSourceModal"),
     load = () => run("loadReactMobileYoutube");
   return (
-    <div
-      id={"video-mobile-source-modal"}
-      className={
-        "skill-modal video-mobile-source-modal" + (view.open ? "" : " hidden")
-      }
-      data-react-managed="true"
-      role={"dialog"}
-      aria-modal={"true"}
-      aria-labelledby={"video-mobile-source-title"}
+    <ModalFrame
+      id="video-mobile-source-modal"
+      className="skill-modal video-mobile-source-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="video-mobile-source-title"
+      open={view.open}
+      onClose={close}
+      variant="skill"
+      backdropProps={{
+        id: "video-mobile-source-backdrop",
+      }}
+      contentProps={{
+        className: "skill-modal__content video-mobile-source-dialog",
+      }}
     >
-      <div
-        id={"video-mobile-source-backdrop"}
-        className={"skill-modal__backdrop"}
+      <ModalCloseButton
+        id="video-mobile-source-close"
         onClick={close}
-        data-react-managed="true"
-      ></div>
-      <div className={"skill-modal__content video-mobile-source-dialog"}>
-        <button
-          id={"video-mobile-source-close"}
-          onClick={close}
-          data-react-managed="true"
-          className={"skill-modal__close-abs"}
-          type={"button"}
-          aria-label={"Chiudi"}
+        className="skill-modal__close-abs"
+        type="button"
+        aria-label="Chiudi"
+      >
+        {"✕"}
+      </ModalCloseButton>
+      <ModalHeader variant="skill">
+        <h3 id="video-mobile-source-title">{"Scegli il video"}</h3>
+      </ModalHeader>
+      <ModalBody
+        variant="skill"
+        className="skill-modal__body video-mobile-source-body"
+      >
+        <p className="section-note">
+          {
+            "Carica un video dal telefono oppure incolla il link YouTube della partita."
+          }
+        </p>
+        <CommandButton
+          id="video-mobile-file-picker"
+          command="openReactLocalVideoPicker"
+          immediate
+          className="primary video-mobile-source-file"
+          type="button"
         >
-          {"✕"}
+          {"Carica dal telefono"}
+        </CommandButton>
+        <div className="video-mobile-source-divider">
+          <span>{"oppure"}</span>
+        </div>
+        <label htmlFor="video-mobile-youtube-url">{"Link YouTube"}</label>
+        <input
+          id="video-mobile-youtube-url"
+          value={view.url}
+          onChange={(event) =>
+            mobileVideoSourceStore.publish({ url: event.target.value })
+          }
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              load();
+            }
+          }}
+          type="url"
+          inputMode="url"
+          placeholder="https://youtu.be/..."
+          autoComplete="url"
+        />
+        <button
+          id="video-mobile-youtube-load"
+          onClick={load}
+          className="secondary"
+          type="button"
+        >
+          {"Usa questo link"}
         </button>
-        <div className={"skill-modal__head"}>
-          <h3 id={"video-mobile-source-title"}>{"Scegli il video"}</h3>
-        </div>
-        <div className={"skill-modal__body video-mobile-source-body"}>
-          <p className={"section-note"}>
-            {
-              "Carica un video dal telefono oppure incolla il link YouTube della partita."
-            }
-          </p>
-          <button
-            id={"video-mobile-file-picker"}
-            onClick={() => invokeRuntimeEvent("openReactLocalVideoPicker")}
-            data-react-managed="true"
-            className={"primary video-mobile-source-file"}
-            type={"button"}
-          >
-            {"Carica dal telefono"}
-          </button>
-          <div className={"video-mobile-source-divider"}>
-            <span>{"oppure"}</span>
-          </div>
-          <label htmlFor={"video-mobile-youtube-url"}>{"Link YouTube"}</label>
-          <input
-            id={"video-mobile-youtube-url"}
-            data-react-managed="true"
-            value={view.url}
-            onChange={(event) =>
-              mobileVideoSourceStore.publish({ url: event.target.value })
-            }
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                load();
-              }
-            }}
-            type={"url"}
-            inputMode={"url"}
-            placeholder={"https://youtu.be/..."}
-            autoComplete={"url"}
-          />
-          <button
-            id={"video-mobile-youtube-load"}
-            onClick={load}
-            data-react-managed="true"
-            className={"secondary"}
-            type={"button"}
-          >
-            {"Usa questo link"}
-          </button>
-          <button
-            id={"video-mobile-source-later"}
-            onClick={close}
-            data-react-managed="true"
-            className={"video-mobile-source-later"}
-            type={"button"}
-          >
-            {"Continua senza video"}
-          </button>
-        </div>
-      </div>
-    </div>
+        <button
+          id="video-mobile-source-later"
+          onClick={close}
+          className="video-mobile-source-later"
+          type="button"
+        >
+          {"Continua senza video"}
+        </button>
+      </ModalBody>
+    </ModalFrame>
   );
 }

@@ -1,15 +1,14 @@
+import { CommandButton } from "./ui/CommandButton.jsx";
+import { FileImportInput } from "./ui/FileImportInput.jsx";
+
+import { useViewStore } from "../hooks/useViewStore.js";
 import { runtimeStore } from "../state/runtime-store.mjs";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState } from "react";
 import { videoViewStore } from "../state/video-view-store.mjs";
-import { invokeRuntime, invokeRuntimeEvent } from "../compat/runtime.js";
+import { actions as appActions, events as appEvents } from "../app/actions.mjs";
 const run = (command, ...args) =>
-  invokeRuntime(command, ...args).catch(console.error);
-const useVideoView = () =>
-  useSyncExternalStore(
-    videoViewStore.subscribe,
-    videoViewStore.getSnapshot,
-    videoViewStore.getSnapshot,
-  );
+  appActions[command]( ...args).catch(console.error);
+const useVideoView = () => useViewStore(videoViewStore);
 const actions = {
   "btn-clear-video": ["clearLoadedVideo"],
   "btn-sync-first-skill": ["syncFirstSkillToVideo"],
@@ -29,24 +28,20 @@ const actions = {
 };
 export function VideoActionButton({ id, children, ...props }) {
   return (
-    <button
+    <CommandButton
       {...props}
       id={id}
-      data-react-managed="true"
-      onClick={() => run(...actions[id])}
+      command={actions[id][0]}
+      args={actions[id].slice(1)}
     >
       {children}
-    </button>
+    </CommandButton>
   );
 }
 export function VideoSourceControls({ scout = false }) {
   const view = useVideoView(),
     suffix = scout ? "-scout" : "";
-  const controls = useSyncExternalStore(
-    runtimeStore.subscribe,
-    runtimeStore.getSnapshot,
-    runtimeStore.getSnapshot,
-  );
+  const controls = useViewStore(runtimeStore);
   const [url, setUrl] = useState(view.youtubeUrl);
   useEffect(() => setUrl(view.youtubeUrl), [view.youtubeUrl]);
   const load = () => run("handleYoutubeUrlLoad", url);
@@ -56,27 +51,21 @@ export function VideoSourceControls({ scout = false }) {
         id={"video-file-picker" + suffix}
         className="file-btn"
         htmlFor={"video-file-input" + suffix}
-        data-react-managed="true"
         onClick={(event) => {
           if (typeof window.showOpenFilePicker === "function") {
             event.preventDefault();
-            invokeRuntimeEvent("openReactVideoPicker", scout);
+            appEvents.openReactVideoPicker(scout);
           }
         }}
       >
         Carica video
       </label>
-      <input
+      <FileImportInput
         id={"video-file-input" + suffix}
-        type="file"
         accept="video/*"
         hidden
-        data-react-managed="true"
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file) run("handleVideoFileChange", file);
-          event.target.value = "";
-        }}
+        clearAfter
+        onFile={(file) => run("handleVideoFileChange", file)}
       />
       {!scout && (
         <>
@@ -97,7 +86,6 @@ export function VideoSourceControls({ scout = false }) {
             <input
               id="video-playbyplay-toggle"
               type="checkbox"
-              data-react-managed="true"
               checked={view.playByPlay}
               onChange={(event) =>
                 run("changeReactVideoPlayByPlay", event.target.checked)
@@ -112,7 +100,6 @@ export function VideoSourceControls({ scout = false }) {
           id={"youtube-url-input" + suffix}
           type="url"
           placeholder="https://youtu.be/..."
-          data-react-managed="true"
           value={url}
           onChange={(event) => setUrl(event.target.value)}
           onKeyDown={(event) => {
@@ -126,7 +113,6 @@ export function VideoSourceControls({ scout = false }) {
           id={"btn-load-youtube" + suffix}
           disabled={scout && !!controls.scoutControlsDisabled}
           className="secondary"
-          data-react-managed="true"
           onClick={load}
         >
           Usa YouTube
@@ -142,7 +128,6 @@ export function VideoMobileSourceButton() {
       id="video-mobile-source-open"
       className="secondary video-mobile-source-open"
       type="button"
-      data-react-managed="true"
       onClick={() => run("openVideoMobileSourceModal")}
     >
       {view.hasSource ? "Cambia video" : "Scegli video"}
@@ -154,7 +139,6 @@ export function VideoMobileNavigation({ direction, ...props }) {
   return (
     <button
       {...props}
-      data-react-managed="true"
       disabled={direction < 0 ? view.previousDisabled : view.nextDisabled}
       onClick={() => run("selectVideoMobileEvent", direction)}
     />
@@ -169,7 +153,7 @@ export function VideoViewText({ kind, ...props }) {
         ? `${view.resultCount} ${view.resultCount === 1 ? "azione trovata" : "azioni trovate"}`
         : String(view.filterCount);
   return (
-    <div {...props} data-react-managed="true">
+    <div {...props}>
       {text}
     </div>
   );
@@ -180,7 +164,6 @@ export function VideoFilterCount() {
     <span
       id="video-mobile-filter-count"
       className="video-mobile-filter-count"
-      data-react-managed="true"
     >
       {view.filterCount}
     </span>
@@ -193,7 +176,6 @@ export function VideoOverlay() {
       id="video-analysis-overlay"
       className={"video-overlay" + (view.overlayVisible ? "" : " hidden")}
       aria-hidden="true"
-      data-react-managed="true"
     >
       <div id="video-overlay-set" className="video-overlay-line">
         {view.overlay}
@@ -212,9 +194,7 @@ export function VideoElement({ scout = false }) {
   }, [view.localSource]);
   // Seeking and playback remain media effects; source and visibility belong to React.
   const update = (event) =>
-    invokeRuntimeEvent(
-      "updateVideoPlaybackSnapshot",
-      event.currentTarget.currentTime,
+    appEvents.updateVideoPlaybackSnapshot(event.currentTarget.currentTime,
     );
   return (
     <video
@@ -224,11 +204,20 @@ export function VideoElement({ scout = false }) {
       src={view.localSource || undefined}
       style={{ display: view.youtubeId ? "none" : "block" }}
       preload="metadata"
-      data-react-managed="true"
       onTimeUpdate={update}
       onPause={update}
       onSeeked={update}
       onEnded={update}
     />
   );
+}
+
+export function YouTubeFrame({ scout = false }) {
+  return <>
+    <iframe id={'youtube-frame' + (scout ? '-scout' : '')} className="youtube-frame"
+      title="YouTube player" tabIndex="-1"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowFullScreen={true} />
+    <div className="youtube-focus-guard" data-youtube-guard="" />
+  </>;
 }

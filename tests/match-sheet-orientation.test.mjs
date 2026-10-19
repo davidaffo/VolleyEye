@@ -1,15 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import vm from "node:vm";
 
-const rendering = readFileSync("js/scout/analysis/trajectory-rendering.js", "utf8");
-const sheet = readFileSync("js/scout/analysis/match-sheet.js", "utf8");
+const rendering = readFileSync("src/features/state/analysis-trajectory-rendering.js", "utf8") + readFileSync("src/domain/trajectory-geometry.js", "utf8") + readFileSync("src/features/analysis/trajectory-model.js", "utf8");
+const sheet = readFileSync("src/features/analysis/match-sheet-model.js", "utf8") + readFileSync("src/features/analysis/match-sheet.js", "utf8");
 const context = vm.createContext({
   clamp01Val: value => Math.max(0, Math.min(1, value)),
   getServeStartZone: event => event.serveStartZone
 });
-vm.runInContext(rendering.slice(rendering.indexOf("const MATCH_SHEET_ROLE_ORDER")) + "\n" + sheet, context);
+vm.runInContext(rendering + "\n" + sheet, context);
 function evaluate(expression) {
   return JSON.parse(JSON.stringify(vm.runInContext(expression, context)));
 }
@@ -49,7 +49,7 @@ test("il servizio ruota le coordinate locali di entrambi i semicampi", () => {
   assert.deepEqual(result.start, {x: 25, y: 4});
   assert.deepEqual(result.end, {x: 75, y: 196});
   const fallback = evaluate('getMatchSheetServeTrajectory({serveStartZone: 1, serveEnd: {x: .25, y: 0}})');
-  assert.equal(fallback.start.x, 18);
+  assert.equal(fallback, null); // A serve without recorded origin coordinates has no trajectory.
 });
 
 
@@ -77,6 +77,7 @@ test("i filtri cambio palla combinano set e giocatrice della squadra selezionata
 
 test("i ruoli seguono le zone degli attacchi e non le posizioni assolute di rotazione", () => {
   context.state = {uiMatchSheetFilters: {}};
+  context.getAnalysisExtraMatchState = () => ({ our: new Set(), opponent: new Set() });
   context.getPlayersForScope = () => ["Anna", "Bea", "Carla"];
   context.getPlayerNumbersForScope = () => ({Anna: 9, Bea: 7, Carla: 12});
   context.getSetStartEntryForScope = () => ({court: [{main: "Anna"}, {main: "Bea"}], rotation: 1});

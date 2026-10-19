@@ -1,21 +1,18 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import test from "node:test";
 import vm from "node:vm";
 
 const context = {};
 context.self = context;
 context.window = context;
+context.VolleyEye = {};
 vm.runInNewContext(
-  readFileSync(new URL("../js/shared/namespace.js", import.meta.url), "utf8"),
+  readFileSync(new URL("../src/domain/lineup.js", import.meta.url), "utf8"),
   context
 );
 vm.runInNewContext(
-  readFileSync(new URL("../js/shared/lineup-core.js", import.meta.url), "utf8"),
-  context
-);
-vm.runInNewContext(
-  readFileSync(new URL("../js/shared/auto-role.js", import.meta.url), "utf8"),
+  readFileSync(new URL("../src/domain/auto-role.js", import.meta.url), "utf8"),
   context
 );
 

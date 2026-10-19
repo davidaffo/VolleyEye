@@ -1,12 +1,11 @@
-import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import { ChartTicks } from './ui/ChartTicks.jsx';
+
+import { useViewStore } from "../hooks/useViewStore.js";
+import { useLayoutEffect, useRef, useState } from "react";
 import { setTrendStore } from "../state/roster-import-store.mjs";
-import { invokeRuntime } from "../compat/runtime.js";
+import { actions as appActions } from "../app/actions.mjs";
 function useView() {
-  return useSyncExternalStore(
-    setTrendStore.subscribe,
-    setTrendStore.getSnapshot,
-    setTrendStore.getSnapshot,
-  );
+  return useViewStore(setTrendStore);
 }
 export function SetTrendCard({ card, selection }) {
   const c = card,
@@ -54,19 +53,7 @@ export function SetTrendCard({ card, selection }) {
             ry="12"
           />
           <g className="set-trend__grid">
-            {c.yTicks.map((tick, index) => (
-              <g key={index} className="set-trend__tick">
-                <line
-                  x1={c.pad.left}
-                  y1={tick.y}
-                  x2={c.width - c.pad.right}
-                  y2={tick.y}
-                />
-                <text x={c.pad.left - 8} y={tick.textY} textAnchor="end">
-                  {tick.label}
-                </text>
-              </g>
-            ))}
+            <ChartTicks ticks={c.yTicks} model={c} className="set-trend__tick" />
           </g>
           <line
             className="set-trend__zero"
@@ -120,7 +107,7 @@ export function SetTrendCard({ card, selection }) {
                 onMouseEnter={() => setHover(point)}
                 onMouseLeave={() => setHover(null)}
                 onClick={() =>
-                  invokeRuntime("selectReactSetTrendPoint", point.key).catch(
+                  appActions.selectReactSetTrendPoint(point.key).catch(
                     console.error,
                   )
                 }
@@ -180,7 +167,6 @@ export function SetTrendGrid() {
     <div
       id="set-trend-grid"
       className="set-trend-grid"
-      data-react-managed="true"
     >
       {view.cards.length ? (
         view.cards.map((card, index) => (
@@ -200,7 +186,6 @@ export function SetTrendDetail() {
     <div
       id="set-trend-detail"
       className="set-trend-detail"
-      data-react-managed="true"
     >
       {detail ? (
         <>

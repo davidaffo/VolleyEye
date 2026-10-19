@@ -1,8 +1,13 @@
-import { useEffect, useRef, useSyncExternalStore } from "react";
+import { RotationControls } from './ui/RotationControls.jsx';
+import { useLineupInteractions } from "../hooks/useLineupInteractions.js";
+import { LineupSlot, LineupChip } from "./ui/LineupPlayer.jsx";
+
+import { useViewStore } from "../hooks/useViewStore.js";
+import { useRef } from "react";
 import { nextSetStore } from "../state/next-set-store.mjs";
-import { invokeRuntime, invokeRuntimeEvent } from "../compat/runtime.js";
+import { actions as appActions } from "../app/actions.mjs";
 function run(command, ...args) {
-  return invokeRuntime(command, ...args).catch((error) => {
+  return appActions[command]( ...args).catch((error) => {
     console.error("Preparazione set non riuscita", error);
     window.alert(error.message);
   });
@@ -18,39 +23,14 @@ const emptyTeam = {
 };
 function NextSetTeam({ scope, team, visible, drag }) {
   const suffix = scope === "opponent" ? "opp" : "our";
-  const root = useRef(null);
-  useEffect(() => {
-    const element = root.current;
-    const onTouchStart = (event) => {
-      const target = event.target.closest(".lineup-slot, .lineup-chip");
-      if (!target || !element.contains(target)) return;
-      const name = target.dataset.playerName;
-      if (!name) return;
-      const index = target.classList.contains("lineup-slot")
-        ? Number(target.dataset.posIndex)
-        : null;
-      if (index === null && !window.matchMedia("(pointer: coarse)").matches)
-        return;
-      invokeRuntimeEvent(
-        "handleLineupTouchStart",
-        event,
-        name,
-        index,
-        "next-set",
-        scope,
-      );
-    };
-    element.addEventListener("touchstart", onTouchStart, { passive: false });
-    return () => element.removeEventListener("touchstart", onTouchStart);
-  }, [scope]);
-  const beginDrag = (event, name, index) => {
-    drag.current = { name, index, scope };
-    event.dataTransfer.setData("text/plain", name);
-    event.dataTransfer.effectAllowed = "move";
-  };
+  const interactions = useLineupInteractions({
+    context: "next-set", scope, drag,
+    place: (name, index) => run("changeNextSetPlayer", scope, index, name),
+    move: (from, to) => run("moveNextSetSlot", scope, from, to),
+  });
   return (
     <div
-      ref={root}
+      ref={interactions.root}
       className={"next-set-lineup-block" + (visible ? "" : " hidden")}
       id={"next-set-block-" + suffix}
     >
@@ -58,48 +38,17 @@ function NextSetTeam({ scope, team, visible, drag }) {
         <h4 id={"next-set-team-" + suffix}>
           {team.name || (scope === "our" ? "Squadra nostra" : "Avversarie")}
         </h4>
-        <div className="rotation-controls next-set-rotation-controls">
-          <button
-            id={"next-set-rotate-cw-" + suffix}
-            className="small rotate-cw"
-            type="button"
-            data-react-managed="true"
-            onClick={() => run("rotateNextSetCourt", scope, "cw")}
-          >
-            ↺
-          </button>
-          <div className="rotation-display">
-            <select
-              id={"next-set-rotation-select-" + suffix}
-              className="rotation-select"
-              data-react-managed="true"
-              value={team.rotation}
-              onChange={(event) =>
-                run("setNextSetRotation", scope, event.target.value)
-              }
-            >
-              {[1, 2, 3, 4, 5, 6].map((n) => (
-                <option key={n} value={n}>
-                  P{n}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button
-            id={"next-set-rotate-ccw-" + suffix}
-            className="small rotate-ccw"
-            type="button"
-            data-react-managed="true"
-            onClick={() => run("rotateNextSetCourt", scope, "ccw")}
-          >
-            ↻
-          </button>
-        </div>
+        <RotationControls
+          className="rotation-controls next-set-rotation-controls"
+          ids={['next-set-rotate-cw-' + suffix, 'next-set-rotation-select-' + suffix, 'next-set-rotate-ccw-' + suffix]}
+          value={team.rotation}
+          onChange={value => run('setNextSetRotation', scope, value)}
+          onRotate={direction => run('rotateNextSetCourt', scope, direction)}
+        />
         <button
           id={"next-set-default-" + suffix}
           type="button"
           className="secondary small"
-          data-react-managed="true"
           disabled={!team.hasDefaults}
           onClick={() => run("restoreNextSetDefaults", scope)}
         >
@@ -111,71 +60,29 @@ function NextSetTeam({ scope, team, visible, drag }) {
         className="lineup-court-grid next-set-court-grid"
       >
         {team.court.map((slot, index) => (
-          <div
-            key={index}
-            className={
-              "lineup-slot pos-" + (index + 1) + (!slot.main ? " empty" : "")
-            }
-            style={{ gridArea: "pos" + (index + 1) }}
-            data-pos={"P" + (index + 1)}
-            data-pos-index={index}
-            data-lineup-context="next-set"
-            data-team-scope={scope}
-            data-player-name={slot.main}
-            draggable={!!slot.main}
-            onDragStart={(event) => beginDrag(event, slot.main, index)}
-            onDragEnd={() => {
-              drag.current = null;
-            }}
-            onDragOver={(event) => {
-              event.preventDefault();
-              event.currentTarget.classList.add("drop-over");
-            }}
-            onDragLeave={(event) =>
-              event.currentTarget.classList.remove("drop-over")
-            }
-            onDrop={(event) => {
-              event.preventDefault();
-              event.currentTarget.classList.remove("drop-over");
-              const transfer = drag.current;
-              const name =
-                event.dataTransfer.getData("text/plain") ||
-                transfer?.name ||
-                "";
-              if (!name || (transfer?.scope && transfer.scope !== scope))
-                return;
-              if (
-                typeof transfer?.index === "number" &&
-                transfer.index !== index
-              )
-                run("moveNextSetSlot", scope, transfer.index, index);
-              else run("changeNextSetPlayer", scope, index, name);
-              drag.current = null;
-            }}
-            onClick={() => {
+          <LineupSlot
+                key={index}
+                interactions={interactions}
+                name={slot.main}
+                index={index}
+                onClick={() => {
               if (slot.main) run("changeNextSetPlayer", scope, index, "");
             }}
-          >
+              >
             <div className="slot-body">
               <div className="slot-name">{slot.label}</div>
             </div>
-          </div>
+          </LineupSlot>
         ))}
       </div>
       <div className="next-set-bench">
         <div id={"next-set-bench-" + suffix} className="lineup-bench-chips">
           {team.bench.length ? (
             team.bench.map((player) => (
-              <div
+              <LineupChip
                 key={player.name}
-                className="lineup-chip"
-                draggable
-                data-player-name={player.name}
-                data-lineup-context="next-set"
-                onDragStart={(event) => beginDrag(event, player.name, null)}
-                onDragEnd={() => {
-                  drag.current = null;
-                }}
+                interactions={interactions}
+                name={player.name}
                 onClick={() => {
                   const index = team.court.findIndex((slot) => !slot.main);
                   run(
@@ -187,7 +94,7 @@ function NextSetTeam({ scope, team, visible, drag }) {
                 }}
               >
                 <span>{player.label}</span>
-              </div>
+              </LineupChip>
             ))
           ) : (
             <div className="bench-empty">Nessuna riserva disponibile.</div>
@@ -201,7 +108,6 @@ function NextSetTeam({ scope, team, visible, drag }) {
         <select
           id={"next-set-preferred-libero-" + suffix}
           className="rotation-select"
-          data-react-managed="true"
           value={team.preferredLibero}
           disabled={!team.liberos.length}
           onChange={(event) =>
@@ -220,11 +126,7 @@ function NextSetTeam({ scope, team, visible, drag }) {
   );
 }
 export function NextSetPreparation() {
-  const view = useSyncExternalStore(
-    nextSetStore.subscribe,
-    nextSetStore.getSnapshot,
-    nextSetStore.getSnapshot,
-  );
+  const view = useViewStore(nextSetStore);
   const drag = useRef(null);
   const first = view.setNum === 1;
   const names = {
@@ -236,7 +138,6 @@ export function NextSetPreparation() {
       id="next-set-inline"
       className={"next-set-inline" + (view.open ? "" : " hidden")}
       aria-hidden={!view.open}
-      data-react-managed="true"
     >
       <div className="next-set-inline__card">
         <div className="next-set-inline__head">
@@ -244,7 +145,6 @@ export function NextSetPreparation() {
           <button
             id="next-set-close"
             className={"pill-remove" + (first ? " hidden" : "")}
-            data-react-managed="true"
             type="button"
             aria-label="Chiudi"
             onClick={() => run("closeNextSetModal")}
@@ -280,7 +180,6 @@ export function NextSetPreparation() {
             <input
               type="checkbox"
               id="next-set-swap-court"
-              data-react-managed="true"
               checked={view.swapCourt}
               onChange={(event) =>
                 run("changeNextSetOption", "swapCourt", event.target.checked)
@@ -299,7 +198,6 @@ export function NextSetPreparation() {
                   type="radio"
                   name="next-set-side"
                   id={"next-set-side-" + suffix}
-                  data-react-managed="true"
                   checked={suffix === "opp" ? view.swapCourt : !view.swapCourt}
                   onChange={() =>
                     run("changeNextSetOption", "swapCourt", suffix === "opp")
@@ -317,7 +215,6 @@ export function NextSetPreparation() {
                   type="radio"
                   name="next-set-serve"
                   id={"next-set-serve-" + suffix}
-                  data-react-managed="true"
                   checked={suffix === "our" ? view.isServing : !view.isServing}
                   onChange={() =>
                     run("changeNextSetOption", "isServing", suffix === "our")
@@ -331,7 +228,6 @@ export function NextSetPreparation() {
             <button
               id="next-set-start"
               className="primary"
-              data-react-managed="true"
               onClick={() => run("applyNextSetDraft")}
             >
               Avvia set
@@ -339,7 +235,6 @@ export function NextSetPreparation() {
             <button
               id="next-set-cancel"
               className={"secondary" + (first ? " hidden" : "")}
-              data-react-managed="true"
               onClick={() => run("closeNextSetModal")}
             >
               Annulla

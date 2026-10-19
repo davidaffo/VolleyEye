@@ -1,13 +1,11 @@
-import { useSyncExternalStore } from "react";
+
+import { useViewStore } from "../hooks/useViewStore.js";
+
 import { runtimeStore } from "../state/runtime-store.mjs";
-import { invokeRuntime } from "../compat/runtime.js";
+import { actions as appActions } from "../app/actions.mjs";
 
 function useRuntimeView() {
-  return useSyncExternalStore(
-    runtimeStore.subscribe,
-    runtimeStore.getSnapshot,
-    runtimeStore.getSnapshot,
-  );
+  return useViewStore(runtimeStore);
 }
 
 function reportActionError(error) {
@@ -25,11 +23,10 @@ export function TabButton({ className, children, ...props }) {
     .join(" ");
   return (
     <button
-      data-react-managed="true"
       className={base + (active ? " active" : "")}
       {...props}
       onClick={() =>
-        invokeRuntime("navigateToTab", target).catch(reportActionError)
+        appActions.navigateToTab(target).catch(reportActionError)
       }
     >
       {children}
@@ -42,12 +39,11 @@ export function ThemeButton({ className, children, ...props }) {
   const choice = props["data-theme-choice"];
   const active = snapshot.theme === choice;
   const choose = async () => {
-    await invokeRuntime("applyTheme", choice);
-    await invokeRuntime("saveState");
+    await appActions.applyTheme(choice);
+    await appActions.saveState();
   };
   return (
     <button
-      data-react-managed="true"
       {...props}
       className={className + (active ? " active" : "")}
       aria-pressed={active}
@@ -75,9 +71,8 @@ export function AggTabButton({ className, children, ...props }) {
     <button
       {...props}
       className={base + (active ? " active" : "")}
-      data-react-managed="true"
       onClick={() =>
-        invokeRuntime("setActiveAggTab", target).catch(reportActionError)
+        appActions.setActiveAggTab(target).catch(reportActionError)
       }
     >
       {children}

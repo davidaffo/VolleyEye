@@ -1,27 +1,28 @@
 import { readAppHtml } from './helpers/app-html.mjs';
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import test from "node:test";
 import vm from "node:vm";
 import { JSDOM } from "jsdom";
 import { readScoutSource } from "./helpers/scout-source.mjs";
 import { readRosterSource } from "./helpers/roster-source.mjs";
 
+import { readRuntimeSource } from "./helpers/react-runtime.mjs";
+import { sourceFunctions } from "./helpers/source-functions.mjs";
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const html = readAppHtml();
 const scout = readScoutSource();
 const roster = readRosterSource();
 function load(context, source, names) {
   for (const name of names) {
-    const start = source.indexOf(`function ${name}(`);
-    assert.ok(start >= 0, name);
-    const tail = source.slice(start);
-    const next = tail.slice(1).search(/^function /m);
-    vm.runInContext(next < 0 ? tail : tail.slice(0, next + 1), context);
+    const body = sourceFunctions(source, [name]);
+    assert.ok(body, name);
+    vm.runInContext(body, context);
   }
 }
+
 function setup() {
-  const dom = new JSDOM(html);
+  const dom = new JSDOM(html, {runScripts: "outside-only"});
   const state = {
     useOpponentTeam: true, predictiveSkillFlow: true, isServing: true,
     players: ["Omonima", "Casa 2", "Casa 3", "Casa 4", "Casa 5", "Casa 6", "Riserva casa"],
@@ -31,8 +32,11 @@ function setup() {
   };
   state.court = state.players.slice(0, 6).map(main => ({ main, replaced: "" }));
   state.opponentCourt = state.opponentPlayers.slice(0, 6).map(main => ({ main, replaced: "" }));
-  const context = vm.createContext({
-    state, document: dom.window.document, window: { matchMedia: () => ({ matches: false }) },
+  const context = dom.getInternalVMContext();
+  context.matchMedia = () => ({matches:false});
+  vm.runInContext(readRuntimeSource("react-views"), context);
+  Object.assign(context, {
+    state,
     POSITIONS_META: [],
     getPredictedSkillIdForScope: scope => scope === "our" ? "serve" : "pass",
     getPredictedSkillId: () => "serve", isServingForScope: scope => scope === "our" ? state.isServing : !state.isServing,
@@ -41,6 +45,8 @@ function setup() {
     ensureCourtShapeFor: court => court.map(slot => ({ ...slot })),
     getAutoRoleDisplayCourt: (skill, scope) => context.getTeamCourt(scope).map((slot, idx) => ({ slot, idx })),
     isAnySelectedSkillForScope: () => false, getPlayerPhotoForScope: () => "", isSetterPlayerForScope: () => false,
+    buildScoutSkillView: () => null, publishReactFloatingServeError: () => {},
+    invokeEvent: () => {},
     formatStructuredPlayerName: name => name, getRoleLabelForRotation: () => "C",
     isErrorPickModeForScope: scope => context.errorScope === scope, isPointPickModeForScope: () => false,
     getBenchEntriesForScope: scope => [{ name: scope === "our" ? "Riserva casa" : "Riserva ospite", idx: 6 }],
@@ -59,7 +65,11 @@ function setup() {
   ]) context[name] = () => {};
   load(context, scout, ["getPlayersForScope", "getPlayerNumbersForScope", "getLiberosForScope", "getCaptainsForScope"]);
   load(context, roster, ["getTeamCourt", "formatNameWithNumberFor"]);
-  load(context, scout, ["renderTeamCourtCards", "getScoutCourtSkill", "renderPlayers", "renderOpponentPlayers", "renderScoutTeamCourt", "syncCourtSideLayout"]);
+  vm.runInContext(sourceFunctions(read("src/features/scout/court-view.js"), ["publishScoutCourtView", "publishLiberoBench"]), context);
+  load(context, scout, [ "getScoutCourtSkill", "renderPlayers", "renderOpponentPlayers", "renderScoutTeamCourt", "syncCourtSideLayout"]);
+  for(const name of ["renderPlayers", "renderOpponentPlayers"]){
+    const render=context[name]; context[name]=(...args)=>{render(...args);context.__flushReactViews();};
+  }
   return { context, dom };
 }
 
@@ -141,6 +151,7 @@ test("liberi e rientri usano le stesse interazioni per entrambe le squadre", () 
     c.state[prefix ? 'opponentPlayers' : 'players'].push('Libero');
     c.state[prefix ? 'opponentLiberos' : 'liberos'] = ['Libero'];
     c.renderLiberoChipsInline();
+    c.__flushReactViews();
     const chip = dom.window.document.querySelector(`.libero-tags [data-team-scope="${scope}"][data-player-name="Libero"]`);
     chip.click();
     assert.deepEqual(c.clicked, ['Libero', scope]);
@@ -148,6 +159,7 @@ test("liberi e rientri usano le stesse interazioni per entrambe le squadre", () 
     const replacedName = c.getTeamCourt(scope)[4].main;
     c.getTeamCourt(scope)[4] = { main: 'Libero', replaced: replacedName };
     c.renderLiberoChipsInline();
+    c.__flushReactViews();
     const used = dom.window.document.querySelector(`.libero-tags [data-team-scope="${scope}"][data-player-name="Libero"]`);
     assert.equal(used.getAttribute('aria-disabled'), 'true');
     const replaced = dom.window.document.querySelector(`.libero-tags [data-team-scope="${scope}"][data-player-name="${replacedName}"]`);
@@ -183,7 +195,7 @@ test("il trascinamento legge il campo della squadra corretta e rifiuta l’altra
 test("cambi, ingresso libero e rientro usano la stessa logica e modificano soltanto la squadra scelta", () => {
   const { context: c, dom } = setup();
   c.window.VolleyEye = {};
-  vm.runInContext(read('js/shared/lineup-core.js'), c);
+  vm.runInContext(read('src/domain/lineup.js'), c);
   c.lineupCore = c.window.VolleyEye.lineup;
   c.cloneCourtLineup = court => c.lineupCore.cloneCourtLineup(court);
   c.FRONT_ROW_INDEXES = new Set([1, 2, 3]);

@@ -3,10 +3,10 @@ import { readAppHtml } from './helpers/app-html.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
-import { readFileSync } from 'node:fs';
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import { JSDOM } from 'jsdom';
 import { IDBFactory } from 'fake-indexeddb';
-import { runtimeFiles } from './helpers/browser-runtime-files.mjs';
+import { runtimeFiles, readRuntimeSource } from './helpers/browser-runtime-files.mjs';
 
 async function browser(options = {}) {
   const html = readAppHtml().replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
@@ -44,7 +44,7 @@ async function browser(options = {}) {
   window.alert = message => assert.fail(message);
   window.localStorage.setItem('volleyeye-default-demo-preference', 'removed');
   const context = dom.getInternalVMContext();
-  runtimeFiles.forEach(file => vm.runInContext(readFileSync(file, 'utf8'), context, { filename: file }));
+  runtimeFiles.forEach(file => vm.runInContext(readRuntimeSource(file), context, { filename: file }));
   await window.init();
   return { dom, window, context, strokes };
 }
@@ -67,6 +67,7 @@ for (const [file, count] of [['Castenaso - Budrio.dvw', 144], ['Finale Villanova
         renderTrajectoryAnalysis();
         await archiveStorage.flush();
       })()`, context);
+      window.__flushReactViews();
       assert.equal(window.getAnalysisTeamScope(), 'opponent');
       assert.equal(window.document.body.dataset.activeTab, 'aggregated');
       assert.match(window.document.getElementById('agg-table-body').textContent, /Lazzari/);
@@ -88,6 +89,7 @@ for (const [file, count] of [['Castenaso - Budrio.dvw', 144], ['Finale Villanova
       // restore must keep selecting Budrio without inventing a home roster.
       vm.runInContext('analysisTeamFilterState.teams = new Set(["our"]);', context);
       assert.equal(await window.loadStateFromIndexedDb(), true);
+      window.__flushReactViews();
       assert.equal(window.getAnalysisTeamScope(), 'opponent');
       assert.equal(vm.runInContext('state.players.length', context), 0);
       assert.equal(window.getFilteredTrajectoryEvents().length, count);

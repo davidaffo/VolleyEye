@@ -1,19 +1,16 @@
-import { useSyncExternalStore } from "react";
+
+import { useViewStore } from "../hooks/useViewStore.js";
+
 import { metricsStore } from "../state/roster-import-store.mjs";
-import { invokeRuntime } from "../compat/runtime.js";
+import { actions as appActions } from "../app/actions.mjs";
 const run = (command, ...args) =>
-  invokeRuntime(command, ...args).catch(console.error);
+  appActions[command]( ...args).catch(console.error);
 export function MetricsConfig() {
-  const view = useSyncExternalStore(
-    metricsStore.subscribe,
-    metricsStore.getSnapshot,
-    metricsStore.getSnapshot,
-  );
+  const view = useViewStore(metricsStore);
   return (
     <div
       id="metrics-config"
       className="metrics-config"
-      data-react-managed="true"
     >
       {view.skills.map((skill) => (
         <div

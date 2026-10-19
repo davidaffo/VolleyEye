@@ -1,11 +1,12 @@
-import { useSyncExternalStore } from "react";
+import { createPreviousSkillOptions } from '../domain/previous-skill-options.js';
+import { analysisFilterFields } from './ui/analysis-filter-fields.js';
+import { FilterField } from "./ui/FilterField.jsx";
+
+import { useViewStore } from "../hooks/useViewStore.js";
+
 import { filterStore } from "../state/filter-store.mjs";
 export function AnalysisFilter({ id, className }) {
-  useSyncExternalStore(
-    filterStore.subscribe,
-    filterStore.getSnapshot,
-    filterStore.getSnapshot,
-  );
+  useViewStore(filterStore);
   const view = filterStore.getView(id);
   const options = (items, groupId) =>
     items.map((option, index) => (
@@ -30,7 +31,7 @@ export function AnalysisFilter({ id, className }) {
       </label>
     ));
   return (
-    <div id={id} className={className} data-react-managed="true">
+    <div id={id} className={className}>
       {view.groups.length
         ? view.groups.map((group) => (
             <div className="filter-scope-group" key={group.id}>
@@ -45,16 +46,11 @@ export function AnalysisFilter({ id, className }) {
   );
 }
 export function PreviousSkillSelect({ id }) {
-  useSyncExternalStore(
-    filterStore.subscribe,
-    filterStore.getSnapshot,
-    filterStore.getSnapshot,
-  );
+  useViewStore(filterStore);
   const view = filterStore.getView(id);
   return (
     <select
       id={id}
-      data-react-managed="true"
       value={view.value}
       onChange={(event) =>
         view.onChange?.(
@@ -66,17 +62,7 @@ export function PreviousSkillSelect({ id }) {
     >
       {(view.options.length
         ? view.options
-        : [
-            { value: "any", label: "Tutte" },
-            {
-              value: "freeball-positive",
-              label: "Freeball o ricezione positiva",
-            },
-            { value: "receive-positive", label: "Solo ricezione positiva" },
-            { value: "defense-negative", label: "Difesa + ricezione negativa" },
-            { value: "freeball-only", label: "Solo freeball" },
-            { value: "dig-only", label: "Solo difesa" },
-          ]
+        : createPreviousSkillOptions()
       ).map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}
@@ -84,4 +70,17 @@ export function PreviousSkillSelect({ id }) {
       ))}
     </select>
   );
+}
+
+export function AnalysisFilterFields({ fields, group, prefix, extra }) {
+  fields ||= analysisFilterFields(group, prefix, extra);
+  return fields.map(([id, label, type]) => (
+    <FilterField key={id} label={label}>
+      {type === "previous" ? (
+        <PreviousSkillSelect id={id} />
+      ) : (
+        <AnalysisFilter id={id} className="analysis-filter__options" />
+      )}
+    </FilterField>
+  ));
 }

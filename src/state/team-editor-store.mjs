@@ -1,5 +1,7 @@
+import { createViewStore } from './view-store.mjs';
+
 export function createTeamEditorStore() {
-  let snapshot = Object.freeze({
+  const base = createViewStore({
     open: false,
     isNew: false,
     title: "Gestione squadra",
@@ -17,26 +19,17 @@ export function createTeamEditorStore() {
     preferredLibero: "",
     liveEdit: false,
   });
-  const listeners = new Set();
   return {
-    getSnapshot: () => snapshot,
-    subscribe(listener) {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
+    ...base,
     updateMetadata(field, value) {
       if (
-        !Object.hasOwn(snapshot.meta, field) ||
-        (field === "name" && !snapshot.isNew)
+        !Object.hasOwn(base.getSnapshot().meta, field) ||
+        (field === "name" && !base.getSnapshot().isNew)
       )
         return;
       this.publish({
-        meta: Object.freeze({ ...snapshot.meta, [field]: value }),
+        meta: Object.freeze({ ...base.getSnapshot().meta, [field]: value }),
       });
-    },
-    publish(patch) {
-      snapshot = Object.freeze({ ...snapshot, ...patch });
-      listeners.forEach((listener) => listener());
     },
   };
 }

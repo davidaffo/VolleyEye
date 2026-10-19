@@ -1,17 +1,15 @@
-import { useSyncExternalStore } from "react";
+
+import { useViewStore } from "../hooks/useViewStore.js";
+
 import { analysisTableStore } from "../state/analysis-table-store.mjs";
 function useView(id) {
-  useSyncExternalStore(
-    analysisTableStore.subscribe,
-    analysisTableStore.getSnapshot,
-    analysisTableStore.getSnapshot,
-  );
+  useViewStore(analysisTableStore);
   return analysisTableStore.getView(id);
 }
 export function AnalysisTableBody({ id }) {
   const view = useView(id);
   return (
-    <tbody id={id} data-react-managed="true">
+    <tbody id={id}>
       {view.rows.map((row, index) => (
         <tr key={index} className={row.className}>
           {row.cells.map((cell, index) => (
@@ -30,7 +28,6 @@ export function DistributionGrid({ id }) {
     <div
       id={id}
       className="distribution-grid distribution-grid-layout"
-      data-react-managed="true"
     >
       <div className="distribution-legend">
         <span>

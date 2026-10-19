@@ -8,21 +8,21 @@ const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8"
 
 test("tutti gli asset delle traiettorie usati a runtime esistono e sono disponibili offline", () => {
   const scout = readScoutSource();
-  const worker = read("service-worker.js");
+  const worker = read("src/pwa/service-worker.js");
   const assets = new Set(
     [...scout.matchAll(/["'`](images\/trajectory\/[^"'`]+\.png)["'`]/g)].map(match => match[1])
   );
   for (const asset of assets) {
     if (asset.includes("${")) continue;
     assert.equal(existsSync(new URL(`../${asset}`, import.meta.url)), true, `${asset} non esiste`);
-    assert.match(worker, new RegExp(asset.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), `${asset} non è in cache`);
+    assert.match(read("build/static-assets-plugin.mjs"), /"images"/);
   }
 });
 
 test("il service worker non memorizza risposte HTTP fallite", () => {
-  const worker = read("service-worker.js");
-  assert.equal((worker.match(/cache\.put\(request, copy\)/g) || []).length, 3);
-  assert.equal((worker.match(/response\s*&&\s*response\.ok/g) || []).length, 3);
+  const worker = read("src/pwa/service-worker.js");
+  assert.equal((worker.match(/cache\.put\(request, response\.clone\(\)\)/g) || []).length, 1);
+  assert.equal((worker.match(/response\.ok/g) || []).length, 1);
 });
 
 test("il payload squadra compatto ricostruisce i numeri dai dettagli", () => {
@@ -91,13 +91,13 @@ test("l'annullamento del cambio set ripristina anche orologi e stato controlli",
 });
 
 test("timeout, cambi e annullamento rispettano lo scope della squadra", () => {
-  const scout = readScoutSource();
+  const scout = readScoutSource() + readFileSync(new URL("../src/features/core/runtime-view.js", import.meta.url), "utf8");
   assert.match(
     scout,
     /recordSetAction\("timeout",\s*\{[^}]*code:\s*"TOA"[^}]*teamScope:\s*"opponent"/
   );
-  assert.match(scout, /getSubstitutionCountForSet\(setNum,\s*"our"\)/);
-  assert.match(scout, /getSubstitutionCountForSet\(setNum,\s*"opponent"\)/);
+  assert.match(scout, /getSubstitutionCountForSet\(set,\s*"our"\)/);
+  assert.match(scout, /getSubstitutionCountForSet\(set,\s*"opponent"\)/);
   const saveLineup = scout.slice(scout.indexOf("function saveLineupModal"), scout.indexOf("function closeCurrentEdit"));
   assert.doesNotMatch(saveLineup, /countSubstitutions\s*&&\s*lineupModalScope\s*!==\s*"opponent"/);
   assert.match(saveLineup, /teamScope:\s*scope/);

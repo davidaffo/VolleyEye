@@ -7,7 +7,6 @@ Regola operativa per ogni modifica/fix/feature:
    - `version.config.json`
    - `version.json`
    - `js/app-version.js`
-   - `service-worker.js` nella radice (versione cache classica per i test)
    - La build React importa `js/app-version.js`; `dist/index.html` e `dist/service-worker.js` vengono rigenerati da `npm run build`.
 
 Varianti:
@@ -23,4 +22,4 @@ Note:
 - Questa procedura vale sempre quando il programma viene aggiornato.
 - Il formato versione finale resta: `baseVersion+commitCount.commitHash`.
 - GitHub Actions esegue `version:sync` e `build` prima del deploy; il service worker pubblicato viene generato dalla build con i nomi effettivi dei chunk.
-- `service-worker.js` nella radice conserva il worker della versione classica per i test di compatibilità; la versione React usa `src/pwa/service-worker.js`.
+- `src/pwa/service-worker.js` è il template del worker React; il precache e la versione della cache sono generati dalla build.

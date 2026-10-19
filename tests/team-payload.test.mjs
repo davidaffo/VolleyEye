@@ -1,14 +1,11 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import test from "node:test";
 import vm from "node:vm";
 import { readRosterSource } from "./helpers/roster-source.mjs";
 
 const source = readRosterSource();
-const helpers = source.slice(
-  source.indexOf("function normalizePlayers"),
-  source.indexOf("function replacePlayerNameEverywhere")
-);
+const helpers = readFileSync("src/domain/player-names.js", "utf8") + readFileSync("src/features/teams/roster-data.js", "utf8");
 const normalizer = source.slice(
   source.indexOf("function normalizeTeamPayload"),
   source.indexOf("function loadTeamNormalized")

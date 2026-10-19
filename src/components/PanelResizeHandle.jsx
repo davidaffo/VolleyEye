@@ -1,35 +1,39 @@
-import { useSyncExternalStore } from "react";
+
+import { useViewStore } from "../hooks/useViewStore.js";
+
 import { runtimeStore } from "../state/runtime-store.mjs";
-import { invokeRuntimeEvent } from "../compat/runtime.js";
+import { events as appEvents } from "../app/actions.mjs";
+const panelHandles = {
+  left: ['scout-resize-left', 'scout-column-resizer', 'Ridimensiona colonna partita'],
+  right: ['scout-resize-right', 'scout-column-resizer', 'Ridimensiona colonna log'],
+  scoutHeight: ['video-scout-resize-handle', 'video-resize-handle', 'Allarga finestra video scout'],
+  analysisHeight: ['video-analysis-resize-handle', 'video-resize-handle', 'Allarga finestra video'],
+};
 export function PanelResizeHandle({ panel, ...props }) {
-  const view = useSyncExternalStore(
-    runtimeStore.subscribe,
-    runtimeStore.getSnapshot,
-    runtimeStore.getSnapshot,
-  );
+  const view = useViewStore(runtimeStore);
+  const [id, className, label] = panelHandles[panel];
+  const column = panel === 'left' || panel === 'right';
   return (
     <button
+      type="button" id={id} className={className} aria-label={label}
+      role={column ? 'separator' : undefined} aria-orientation={column ? 'vertical' : undefined}
+      title={column ? 'Trascina per ridimensionare. Doppio clic per ripristinare.' : 'Trascina per allargare. Doppio click per reset.'}
       {...props}
-      data-react-managed="true"
       disabled={panel !== "analysisHeight" && !!view.scoutControlsDisabled}
       onPointerDown={(event) =>
-        invokeRuntimeEvent(
-          "resizeReactPanel",
-          panel,
+        appEvents.resizeReactPanel(panel,
           "start",
           event.nativeEvent,
         )
       }
       onDoubleClick={(event) =>
-        invokeRuntimeEvent(
-          "resizeReactPanel",
-          panel,
+        appEvents.resizeReactPanel(panel,
           "reset",
           event.nativeEvent,
         )
       }
       onKeyDown={(event) =>
-        invokeRuntimeEvent("resizeReactPanel", panel, "key", event.nativeEvent)
+        appEvents.resizeReactPanel(panel, "key", event.nativeEvent)
       }
     />
   );

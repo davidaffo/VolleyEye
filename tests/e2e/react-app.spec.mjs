@@ -166,7 +166,7 @@ test("build PWA: manifest corretto e riapertura offline con chunk React in cache
   expect(errors).toEqual([]);
 });
 
-test("export HTML autonomo conserva analisi funzionante senza React o rete", async ({
+test("export autonomo riusa React e conserva analisi funzionante senza rete", async ({
   page,
   browser,
 }) => {
@@ -189,6 +189,9 @@ test("export HTML autonomo conserva analisi funzionante senza React o rete", asy
     "data-active-tab",
     "aggregated",
   );
+  await expect(exported.locator("html")).toHaveAttribute("data-app-ready", "true");
+  await exported.locator('[data-agg-tab-target="match-sheet"]').click();
+  await expect(exported.locator("#match-sheet-page")).toBeVisible();
   expect(exportErrors).toEqual([]);
   await offlineContext.close();
   expect(errors).toEqual([]);
@@ -1328,7 +1331,7 @@ test("scheda partita React: campi SVG, filtri e note dopo aggiornamento", async 
   );
   await page.locator('[data-agg-tab-target="match-sheet"]').click();
   const sheet = page.locator("#match-sheet-page");
-  await expect(sheet).toHaveAttribute("data-react-managed", "true");
+  await expect(sheet).toBeVisible();
   expect(await sheet.locator("svg").count()).toBeGreaterThan(10);
   const note = sheet.locator("textarea").first(),
     key = await note.getAttribute("data-match-sheet-note");
@@ -1364,7 +1367,7 @@ test("statistiche React: tabellino, dettaglio, play by play, andamento e metrich
     window.VolleyEye.app.invoke("setActiveTab", "aggregated"),
   );
   const body = page.locator("#agg-table-body");
-  await expect(body).toHaveAttribute("data-react-managed", "true");
+  await expect(body).toBeVisible();
   await expect(body).toContainText("Totale squadra");
   await body.locator(".agg-body-header .skill-attack").first().click();
   await expect(page.locator(".agg-table-back")).toContainText("Attacco");
@@ -1374,10 +1377,7 @@ test("statistiche React: tabellino, dettaglio, play by play, andamento e metrich
   await page.locator(".agg-table-back").click();
   await expect(body).toContainText("Totale squadra");
   await page.locator('[data-agg-tab-target="play-by-play"]').click();
-  await expect(page.locator("#analysis-play-by-play")).toHaveAttribute(
-    "data-react-managed",
-    "true",
-  );
+  await expect(page.locator("#analysis-play-by-play")).toBeVisible();
   await expect(page.locator(".play-by-play-row").first()).toBeVisible();
   await page.locator(".play-by-play-token").first().hover();
   await expect(page.locator(".play-by-play-tooltip")).toBeVisible();
@@ -1396,10 +1396,7 @@ test("statistiche React: tabellino, dettaglio, play by play, andamento e metrich
   await page.evaluate(() =>
     window.VolleyEye.app.invoke("setActiveTab", "info"),
   );
-  await expect(page.locator("#metrics-config")).toHaveAttribute(
-    "data-react-managed",
-    "true",
-  );
+  await expect(page.locator("#metrics-config")).toBeVisible();
   const toggle = page.locator(".metric-block.skill-attack .toggle-skill");
   await expect(toggle).toHaveText("ON");
   await toggle.click();
@@ -1424,24 +1421,15 @@ test("analisi giocatrici React: traiettorie, selezioni, distribuzione e confront
     window.VolleyEye.app.invoke("setActiveTab", "aggregated"),
   );
   await page.locator('[data-agg-tab-target="trajectory"]').click();
-  await expect(page.locator("#trajectory-grid")).toHaveAttribute(
-    "data-react-managed",
-    "true",
-  );
+  await expect(page.locator("#trajectory-grid")).toBeVisible();
   await expect(page.locator("#trajectory-grid canvas")).toHaveCount(6);
   await page.locator('[data-agg-tab-target="second"]').click();
-  await expect(page.locator("#agg-second-attack-body")).toHaveAttribute(
-    "data-react-managed",
-    "true",
-  );
+  await expect(page.locator("#agg-second-attack-body")).toBeVisible();
   await expect(
     page.locator("#second-distribution .distribution-card"),
   ).toHaveCount(7);
   await page.locator('[data-agg-tab-target="player"]').click();
-  await expect(page.locator("#player-analysis-body")).toHaveAttribute(
-    "data-react-managed",
-    "true",
-  );
+  await expect(page.locator("#player-analysis-body")).toBeVisible();
   await expect(page.locator("#player-analysis-hero")).toBeVisible();
   const options = await page
     .locator("#player-analysis-select option")
@@ -1971,5 +1959,129 @@ test("azioni database React: cancellazione demo aggiorna visibilità e archivio"
     () => document.documentElement.dataset.appReady === "true",
   );
   await expect(button).toBeHidden();
+  expect(errors).toEqual([]);
+});
+
+test('formazioni condivise: drag conserva la bozza e impedisce trasferimenti tra squadre', async ({ page }) => {
+  const errors = await openApp(page);
+  const demo = JSON.parse(readFileSync('match_demo.json', 'utf8'));
+  const match = demo.state || demo;
+  Object.assign(match, { events: [], currentSet: 1, setResults: {}, scoreOverrides: {},
+    matchFinished: false, matchEndSetSnapshot: null, matchEndSetRecorded: null });
+  await page.evaluate(async snapshot => {
+    const app = window.VolleyEye.app;
+    await app.invoke('applyImportedMatch', snapshot, { silent: true });
+    await app.invoke('saveState', { persistLocal: true });
+    await app.invoke('enterSelectedMatch');
+    await app.invoke('openMobileLineupModal', 'our');
+  }, match);
+  const court = page.locator('#lineup-modal-court .lineup-slot');
+  const first = await court.nth(0).getAttribute('data-player-name');
+  const second = await court.nth(1).getAttribute('data-player-name');
+  const before = await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot());
+  await court.nth(0).dragTo(court.nth(1));
+  await expect(court.nth(1)).toHaveAttribute('data-player-name', first);
+  await expect(court.nth(0)).toHaveAttribute('data-player-name', second);
+  const bench = page.locator('#lineup-modal-bench .lineup-chip').first();
+  const incoming = await bench.getAttribute('data-player-name');
+  await bench.dragTo(court.nth(0));
+  await expect(court.nth(0)).toHaveAttribute('data-player-name', incoming);
+  expect(await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot().court)).toEqual(before.court);
+  await page.locator('#lineup-modal-cancel').click();
+  await page.locator('#btn-next-set').click();
+  const own = page.locator('#next-set-court-our .lineup-slot');
+  const opponent = page.locator('#next-set-court-opp .lineup-slot');
+  const ownName = await own.nth(0).getAttribute('data-player-name');
+  const otherName = await opponent.nth(0).getAttribute('data-player-name');
+  await own.nth(0).dragTo(opponent.nth(0));
+  await expect(own.nth(0)).toHaveAttribute('data-player-name', ownName);
+  await expect(opponent.nth(0)).toHaveAttribute('data-player-name', otherName);
+  await own.nth(0).dragTo(own.nth(1));
+  await expect(own.nth(1)).toHaveAttribute('data-player-name', ownName);
+  expect(errors).toEqual([]);
+});
+
+test('formazione default: drag e rilascio touch modificano solo il draft', async ({ page }) => {
+  const errors = await openApp(page);
+  const before = await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot());
+  await page.evaluate(async () => {
+    await window.VolleyEye.app.invoke('openTeamsManagerModal');
+    await window.VolleyEye.app.invoke('openSelectedManagedTeam');
+  });
+  const slots = page.locator('#default-lineup-grid .default-lineup-slot');
+  const bench = page.locator('#default-lineup-bench .default-lineup-chip').first();
+  const name = await bench.getAttribute('data-player-name');
+  await bench.dragTo(slots.nth(0));
+  await expect(slots.nth(0)).toHaveAttribute('data-player-name', name);
+  await page.evaluate(() => {
+    const source = document.querySelector('#default-lineup-grid .default-lineup-slot');
+    const target = document.querySelectorAll('#default-lineup-grid .default-lineup-slot')[1];
+    const sourceBox = source.getBoundingClientRect(), targetBox = target.getBoundingClientRect();
+    const point = box => ({ identifier: 1, target: source, clientX: box.x + box.width / 2, clientY: box.y + box.height / 2 });
+    const start = new Touch(point(sourceBox)), end = new Touch(point(targetBox));
+    source.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, cancelable: true, touches: [start] }));
+    target.dispatchEvent(new TouchEvent('touchend', { bubbles: true, cancelable: true, changedTouches: [end] }));
+  });
+  await expect(slots.nth(1)).toHaveAttribute('data-player-name', name);
+  await expect(page.locator('.touch-drag-ghost')).toHaveCount(0);
+  await page.locator('#team-manager-cancel').click();
+  expect(await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot().court)).toEqual(before.court);
+  expect(errors).toEqual([]);
+});
+
+test('widget React: tastiera conserva nodi, focus e ordine dopo il reload', async ({ page }) => {
+  const errors = await openApp(page);
+  await page.locator('#btn-load-match').click();
+  await page.locator('#btn-end-match').click();
+  const widget = page.locator('[data-scout-widget="dvw"]');
+  const handle = widget.locator('.scout-widget-handle');
+  await page.evaluate(() => {
+    window.__widgetNode = document.querySelector('[data-scout-widget="dvw"]');
+    window.__widgetInput = window.__widgetNode.querySelector('input');
+    window.__videoNode = document.querySelector('#analysis-video-scout');
+  });
+  await handle.focus();
+  await handle.press('ArrowLeft');
+  await expect(page.locator('[data-scout-widget-zone="center-top"] > [data-scout-widget="dvw"]')).toHaveCount(1);
+  await expect(handle).toBeFocused();
+  await handle.press('ArrowDown');
+  await expect(page.locator('[data-scout-widget-zone="center-bottom"] > [data-scout-widget="dvw"]')).toHaveCount(1);
+  expect(await page.evaluate(() => window.__widgetNode === document.querySelector('[data-scout-widget="dvw"]')
+    && window.__widgetInput === window.__widgetNode.querySelector('input')
+    && window.__videoNode === document.querySelector('#analysis-video-scout'))).toBe(true);
+  await page.reload();
+  await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true');
+  await expect(page.locator('[data-scout-widget-zone="center-bottom"] > [data-scout-widget="dvw"]')).toHaveCount(1);
+  expect(errors).toEqual([]);
+});
+
+test('widget React: trascinamento annullato e confermato conserva i pannelli', async ({ page }) => {
+  const errors = await openApp(page);
+  await page.locator('#btn-load-match').click();
+  await page.locator('#btn-end-match').click();
+  const handle = page.locator('[data-scout-widget="dvw"] .scout-widget-handle');
+  const previous = await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot().uiScoutWidgetLayout);
+  await handle.hover({ timeout: 10000 });
+  const box = await handle.boundingBox();
+  await page.mouse.down();
+  await page.mouse.move(box.x - 60, box.y + 30, { steps: 5 });
+  await expect(page.locator('.scout-widget-drag-ghost')).toHaveCount(1);
+  await page.evaluate(() => window.dispatchEvent(new PointerEvent('pointercancel', { pointerId: 1 })));
+  await page.mouse.up();
+  await expect(page.locator('.scout-widget-drag-ghost')).toHaveCount(0);
+  await expect(page.locator('body')).not.toHaveClass(/scout-widget-dragging/);
+  expect(await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot().uiScoutWidgetLayout)).toEqual(previous);
+  await handle.hover({ timeout: 10000 });
+  const origin = await handle.boundingBox();
+  await page.evaluate(() => { window.__draggedWidget = document.querySelector('[data-scout-widget="dvw"]'); });
+  await page.mouse.down();
+  await page.mouse.move(origin.x - 40, origin.y + 30, { steps: 5 });
+  await expect(page.locator('.scout-widget-drag-ghost')).toHaveCount(1);
+  const target = await page.locator('[data-scout-widget-zone="center-top"]').boundingBox();
+  await page.mouse.move(target.x + 20, target.y + 20, { steps: 5 });
+  await page.mouse.up();
+  await expect(page.locator('[data-scout-widget-zone="center-top"] > [data-scout-widget="dvw"]')).toHaveCount(1);
+  await expect(page.locator('.scout-widget-drag-ghost')).toHaveCount(0);
+  expect(await page.evaluate(() => window.__draggedWidget === document.querySelector('[data-scout-widget="dvw"]'))).toBe(true);
   expect(errors).toEqual([]);
 });

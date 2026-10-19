@@ -1,16 +1,13 @@
-import { useSyncExternalStore } from "react";
+
+import { useViewStore } from "../../hooks/useViewStore.js";
+
 import { floatingServeErrorStore } from "../../state/roster-import-store.mjs";
-import { invokeRuntime } from "../../compat/runtime.js";
+import { actions as appActions } from "../../app/actions.mjs";
 export function FloatingServeErrorBtn() {
-  const view = useSyncExternalStore(
-    floatingServeErrorStore.subscribe,
-    floatingServeErrorStore.getSnapshot,
-    floatingServeErrorStore.getSnapshot,
-  );
+  const view = useViewStore(floatingServeErrorStore);
   return (
     <button
       id="floating-serve-error-btn"
-      data-react-managed="true"
       className={"floating-serve-error-btn" + (view.visible ? "" : " hidden")}
       type="button"
       aria-label="Battuta errore"
@@ -18,7 +15,7 @@ export function FloatingServeErrorBtn() {
       data-player-idx={view.playerIdx ?? ""}
       data-player-name={view.playerName}
       onClick={() =>
-        invokeRuntime("recordReactFloatingServeError").catch(console.error)
+        appActions.recordReactFloatingServeError().catch(console.error)
       }
     >
       =

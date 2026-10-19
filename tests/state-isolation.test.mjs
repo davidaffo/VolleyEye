@@ -1,20 +1,18 @@
 import { readAppHtml } from './helpers/app-html.mjs';
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import test from "node:test";
 import vm from "node:vm";
 import { readScoutSource } from "./helpers/scout-source.mjs";
 import { readRosterSource } from "./helpers/roster-source.mjs";
 
-const isolationSource = readFileSync(new URL("../js/shared/state-isolation.js", import.meta.url), "utf8");
+const isolationSource = readFileSync(new URL("../src/domain/isolation.js", import.meta.url), "utf8");
 const context = { structuredClone };
 context.self = context;
-vm.runInNewContext(
-  readFileSync(new URL("../js/shared/namespace.js", import.meta.url), "utf8"),
-  context
-);
+context.VolleyEye = {};
 vm.runInNewContext(isolationSource, context);
 const isolation = context.VolleyEye.stateIsolation;
+import { sourceFunctions } from "./helpers/source-functions.mjs";
 const plain = value => JSON.parse(JSON.stringify(value));
 
 test("cloneData separa completamente snapshot e stato vivo", () => {
@@ -126,8 +124,8 @@ test("sanitizeRosterScope impedisce duplicati e coppie autoreferenziali in campo
 test("i confini applicativi non reintroducono sincronizzazioni implicite", () => {
   const scout = readScoutSource();
   const roster = readRosterSource();
-  const index = readFileSync(new URL("../config/runtime-files.mjs", import.meta.url), "utf8");
-  const serviceWorker = readFileSync(new URL("../service-worker.js", import.meta.url), "utf8");
+
+
   const renderPlayersBody = scout.slice(
     scout.indexOf("function renderPlayers()"),
     scout.indexOf("function renderPlayersManagerList()")
@@ -149,17 +147,14 @@ test("i confini applicativi non reintroducono sincronizzazioni implicite", () =>
   assert.doesNotMatch(teamSelectRenderBody, /state\.selectedTeam\s*=/);
   assert.doesNotMatch(teamSelectRenderBody, /state\.match\.teamName\s*=/);
   assert.doesNotMatch(opponentSelectRenderBody, /state\.selectedOpponentTeam\s*=/);
-  assert.match(teamSelectRenderBody, /renderArchivedTeamsSelect\s*\(/);
-  assert.match(opponentSelectRenderBody, /renderArchivedTeamsSelect\s*\(/);
+  assert.match(teamSelectRenderBody, /publishTeamsManagerView\s*\(/);
+  assert.match(opponentSelectRenderBody, /publishTeamsManagerView\s*\(/);
   assert.doesNotMatch(opponentSelectRenderBody, /\.filter\s*\(.*state\.selectedTeam/);
   assert.match(roster, /teamManagerStorageOnly\s*=\s*true/);
   assert.match(roster, /players:\s*\[\],\s*\n\s*defaultLineup:\s*\[\]/);
   assert.match(roster, /applyLiveOpponentTeamManagerPayload/);
   assert.match(roster, /applyLiveTeamManagerPayload\(payload, liveCurrentPayload\)/);
   assert.match(roster, /applyLiveOpponentTeamManagerPayload\(payload, liveCurrentPayload\)/);
-  assert.ok(index.indexOf("js/shared/namespace.js") < index.indexOf("js/shared/state-isolation.js"));
-  assert.ok(index.indexOf("js/shared/state-isolation.js") < index.indexOf("js/roster-lineup.js"));
-  assert.match(serviceWorker, /js\/shared\/state-isolation\.js/);
   assert.doesNotMatch(
     scout.slice(scout.indexOf("function handleImportMatchFile"), scout.indexOf("function readMatchLinkParam")),
     /saveTeamToStorage\s*\(/
@@ -174,7 +169,7 @@ test("l'elenco avversarie conserva tutte le squadre e disabilita solo quella pri
   const start = roster.indexOf("function buildArchivedTeamOptions(");
   const end = roster.indexOf("function renderArchivedTeamsSelect(", start);
   const selectContext = {};
-  vm.runInNewContext(`${roster.slice(start, end)}; this.buildOptions = buildArchivedTeamOptions;`, selectContext);
+  vm.runInNewContext(`${sourceFunctions(roster, ["buildArchivedTeamOptions"])}; this.buildOptions = buildArchivedTeamOptions;`, selectContext);
   const options = plain(selectContext.buildOptions(["Volley Blu", "Volley Rossa", "Volley Verde"], "Volley Blu"));
   assert.deepEqual(options.map(option => option.value), ["Volley Blu", "Volley Rossa", "Volley Verde"]);
   assert.deepEqual(options.map(option => option.disabled), [true, false, false]);
@@ -189,5 +184,7 @@ test("i selettori non costruiscono squadre fantasma assenti dall'archivio", () =
   );
   assert.doesNotMatch(renderer, /non in archivio/);
   assert.doesNotMatch(renderer, /createElement\("option"\)[\s\S]*missing/);
-  assert.match(renderer, /teamOptions\.some\(option => option\.value === requestedName && !option\.disabled\)/);
+  const selector = readFileSync(new URL("../src/components/layout/NewMatchModal.jsx", import.meta.url), "utf8");
+  assert.match(selector, /view.teamNames.map/);
+  assert.match(selector, /disabled=\{opponent && name === draft.teamName\}/);
 });

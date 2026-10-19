@@ -1,5 +1,7 @@
+import {reference} from "./helpers/ui-reference.mjs";
+import { sourceFunctions } from "./helpers/source-functions.mjs";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import { createRequire } from "node:module";
 import vm from "node:vm";
 import test from "node:test";
@@ -18,7 +20,7 @@ const bundle = buildSync({
   platform: "node",
   format: "cjs",
   packages: "external",
-  external: ["virtual:volleyeye-runtime"],
+
   jsx: "automatic",
 });
 new Function("require", "module", "exports", bundle.outputFiles[0].text)(
@@ -27,11 +29,11 @@ new Function("require", "module", "exports", bundle.outputFiles[0].text)(
   module.exports,
 );
 const source = readFileSync(
-    new URL("../js/scout/analysis/skill-analysis.js", import.meta.url),
+    new URL("../src/features/analysis/skill-chart-model.js", import.meta.url),
     "utf8",
   ),
   model = readFileSync(
-    new URL("../src/compat/analysis-chart-adapter.js", import.meta.url),
+    new URL("../src/features/analysis/chart-model.js", import.meta.url),
     "utf8",
   );
 function canonical(node) {
@@ -110,22 +112,16 @@ for (const metric of [
           Math,
         });
         vm.runInContext(
-          source.slice(
-            source.indexOf("function getSkillChartLayout"),
-            source.indexOf("function attachSkillChartHover"),
-          ) +
-            model.slice(
-              0,
-              model.indexOf("function publishReactGlobalSkillCharts"),
-            ),
+          sourceFunctions(source, ["getSkillChartLayout"]) +
+            sourceFunctions(model, ["buildReactSkillChartModel"]),
           context,
         );
         const view = context.buildReactSkillChartModel({
           title: "Prova",
+          tones: { positive: "red", neutral: "yellow", negative: "blue" },
           events: series,
           metricId: metric.id,
         });
-        const dom = new JSDOM(context.buildSkillChartSvg(series, metric));
         const react = new JSDOM(
           renderToStaticMarkup(
             createElement(module.exports.SkillChart, { model: view }),
@@ -133,7 +129,7 @@ for (const metric of [
         );
         assert.deepEqual(
           canonical(react.window.document.querySelector("svg")),
-          canonical(dom.window.document.querySelector("svg")),
+          reference("react-charts:3930"),
         );
       });
     }

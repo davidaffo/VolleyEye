@@ -1,11 +1,12 @@
+import {reference} from "./helpers/ui-reference.mjs";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import vm from "node:vm";
 import test from "node:test";
 import { JSDOM } from "jsdom";
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
-const legacy = read("../js/scout/live/court-rendering.js");
-const model = read("../js/scout/live/court-view-model.js");
+
+const model = read("../src/features/live/court-view-model.js");
 const globals = read("../js/globals.js").split("const PERSISTENT_DB_NAME")[0];
 function setup(options) {
   const dom = new JSDOM('<div id="target"></div>');
@@ -75,7 +76,7 @@ function setup(options) {
     startAttackSelection: () => calls.push(["start-attack"]),
     setNextSetType: (value) => calls.push(["set-type", value]),
   });
-  vm.runInContext(globals + legacy + model, context);
+  vm.runInContext(globals + model, context);
   return { dom, context, calls };
 }
 function buttonInfo(button) {
@@ -160,13 +161,7 @@ const scenarios = [
 ];
 for (const [name, options] of scenarios)
   test("React court preserves legacy actions: " + name, () => {
-    const old = setup(options),
-      next = setup(options);
-    const target = old.dom.window.document.getElementById("target");
-    old.context.renderSkillRows(target, 0, "A", {
-      scope: "our",
-      nextSkillId: options.next || null,
-    });
+    const next = setup(options);
     const view = next.context.buildScoutSkillView(0, "A", {
       scope: "our",
       nextSkillId: options.next || null,
@@ -189,24 +184,20 @@ for (const [name, options] of scenarios)
       }
     assert.deepEqual(
       buttons,
-      Array.from(target.querySelectorAll("button"), buttonInfo),
+      reference("react-court:7193"),
     );
     assert.deepEqual(
       Array.from(
         view.groups.filter((group) => group.className),
         (group) => [group.className, group.header?.text || ""],
       ),
-      Array.from(target.querySelectorAll(".skill-grid,.code-grid"), (group) => [
-        group.className,
-        group.querySelector(".skill-title")?.textContent || "",
-      ]),
+      reference("react-court:7302"),
     );
     assert.equal(
       view.note || "",
-      target.querySelector(".players-empty")?.textContent || "",
+      reference("react-court:7658"),
     );
-    assert.deepEqual(next.calls, old.calls);
-    assert.equal(next.context.selected, old.context.selected);
-    old.dom.window.close();
+    assert.deepEqual(next.calls, reference("react-court:7771"));
+    assert.equal(next.context.selected, reference("react-court:7816"));
     next.dom.window.close();
   });

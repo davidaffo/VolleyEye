@@ -1,7 +1,7 @@
-const STORAGE_KEY = "volleyScoutV1";
-const MAX_TIMEOUTS_PER_SET = 2;
-const MAX_SUBSTITUTIONS_PER_SET = 8;
-const SKILLS = [
+export const STORAGE_KEY = "volleyScoutV1";
+export const MAX_TIMEOUTS_PER_SET = 2;
+export const MAX_SUBSTITUTIONS_PER_SET = 8;
+export const SKILLS = [
   { id: "serve", label: "Battuta", badgeClass: "badge-serve" },
   { id: "pass", label: "Ricezione", badgeClass: "badge-pass" },
   { id: "freeball", label: "Freeball", badgeClass: "badge-freeball" },
@@ -10,7 +10,7 @@ const SKILLS = [
   { id: "defense", label: "Difesa", badgeClass: "badge-defense" },
   { id: "block", label: "Muro", badgeClass: "badge-block" }
 ];
-const SKILL_COLORS = {
+export const SKILL_COLORS = {
   serve: { bg: "#1b5e20", text: "#d1fae5", soft: "rgba(27, 94, 32, 0.18)" },
   pass: { bg: "#f9a825", text: "#ffffff", soft: "rgba(249, 168, 37, 0.18)" },
   freeball: { bg: "#c026d3", text: "#fdf4ff", soft: "rgba(192, 38, 211, 0.18)" },
@@ -19,19 +19,19 @@ const SKILL_COLORS = {
   defense: { bg: "#546e7a", text: "#e2e8f0", soft: "rgba(84, 110, 122, 0.18)" },
   block: { bg: "#4a148c", text: "#ede9fe", soft: "rgba(74, 20, 140, 0.18)" }
 };
-const THEME_TEXT = {
+export const THEME_TEXT = {
   dark: "#ffffff",
   light: "#0f172a"
 };
-const RESULT_CODES = ["#", "+", "!", "-", "=", "/"];
-const PASS_LIKE_POINT_RULE_DEFAULT = { for: [], against: ["="] };
-const PASS_LIKE_METRIC_DEFAULT = {
+export const RESULT_CODES = ["#", "+", "!", "-", "=", "/"];
+export const PASS_LIKE_POINT_RULE_DEFAULT = { for: [], against: ["="] };
+export const PASS_LIKE_METRIC_DEFAULT = {
   positive: ["#", "+"],
   negative: ["/", "="],
   activeCodes: RESULT_CODES,
   enabled: true
 };
-const POINT_RULE_DEFAULTS = {
+export const POINT_RULE_DEFAULTS = {
   serve: { for: ["#"], against: ["="] },
   pass: PASS_LIKE_POINT_RULE_DEFAULT,
   freeball: PASS_LIKE_POINT_RULE_DEFAULT,
@@ -41,7 +41,7 @@ const POINT_RULE_DEFAULTS = {
   second: { for: [], against: ["=", "/"] },
   manual: { for: ["for"], against: ["against", "error"] }
 };
-const METRIC_DEFAULTS = {
+export const METRIC_DEFAULTS = {
   serve: { positive: ["#", "+", "!", "/"], negative: ["="], activeCodes: RESULT_CODES, enabled: true },
   pass: PASS_LIKE_METRIC_DEFAULT,
   freeball: PASS_LIKE_METRIC_DEFAULT,
@@ -55,17 +55,17 @@ const METRIC_DEFAULTS = {
   },
   second: { positive: ["#"], negative: ["/", "-", "="], activeCodes: RESULT_CODES, enabled: true }
 };
-const PERSISTENT_DB_NAME = "Data";
-const TEAM_STORE_NAME = "Teams";
-const TEAM_PREFIX = PERSISTENT_DB_NAME + "/" + TEAM_STORE_NAME + "/";
-const OPPONENT_TEAM_STORE_NAME = "OpponentTeams";
-const OPPONENT_TEAM_PREFIX = PERSISTENT_DB_NAME + "/" + OPPONENT_TEAM_STORE_NAME + "/";
-const PLAYER_STORE_NAME = "Players";
-const PLAYER_PREFIX = PERSISTENT_DB_NAME + "/" + PLAYER_STORE_NAME;
-const MATCH_STORE_NAME = "Matches";
-const MATCH_PREFIX = PERSISTENT_DB_NAME + "/" + MATCH_STORE_NAME + "/";
-const AUTO_LIBERO_ROLE_DEFAULT_VERSION = 1;
-const TEMPLATE_TEAM = {
+export const PERSISTENT_DB_NAME = "Data";
+export const TEAM_STORE_NAME = "Teams";
+export const TEAM_PREFIX = PERSISTENT_DB_NAME + "/" + TEAM_STORE_NAME + "/";
+export const OPPONENT_TEAM_STORE_NAME = "OpponentTeams";
+export const OPPONENT_TEAM_PREFIX = PERSISTENT_DB_NAME + "/" + OPPONENT_TEAM_STORE_NAME + "/";
+export const PLAYER_STORE_NAME = "Players";
+export const PLAYER_PREFIX = PERSISTENT_DB_NAME + "/" + PLAYER_STORE_NAME;
+export const MATCH_STORE_NAME = "Matches";
+export const MATCH_PREFIX = PERSISTENT_DB_NAME + "/" + MATCH_STORE_NAME + "/";
+export const AUTO_LIBERO_ROLE_DEFAULT_VERSION = 1;
+export const TEMPLATE_TEAM = {
   players: [
     "Palleggiatore 1",
     "Palleggiatore 2",
@@ -84,7 +84,7 @@ const TEMPLATE_TEAM = {
   ],
   liberos: ["Libero 1", "Libero 2"]
 };
-const POSITIONS_META = [
+export const POSITIONS_META = [
   { id: 1, label: "Posizione 1 · P", gridArea: "pos1" },
   { id: 2, label: "Posizione 2 · S1", gridArea: "pos2" },
   { id: 3, label: "Posizione 3 · C2", gridArea: "pos3" },
@@ -92,7 +92,12 @@ const POSITIONS_META = [
   { id: 5, label: "Posizione 5 · S2", gridArea: "pos5" },
   { id: 6, label: "Posizione 6 · C1", gridArea: "pos6" }
 ];
-let state = {
+export const PLAYER_PHOTO_REMOVE_RESULT = "__REMOVE_PLAYER_PHOTO__";
+export const PLAYER_PHOTO_EXPORT_SIZE = 320;
+import { createDomainState } from "../src/app/domain-state.mjs";
+
+export const session = createDomainState({
+"state": () => ({
   match: {
     opponent: "",
     category: "",
@@ -212,11 +217,71 @@ let state = {
   uiMatchSessionActive: false,
   uiActiveTab: "match",
   uiTopBarHidden: false
-};
-function canUseShare() {
-  return typeof navigator !== "undefined" && typeof navigator.share === "function";
-}
-function downloadBlob(blob, fileName) {
+}),
+"modalMode": () => ("skill")
+}, {
+"elOpponent": () => (document.getElementById("match-opponent")),
+"elCategory": () => (document.getElementById("match-category")),
+"elDate": () => (document.getElementById("match-date")),
+"elLeg": () => (document.getElementById("match-leg")),
+"elMatchType": () => (document.getElementById("match-type")),
+"elCurrentSet": () => (document.getElementById("current-set")),
+"elPlayersInput": () => (document.getElementById("players-input")),
+"elPlayersContainer": () => (document.getElementById("players-container")),
+"elPlayersList": () => (document.getElementById("players-list")),
+"elNewPlayerInput": () => (document.getElementById("new-player-name")),
+"elTeamsSelect": () => (document.getElementById("saved-teams")),
+"elBtnDeleteTeam": () => (document.getElementById("btn-delete-team")),
+"elBtnDuplicateTeam": () => (document.getElementById("btn-duplicate-team")),
+"elTeamFileInput": () => (document.getElementById("team-file-input")),
+"elRotationIndicator": () => (document.getElementById("rotation-indicator")),
+"elRotationSelect": () => (document.getElementById("rotation-select")),
+"elRotationSelectOpp": () => (document.getElementById("rotation-select-opp")),
+"elSkillModal": () => (document.getElementById("skill-modal")),
+"elSkillModalBody": () => (document.getElementById("skill-modal-body")),
+"elSkillModalCancel": () => (document.getElementById("skill-modal-cancel")),
+"elSkillModalClose": () => (document.getElementById("skill-modal-close")),
+"elAggSkillModal": () => (document.getElementById("agg-skill-modal")),
+"elAggSkillModalBody": () => (document.getElementById("agg-skill-modal-body")),
+"elAnalysisSkillChartGrid": () => (document.getElementById("analysis-skill-chart-grid")),
+"elBulkEditModal": () => (document.getElementById("bulk-edit-modal")),
+"elBulkEditBody": () => (document.getElementById("bulk-edit-body")),
+"elBulkEditClose": () => (document.getElementById("bulk-edit-close")),
+"elBulkEditCancel": () => (document.getElementById("bulk-edit-cancel")),
+"elErrorModal": () => (document.getElementById("error-modal")),
+"elErrorModalBody": () => (document.getElementById("error-modal-body")),
+"elErrorModalClose": () => (document.getElementById("error-modal-close")),
+"elPointModal": () => (document.getElementById("point-modal")),
+"elPointModalBody": () => (document.getElementById("point-modal-body")),
+"elPointModalClose": () => (document.getElementById("point-modal-close")),
+"elVideoFileInput": () => (document.getElementById("video-file-input")),
+"elAnalysisVideo": () => (document.getElementById("analysis-video")),
+"elVideoSkillsContainer": () => (document.getElementById("video-skills-container")),
+"elVideoFileLabel": () => (document.getElementById("video-file-label")),
+"elVideoSyncLabel": () => (document.getElementById("video-sync-label")),
+"elVideoSelectionCount": () => (document.getElementById("video-selection-count")),
+"elYoutubeFrame": () => (document.getElementById("youtube-frame")),
+"elVideoScoutContainer": () => (document.getElementById("video-scout-container")),
+"elVideoScoutControls": () => (document.getElementById("video-scout-controls")),
+"elVideoMobileSourceModal": () => (document.getElementById("video-mobile-source-modal")),
+"elVideoMobileSourceOpen": () => (document.getElementById("video-mobile-source-open")),
+"elVideoMobileYoutubeUrl": () => (document.getElementById("video-mobile-youtube-url")),
+"elVideoFileInputScout": () => (document.getElementById("video-file-input-scout")),
+"elAnalysisVideoScout": () => (document.getElementById("analysis-video-scout")),
+"elYoutubeFrameScout": () => (document.getElementById("youtube-frame-scout")),
+"elSecondDistribution": () => (document.getElementById("second-distribution")),
+"elTrajectoryAttackSummary": () => (document.getElementById("trajectory-attack-summary")),
+"elPlayerAttackSummary": () => (document.getElementById("player-attack-summary")),
+"elTrajFilterAttackTypes": () => (document.getElementById("traj-filter-attack-types")),
+"elPlayerTrajFilterAttackTypes": () => (document.getElementById("player-traj-filter-attack-types")),
+"elPlayerAnalysisCompareFilter": () => (document.getElementById("player-analysis-compare-filter")),
+"elPlayerAnalysisTableWrap": () => (document.getElementById("player-analysis-table-wrap")),
+"elPlayerAnalysisSkillChartGrid": () => (document.getElementById("player-analysis-skill-chart-grid")),
+"elThemeToggles": () => (Array.from(document.querySelectorAll("[data-theme-choice]")))
+});
+const matchState = session;
+
+export function downloadBlob(blob, fileName) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -226,7 +291,8 @@ function downloadBlob(blob, fileName) {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
-function blobToDataUrl(blob) {
+
+export function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onloadend = () => resolve(reader.result);
@@ -234,38 +300,12 @@ function blobToDataUrl(blob) {
     reader.readAsDataURL(blob);
   });
 }
-async function shareBlob(title, blob, fileName) {
-  const file = new File([blob], fileName || "export.bin", { type: blob.type || "application/octet-stream" });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try {
-      await navigator.share({ title, files: [file] });
-      return true;
-    } catch (_) {
-      // fallthrough to data URL share
-    }
-  }
-  if (!canUseShare()) return false;
-  try {
-    const dataUrl = await blobToDataUrl(blob);
-    await navigator.share({ title, url: dataUrl, text: fileName || "" });
-    return true;
-  } catch (_) {
-    return false;
-  }
-}
-async function shareText(title, text) {
-  if (!canUseShare()) return false;
-  try {
-    await navigator.share({ title, text });
-    return true;
-  } catch (_) {
-    return false;
-  }
-}
-function logError(context, err) {
+
+export function logError(context, err) {
   console.error(context, err);
 }
-function pickImageFile(accept = "image/*") {
+
+export function pickImageFile(accept = "image/*") {
   return new Promise(resolve => {
     const input = document.createElement("input");
     let settled = false;
@@ -287,7 +327,8 @@ function pickImageFile(accept = "image/*") {
     input.click();
   });
 }
-function loadImageElement(src) {
+
+export function loadImageElement(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
@@ -295,362 +336,8 @@ function loadImageElement(src) {
     img.src = src;
   });
 }
-const elPlayerPhotoModal = document.getElementById("player-photo-modal");
-const elPlayerPhotoStage = document.getElementById("player-photo-stage");
-const elPlayerPhotoImage = document.getElementById("player-photo-image");
-const elPlayerPhotoZoom = document.getElementById("player-photo-zoom");
-const elPlayerPhotoClose = document.getElementById("player-photo-close");
-const elPlayerPhotoCancel = document.getElementById("player-photo-cancel");
-const elPlayerPhotoRemove = document.getElementById("player-photo-remove");
-const elPlayerPhotoSave = document.getElementById("player-photo-save");
-const PLAYER_PHOTO_REMOVE_RESULT = "__REMOVE_PLAYER_PHOTO__";
-const PLAYER_PHOTO_EXPORT_SIZE = 320;
-const playerPhotoEditorState = {
-  resolve: null,
-  image: null,
-  sourceUrl: "",
-  baseScale: 1,
-  zoom: 1,
-  offsetX: 0,
-  offsetY: 0,
-  pointerId: null,
-  dragStartX: 0,
-  dragStartY: 0,
-  dragOriginX: 0,
-  dragOriginY: 0,
-  allowRemove: false
-};
-function syncPlayerPhotoBaseScale() {
-  if (!playerPhotoEditorState.image || !elPlayerPhotoStage) return;
-  const cropSize = Math.max(1, elPlayerPhotoStage.clientWidth || 320);
-  playerPhotoEditorState.baseScale = Math.max(
-    cropSize / playerPhotoEditorState.image.naturalWidth,
-    cropSize / playerPhotoEditorState.image.naturalHeight
-  );
-}
-function setPlayerPhotoModalOpen(isOpen) {
-  if (!elPlayerPhotoModal) return;
-  if(elPlayerPhotoModal.dataset.reactManaged === "true" && typeof setReactPlayerPhotoOpen === "function")setReactPlayerPhotoOpen(isOpen);
-  else elPlayerPhotoModal.classList.toggle("hidden", !isOpen);
-}
-function clampPlayerPhotoOffsets() {
-  if (!playerPhotoEditorState.image || !elPlayerPhotoStage) return;
-  const cropSize = Math.max(1, elPlayerPhotoStage.clientWidth || 320);
-  const scale = playerPhotoEditorState.baseScale * playerPhotoEditorState.zoom;
-  const imgWidth = playerPhotoEditorState.image.naturalWidth * scale;
-  const imgHeight = playerPhotoEditorState.image.naturalHeight * scale;
-  const maxOffsetX = Math.max(0, (imgWidth - cropSize) / 2);
-  const maxOffsetY = Math.max(0, (imgHeight - cropSize) / 2);
-  playerPhotoEditorState.offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, playerPhotoEditorState.offsetX));
-  playerPhotoEditorState.offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, playerPhotoEditorState.offsetY));
-}
-function renderPlayerPhotoEditor() {
-  if (!elPlayerPhotoImage || !elPlayerPhotoStage || !playerPhotoEditorState.image) return;
-  syncPlayerPhotoBaseScale();
-  clampPlayerPhotoOffsets();
-  if(elPlayerPhotoImage.dataset.reactManaged === "true" && typeof publishPlayerPhotoView === "function"){publishPlayerPhotoView();return;}
-  const scale = playerPhotoEditorState.baseScale * playerPhotoEditorState.zoom;
-  elPlayerPhotoImage.style.transform =
-    `translate(calc(-50% + ${playerPhotoEditorState.offsetX}px), calc(-50% + ${playerPhotoEditorState.offsetY}px)) scale(${scale})`;
-}
-function closePlayerPhotoEditor(result = null) {
-  if (playerPhotoEditorState.sourceUrl && playerPhotoEditorState.sourceUrl.startsWith("blob:")) {
-    URL.revokeObjectURL(playerPhotoEditorState.sourceUrl);
-  }
-  const resolve = playerPhotoEditorState.resolve;
-  playerPhotoEditorState.resolve = null;
-  playerPhotoEditorState.image = null;
-  playerPhotoEditorState.sourceUrl = "";
-  playerPhotoEditorState.baseScale = 1;
-  playerPhotoEditorState.zoom = 1;
-  playerPhotoEditorState.offsetX = 0;
-  playerPhotoEditorState.offsetY = 0;
-  playerPhotoEditorState.pointerId = null;
-  playerPhotoEditorState.allowRemove = false;
-  if (elPlayerPhotoRemove && elPlayerPhotoRemove.dataset.reactManaged !== "true") {
-    elPlayerPhotoRemove.classList.add("hidden");
-  }
-  if (elPlayerPhotoImage && elPlayerPhotoImage.dataset.reactManaged !== "true") {
-    elPlayerPhotoImage.removeAttribute("src");
-    elPlayerPhotoImage.style.transform = "";
-  }
-  setPlayerPhotoModalOpen(false);
-  if (typeof resolve === "function") {
-    resolve(result);
-  }
-}
-function exportPlayerPhotoDataUrl(options = {}) {
-  if (!playerPhotoEditorState.image || !elPlayerPhotoStage) {
-    throw new Error("player-photo-not-ready");
-  }
-  const size = Number(options.size) > 0 ? Number(options.size) : PLAYER_PHOTO_EXPORT_SIZE;
-  const quality = Number(options.quality) > 0 ? Math.min(0.9, Number(options.quality)) : 0.72;
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("canvas-unavailable");
-  const cropSize = Math.max(1, elPlayerPhotoStage.clientWidth || 320);
-  const img = playerPhotoEditorState.image;
-  const scale = playerPhotoEditorState.baseScale * playerPhotoEditorState.zoom;
-  const displayWidth = img.naturalWidth * scale;
-  const displayHeight = img.naturalHeight * scale;
-  const left = cropSize / 2 - displayWidth / 2 + playerPhotoEditorState.offsetX;
-  const top = cropSize / 2 - displayHeight / 2 + playerPhotoEditorState.offsetY;
-  const sourceX = Math.max(0, (-left / displayWidth) * img.naturalWidth);
-  const sourceY = Math.max(0, (-top / displayHeight) * img.naturalHeight);
-  const sourceW = Math.min(img.naturalWidth, (cropSize / displayWidth) * img.naturalWidth);
-  const sourceH = Math.min(img.naturalHeight, (cropSize / displayHeight) * img.naturalHeight);
-  ctx.drawImage(img, sourceX, sourceY, sourceW, sourceH, 0, 0, size, size);
-  return canvas.toDataURL("image/jpeg", quality);
-}
-async function openPlayerPhotoEditor(sourceUrl, options = {}) {
-  if (!sourceUrl) return null;
-  if (!elPlayerPhotoModal || !elPlayerPhotoStage || !elPlayerPhotoImage || !elPlayerPhotoZoom) {
-    throw new Error("player-photo-modal-missing");
-  }
-  if (typeof playerPhotoEditorState.resolve === "function") {
-    closePlayerPhotoEditor(null);
-  }
-  const img = await loadImageElement(sourceUrl);
-  playerPhotoEditorState.image = img;
-  playerPhotoEditorState.sourceUrl = sourceUrl;
-  playerPhotoEditorState.baseScale = 1;
-  playerPhotoEditorState.zoom = 1;
-  playerPhotoEditorState.offsetX = 0;
-  playerPhotoEditorState.offsetY = 0;
-  playerPhotoEditorState.allowRemove = !!options.allowRemove;
-  if (elPlayerPhotoRemove && elPlayerPhotoRemove.dataset.reactManaged !== "true") {
-    elPlayerPhotoRemove.classList.toggle("hidden", !playerPhotoEditorState.allowRemove);
-  }
-  if(elPlayerPhotoModal.dataset.reactManaged !== "true") {
-  elPlayerPhotoImage.src = sourceUrl;
-  elPlayerPhotoZoom.min = "1";
-  elPlayerPhotoZoom.max = options.maxZoom ? String(options.maxZoom) : "3";
-  elPlayerPhotoZoom.step = "0.01";
-  elPlayerPhotoZoom.value = "1";
-  }
-  if(elPlayerPhotoModal.dataset.reactManaged === "true" && typeof setReactPlayerPhotoOpen === "function")setReactPlayerPhotoOpen(true,options);
-  else setPlayerPhotoModalOpen(true);
-  requestAnimationFrame(() => renderPlayerPhotoEditor());
-  return new Promise(resolve => {
-    playerPhotoEditorState.resolve = resolve;
-  });
-}
-async function preparePlayerPhotoDataUrl(file, options = {}) {
-  if (!file) return "";
-  const type = String(file.type || "").toLowerCase();
-  if (!type.startsWith("image/")) {
-    throw new Error("invalid-image");
-  }
-  const sourceUrl = URL.createObjectURL(file);
-  try {
-    const edited = await openPlayerPhotoEditor(sourceUrl, options);
-    return edited || "";
-  } catch (error) {
-    URL.revokeObjectURL(sourceUrl);
-    throw error;
-  }
-}
-function handlePlayerPhotoPointerDown(ev) {
-  if (!playerPhotoEditorState.image || !elPlayerPhotoStage || !(ev.target instanceof HTMLElement)) return;
-  playerPhotoEditorState.pointerId = ev.pointerId;
-  playerPhotoEditorState.dragStartX = ev.clientX;
-  playerPhotoEditorState.dragStartY = ev.clientY;
-  playerPhotoEditorState.dragOriginX = playerPhotoEditorState.offsetX;
-  playerPhotoEditorState.dragOriginY = playerPhotoEditorState.offsetY;
-  elPlayerPhotoStage.classList.add("dragging");
-  if (elPlayerPhotoStage.setPointerCapture) {
-    elPlayerPhotoStage.setPointerCapture(ev.pointerId);
-  }
-  ev.preventDefault();
-}
-function handlePlayerPhotoPointerMove(ev) {
-  if (playerPhotoEditorState.pointerId !== ev.pointerId) return;
-  playerPhotoEditorState.offsetX = playerPhotoEditorState.dragOriginX + (ev.clientX - playerPhotoEditorState.dragStartX);
-  playerPhotoEditorState.offsetY = playerPhotoEditorState.dragOriginY + (ev.clientY - playerPhotoEditorState.dragStartY);
-  renderPlayerPhotoEditor();
-}
-function handlePlayerPhotoPointerUp(ev) {
-  if (playerPhotoEditorState.pointerId !== ev.pointerId) return;
-  playerPhotoEditorState.pointerId = null;
-  if (elPlayerPhotoStage && elPlayerPhotoStage.releasePointerCapture) {
-    try {
-      elPlayerPhotoStage.releasePointerCapture(ev.pointerId);
-    } catch (_) {}
-  }
-  if (elPlayerPhotoStage) {
-    elPlayerPhotoStage.classList.remove("dragging");
-  }
-}
-if (elPlayerPhotoStage && elPlayerPhotoStage.dataset.reactManaged !== "true" && !elPlayerPhotoStage._playerPhotoBound) {
-  elPlayerPhotoStage.addEventListener("pointerdown", handlePlayerPhotoPointerDown);
-  elPlayerPhotoStage.addEventListener("pointermove", handlePlayerPhotoPointerMove);
-  elPlayerPhotoStage.addEventListener("pointerup", handlePlayerPhotoPointerUp);
-  elPlayerPhotoStage.addEventListener("pointercancel", handlePlayerPhotoPointerUp);
-  elPlayerPhotoStage._playerPhotoBound = true;
-}
-if (elPlayerPhotoZoom && elPlayerPhotoZoom.dataset.reactManaged !== "true" && !elPlayerPhotoZoom._playerPhotoBound) {
-  elPlayerPhotoZoom.addEventListener("input", () => {
-    const nextZoom = parseFloat(elPlayerPhotoZoom.value);
-    playerPhotoEditorState.zoom = Number.isFinite(nextZoom) ? Math.max(1, nextZoom) : 1;
-    renderPlayerPhotoEditor();
-  });
-  elPlayerPhotoZoom._playerPhotoBound = true;
-}
-if (elPlayerPhotoClose && elPlayerPhotoClose.dataset.reactManaged !== "true" && !elPlayerPhotoClose._playerPhotoBound) {
-  elPlayerPhotoClose.addEventListener("click", () => closePlayerPhotoEditor(null));
-  elPlayerPhotoClose._playerPhotoBound = true;
-}
-if (elPlayerPhotoCancel && elPlayerPhotoCancel.dataset.reactManaged !== "true" && !elPlayerPhotoCancel._playerPhotoBound) {
-  elPlayerPhotoCancel.addEventListener("click", () => closePlayerPhotoEditor(null));
-  elPlayerPhotoCancel._playerPhotoBound = true;
-}
-if (elPlayerPhotoRemove && elPlayerPhotoRemove.dataset.reactManaged !== "true" && !elPlayerPhotoRemove._playerPhotoBound) {
-  elPlayerPhotoRemove.addEventListener("click", () => closePlayerPhotoEditor(PLAYER_PHOTO_REMOVE_RESULT));
-  elPlayerPhotoRemove._playerPhotoBound = true;
-}
-if (elPlayerPhotoSave && elPlayerPhotoSave.dataset.reactManaged !== "true" && !elPlayerPhotoSave._playerPhotoBound) {
-  elPlayerPhotoSave.addEventListener("click", () => {
-    try {
-      closePlayerPhotoEditor(exportPlayerPhotoDataUrl());
-    } catch (err) {
-      logError("player-photo-export", err);
-      closePlayerPhotoEditor(null);
-    }
-  });
-  elPlayerPhotoSave._playerPhotoBound = true;
-}
-if (elPlayerPhotoModal && elPlayerPhotoModal.dataset.reactManaged !== "true" && !elPlayerPhotoModal._playerPhotoBound) {
-  elPlayerPhotoModal.addEventListener("click", ev => {
-    const target = ev.target;
-    if (!(target instanceof HTMLElement)) return;
-    if (target.dataset.closePlayerPhoto !== undefined || target === elPlayerPhotoModal) {
-      closePlayerPhotoEditor(null);
-    }
-  });
-  elPlayerPhotoModal._playerPhotoBound = true;
-}
-const elOpponent = document.getElementById("match-opponent");
-const elCategory = document.getElementById("match-category");
-const elDate = document.getElementById("match-date");
-const elLeg = document.getElementById("match-leg");
-const elMatchType = document.getElementById("match-type");
-const elCurrentSet = document.getElementById("current-set");
-const elCurrentSetDisplay = document.getElementById("current-set-display");
-const elPlayersInput = document.getElementById("players-input");
-const elPlayersContainer = document.getElementById("players-container");
-const elPlayersList = document.getElementById("players-list");
-const elNewPlayerInput = document.getElementById("new-player-name");
-const elBtnAddPlayer = document.getElementById("btn-add-player");
-const elBtnClearPlayers = document.getElementById("btn-clear-players");
-const elBtnOpenLineup = document.getElementById("btn-open-lineup");
-const elTeamsSelect = document.getElementById("saved-teams");
-const elBtnSaveTeam = document.getElementById("btn-save-team");
-const elBtnDeleteTeam = document.getElementById("btn-delete-team");
-const elBtnDuplicateTeam = document.getElementById("btn-duplicate-team");
-const elBtnExportTeam = document.getElementById("btn-export-team");
-const elBtnImportTeam = document.getElementById("btn-import-team");
-const elTeamFileInput = document.getElementById("team-file-input");
-const elLineupChips = document.getElementById("lineup-chips");
-const elRotationIndicator = document.getElementById("rotation-indicator");
-const elRotationSelect = document.getElementById("rotation-select");
-const elRotationSelectOpp = document.getElementById("rotation-select-opp");
-const elBtnRotateCw = document.getElementById("btn-rotate-cw");
-const elBtnRotateCcw = document.getElementById("btn-rotate-ccw");
-const elBtnRotateCwOpp = document.getElementById("btn-rotate-cw-opp");
-const elBtnRotateCcwOpp = document.getElementById("btn-rotate-ccw-opp");
-const elBtnRotateCwModal = document.getElementById("btn-rotate-cw-modal");
-const elBtnRotateCcwModal = document.getElementById("btn-rotate-ccw-modal");
-const elLiberoTags = document.getElementById("libero-tags");
-const elLiberoTagsInline = document.getElementById("libero-tags-inline");
-const elLiberoTagsInlineOpp = document.getElementById("libero-tags-inline-opp");
-const elSkillModal = document.getElementById("skill-modal");
-const elSkillModalBackdrop = document.querySelector("#skill-modal .skill-modal__backdrop");
-const elSkillModalBody = document.getElementById("skill-modal-body");
-const elSkillModalTitle = document.getElementById("skill-modal-title");
-const elSkillModalCancel = document.getElementById("skill-modal-cancel");
-const elSkillModalClose = document.getElementById("skill-modal-close");
-const elAggSkillModal = document.getElementById("agg-skill-modal");
-const elAggSkillModalBackdrop = document.querySelector("#agg-skill-modal .skill-modal__backdrop");
-const elAggSkillModalBody = document.getElementById("agg-skill-modal-body");
-const elAggSkillModalTitle = document.getElementById("agg-skill-modal-title");
-const elAggSkillModalClose = document.getElementById("agg-skill-modal-close");
-const elAnalysisSkillChartMetric = document.getElementById("analysis-skill-chart-metric");
-const elAnalysisSkillChartGrid = document.getElementById("analysis-skill-chart-grid");
-const elBulkEditModal = document.getElementById("bulk-edit-modal");
-const elBulkEditBody = document.getElementById("bulk-edit-body");
-const elBulkEditTitle = document.getElementById("bulk-edit-title");
-const elBulkEditHint = document.getElementById("bulk-edit-hint");
-const elBulkEditClose = document.getElementById("bulk-edit-close");
-const elBulkEditCancel = document.getElementById("bulk-edit-cancel");
-const elBulkEditApply = document.getElementById("bulk-edit-apply");
-const elBulkEditBackdrop = document.querySelector("#bulk-edit-modal .skill-modal__backdrop");
-const elErrorModal = document.getElementById("error-modal");
-const elErrorModalBody = document.getElementById("error-modal-body");
-const elErrorModalClose = document.getElementById("error-modal-close");
-const elErrorModalBackdrop = document.querySelector("#error-modal .skill-modal__backdrop");
-const elPointModal = document.getElementById("point-modal");
-const elPointModalBody = document.getElementById("point-modal-body");
-const elPointModalClose = document.getElementById("point-modal-close");
-const elPointModalBackdrop = document.querySelector("#point-modal .skill-modal__backdrop");
-const elVideoFileInput = document.getElementById("video-file-input");
-const elAnalysisVideo = document.getElementById("analysis-video");
-const elVideoSkillsContainer = document.getElementById("video-skills-container");
-const elVideoFileLabel = document.getElementById("video-file-label");
-const elVideoSyncLabel = document.getElementById("video-sync-label");
-const elBtnSyncFirstSkill = document.getElementById("btn-sync-first-skill");
-const elBtnCopyFfmpeg = document.getElementById("btn-copy-ffmpeg");
-const elBtnVideoFramePrev = document.getElementById("btn-video-frame-prev");
-const elBtnVideoFrameNext = document.getElementById("btn-video-frame-next");
-const elVideoSelectionCount = document.getElementById("video-selection-count");
-const elVideoPlayByPlayToggle = document.getElementById("video-playbyplay-toggle");
-const elBtnClearVideo = document.getElementById("btn-clear-video");
-const elYoutubeUrlInput = document.getElementById("youtube-url-input");
-const elBtnLoadYoutube = document.getElementById("btn-load-youtube");
-const elYoutubeFrame = document.getElementById("youtube-frame");
-const elVideoScoutToggle = document.getElementById("video-scout-toggle");
-const elVideoScoutContainer = document.getElementById("video-scout-container");
-const elVideoScoutControls = document.getElementById("video-scout-controls");
-const elVideoAnalysisSection = document.getElementById("video-analysis-section");
-const elVideoAnalysisHost = document.getElementById("video-analysis-host");
-const elVideoMobileFilterOpen = document.getElementById("video-mobile-filter-open");
-const elVideoMobileFilterClose = document.getElementById("video-mobile-filter-close");
-const elVideoMobileFilterApply = document.getElementById("video-mobile-filter-apply");
-const elVideoMobileFilterBackdrop = document.getElementById("video-mobile-filter-backdrop");
-const elVideoMobileFilterCount = document.getElementById("video-mobile-filter-count");
-const elVideoMobileResultsCount = document.getElementById("video-mobile-results-count");
-const elVideoMobilePrev = document.getElementById("video-mobile-prev");
-const elVideoMobileNext = document.getElementById("video-mobile-next");
-const elVideoMobileSourceModal = document.getElementById("video-mobile-source-modal");
-const elVideoMobileSourceOpen = document.getElementById("video-mobile-source-open");
-const elVideoMobileSourceClose = document.getElementById("video-mobile-source-close");
-const elVideoMobileSourceBackdrop = document.getElementById("video-mobile-source-backdrop");
-const elVideoMobileSourceLater = document.getElementById("video-mobile-source-later");
-const elVideoMobileFilePicker = document.getElementById("video-mobile-file-picker");
-const elVideoMobileYoutubeUrl = document.getElementById("video-mobile-youtube-url");
-const elVideoMobileYoutubeLoad = document.getElementById("video-mobile-youtube-load");
-const elVideoFileInputScout = document.getElementById("video-file-input-scout");
-const elAnalysisVideoScout = document.getElementById("analysis-video-scout");
-const elYoutubeUrlInputScout = document.getElementById("youtube-url-input-scout");
-const elBtnLoadYoutubeScout = document.getElementById("btn-load-youtube-scout");
-const elYoutubeFrameScout = document.getElementById("youtube-frame-scout");
-const elSecondDistribution = document.getElementById("second-distribution");
-const elTrajectoryAttackSummary = document.getElementById("trajectory-attack-summary");
-const elPlayerAttackSummary = document.getElementById("player-attack-summary");
-const elTrajFilterAttackTypes = document.getElementById("traj-filter-attack-types");
-const elPlayerTrajFilterAttackTypes = document.getElementById("player-traj-filter-attack-types");
-const elPlayerAnalysisCompareEnabled = document.getElementById("player-analysis-compare-enabled");
-const elPlayerAnalysisCompareFilter = document.getElementById("player-analysis-compare-filter");
-const elPlayerAnalysisCompareSelect = document.getElementById("player-analysis-compare-select");
-const elPlayerAnalysisTableWrap = document.getElementById("player-analysis-table-wrap");
-const elPlayerAnalysisCompareView = document.getElementById("player-analysis-compare-view");
-const elPlayerAnalysisChartMetric = document.getElementById("player-analysis-chart-metric");
-const elPlayerAnalysisSkillChartGrid = document.getElementById("player-analysis-skill-chart-grid");
-const elThemeToggles = Array.from(document.querySelectorAll("[data-theme-choice]"));
-let modalMode = "skill";
 
-function applySkillThemeVars() {
+export function applySkillThemeVars() {
   const root = document.documentElement;
   Object.entries(SKILL_COLORS).forEach(([id, colors]) => {
     root.style.setProperty(`--skill-${id}-bg`, colors.bg);
@@ -658,4 +345,3 @@ function applySkillThemeVars() {
     root.style.setProperty(`--skill-${id}-soft`, colors.soft || colors.bg);
   });
 }
-applySkillThemeVars();

@@ -1,5 +1,7 @@
+import { createViewStore } from './view-store.mjs';
+
 export function createPlayersDbStore() {
-  let snapshot = Object.freeze({
+  const base = createViewStore({
     open: false,
     entries: Object.freeze([]),
     options: Object.freeze([]),
@@ -7,21 +9,12 @@ export function createPlayersDbStore() {
     primaryId: "",
     secondaryId: "",
   });
-  const listeners = new Set();
   const store = {
-    getSnapshot: () => snapshot,
-    subscribe(listener) {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
-    publish(patch) {
-      snapshot = Object.freeze({ ...snapshot, ...patch });
-      listeners.forEach((listener) => listener());
-    },
+    ...base,
     select(field, id) {
       if (
         !["primaryId", "secondaryId"].includes(field) ||
-        (id && !snapshot.options.some((option) => option.id === id))
+        (id && !base.getSnapshot().options.some((option) => option.id === id))
       )
         return;
       store.publish({ [field]: id });

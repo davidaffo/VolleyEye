@@ -1,11 +1,9 @@
-import { useLayoutEffect, useRef, useSyncExternalStore } from "react";
+
+import { useViewStore } from "../../hooks/useViewStore.js";
+import { useLayoutEffect, useRef } from "react";
 import { updateBannerStore } from "../../state/roster-import-store.mjs";
 export function UpdateBanner() {
-  const view = useSyncExternalStore(
-      updateBannerStore.subscribe,
-      updateBannerStore.getSnapshot,
-      updateBannerStore.getSnapshot,
-    ),
+  const view = useViewStore(updateBannerStore),
     root = useRef(null);
   useLayoutEffect(() => {
     const update = () =>
@@ -24,7 +22,6 @@ export function UpdateBanner() {
       id="update-banner"
       ref={root}
       className={"update-banner" + (view.visible ? "" : " hidden")}
-      data-react-managed="true"
       role="status"
       aria-live="polite"
     >

@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
-import { readFileSync } from 'node:fs';
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 
 function harness() {
   const ctx = { MATCH_PREFIX: 'match-', logError() {}, archiveStorage: {}, state: {} };
-  vm.runInNewContext(readFileSync('js/roster/storage/match-repository.js', 'utf8'), ctx);
+  vm.runInNewContext(readFileSync('src/features/storage/match-repository.js', 'utf8'), ctx);
   return ctx;
 }
 test('archivio compatto conserva valori, campi assenti e oggetti indipendenti', () => {

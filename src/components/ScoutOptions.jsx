@@ -1,10 +1,13 @@
-import { useSyncExternalStore } from "react";
+import { CommandButton } from "./ui/CommandButton.jsx";
+
+import { useViewStore } from "../hooks/useViewStore.js";
+
 import { runtimeStore } from "../state/runtime-store.mjs";
 import {
   settingsStore,
   setTypeShortcutsStore,
 } from "../state/roster-import-store.mjs";
-import { invokeRuntime } from "../compat/runtime.js";
+import { actions as appActions } from "../app/actions.mjs";
 const fields = {
   "auto-rotate-toggle": "autoRotate",
   "auto-role-toggle": "autoRolePositioning",
@@ -24,22 +27,15 @@ const fields = {
   "serve-trajectory-log-toggle-inline-opp": "showServeTrajectoryLogOpp",
 };
 export function ScoutToggle({ id, ...props }) {
-  const view = useSyncExternalStore(
-    settingsStore.subscribe,
-    settingsStore.getSnapshot,
-    settingsStore.getSnapshot,
-  );
+  const view = useViewStore(settingsStore);
   return (
     <input
       {...props}
       id={id}
       type="checkbox"
-      data-react-managed="true"
       checked={!!view.values[fields[id]]}
       onChange={(event) =>
-        invokeRuntime(
-          "changeReactSetting",
-          fields[id],
+        appActions.changeReactSetting(fields[id],
           event.target.checked,
         ).catch(console.error)
       }
@@ -47,20 +43,10 @@ export function ScoutToggle({ id, ...props }) {
   );
 }
 
-const useSettings = () =>
-  useSyncExternalStore(
-    settingsStore.subscribe,
-    settingsStore.getSnapshot,
-    settingsStore.getSnapshot,
-  );
-const useControls = () =>
-  useSyncExternalStore(
-    runtimeStore.subscribe,
-    runtimeStore.getSnapshot,
-    runtimeStore.getSnapshot,
-  );
+const useSettings = () => useViewStore(settingsStore);
+const useControls = () => useViewStore(runtimeStore);
 const run = (command, ...args) =>
-  invokeRuntime(command, ...args).catch(console.error);
+  appActions[command]( ...args).catch(console.error);
 const actions = {
   "btn-rotate-cw": ["rotateCourt", "cw"],
   "btn-rotate-ccw": ["rotateCourt", "ccw"],
@@ -77,15 +63,15 @@ export function ScoutActionButton({ id, children, ...props }) {
   const controls = useControls();
   const allowed = id.startsWith("btn-swap-libero");
   return (
-    <button
+    <CommandButton
       {...props}
       id={id}
-      data-react-managed="true"
       disabled={!allowed && !!controls.scoutControlsDisabled}
-      onClick={() => run(...actions[id])}
+      command={actions[id][0]}
+      args={actions[id].slice(1)}
     >
       {children}
-    </button>
+    </CommandButton>
   );
 }
 export function ScoutRotationSelect({ id, children, ...props }) {
@@ -95,7 +81,6 @@ export function ScoutRotationSelect({ id, children, ...props }) {
     <select
       {...props}
       id={id}
-      data-react-managed="true"
       value={String(values[opponent ? "opponentRotation" : "rotation"] || 1)}
       onChange={(event) =>
         run(
@@ -115,7 +100,6 @@ export function ScoutLiberoSelect({ id, children, defaultValue, ...props }) {
     <select
       {...props}
       id={id}
-      data-react-managed="true"
       value={
         values[opponent ? "opponentAutoLiberoRole" : "autoLiberoRole"] ?? "C"
       }
@@ -138,7 +122,6 @@ export function ForceSkillButton({ scope, children, ...props }) {
   return (
     <button
       {...props}
-      data-react-managed="true"
       style={{
         display: values.skillVisibility?.[skill] === false ? "none" : "",
       }}
@@ -158,7 +141,6 @@ export function OpponentSkillToggle({ id, ...props }) {
       {...props}
       id={id}
       type="checkbox"
-      data-react-managed="true"
       checked={view.values.opponentSkillConfig?.[skill] !== false}
       onChange={(event) =>
         run("changeReactOpponentSkill", skill, event.target.checked)
@@ -168,11 +150,7 @@ export function OpponentSkillToggle({ id, ...props }) {
 }
 
 export function SetTypeShortcuts() {
-  const view = useSyncExternalStore(
-    setTypeShortcutsStore.subscribe,
-    setTypeShortcutsStore.getSnapshot,
-    setTypeShortcutsStore.getSnapshot,
-  );
+  const view = useViewStore(setTypeShortcutsStore);
   const controls = useControls();
   return (
     <div className="set-type-shortcuts__buttons">
@@ -180,7 +158,6 @@ export function SetTypeShortcuts() {
         <button
           key={choice.value}
           type="button"
-          data-react-managed="true"
           className={
             "set-type-btn" + (view.selected === choice.value ? " active" : "")
           }
@@ -195,7 +172,6 @@ export function SetTypeShortcuts() {
       <button
         className="set-type-btn secondary"
         data-clear-settype=""
-        data-react-managed="true"
         type="button"
         disabled={!!controls.scoutControlsDisabled}
         onClick={() => run("changeReactSetType", "")}

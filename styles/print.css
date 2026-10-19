@@ -13,10 +13,8 @@
   .tabs-dots,
   .floating-actions-modal,
   .skill-modal,
-  .skill-modal {
-    display: none !important;
-  }
-  .controls-row,
+  .skill-modal,
+.controls-row,
   button,
   select,
   input,
@@ -59,15 +57,9 @@
   }
   .table-wrapper,
   .rotation-wrapper,
-  .score-summary {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-  .agg-subpanel.active {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-  .trajectory-layout,
+  .score-summary,
+.agg-subpanel.active,
+.trajectory-layout,
   .serve-trajectory-layout,
   .trajectory-grid,
   .serve-trajectory-grid {

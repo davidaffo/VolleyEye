@@ -1,23 +1,20 @@
-import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+
+import { useViewStore } from "../hooks/useViewStore.js";
+import { useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { playByPlayStore } from "../state/roster-import-store.mjs";
-import { invokeRuntime } from "../compat/runtime.js";
+import { actions as appActions } from "../app/actions.mjs";
 function useView() {
-  return useSyncExternalStore(
-    playByPlayStore.subscribe,
-    playByPlayStore.getSnapshot,
-    playByPlayStore.getSnapshot,
-  );
+  return useViewStore(playByPlayStore);
 }
 export function PlayByPlaySelect() {
   const view = useView();
   return (
     <select
       id="analysis-play-by-play-set"
-      data-react-managed="true"
       value={view.selectedSet}
       onChange={(event) =>
-        invokeRuntime("changeReactPlayByPlaySet", event.target.value).catch(
+        appActions.changeReactPlayByPlaySet(event.target.value).catch(
           console.error,
         )
       }
@@ -36,7 +33,6 @@ export function PlayByPlaySummary() {
     <div
       id="analysis-play-by-play-summary"
       className="play-by-play-summary"
-      data-react-managed="true"
     >
       {view.count > 0 && (
         <>
@@ -119,7 +115,6 @@ export function PlayByPlayTable() {
     <div
       id="analysis-play-by-play"
       className="play-by-play-list"
-      data-react-managed="true"
     >
       {view.count === 0 ? (
         <div className="players-empty">

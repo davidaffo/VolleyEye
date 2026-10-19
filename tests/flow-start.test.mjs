@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import test from "node:test";
 import vm from "node:vm";
 import { readScoutSource } from "./helpers/scout-source.mjs";
@@ -166,10 +166,7 @@ test("il reset e il salvataggio conservano le premesse del flusso automatico", (
   assert.match(reset, /state\.flowTeamScope = preservedServing \? "our" : "opponent"/);
   assert.match(reset, /state\.pendingServe = null/);
 
-  const exportPayload = source.slice(
-    source.indexOf("function buildMatchExportPayload"),
-    source.indexOf("function buildDatabaseBackupPayload")
-  );
+  const exportPayload = readFileSync('src/features/storage/match-payload.js', 'utf8');
   assert.match(exportPayload, /predictiveSkillFlow: state\.predictiveSkillFlow !== false/);
   assert.match(exportPayload, /pendingServe: state\.pendingServe/);
 });

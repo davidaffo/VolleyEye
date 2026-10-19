@@ -1,129 +1,41 @@
-import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import test from "node:test";
-import vm from "node:vm";
-
-const context = {};
-context.self = context;
-context.window = context;
-vm.runInNewContext(
-  readFileSync(new URL("../js/shared/namespace.js", import.meta.url), "utf8"),
-  context,
-);
-vm.runInNewContext(
-  readFileSync(new URL("../js/match-settings.js", import.meta.url), "utf8"),
-  context,
-);
-
-const field = (value) => ({ value, disabled: false });
-
-function setup(overrides = {}) {
-  const state = {
-    match: {},
-    selectedTeam: "Casa",
-    selectedOpponentTeam: "Ospiti",
-    useOpponentTeam: false,
-    currentSet: 1,
-    players: ["A"],
-    opponentPlayers: ["B"],
-    ...overrides,
-  };
-  const calls = { saved: 0, set: [] };
-  const elements = {
-    elOpponent: field("Manuale"),
-    elCategory: field("U18"),
-    elDate: field(""),
-    elMatchType: field("campionato"),
-    elLeg: field("andata"),
-    elCurrentSet: field("3"),
-    elPlayersInput: field(""),
-    elOpponentPlayersInput: field(""),
-  };
-  const api = context.VolleyEye.matchSettings.createMatchSettings({
-    state,
-    getTodayIso: () => "2026-09-09",
-    ensureMatchDefaults: () => {
-      state.match ||= {};
-      state.match.date ||= "2026-09-09";
-      state.match.matchType ||= "amichevole";
-    },
-    setCurrentSet: (value, options) => calls.set.push([value, options]),
-    syncCurrentSetUI: (value) => (calls.syncedSet = value),
-    saveState: () => (calls.saved += 1),
-    ...elements,
-  });
-  return { state, calls, elements, api };
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { createMatchDialogStore } from '../src/state/match-dialog-store.mjs';
+function setup(details = {}, mode = 'create') {
+  const store = createMatchDialogStore();
+  store.open({mode,details,teamNames:['Casa','Ospiti'],today:'2026-09-09',currentCategory:'U18'});
+  return store;
 }
-
-test("salva avversario manuale senza toccare la squadra selezionata", () => {
-  const { state, calls, api } = setup();
-  api.saveMatchInfoFromUI();
-  assert.equal(state.match.teamName, "Casa");
-  assert.equal(state.match.opponent, "Manuale");
-  assert.equal(state.match.opponentManual, "Manuale");
-  assert.equal(state.match.date, "2026-09-09");
-  assert.deepEqual(JSON.parse(JSON.stringify(calls.set)), [
-    ["3", { save: false }],
-  ]);
-  assert.equal(calls.saved, 1);
+test('il dialogo mantiene separati avversario manuale e squadra selezionata', () => {
+  const store=setup();
+  store.update('opponentManual','Manuale');
+  assert.equal(store.getSnapshot().draft.teamName,'Casa');
+  assert.equal(store.getSnapshot().draft.opponentManual,'Manuale');
+  assert.equal(store.getSnapshot().draft.date,'2026-09-09');
 });
-
-test("in modalità doppia squadra usa l'avversaria selezionata", () => {
-  const { state, elements, api } = setup({ useOpponentTeam: true });
-  elements.elOpponent.value = "Testo estraneo";
-  api.saveMatchInfoFromUI();
-  assert.equal(state.match.opponent, "Ospiti");
-  assert.equal(state.match.opponentManual, undefined);
+test('la modalità doppia squadra conserva la selezione indipendente', () => {
+  const store=setup({useOpponentTeam:true,selectedTeam:'Casa',selectedOpponentTeam:'Ospiti'});
+  assert.equal(store.getSnapshot().draft.mode,'double');
+  assert.equal(store.getSnapshot().draft.opponentTeam,'Ospiti');
+  store.update('teamName','Ospiti');
+  assert.equal(store.getSnapshot().draft.opponentTeam,'Casa');
 });
-
-test("la UI blocca il campo avversario solo quando è collegato a una squadra", () => {
-  const { state, elements, api } = setup({
-    useOpponentTeam: true,
-    match: {
-      opponent: "Ospiti",
-      category: "U16",
-      date: "2026-01-02",
-      matchType: "torneo",
-      leg: "ritorno",
-    },
-  });
-  api.applyMatchInfoToUI();
-  assert.equal(elements.elOpponent.value, "Ospiti");
-  assert.equal(elements.elOpponent.disabled, true);
-  assert.equal(elements.elCategory.value, "U16");
-  state.useOpponentTeam = false;
-  api.applyMatchInfoToUI();
-  assert.equal(elements.elOpponent.disabled, false);
+test('modificare i dati partita conserva le identità delle squadre', () => {
+  const store=setup({useOpponentTeam:true,selectedTeam:'Casa',selectedOpponentTeam:'Ospiti',match:{category:'U16'}},'edit');
+  store.update('teamName','Ospiti');
+  store.update('mode','single');
+  store.update('opponentTeam','Casa');
+  assert.equal(store.getSnapshot().draft.teamName,'Casa');
+  assert.equal(store.getSnapshot().draft.mode,'double');
+  assert.equal(store.getSnapshot().draft.opponentTeam,'Ospiti');
 });
-
-test("le textarea sono sempre ricostruite dallo stato del rispettivo roster", () => {
-  const { elements, api } = setup({
-    players: ["A", "C"],
-    opponentPlayers: ["B", "D"],
-  });
-  api.applyPlayersFromStateToTextarea();
-  api.applyOpponentPlayersFromStateToTextarea();
-  assert.equal(elements.elPlayersInput.value, "A\nC");
-  assert.equal(elements.elOpponentPlayersInput.value, "B\nD");
-});
-
-test("caricare i dati del match non sovrascrive la bozza dei campi gestiti da React", () => {
-  const { elements, api } = setup({
-    match: {
-      category: "Salvata",
-      date: "2026-10-10",
-      matchType: "torneo",
-      leg: "ritorno",
-    },
-  });
-  const names = ["elCategory", "elDate", "elMatchType", "elLeg"];
-  const draft = names.map((name) => elements[name].value);
-  names.forEach((name) => {
-    elements[name].dataset = { reactManaged: "true" };
-  });
-  api.applyMatchInfoToUI();
-  assert.deepEqual(
-    names.map((name) => elements[name].value),
-    draft,
-  );
+test('la bozza non modifica il match e annullarla conserva i dati salvati', () => {
+  const details={match:{category:'U16',date:'2026-01-02'}};
+  const store=setup(details,'edit');
+  store.update('category','U18');
+  store.close();
+  assert.equal(store.getSnapshot().open,false);
+  assert.equal(details.match.category,'U16');
+  store.open({mode:'edit',details,teamNames:['Casa','Ospiti'],today:'2026-09-09'});
+  assert.equal(store.getSnapshot().draft.category,'U16');
 });

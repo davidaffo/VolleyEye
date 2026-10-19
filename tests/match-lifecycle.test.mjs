@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import test from "node:test";
 import vm from "node:vm";
 import { readRosterSource } from "./helpers/roster-source.mjs";
@@ -19,7 +19,8 @@ test("modificare i dati conserva squadre, modalità, eventi e identità del matc
       events: [{ eventId: 1 }], match: { teamName: "Casa", opponent: "Ospiti" }
     };
     const context = {
-      state, persistCurrentMatch: () => true, alert: () => {},
+      state, persistCurrentMatch: () => true, alert: () => {}, saveState: () => {},
+      renderMatchesSelect: () => {}, renderMatchSummary: () => {}, updateMatchStatusUI: () => {}, ensureMatchDefaults: () => {},
       getTodayIso: () => "2026-09-23"
     };
     vm.runInNewContext(source, context);

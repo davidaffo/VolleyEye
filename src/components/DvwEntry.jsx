@@ -1,23 +1,20 @@
-import { useSyncExternalStore } from "react";
+import { ScoutWidgetPortal } from './ScoutWorkspace.jsx';
+import { ScoutWidgetHandle } from "./ScoutWidgetHandle.jsx";
+
+import { useViewStore } from "../hooks/useViewStore.js";
+
 import { dvwEntryStore } from "../state/roster-import-store.mjs";
 import { runtimeStore } from "../state/runtime-store.mjs";
-import { invokeRuntime, invokeRuntimeEvent } from "../compat/runtime.js";
+import { actions as appActions, events as appEvents } from "../app/actions.mjs";
 const run = (command, ...args) =>
-  invokeRuntime(command, ...args).catch(console.error);
+  appActions[command]( ...args).catch(console.error);
 export function DvwEntry() {
-  const view = useSyncExternalStore(
-    dvwEntryStore.subscribe,
-    dvwEntryStore.getSnapshot,
-    dvwEntryStore.getSnapshot,
-  );
-  const controls = useSyncExternalStore(
-    runtimeStore.subscribe,
-    runtimeStore.getSnapshot,
-    runtimeStore.getSnapshot,
-  );
+  const view = useViewStore(dvwEntryStore);
+  const controls = useViewStore(runtimeStore);
   const disabled = !!controls.scoutControlsDisabled;
   return (
-    <div className="scout-dvw-bar scout-widget" data-scout-widget="dvw">
+    <ScoutWidgetPortal className="scout-dvw-bar scout-widget" data-scout-widget="dvw">
+      <ScoutWidgetHandle label="codice DataVolley" />
       <div className="scout-dvw-bar__top">
         <div className="scout-dvw-bar__title-row">
           <label htmlFor="dvw-scout-input">Scout da codice DataVolley</label>
@@ -25,11 +22,10 @@ export function DvwEntry() {
             id="btn-dvw-scout-help"
             className="icon-button scout-dvw-help-btn"
             type="button"
-            data-react-managed="true"
             disabled={disabled}
             aria-label="Apri manuale codici scouting"
             title="Apri manuale codici scouting"
-            onClick={() => invokeRuntimeEvent("openDvwScoutHelp")}
+            onClick={() => appEvents.openDvwScoutHelp()}
           >
             ?
           </button>
@@ -38,7 +34,6 @@ export function DvwEntry() {
           id="dvw-scout-last-code"
           className="scout-dvw-bar__last"
           aria-live="polite"
-          data-react-managed="true"
         >
           {view.lastCode}
         </div>
@@ -49,18 +44,17 @@ export function DvwEntry() {
           type="text"
           autoComplete="off"
           spellCheck="false"
-          data-react-managed="true"
           placeholder="Esempio: *08SM#~~~15C oppure più token separati da spazio"
           value={view.text}
           onChange={(event) =>
-            invokeRuntimeEvent("changeReactDvwText", event.target.value)
+            appEvents.changeReactDvwText(event.target.value)
           }
           onKeyDown={(event) => {
             event.stopPropagation();
             if (event.key === " " || event.key === "Tab") {
               if (view.text.trim()) {
                 event.preventDefault();
-                invokeRuntimeEvent("queueCurrentDvwScoutToken");
+                appEvents.queueCurrentDvwScoutToken();
               }
             } else if (event.key === "Enter") {
               event.preventDefault();
@@ -73,7 +67,6 @@ export function DvwEntry() {
           className="secondary"
           type="button"
           disabled={disabled}
-          data-react-managed="true"
           onClick={() => run("applyDvwScoutInput")}
         >
           Applica
@@ -83,7 +76,6 @@ export function DvwEntry() {
           className="secondary"
           type="button"
           disabled={disabled}
-          data-react-managed="true"
           onClick={() => run("clearReactDvwEntry")}
         >
           Pulisci
@@ -93,7 +85,6 @@ export function DvwEntry() {
         id="dvw-scout-breakdown"
         className="scout-dvw-bar__breakdown"
         aria-live="polite"
-        data-react-managed="true"
       >
         {view.breakdown?.suggestion && (
           <div className="scout-dvw-breakdown__suggestion">
@@ -148,7 +139,6 @@ export function DvwEntry() {
         id="dvw-scout-pending"
         className="scout-dvw-bar__pending"
         aria-live="polite"
-        data-react-managed="true"
       >
         {view.tokens.map((token) => (
           <div
@@ -168,7 +158,6 @@ export function DvwEntry() {
               <button
                 type="button"
                 className="scout-dvw-chip__remove"
-                data-react-managed="true"
                 disabled={disabled}
                 title="Rimuovi token"
                 onClick={() => run("removeReactDvwToken", token.id)}
@@ -185,10 +174,9 @@ export function DvwEntry() {
           "scout-dvw-bar__status" + (view.tone ? " is-" + view.tone : "")
         }
         aria-live="polite"
-        data-react-managed="true"
       >
         {view.status}
       </div>
-    </div>
+    </ScoutWidgetPortal>
   );
 }

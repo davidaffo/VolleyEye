@@ -4,7 +4,7 @@ import test from "node:test";
 
 const viewer = readFileSync(new URL("../docs/markdown-viewer.html", import.meta.url), "utf8");
 const manual = readFileSync(new URL("../docs/manual.md", import.meta.url), "utf8");
-const serviceWorker = readFileSync(new URL("../service-worker.js", import.meta.url), "utf8");
+const serviceWorker = readFileSync(new URL("../build/static-assets-plugin.mjs", import.meta.url), "utf8");
 
 test("il viewer usa marked con supporto GFM anziché un parser Markdown artigianale", () => {
   assert.match(viewer, /\.\.\/js\/vendor\/marked\.umd\.js/);
@@ -15,9 +15,9 @@ test("il viewer usa marked con supporto GFM anziché un parser Markdown artigian
 });
 
 test("manuale, viewer e parser sono disponibili anche offline", () => {
-  assert.match(serviceWorker, /\.\/docs\/manual\.md/);
-  assert.match(serviceWorker, /\.\/docs\/markdown-viewer\.html/);
-  assert.match(serviceWorker, /\.\/js\/vendor\/marked\.umd\.js/);
+  assert.match(serviceWorker, /"docs"/);
+  assert.equal(existsSync(new URL("../docs/markdown-viewer.html", import.meta.url)), true);
+  assert.match(serviceWorker, /js\/vendor\/marked\.umd\.js/);
   assert.doesNotMatch(serviceWorker, /node_modules\/marked/);
   assert.equal(existsSync(new URL("../js/vendor/marked.umd.js", import.meta.url)), true);
   assert.equal(existsSync(new URL("../js/vendor/marked.LICENSE", import.meta.url)), true);

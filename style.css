@@ -322,12 +322,8 @@ body[data-theme="light"] .tab-panel {
   color: #ffffff;
   box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.24);
 }
-.pdf-capture .tabs-nav {
-  display: none !important;
-}
-.pdf-capture .controls-row {
-  display: none !important;
-}
+.pdf-capture .tabs-nav,
+.pdf-capture .controls-row,
 .pdf-capture [data-pdf-hide="true"] {
   display: none !important;
 }
@@ -474,11 +470,7 @@ body[data-theme="light"] .app-footer-github {
   border-color: #94a3b8;
   color: #0f172a;
 }
-body[data-theme="light"] .app-footer-manual {
-  background: #eff6ff;
-  border-color: #93c5fd;
-  color: #1d4ed8;
-}
+body[data-theme="light"] .app-footer-manual,
 body[data-theme="light"] .app-footer-refresh {
   background: #eff6ff;
   border-color: #93c5fd;

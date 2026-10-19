@@ -1,7 +1,9 @@
-import { useLayoutEffect, useSyncExternalStore } from "react";
+
+import { useViewStore } from "../hooks/useViewStore.js";
+import { useLayoutEffect } from "react";
 import { scoutCourtStore } from "../state/scout-court-store.mjs";
 import { runtimeStore } from "../state/runtime-store.mjs";
-import { invokeRuntimeEvent } from "../compat/runtime.js";
+import { events as appEvents } from "../app/actions.mjs";
 function act(callback, event) {
   if (!callback) return;
   try {
@@ -23,7 +25,6 @@ export function ScoutSkillControls({ view, disabled }) {
           type="button"
           className="player-skill-cancel"
           title="Annulla fondamentale"
-          data-react-managed="true"
           disabled={disabled}
           onClick={(event) => {
             event.stopPropagation();
@@ -53,7 +54,6 @@ export function ScoutSkillControls({ view, disabled }) {
                 type="button"
                 className={button.className}
                 style={button.style || undefined}
-                data-react-managed="true"
                 disabled={disabled}
                 data-player-idx={button.data?.playerIdx}
                 data-player-name={button.data?.playerName}
@@ -84,23 +84,13 @@ export function ScoutSkillControls({ view, disabled }) {
   );
 }
 export function ScoutCourt({ scope }) {
-  const courts = useSyncExternalStore(
-    scoutCourtStore.subscribe,
-    scoutCourtStore.getSnapshot,
-    scoutCourtStore.getSnapshot,
-  );
-  const controls = useSyncExternalStore(
-    runtimeStore.subscribe,
-    runtimeStore.getSnapshot,
-    runtimeStore.getSnapshot,
-  );
+  const courts = useViewStore(scoutCourtStore);
+  const controls = useViewStore(runtimeStore);
   const view = courts[scope];
   const disabled = !!controls.scoutControlsDisabled;
   useLayoutEffect(() => {
     if (!view.previousRects) return;
-    invokeRuntimeEvent(
-      "animateFlip",
-      view.previousRects,
+    appEvents.animateFlip(view.previousRects,
       `.court-card[data-team-scope="${scope}"]`,
       (element) =>
         element.dataset.playerName || "pos-" + (element.dataset.posIndex || ""),
@@ -121,7 +111,6 @@ export function ScoutCourt({ scope }) {
             "error-choice-btn " +
             (view.pointPick ? "success" : "danger error-pick-bench-team-error")
           }
-          data-react-managed="true"
           disabled={disabled}
           onClick={(event) =>
             act(view.pointPick ? view.onTeamPoint : view.onTeamError, event)
@@ -137,7 +126,6 @@ export function ScoutCourt({ scope }) {
                   key={player.name}
                   type="button"
                   className="error-choice-btn danger error-pick-bench-btn"
-                  data-react-managed="true"
                   disabled={disabled}
                   onClick={(event) => act(player.onPick, event)}
                 >
@@ -163,7 +151,6 @@ export function ScoutCourt({ scope }) {
             ? "opponent-players-container"
             : "players-container"
         }
-        data-react-managed="true"
         className={
           "court-layout" +
           (view.mirrored ? " court-layout--mirror" : "") +
@@ -183,7 +170,6 @@ export function ScoutCourt({ scope }) {
                       ? "Annulla selezione punto"
                       : "Annulla selezione errore"
                   }
-                  data-react-managed="true"
                   disabled={disabled}
                   onClick={(event) => act(view.onCancelPick, event)}
                 >
@@ -221,29 +207,21 @@ export function ScoutCourt({ scope }) {
                     : {}),
                 }}
                 onDragEnterCapture={(event) =>
-                  invokeRuntimeEvent(
-                    "handlePositionDragOver",
-                    event,
+                  appEvents.handlePositionDragOver(event,
                     event.currentTarget,
                   )
                 }
                 onDragOverCapture={(event) =>
-                  invokeRuntimeEvent(
-                    "handlePositionDragOver",
-                    event,
+                  appEvents.handlePositionDragOver(event,
                     event.currentTarget,
                   )
                 }
                 onDragLeaveCapture={(event) =>
-                  invokeRuntimeEvent(
-                    "handlePositionDragLeave",
-                    event.currentTarget,
+                  appEvents.handlePositionDragLeave(event.currentTarget,
                   )
                 }
                 onDropCapture={(event) =>
-                  invokeRuntimeEvent(
-                    "handlePositionDrop",
-                    event,
+                  appEvents.handlePositionDrop(event,
                     event.currentTarget,
                   )
                 }
@@ -255,15 +233,13 @@ export function ScoutCourt({ scope }) {
                   }
                   draggable={!!card.name && card.libero}
                   onDragStart={(event) =>
-                    invokeRuntimeEvent(
-                      "handleCourtDragStart",
-                      event,
+                    appEvents.handleCourtDragStart(event,
                       card.posIndex,
                       scope,
                     )
                   }
                   onDragEnd={(event) =>
-                    invokeRuntimeEvent("handleCourtDragEnd", event)
+                    appEvents.handleCourtDragEnd(event)
                   }
                 >
                   <div className="court-tagbar">
@@ -289,7 +265,6 @@ export function ScoutCourt({ scope }) {
                         type="button"
                         className="libero-return-btn"
                         title={card.restoreLabel}
-                        data-react-managed="true"
                         disabled={disabled}
                         onClick={(event) => {
                           event.stopPropagation();
@@ -326,7 +301,6 @@ export function ScoutCourt({ scope }) {
                         (view.pointPick ? "success" : "danger") +
                         " error-pick-btn"
                       }
-                      data-react-managed="true"
                       disabled={disabled}
                       onClick={(event) => act(card.onPick, event)}
                     >

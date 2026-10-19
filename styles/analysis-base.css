@@ -634,9 +634,7 @@ body[data-theme="light"] .skill-row {
   border-color: #3b82f6;
   color: #3b82f6;
 }
-.code-error-btn {
-  grid-column: 1 / -1;
-}
+.code-error-btn,
 .skill-error-btn {
   grid-column: 1 / -1;
 }

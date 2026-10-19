@@ -2,11 +2,15 @@ import { dvwFixtureRoot } from './helpers/dvw-fixtures.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readdirSync } from 'node:fs';
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 
 function harness() {
+  let playerId = 0;
   const context = {
     state: { useOpponentTeam: true }, DEFAULT_STAFF: {},
+    generatePlayerId: () => `test-player-${++playerId}`,
+    getRoleLabelForRotation: () => "P",
     ensureCourtShapeFor: court => court,
     normalizeDataVolleyEventMeta: value => ({ ...value }),
     getTeamScopeFromEvent: event => event.team === 'opponent' ? 'opponent' : 'our',
@@ -14,13 +18,15 @@ function harness() {
     getScoreOverrideTotals: () => ({ for: 0, against: 0 }),
     normalizeScoreOverrides: value => value || {}
   };
-  for (const file of ['datavolley-export', 'datavolley-codec', 'datavolley-match-import']) {
-    vm.runInNewContext(readFileSync(`js/scout/io/${file}.js`, 'utf8'), context);
+  for (const file of ['datavolley-skills', 'datavolley-export', 'datavolley-codec', 'datavolley-match-import']) {
+    vm.runInNewContext(readFileSync(`src/features/io/${file}.js`, 'utf8'), context);
   }
   context.computeDataVolleyEventSignature = () => '';
-  vm.runInNewContext(readFileSync('js/scout/live/score-analysis.js', 'utf8'), context);
+  vm.runInNewContext(readFileSync('src/features/analysis/scores.js', 'utf8'), context);
   context.ensurePointRulesDefaults = () => {};
   context.normalizePointRule = () => ({ for: ['#'], against: ['='] });
+  const parse = context.parseDataVolleyDvwToMatchState;
+  context.parseDataVolleyDvwToMatchState = (...args) => { playerId = 0; return parse(...args); };
   return context;
 }
 const root = dvwFixtureRoot('resources/data volley');

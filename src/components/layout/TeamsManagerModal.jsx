@@ -1,16 +1,26 @@
-import { useRef, useState, useSyncExternalStore } from "react";
+import { ModalDialog } from "../ui/Modal.jsx";
+
+import { CommandButton } from "../ui/CommandButton.jsx";
+import { FileImportInput } from "../ui/FileImportInput.jsx";
+
+import { useViewStore } from "../../hooks/useViewStore.js";
+
+import { useRef, useState } from "react";
 import {
   teamsManagerStore,
   getTeamMergeChoices,
 } from "../../state/teams-manager-store.mjs";
-import { invokeRuntime } from "../../compat/runtime.js";
+import { actions as appActions } from "../../app/actions.mjs";
 
+function report(error) {
+  console.error("Operazione squadra non riuscita", error);
+  window.alert(error.message);
+}
 async function run(command, ...args) {
   try {
-    return await invokeRuntime(command, ...args);
+    return await appActions[command]( ...args);
   } catch (error) {
-    console.error("Operazione squadra non riuscita", error);
-    window.alert(error.message);
+    report(error);
   }
 }
 function TeamMerge({ primary, teams }) {
@@ -94,160 +104,121 @@ function TeamMerge({ primary, teams }) {
   );
 }
 export function TeamsManagerModal() {
-  const view = useSyncExternalStore(
-    teamsManagerStore.subscribe,
-    teamsManagerStore.getSnapshot,
-    teamsManagerStore.getSnapshot,
-  );
+  const view = useViewStore(teamsManagerStore);
   const fileInput = useRef(null);
   const selected = view.teams.find((team) => team.name === view.selectedName);
   const action = (id, text, command, className, requiresSelection = false) => (
-    <button
+    <CommandButton
       id={id}
       className={className}
-      data-react-managed="true"
       disabled={requiresSelection && !selected}
-      onClick={() => run(command)}
+      command={command}
+      onError={report}
     >
       {text}
-    </button>
+    </CommandButton>
   );
   return (
-    <div
+    <ModalDialog
       id="teams-manager-modal"
-      className={"settings-modal" + (view.open ? "" : " hidden")}
-      data-react-managed="true"
-      role="dialog"
-      aria-modal="true"
+      className="settings-modal"
       aria-labelledby="teams-manager-title"
+      open={view.open}
+      onClose={() => run("closeTeamsManagerModal")}
+      variant="settings"
+      backdropProps={{ "data-close-teams-manager": "" }}
+      contentProps={{
+        className: "settings-modal__content teams-manager__content",
+      }}
+      title={<h3 id="teams-manager-title">Gestione squadre</h3>}
+      closeProps={{
+        id: "teams-manager-close",
+        className: "pill-remove",
+        "aria-label": "Chiudi",
+        onClick: () => run("closeTeamsManagerModal"),
+      }}
+      bodyProps={{ className: "settings-modal__body teams-manager__body" }}
     >
-      <div
-        className="settings-modal__backdrop"
-        data-close-teams-manager=""
-        onClick={() => run("closeTeamsManagerModal")}
-      ></div>
-      <div className="settings-modal__content teams-manager__content">
-        <div className="settings-modal__head">
-          <h3 id="teams-manager-title">Gestione squadre</h3>
-          <button
-            id="teams-manager-close"
-            className="pill-remove"
-            aria-label="Chiudi"
-            data-react-managed="true"
-            onClick={() => run("closeTeamsManagerModal")}
-          >
-            ✕
-          </button>
-        </div>
-        <div className="settings-modal__body teams-manager__body">
-          <div className="teams-manager-row">
-            <label>Squadre salvate</label>
-            <ul
-              id="teams-manager-list"
-              className="teams-manager-list"
-              data-react-managed="true"
-            >
-              {view.teams.length ? (
-                view.teams.map((team) => (
-                  <li
-                    key={team.name}
-                    data-team-name={team.name}
-                    className={
-                      "teams-manager-item" +
-                      (team.name === view.selectedName ? " selected" : "")
-                    }
-                    onClick={() => run("selectManagedTeam", team.name)}
-                  >
-                    {team.name}
-                  </li>
-                ))
-              ) : (
-                <li className="teams-manager-item">Nessuna squadra salvata.</li>
-              )}
-            </ul>
-          </div>
-          <div className="teams-manager-actions">
-            {action(
-              "btn-new-team",
-              "Nuova squadra",
-              "createManagedTeam",
-              "primary",
-            )}
-            {action(
-              "teams-manager-open-team",
-              "Gestione squadra",
-              "openSelectedManagedTeam",
-              "secondary",
-              true,
-            )}
-            {action(
-              "teams-manager-delete",
-              "Elimina",
-              "deleteSelectedManagedTeam",
-              "danger",
-              true,
-            )}
-            {action(
-              "teams-manager-duplicate",
-              "Duplica",
-              "duplicateSelectedManagedTeam",
-              "secondary",
-              true,
-            )}
-            {action(
-              "teams-manager-export",
-              "Esporta su file",
-              "exportSelectedManagedTeam",
-              "secondary",
-              true,
-            )}
-            <button
-              id="teams-manager-import"
-              className="secondary"
-              data-react-managed="true"
-              onClick={() => {
-                fileInput.current.value = "";
-                fileInput.current.click();
-              }}
-            >
-              Importa da file
-            </button>
-            {action(
-              "teams-manager-open-players-db",
-              "Archivio giocatrici",
-              "openPlayersDbModal",
-              "secondary",
-            )}
-            <input
-              ref={fileInput}
-              id="teams-manager-file-input"
-              type="file"
-              accept="application/json,text/plain"
-              hidden
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) run("importTeamToStorageOnly", file);
-              }}
-            />
-          </div>
-          <p className="section-note">
-            La selezione qui serve solo per gestire le squadre salvate.
-          </p>
-          <div
-            id="team-merge-panel"
-            className="teams-manager-row"
-            data-react-managed="true"
-          >
-            {selected && (
-              <TeamMerge
-                key={JSON.stringify([view.selectedName, view.teams])}
-                primary={selected}
-                teams={view.teams}
-              />
-            )}
-          </div>
-        </div>
+      <div className="teams-manager-row">
+        <label>Squadre salvate</label>
+        <ul id="teams-manager-list" className="teams-manager-list">
+          {view.teams.length ? (
+            view.teams.map((team) => (
+              <li
+                key={team.name}
+                data-team-name={team.name}
+                className={
+                  "teams-manager-item" + (team.name === view.selectedName ? " selected" : "")
+                }
+                onClick={() => run("selectManagedTeam", team.name)}
+              >
+                {team.name}
+              </li>
+            ))
+          ) : (
+            <li className="teams-manager-item">Nessuna squadra salvata.</li>
+          )}
+        </ul>
       </div>
-    </div>
+      <div className="teams-manager-actions">
+        {action("btn-new-team", "Nuova squadra", "createManagedTeam", "primary")}
+        {action(
+          "teams-manager-open-team",
+          "Gestione squadra",
+          "openSelectedManagedTeam",
+          "secondary",
+          true,
+        )}
+        {action("teams-manager-delete", "Elimina", "deleteSelectedManagedTeam", "danger", true)}
+        {action(
+          "teams-manager-duplicate",
+          "Duplica",
+          "duplicateSelectedManagedTeam",
+          "secondary",
+          true,
+        )}
+        {action(
+          "teams-manager-export",
+          "Esporta su file",
+          "exportSelectedManagedTeam",
+          "secondary",
+          true,
+        )}
+        <button
+          id="teams-manager-import"
+          className="secondary"
+          onClick={() => {
+            fileInput.current.value = "";
+            fileInput.current.click();
+          }}
+        >
+          Importa da file
+        </button>
+        {action(
+          "teams-manager-open-players-db",
+          "Archivio giocatrici",
+          "openPlayersDbModal",
+          "secondary",
+        )}
+        <FileImportInput
+          ref={fileInput}
+          id="teams-manager-file-input"
+          type="file"
+          accept="application/json,text/plain"
+          hidden
+          onFile={(file) => run("importTeamToStorageOnly", file)}
+        />
+      </div>
+      <p className="section-note">La selezione qui serve solo per gestire le squadre salvate.</p>
+      <div id="team-merge-panel" className="teams-manager-row">
+        {selected && (
+          <TeamMerge
+            key={JSON.stringify([view.selectedName, view.teams])}
+            primary={selected}
+            teams={view.teams}
+          />
+        )}
+      </div>
+    </ModalDialog>
   );
 }

@@ -1,23 +1,20 @@
-import { useSyncExternalStore } from "react";
+
+import { useViewStore } from "../../hooks/useViewStore.js";
+
 import { runtimeStore } from "../../state/runtime-store.mjs";
-import { invokeRuntime } from "../../compat/runtime.js";
+import { actions as appActions } from "../../app/actions.mjs";
 export function BtnToggleTopbar() {
-  const view = useSyncExternalStore(
-      runtimeStore.subscribe,
-      runtimeStore.getSnapshot,
-      runtimeStore.getSnapshot,
-    ),
+  const view = useViewStore(runtimeStore),
     label = view.topbarHidden ? "Mostra barra" : "Nascondi barra";
   return (
     <button
       id="btn-toggle-topbar"
       className="topbar-toggle-btn"
       type="button"
-      data-react-managed="true"
       aria-label={label}
       title={label}
       aria-pressed={!!view.topbarHidden}
-      onClick={() => invokeRuntime("toggleReactTopbar").catch(console.error)}
+      onClick={() => appActions.toggleReactTopbar().catch(console.error)}
     >
       {view.topbarHidden ? "▾" : "▴"}
     </button>

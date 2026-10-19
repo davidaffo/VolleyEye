@@ -1,6 +1,6 @@
 import { readAppHtml } from './helpers/app-html.mjs';
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import test from "node:test";
 import vm from "node:vm";
 import { readScoutSource } from "./helpers/scout-source.mjs";
@@ -76,8 +76,8 @@ test("al primo caricamento viene chiesto se conservare o eliminare le demo", () 
     source.indexOf("function askDefaultDemoChoice"),
     source.indexOf("async function applyImportedDatabase")
   );
-  assert.match(chooser, /Usa le demo/);
-  assert.match(chooser, /Non usare ed elimina/);
+  assert.match(html, /Usa le demo/);
+  assert.match(html, /Non usare ed elimina/);
   assert.match(chooser, /removeDefaultDemoData\(\{ askConfirmation: false, showResult: false \}\)/);
   assert.match(source, /getDefaultDemoPreference\(\) !== "removed"/);
   assert.match(source, /await showDefaultDemoWelcomePopup\(\)/);
@@ -85,7 +85,7 @@ test("al primo caricamento viene chiesto se conservare o eliminare le demo", () 
 
 test("la gestione dati espone il comando dedicato per cancellare le demo", () => {
   assert.match(html, /id="btn-delete-demo-data"[^>]*>Cancella dati demo</);
-  assert.match(source, /elBtnDeleteDemoData\.addEventListener\("click"/);
+  assert.match(readFileSync(new URL("../src/components/AppActions.jsx", import.meta.url), "utf8"), /"btn-delete-demo-data"/);
   const remover = source.slice(
     source.indexOf("function removeDefaultDemoData"),
     source.indexOf("async function loadDefaultDemoMatch")
@@ -145,7 +145,7 @@ test("il tasto di cancellazione sparisce quando i dati demo non esistono", () =>
   );
   assert.match(visibility, /getDefaultDemoPreference\(\) !== "removed"/);
   assert.match(visibility, /hasDefaultDemoData\(\)/);
-  assert.match(visibility, /classList\.toggle\("hidden", !visible\)/);
+  assert.match(visibility, /demoActionStore\.publish\(\{ visible \}\)/);
   assert.match(source, /updateDefaultDemoDeleteButtonVisibility\(\);/);
 });
 

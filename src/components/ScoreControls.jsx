@@ -1,19 +1,19 @@
-import { useSyncExternalStore } from "react";
+import { CommandButton } from "./ui/CommandButton.jsx";
+
+import { useViewStore } from "../hooks/useViewStore.js";
+
 import { runtimeStore } from "../state/runtime-store.mjs";
-import { invokeRuntime } from "../compat/runtime.js";
+import { actions as appActions } from "../app/actions.mjs";
 
 function useScoreView() {
-  return useSyncExternalStore(
-    runtimeStore.subscribe,
-    runtimeStore.getSnapshot,
-    runtimeStore.getSnapshot,
-  );
+  return useViewStore(runtimeStore);
+}
+function reportScoreControlsError(error) {
+  console.error("Operazione punteggio non riuscita", error);
+  window.alert(error.message);
 }
 function perform(command, ...args) {
-  invokeRuntime(command, ...args).catch((error) => {
-    console.error("Operazione punteggio non riuscita", error);
-    window.alert(error.message);
-  });
+  appActions[command]( ...args).catch(reportScoreControlsError);
 }
 export function CurrentSetControl() {
   const view = useScoreView();
@@ -24,7 +24,6 @@ export function CurrentSetControl() {
         className="set-display"
         id="current-set-display"
         aria-live="polite"
-        data-react-managed="true"
       >
         Set {set}
       </div>
@@ -33,7 +32,6 @@ export function CurrentSetControl() {
         className="hidden-select"
         tabIndex={-1}
         aria-hidden="true"
-        data-react-managed="true"
         value={set}
         onChange={(event) => perform("setCurrentSet", event.target.value)}
       >
@@ -49,7 +47,7 @@ export function CurrentSetControl() {
 export function SetWinScore({ as: Tag = "strong", ...props }) {
   const view = useScoreView();
   return (
-    <Tag {...props} data-react-managed="true">
+    <Tag {...props}>
       {view.setWinLabel || "0 - 0"}
     </Tag>
   );
@@ -57,41 +55,53 @@ export function SetWinScore({ as: Tag = "strong", ...props }) {
 export function ManualScoreButton({ direction, delta, children, ...props }) {
   const view = useScoreView();
   return (
-    <button
+    <CommandButton
       {...props}
-      data-react-managed="true"
       disabled={!!view.scoutControlsDisabled}
-      onClick={() => perform("handleManualScore", direction, delta)}
+      command="handleManualScore"
+      args={[direction, delta]}
+      onError={reportScoreControlsError}
     >
       {children}
-    </button>
+    </CommandButton>
   );
 }
 export function MatchPauseButton({ className, ...props }) {
   const view = useScoreView();
   return (
-    <button
+    <CommandButton
       {...props}
-      data-react-managed="true"
       className={
         className + (view.matchFinished ? " resume-btn primary" : " danger")
       }
-      onClick={() => perform("endMatch")}
+      command="endMatch"
+      args={[]}
+      onError={reportScoreControlsError}
     >
       {view.matchFinished ? "Riprendi partita" : "Pausa/Termina"}
-    </button>
+    </CommandButton>
   );
 }
 export function NextSetButton({ children, ...props }) {
   const view = useScoreView();
   return (
-    <button
+    <CommandButton
       {...props}
-      data-react-managed="true"
       disabled={!!view.scoutControlsDisabled}
-      onClick={() => perform("prepareNextSet")}
+      command="prepareNextSet"
+      args={[]}
+      onError={reportScoreControlsError}
     >
       {children}
-    </button>
+    </CommandButton>
   );
+}
+
+export function ManualScoreControls({ direction }) {
+  const label = direction === 'for' ? 'Fatti' : 'Subiti';
+  return <div className={'score-side score-side-' + direction}>
+    {[-1, 1].map(delta => <ManualScoreButton key={delta} direction={direction} delta={delta}
+      id={'btn-score-' + direction + (delta < 0 ? '-minus' : '-plus')}
+      className={delta < 0 ? 'small secondary' : 'small'}>{(delta < 0 ? '- ' : '+ ') + label}</ManualScoreButton>)}
+  </div>;
 }

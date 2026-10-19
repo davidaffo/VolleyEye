@@ -1,3 +1,5 @@
+import { createViewStore } from './view-store.mjs';
+
 // Form drafts never share references with the active match or its archived payload.
 const blankDraft = Object.freeze({
   teamName: "",
@@ -10,24 +12,16 @@ const blankDraft = Object.freeze({
   leg: "",
 });
 export function createMatchDialogStore() {
-  const listeners = new Set();
-  let view = Object.freeze({
+  const store = createViewStore({
     open: false,
     mode: "create",
     archiveName: "",
     teamNames: Object.freeze([]),
     draft: blankDraft,
   });
-  function publish(next) {
-    view = Object.freeze(next);
-    listeners.forEach((listener) => listener());
-  }
+  const publish = store.replace;
   return {
-    getSnapshot: () => view,
-    subscribe(listener) {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
+    ...store,
     open({
       mode,
       archiveName = "",
@@ -36,6 +30,7 @@ export function createMatchDialogStore() {
       today,
       currentCategory = "",
     }) {
+      const view = store.getSnapshot();
       const editing = mode === "edit";
       const match = details.match || {};
       const names = Object.freeze([...teamNames]);
@@ -67,6 +62,7 @@ export function createMatchDialogStore() {
       publish({ open: true, mode, archiveName, teamNames: names, draft });
     },
     update(field, value) {
+      const view = store.getSnapshot();
       if (!view.open || !Object.hasOwn(view.draft, field)) return;
       if (
         view.mode === "edit" &&
@@ -85,7 +81,7 @@ export function createMatchDialogStore() {
       publish({ ...view, draft: Object.freeze(draft) });
     },
     close() {
-      if (view.open) publish({ ...view, open: false });
+      if (store.getSnapshot().open) store.publish({ open: false });
     },
   };
 }

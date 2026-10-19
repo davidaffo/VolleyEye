@@ -1,11 +1,9 @@
-import { useSyncExternalStore } from "react";
+
+import { useViewStore } from "../hooks/useViewStore.js";
+
 import { runtimeStore } from "../state/runtime-store.mjs";
 
 export function TeamCounter({ counter }) {
-  const snapshot = useSyncExternalStore(
-    runtimeStore.subscribe,
-    runtimeStore.getSnapshot,
-    runtimeStore.getSnapshot,
-  );
+  const snapshot = useViewStore(runtimeStore);
   return snapshot[counter] ?? 0;
 }

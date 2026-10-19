@@ -15,7 +15,6 @@ function fixture(t) {
   writeFileSync(join(root, "package.json"), JSON.stringify({ version: "0.1.0" }));
   writeFileSync(join(root, "version.config.json"), JSON.stringify({ appName: "VolleyEye", baseVersion: "0.18.5" }));
   writeFileSync(join(root, "index.html"), 'window.__APP_CACHE_VERSION__ = "old"; <script src="app.js?v=old"></script>');
-  writeFileSync(join(root, "service-worker.js"), 'const APP_CACHE_VERSION = "old";');
   return {
     read: (name) => readFileSync(join(root, name), "utf8"),
     run: (...args) => spawnSync(process.execPath, [join(root, "scripts/release.mjs"), ...args], { cwd: tmpdir(), encoding: "utf8" })
@@ -33,7 +32,6 @@ test("release increments and synchronizes all version consumers from any cwd", (
     assert.ok(f.read("js/app-version.js").includes(meta.version));
     assert.ok(f.read("index.html").includes(`?v=${meta.cacheVersion}`));
     assert.ok(f.read("index.html").includes(`window.__APP_CACHE_VERSION__ = "${meta.cacheVersion}";`));
-    assert.ok(f.read("service-worker.js").includes(`const APP_CACHE_VERSION = "${meta.cacheVersion}";`));
   }
 });
 

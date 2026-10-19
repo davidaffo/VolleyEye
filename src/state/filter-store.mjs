@@ -1,3 +1,5 @@
+import { createKeyedViewStore } from './view-store.mjs';
+
 const empty = Object.freeze({
   groups: Object.freeze([]),
   options: Object.freeze([]),
@@ -5,19 +7,9 @@ const empty = Object.freeze({
   value: "any",
   type: "checkbox",
 });
-let snapshot = Object.freeze({});
-const listeners = new Set();
+const store = createKeyedViewStore({}, empty);
 export const filterStore = {
-  getSnapshot: () => snapshot,
-  getView: (id) => snapshot[id] || empty,
-  subscribe(listener) {
-    listeners.add(listener);
-    return () => listeners.delete(listener);
-  },
-  publish(id, view) {
-    snapshot = Object.freeze({ ...snapshot, [id]: Object.freeze(view) });
-    listeners.forEach((listener) => listener());
-  },
+  ...store,
   change(id, value, checked) {
     const view = filterStore.getView(id);
     filterStore.publish(id, {

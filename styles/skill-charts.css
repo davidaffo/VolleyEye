@@ -794,14 +794,6 @@ body[data-theme="light"] .court-cell.best-eff {
 .rotation-table td {
   background: #131313;
 }
-body[data-theme="light"] .rotation-table th {
-  background: #e5e7eb;
-  color: #0f172a;
-}
-body[data-theme="light"] .rotation-table td {
-  background: #ffffff;
-  color: #0f172a;
-}
 .video-analysis__head {
   display: flex;
   align-items: center;
@@ -891,9 +883,7 @@ body[data-theme="light"] .rotation-table td {
   cursor: pointer;
   user-select: none;
 }
-.video-skills-table th.video-sortable-header:hover {
-  background: rgba(255, 255, 255, 0.04);
-}
+.video-skills-table th.video-sortable-header:hover,
 .video-skills-table tbody tr:hover {
   background: rgba(255, 255, 255, 0.04);
 }

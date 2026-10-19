@@ -1,6 +1,6 @@
 import { readAppHtml } from './helpers/app-html.mjs';
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import test from "node:test";
 import vm from "node:vm";
 import { readScoutSource } from "./helpers/scout-source.mjs";
@@ -67,9 +67,9 @@ test("i widget possono essere rilasciati sopra, sotto o a destra del campo", () 
     assert.match(html, new RegExp(`data-scout-widget="${widgetId}"`));
   });
   assert.match(css, /body\.scout-widget-dragging \.scout-widget-zone/);
-  assert.match(source, /window\.addEventListener\("pointermove", handleScoutWidgetPointerMove/);
+  assert.match(source, /listenRuntime\(window, "pointermove", handleScoutWidgetPointerMove/);
   assert.match(source, /target\.closest\("\.scout-col-right"\)[\s\S]*getScoutWidgetZone\("right"\)/);
-  assert.match(source, /handle\.draggable = false/);
+  assert.match(readFileSync(new URL("../src/components/ScoutWidgetHandle.jsx", import.meta.url), "utf8"), /draggable=\{false\}/);
   assert.doesNotMatch(source, /handleScoutWidgetNativeDrag/);
   assert.doesNotMatch(source, /sendScoutWidgetToRight/);
   assert.match(source, /if \(!cancelled && moved && pendingZone\)/);

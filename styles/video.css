@@ -678,9 +678,7 @@ body[data-theme="light"] .agg-skill-codes th {
   cursor: pointer;
   pointer-events: auto;
 }
-.skill-modal__cancel-abs:active {
-  transform: scale(0.98);
-}
+.skill-modal__cancel-abs:active,
 .skill-modal__close-abs:active {
   transform: scale(0.98);
 }

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import test from "node:test";
 import { readScoutSource } from "./helpers/scout-source.mjs";
 import { readStyleSource } from "./helpers/style-source.mjs";
@@ -31,7 +31,8 @@ test("in doppia squadra le formazioni si affiancano quando c'è spazio", () => {
     scout.indexOf("function openNextSetModal"),
     scout.indexOf("function closeNextSetModal")
   );
-  assert.match(openModal, /next-set-lineups--double/);
-  assert.match(openModal, /!!state\.useOpponentTeam/);
-  assert.match(openModal, /elNextSetBlockOpp\.classList\.toggle\("hidden", !state\.useOpponentTeam\)/);
+  const component = readFileSync(new URL("../src/components/NextSetPreparation.jsx", import.meta.url), "utf8");
+  assert.match(component, /next-set-lineups--double/);
+  assert.match(openModal, /renderNextSetLineups\(\)/);
+  assert.match(component, /visible=\{view.double\}/);
 });

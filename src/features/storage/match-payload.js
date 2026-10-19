@@ -1,0 +1,78 @@
+import { session as matchState } from '../../../js/globals.js';
+import { syncEventPlayerLinks } from '../events/player-links.js';
+import { normalizeVideoFilterPresets } from './ui-preferences.js';
+import { cloneIsolationData } from '../../domain/snapshots.js';
+
+export function buildMatchExportPayload() {
+  syncEventPlayerLinks(matchState.state.events || []);
+  const payload = {
+    app: "volleyeye",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    state: {
+      match: matchState.state.match,
+      theme: matchState.state.theme,
+      currentSet: matchState.state.currentSet,
+      rotation: matchState.state.rotation,
+      isServing: !!matchState.state.isServing,
+      autoRotatePending: !!matchState.state.autoRotatePending,
+      opponentAutoRotatePending: !!matchState.state.opponentAutoRotatePending,
+      skillClock: matchState.state.skillClock,
+      players: matchState.state.players,
+      captains: (matchState.state.captains || []).slice(0, 1),
+      playerNumbers: matchState.state.playerNumbers,
+      liberos: matchState.state.liberos,
+      opponentStats: matchState.state.opponentStats,
+      opponentPlayers: matchState.state.opponentPlayers,
+      opponentPlayerNumbers: matchState.state.opponentPlayerNumbers,
+      opponentLiberos: matchState.state.opponentLiberos,
+      opponentCaptains: matchState.state.opponentCaptains,
+      opponentCourt: matchState.state.opponentCourt,
+      opponentRotation: matchState.state.opponentRotation,
+      opponentCourtViewMirrored: !!matchState.state.opponentCourtViewMirrored,
+      opponentAutoRoleP1American: !!matchState.state.opponentAutoRoleP1American,
+      opponentAttackTrajectoryEnabled: matchState.state.opponentAttackTrajectoryEnabled !== false,
+      opponentServeTrajectoryEnabled: matchState.state.opponentServeTrajectoryEnabled !== false,
+      opponentSetTypePromptEnabled: matchState.state.opponentSetTypePromptEnabled !== false,
+      opponentAutoLiberoBackline: matchState.state.opponentAutoLiberoBackline !== false,
+      opponentAutoLiberoRole: matchState.state.opponentAutoLiberoRole,
+      opponentLiberoAutoMap: matchState.state.opponentLiberoAutoMap,
+      opponentPreferredLibero: matchState.state.opponentPreferredLibero,
+      opponentSkillFlowOverride: matchState.state.opponentSkillFlowOverride,
+      opponentSkillConfig: matchState.state.opponentSkillConfig,
+      court: matchState.state.court,
+      events: matchState.state.events,
+      stats: matchState.state.stats,
+      metricsConfig: matchState.state.metricsConfig,
+      scoreOverrides: matchState.state.scoreOverrides,
+      setResults: matchState.state.setResults,
+      setStarts: matchState.state.setStarts,
+      matchFinished: matchState.state.matchFinished,
+      selectedTeam: matchState.state.selectedTeam,
+      selectedOpponentTeam: matchState.state.selectedOpponentTeam,
+      video: matchState.state.video,
+      pointRules: matchState.state.pointRules,
+      autoRotate: matchState.state.autoRotate,
+      predictiveSkillFlow: matchState.state.predictiveSkillFlow !== false,
+      skillFlowOverride: matchState.state.skillFlowOverride,
+      pendingServe: matchState.state.pendingServe,
+      forceSkillActive: !!matchState.state.forceSkillActive,
+      forceSkillScope: matchState.state.forceSkillScope,
+      autoLiberoBackline: matchState.state.autoLiberoBackline,
+      autoLiberoRole: matchState.state.autoLiberoRole,
+      liberoAutoMap: matchState.state.liberoAutoMap,
+      preferredLibero: matchState.state.preferredLibero,
+      nextSetType: matchState.state.nextSetType,
+      freeballPending: !!matchState.state.freeballPending,
+      freeballPendingScope: matchState.state.freeballPendingScope,
+      flowTeamScope: matchState.state.flowTeamScope,
+      useOpponentTeam: !!matchState.state.useOpponentTeam,
+      videoFilterPresets:
+        (normalizeVideoFilterPresets(matchState.state.videoFilterPresets || [])),
+      courtViewMirrored: !!matchState.state.courtViewMirrored,
+      courtSideSwapped: !!matchState.state.courtSideSwapped,
+      loadedMatchName: matchState.state.loadedMatchName || matchState.state.selectedMatch || ""
+    }
+  };
+  return (cloneIsolationData(payload));
+}

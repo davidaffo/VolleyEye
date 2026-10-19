@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "audit:source": "node scripts/audit-source.mjs",
+    "audit:duplicates": "node scripts/audit-duplicates.mjs --templates",
     "release": "node scripts/release.mjs",
     "test": "node --test --test-isolation=none tests/*.test.mjs",
     "version:sync": "node scripts/sync-version.mjs",

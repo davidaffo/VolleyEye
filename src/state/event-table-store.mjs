@@ -1,3 +1,5 @@
+import { createViewStore, createKeyedViewStore } from './view-store.mjs';
+export const eventLogSummaryStore = createViewStore({ text: 'Nessun evento' });
 const empty = Object.freeze({
   rows: Object.freeze([]),
   headers: Object.freeze([]),
@@ -5,23 +7,13 @@ const empty = Object.freeze({
   empty: "",
   contextKey: "",
 });
-let snapshot = Object.freeze({});
-const listeners = new Set();
+const store = createKeyedViewStore({}, empty);
 export const eventTableStore = {
-  getSnapshot: () => snapshot,
-  getView: (id) => snapshot[id] || empty,
-  subscribe(listener) {
-    listeners.add(listener);
-    return () => listeners.delete(listener);
-  },
-  publish(id, view) {
-    snapshot = Object.freeze({ ...snapshot, [id]: Object.freeze(view) });
-    listeners.forEach((listener) => listener());
-  },
+  ...store,
   select(keys) {
     const signature = JSON.stringify(keys);
     let changed = false;
-    const next = { ...snapshot };
+    const next = { ...store.getSnapshot() };
     for (const id in next)
       if (JSON.stringify(next[id].selected) !== signature) {
         next[id] = Object.freeze({
@@ -31,8 +23,7 @@ export const eventTableStore = {
         changed = true;
       }
     if (changed) {
-      snapshot = Object.freeze(next);
-      listeners.forEach((listener) => listener());
+      store.replace(next);
     }
   },
 };

@@ -1,19 +1,8 @@
-function createStore(initial) {
-  let snapshot = Object.freeze(initial);
-  const listeners = new Set();
-  return {
-    getSnapshot: () => snapshot,
-    subscribe(listener) {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
-    publish(patch) {
-      snapshot = Object.freeze({ ...snapshot, ...patch });
-      listeners.forEach((listener) => listener());
-    },
-  };
-}
+import { createViewStore as createStore } from "./view-store.mjs";
 export const pastePlayersStore = createStore({ open: false, text: "" });
+export const liberoBenchStore = createStore({ our: [], opponent: [] });
+export const exportProgressStore = createStore({ open: false });
+export const demoWelcomeStore = createStore({ open: false, choose: null });
 export const camp3ConfirmStore = createStore({
   open: false,
   rows: Object.freeze([]),

@@ -1,6 +1,9 @@
-import { useSyncExternalStore } from "react";
+import { ModalDialog } from "./ui/Modal.jsx";
+
+import { useViewStore } from "../hooks/useViewStore.js";
+
 import { videoEditStore } from "../state/video-edit-store.mjs";
-import { invokeRuntime } from "../compat/runtime.js";
+import { actions as appActions } from "../app/actions.mjs";
 const configs = {
   offset: {
     prefix: "offset",
@@ -27,15 +30,11 @@ const configs = {
   },
 };
 export function VideoEditModal({ kind }) {
-  const all = useSyncExternalStore(
-      videoEditStore.subscribe,
-      videoEditStore.getSnapshot,
-      videoEditStore.getSnapshot,
-    ),
+  const all = useViewStore(videoEditStore),
     view = all[kind],
     config = configs[kind];
   const run = (command) =>
-      invokeRuntime(command).catch((error) => {
+      appActions[command]().catch((error) => {
         console.error(error);
         window.alert(error.message);
       }),
@@ -43,106 +42,88 @@ export function VideoEditModal({ kind }) {
   const prefix = config.prefix,
     titleId = kind === "offset" ? "offset-modal-title" : prefix + "-title";
   return (
-    <div
+    <ModalDialog
       id={prefix + "-modal"}
-      className={"settings-modal" + (view.open ? "" : " hidden")}
-      data-react-managed="true"
-      role="dialog"
-      aria-modal="true"
+      className="settings-modal"
       aria-labelledby={titleId}
+      open={view.open}
+      onClose={close}
+      variant="settings"
+      backdropProps={{}}
+      contentProps={{ className: "settings-modal__content" }}
+      title={<h3 id={titleId}>{config.title}</h3>}
+      closeProps={{
+        id: prefix + "-close",
+        className: "pill-remove",
+        "aria-label": "Chiudi",
+        onClick: close,
+      }}
+      bodyProps={{ className: "settings-modal__body" }}
     >
-      <div className="settings-modal__backdrop" onClick={close} />
-      <div className="settings-modal__content">
-        <div className="settings-modal__head">
-          <h3 id={titleId}>{config.title}</h3>
-          <button
-            id={prefix + "-close"}
-            className="pill-remove"
-            aria-label="Chiudi"
-            data-react-managed="true"
-            onClick={close}
-          >
-            ✕
-          </button>
-        </div>
-        <div className="settings-modal__body">
-          {config.note && <p className="section-note">{config.note}</p>}
-          <div
-            id={config.grid}
-            className={
-              kind === "unify" ? "unify-times-grid" : "offset-skill-grid"
-            }
-            data-react-managed="true"
-          >
-            {view.rows.map((row) =>
-              kind === "unify" ? (
-                <div key={row.id} className="unify-times-row">
-                  <div className="unify-times-row__head">
+      {config.note && <p className="section-note">{config.note}</p>}
+      <div id={config.grid} className={kind === "unify" ? "unify-times-grid" : "offset-skill-grid"}>
+        {view.rows.map((row) =>
+          kind === "unify" ? (
+            <div key={row.id} className="unify-times-row">
+              <div className="unify-times-row__head">
+                <input
+                  type="checkbox"
+                  data-link-type={row.id}
+                  checked={row.enabled}
+                  onChange={(event) =>
+                    videoEditStore.change(kind, row.id, {
+                      enabled: event.target.checked,
+                    })
+                  }
+                />
+                <span className="unify-times-row__label">{row.label}</span>
+              </div>
+              <div className="unify-times-row__options">
+                {row.options.map((option) => (
+                  <label key={option.id}>
                     <input
-                      type="checkbox"
-                      data-link-type={row.id}
-                      checked={row.enabled}
-                      onChange={(event) =>
+                      type="radio"
+                      name={"unify-source-" + row.id}
+                      value={option.id}
+                      checked={row.value === option.id}
+                      onChange={() =>
                         videoEditStore.change(kind, row.id, {
-                          enabled: event.target.checked,
+                          value: option.id,
                         })
                       }
                     />
-                    <span className="unify-times-row__label">{row.label}</span>
-                  </div>
-                  <div className="unify-times-row__options">
-                    {row.options.map((option) => (
-                      <label key={option.id}>
-                        <input
-                          type="radio"
-                          name={"unify-source-" + row.id}
-                          value={option.id}
-                          checked={row.value === option.id}
-                          onChange={() =>
-                            videoEditStore.change(kind, row.id, {
-                              value: option.id,
-                            })
-                          }
-                        />
-                        {option.label}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div key={row.id} className="offset-skill-row">
-                  <label>{row.label}</label>
-                  <input
-                    type="number"
-                    step={kind === "duration" ? "250" : "1"}
-                    min={kind === "duration" ? "250" : undefined}
-                    data-skill-id={row.id}
-                    value={row.value}
-                    onChange={(event) =>
-                      videoEditStore.change(kind, row.id, {
-                        value: event.target.value,
-                      })
-                    }
-                  />
-                </div>
-              ),
-            )}
-          </div>
-          <div className="offset-actions">
-            <button
-              id={prefix + "-apply"}
-              className="small"
-              data-react-managed="true"
-              onClick={() => run(config.apply)}
-            >
-              Applica
-            </button>
-            <button className="small secondary" onClick={close}>
-              Annulla
-            </button>
-          </div>
-        </div>
+                    {option.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div key={row.id} className="offset-skill-row">
+              <label>{row.label}</label>
+              <input
+                type="number"
+                step={kind === "duration" ? "250" : "1"}
+                min={kind === "duration" ? "250" : undefined}
+                data-skill-id={row.id}
+                value={row.value}
+                onChange={(event) =>
+                  videoEditStore.change(kind, row.id, {
+                    value: event.target.value,
+                  })
+                }
+              />
+            </div>
+          ),
+        )}
       </div>
-    </div>
+      <div className="offset-actions">
+        <button id={prefix + "-apply"} className="small" onClick={() => run(config.apply)}>
+          Applica
+        </button>
+        <button className="small secondary" onClick={close}>
+          Annulla
+        </button>
+      </div>
+    </ModalDialog>
   );
 }

@@ -1,14 +1,12 @@
-import { useState, useSyncExternalStore } from "react";
+
+import { useViewStore } from "../hooks/useViewStore.js";
+import { useState } from "react";
 import { matchSheetStore } from "../state/roster-import-store.mjs";
-import { invokeRuntime } from "../compat/runtime.js";
+import { actions as appActions } from "../app/actions.mjs";
 const run = (command, ...args) =>
-  invokeRuntime(command, ...args).catch(console.error);
+  appActions[command]( ...args).catch(console.error);
 function useSheet() {
-  return useSyncExternalStore(
-    matchSheetStore.subscribe,
-    matchSheetStore.getSnapshot,
-    matchSheetStore.getSnapshot,
-  );
+  return useViewStore(matchSheetStore);
 }
 function Arrow({ arrow }) {
   return arrow ? <polygon points={arrow.points} fill={arrow.color} /> : null;
@@ -160,7 +158,6 @@ export function MatchSheetControls() {
     <div
       id="match-sheet-controls"
       className="match-sheet-controls"
-      data-react-managed="true"
     >
       <label className="match-sheet-filter">
         <input
@@ -211,7 +208,6 @@ export function MatchSheetPage() {
     <div
       id="match-sheet-page"
       className="match-sheet-page"
-      data-react-managed="true"
     >
       <header className="match-sheet-header">
         <div>

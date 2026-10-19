@@ -1,12 +1,10 @@
+import { actions } from '../app/actions.mjs';
 import { SkillChart } from "./SkillChart.jsx";
-import { useSyncExternalStore } from "react";
+import { useViewStore } from "../hooks/useViewStore.js";
+
 import { aggregatedTableStore } from "../state/roster-import-store.mjs";
 function useView() {
-  return useSyncExternalStore(
-    aggregatedTableStore.subscribe,
-    aggregatedTableStore.getSnapshot,
-    aggregatedTableStore.getSnapshot,
-  );
+  return useViewStore(aggregatedTableStore);
 }
 function Cell({ cell, header = false, hiddenSkills = [] }) {
   const Tag = cell.tag || (header ? "th" : "td"),
@@ -21,7 +19,7 @@ function Cell({ cell, header = false, hiddenSkills = [] }) {
       rowSpan={cell.rowspan}
       title={cell.title}
       data-set-num={cell.setNum}
-      onClick={cell.onClick}
+      onClick={cell.command ? () => actions[cell.command](...(cell.args || [])).catch(console.error) : undefined}
     >
       {cell.text}
     </Tag>
@@ -32,7 +30,7 @@ export function AggregatedTable() {
   return (
     <div className="table-wrapper">
       <table className={view.tableClass}>
-        <thead data-react-managed="true">
+        <thead>
           {view.headers.map((cells, index) => (
             <tr key={index}>
               {cells.map((cell, index) => (
@@ -46,7 +44,7 @@ export function AggregatedTable() {
             </tr>
           ))}
         </thead>
-        <tbody id="agg-table-body" data-react-managed="true">
+        <tbody id="agg-table-body">
           {view.rows.map((row, index) => (
             <tr
               key={index}
@@ -72,7 +70,7 @@ export function AggregatedExtraTable() {
   return (
     <div className="table-wrapper">
       <table className="agg-table">
-        <tbody id="agg-summary-extra-body" data-react-managed="true">
+        <tbody id="agg-summary-extra-body">
           {view.charts?.length > 0 && (
             <tr>
               <td colSpan={32}>

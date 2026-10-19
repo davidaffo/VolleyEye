@@ -1,9 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import vm from "node:vm";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 
-const source = readFileSync("js/scout/io/match-io.js", "utf8");
+const source = readFileSync("src/features/io/match-io.js", "utf8");
 const importer = source.slice(source.indexOf("async function importMatchStateAsNew"));
 
 function harness(stored = true) {
@@ -15,6 +15,8 @@ function harness(stored = true) {
   };
   const context = {
     state, elSavedMatchesSelect: { value: "precedente" },
+    buildMatchDisplayName: match => match.opponent || "",
+    renderMatchesSelect: () => {}, renderMatchesList: () => {}, updateMatchButtonsState: () => {},
     buildUniqueImportedMatchName: () => "importato",
     saveMatchToStorage: (name, payload) => { writes.push({ name, payload }); return stored; },
     saveState: options => assert.equal(options.skipMatchPersist, true)

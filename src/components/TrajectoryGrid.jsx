@@ -1,11 +1,11 @@
-import { useLayoutEffect, useRef, useSyncExternalStore } from "react";
+import { ScoutWidgetPortal } from './ScoutWorkspace.jsx';
+import { ScoutWidgetHandle } from "./ScoutWidgetHandle.jsx";
+
+import { useViewStore } from "../hooks/useViewStore.js";
+import { useLayoutEffect, useRef } from "react";
 import { analysisTableStore } from "../state/analysis-table-store.mjs";
 function useView(id) {
-  useSyncExternalStore(
-    analysisTableStore.subscribe,
-    analysisTableStore.getSnapshot,
-    analysisTableStore.getSnapshot,
-  );
+  useViewStore(analysisTableStore);
   return analysisTableStore.getView(id);
 }
 function TrajectoryCard({ card, serve, id, extraClass = "", scope }) {
@@ -86,7 +86,6 @@ export function TrajectoryGrid({ id, variant = "attack" }) {
         (serve ? " serve-trajectory-grid" : "") +
         (view.far ? " is-far" : "")
       }
-      data-react-managed="true"
     >
       {(view.cards.length || serve
         ? view.cards
@@ -99,19 +98,7 @@ export function TrajectoryGrid({ id, variant = "attack" }) {
       ).map((card) => (
         <TrajectoryCard key={card.key} card={card} serve={serve} />
       ))}
-      {view.legend?.length > 0 && (
-        <div
-          className="distribution-legend trajectory-legend"
-          aria-label="Legenda colori traiettorie"
-        >
-          {view.legend.map((item, index) => (
-            <span key={index}>
-              <i aria-hidden="true" style={{ backgroundColor: item.color }} />
-              {item.label}
-            </span>
-          ))}
-        </div>
-      )}
+      <TrajectoryLegend items={view.legend} />
     </div>
   );
 }
@@ -128,7 +115,7 @@ export function AttackSummary({ id }) {
         </tr>
       ));
   return (
-    <div id={id} className="attack-analysis-summary" data-react-managed="true">
+    <div id={id} className="attack-analysis-summary">
       {view.emptyText ? (
         <div className="players-empty">{view.emptyText}</div>
       ) : (
@@ -167,14 +154,14 @@ export function LogServeTrajectories() {
           { key: "opponent", scope: "opponent", visible: false, empty: true },
         ];
   return (
-    <div
+    <ScoutWidgetPortal
       id="log-serve-trajectory"
       className={
         "log-serve-trajectory scout-widget" + (view.visible ? "" : " hidden")
       }
       data-scout-widget="serve-trajectories"
-      data-react-managed="true"
     >
+      <ScoutWidgetHandle label="traiettorie battuta" />
       <div className="log-serve-trajectory__grid">
         {cards.map((card) => (
           <TrajectoryCard
@@ -189,19 +176,15 @@ export function LogServeTrajectories() {
           />
         ))}
       </div>
-      {view.legend?.length > 0 && (
-        <div
-          className="distribution-legend trajectory-legend"
-          aria-label="Legenda colori traiettorie"
-        >
-          {view.legend.map((item, index) => (
-            <span key={index}>
-              <i aria-hidden="true" style={{ backgroundColor: item.color }} />
-              {item.label}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
+      <TrajectoryLegend items={view.legend} />
+    </ScoutWidgetPortal>
   );
+}
+
+function TrajectoryLegend({ items }) {
+  return items?.length > 0 && <div className="distribution-legend trajectory-legend" aria-label="Legenda colori traiettorie">
+    {items.map((item, index) => <span key={index}>
+      <i aria-hidden="true" style={{ backgroundColor: item.color }} />{item.label}
+    </span>)}
+  </div>;
 }

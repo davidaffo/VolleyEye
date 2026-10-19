@@ -1,3 +1,5 @@
+import { sourceFunctions } from "./helpers/source-functions.mjs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import assert from "node:assert/strict";
 import { readRosterSource } from "./helpers/roster-source.mjs";
 import { readScoutSource } from "./helpers/scout-source.mjs";
@@ -9,13 +11,7 @@ const scout = readScoutSource();
 const plain = value => JSON.parse(JSON.stringify(value));
 function load(context, source, names) {
   context.getPlayerNumbersForScope ??= scope => scope === "opponent" ? context.state.opponentPlayerNumbers || {} : context.state.playerNumbers || {};
-  const code = names.map(name => {
-    const start = source.indexOf(`function ${name}(`);
-    assert.notEqual(start, -1);
-    const rest = source.slice(start);
-    const next = rest.slice(1).search(/^function /m);
-    return next < 0 ? rest : rest.slice(0, next + 1);
-  }).join("\n");
+  const code = sourceFunctions(source, names);
   vm.runInNewContext(code, context);
   return context;
 }
@@ -80,7 +76,7 @@ function element() {
   };
 }
 test("le riserve avversarie restano disponibili nella formazione, usando soltanto il roster avversario", () => {
-  const c = load({ getCourtShape: court => court }, scout, ["getBenchForLineupWithRoster"]);
+  const c = load({ getCourtShape: court => court, sortNamesByNumber: names => names }, scout, ["getBenchForLineupWithRoster"]);
   const bench = c.getBenchForLineupWithRoster(
     [{ main: "Titolare" }, { main: "Libero", replaced: "Sostituita" }],
     ["Titolare", "Riserva", "Libero", "Sostituita"],
@@ -99,10 +95,12 @@ test("la formazione avversaria usa i propri numeri e capitano anche con nomi omo
   assert.equal(c.formatLineupModalName("Omonima"), "12 true");
 });
 test("il clic sul libero avversario usa il cambio e non rimuove il ruolo", () => {
-  const container = element();
+  let view;
   const c = {
+    liberoBenchStore: { publish: next => { view = next; } },
+    getCaptainsForScope: () => [],
     state: { opponentPlayers: ["Libero"], opponentLiberos: ["Libero"], opponentPlayerNumbers: {} },
-    elLiberoTagsInlineOpp: container, document: { createElement: element },
+
     sortNamesByNumber: names => names, orderLiberosByPreference: names => names,
     getUsedNamesForScope: () => new Set(), formatNameWithNumberFor: name => name,
     getTeamNumbers: () => ({}), getTeamLiberos: () => ["Libero"], getTeamPlayers: () => ["Libero"],
@@ -110,9 +108,9 @@ test("il clic sul libero avversario usa il cambio e non rimuove il ruolo", () =>
     handleBenchClickForScope: (name, scope) => { c.clicked = [name, scope]; }
   };
   for (const name of ["handleBenchDragStart", "handleBenchDragEnd", "handleBenchTouchMove", "handleBenchTouchEnd", "handleBenchTouchCancel"]) c[name] = () => {};
-  load(c, roster, ["renderTeamLiberoChipsInline", "renderOpponentLiberoChipsInline"]);
-  c.renderOpponentLiberoChipsInline();
-  container.children[0].events.click();
+  load(c, readFileSync(new URL("../src/features/scout/court-view.js", import.meta.url), "utf8"), ["publishLiberoBench"]);
+  c.publishLiberoBench();
+  view.opponent[0].onClick();
   assert.deepEqual(c.clicked, ["Libero", "opponent"]);
   assert.deepEqual(c.state.opponentLiberos, ["Libero"]);
 });
@@ -145,7 +143,7 @@ test("selezionare l'avversaria conserva tutte le riserve e salva la formazione f
     updateOpponentPlayersList: names => { c.state.opponentPlayers = names; return true; },
     saveState: () => { c.saved = plain(c.state); }
   };
-  for (const name of ["updateOpponentTeamButtonsState", "applyMatchInfoToUI", "renderOpponentLiberoChipsInline", "renderOpponentPlayers", "renderOpponentTeamsSelect", "updateOpponentRotationDisplay"]) c[name] = () => {};
+  for (const name of ["updateOpponentTeamButtonsState", "ensureMatchDefaults", "renderOpponentLiberoChipsInline", "renderOpponentPlayers", "renderOpponentTeamsSelect", "updateOpponentRotationDisplay"]) c[name] = () => {};
   load(c, roster, ["handleOpponentTeamSelectChange", "applyOpponentDefaultLineup"]);
   c.handleOpponentTeamSelectChange();
   assert.deepEqual(c.saved.opponentPlayers, players);
@@ -199,8 +197,8 @@ function managerContext(storageOnly = false) {
     updateOpponentPlayersList: names => { c.state.opponentPlayers = names; return true; },
     saveState: () => { c.saved = plain(c.state); }
   };
-  for (const name of ["syncOpponentTeamsFromStorage", "renderTeamsSelect", "renderOpponentTeamsSelect", "applyMatchInfoToUI",
-    "renderOpponentLiberoChipsInline", "renderOpponentPlayers", "updateOpponentRotationDisplay"]) c[name] = () => {};
+  for (const name of ["syncOpponentTeamsFromStorage", "renderTeamsSelect", "renderOpponentTeamsSelect", "ensureMatchDefaults",
+    "renderOpponentLiberoChipsInline", "renderOpponentPlayers", "updateOpponentRotationDisplay", "invalidateRosterIdMapsCache"]) c[name] = () => {};
   return load(c, roster, ["saveTeamManagerPayload", "applyOpponentDefaultLineup"]);
 }
 test("salvare l'avversaria applica e persiste anche titolari e rotazione predefiniti", () => {

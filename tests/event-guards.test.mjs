@@ -1,18 +1,13 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import test from "node:test";
 import vm from "node:vm";
 import { readScoutSource } from "./helpers/scout-source.mjs";
 
+import { sourceFunctions } from "./helpers/source-functions.mjs";
 const source = readScoutSource();
-const counterFunctions = source.slice(
-  source.indexOf("function getTimeoutCountForSet"),
-  source.indexOf("function updateTeamCounters")
-);
-const undoFunction = source.slice(
-  source.indexOf("function undoSubstitutionEvent"),
-  source.indexOf("function applyAggColumnsVisibility")
-);
+const counterFunctions = sourceFunctions(source, ['getTimeoutCountForSet', 'getTimeoutOppCountForSet', 'getSubstitutionCountForSet']);
+const undoFunction = sourceFunctions(source, ["undoSubstitutionEvent"]);
 const lineupSubstitutionFunction = source.slice(
   source.indexOf("function getLineupSubstitutions"),
   source.indexOf("function assignPlayerToLineup")

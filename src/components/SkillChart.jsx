@@ -1,12 +1,12 @@
-import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import { FilterField } from './ui/FilterField.jsx';
+import { ChartTicks } from './ui/ChartTicks.jsx';
+
+import { useViewStore } from "../hooks/useViewStore.js";
+import { useLayoutEffect, useRef, useState } from "react";
 import { analysisChartStore } from "../state/analysis-chart-store.mjs";
-import { invokeRuntime, invokeRuntimeEvent } from "../compat/runtime.js";
+import { actions as appActions, events as appEvents } from "../app/actions.mjs";
 function useChartView(kind) {
-  return useSyncExternalStore(
-    analysisChartStore.subscribe,
-    analysisChartStore.getSnapshot,
-    analysisChartStore.getSnapshot,
-  )[kind];
+  return useViewStore(analysisChartStore)[kind];
 }
 const metrics = [
   { id: "eff", label: "Eff % cumulativa" },
@@ -19,10 +19,9 @@ export function ChartMetricSelect({ kind, id }) {
   return (
     <select
       id={id}
-      data-react-managed="true"
       value={view.metric}
       onChange={(event) =>
-        invokeRuntime("changeReactChartMetric", kind, event.target.value).catch(
+        appActions.changeReactChartMetric(kind, event.target.value).catch(
           console.error,
         )
       }
@@ -97,9 +96,7 @@ export function SkillChart({ model }) {
             title="Copia immagine grafico"
             disabled={!model.points.length}
             onClick={() =>
-              invokeRuntimeEvent(
-                "copySkillChartImageToClipboard",
-                card.current,
+              appEvents.copySkillChartImageToClipboard(card.current,
                 "Grafico " + model.title,
               )
             }
@@ -170,23 +167,7 @@ export function SkillChart({ model }) {
                     </text>
                   </g>
                 ))}
-                {model.ticks.map((tick, index) => (
-                  <g key={index} className="skill-chart__tick">
-                    <line
-                      x1={model.pad.left}
-                      y1={tick.y}
-                      x2={model.width - model.pad.right}
-                      y2={tick.y}
-                    />
-                    <text
-                      x={model.pad.left - 8}
-                      y={tick.textY}
-                      textAnchor="end"
-                    >
-                      {tick.label}
-                    </text>
-                  </g>
-                ))}
+                <ChartTicks ticks={model.ticks} model={model} className="skill-chart__tick" />
                 {model.zeroY !== null && (
                   <line
                     className="skill-chart__zero"
@@ -329,7 +310,6 @@ export function SkillChartGrid({ kind, id }) {
     <div
       id={id}
       className="analysis-skill-chart-grid"
-      data-react-managed="true"
     >
       {view.empty ? (
         <div className="players-empty">{view.empty}</div>
@@ -340,4 +320,13 @@ export function SkillChartGrid({ kind, id }) {
       )}
     </div>
   );
+}
+
+export function ChartMetricFilter({ kind }) {
+  const individual = kind === 'player';
+  return <div className="analysis-filters">
+    <FilterField label={individual ? 'Metrica grafici skill' : 'Metrica grafici'} row>
+      <ChartMetricSelect kind={kind} id={individual ? 'player-analysis-chart-metric' : 'analysis-skill-chart-metric'} />
+    </FilterField>
+  </div>;
 }

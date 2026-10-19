@@ -1,19 +1,16 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { ModalFrame, ModalCloseButton } from "../ui/Modal.jsx";
+
+import { useViewStore } from "../../hooks/useViewStore.js";
+import { useEffect } from "react";
 import { trajectoryModalStore } from "../../state/roster-import-store.mjs";
-import { invokeRuntime, invokeRuntimeEvent } from "../../compat/runtime.js";
+import { actions as appActions, events as appEvents } from "../../app/actions.mjs";
 const run = (command, ...args) =>
-  invokeRuntime(command, ...args).catch(console.error);
+  appActions[command]( ...args).catch(console.error);
 export function AttackTrajectoryModal() {
-  const view = useSyncExternalStore(
-      trajectoryModalStore.subscribe,
-      trajectoryModalStore.getSnapshot,
-      trajectoryModalStore.getSnapshot,
-    ),
+  const view = useViewStore(trajectoryModalStore),
     close = () => run("closeAttackTrajectoryModal", null),
     pointer = (kind, event) =>
-      invokeRuntimeEvent(
-        "handleReactTrajectoryPointer",
-        kind,
+      appEvents.handleReactTrajectoryPointer(kind,
         event.nativeEvent || event,
       );
   useEffect(() => {
@@ -27,121 +24,108 @@ export function AttackTrajectoryModal() {
     event.stopPropagation();
   };
   return (
-    <div
+    <ModalFrame
       id="attack-trajectory-modal"
       className={view.className}
-      data-react-managed="true"
       role="dialog"
       aria-modal="true"
       aria-labelledby="attack-trajectory-title"
+      open={true}
+      onClose={close}
+      variant="skill"
+      backdropProps={{ "data-close-trajectory": "" }}
+      contentProps={{
+        className: "skill-modal__content attack-trajectory-content",
+      }}
     >
-      <div
-        className="skill-modal__backdrop"
-        data-close-trajectory=""
-        onClick={close}
-      />
-      <div className="skill-modal__content attack-trajectory-content">
-        <div className="attack-trajectory-body">
-          <div className="attack-trajectory-stage">
-            <img
-              id="attack-trajectory-image"
-              alt="Campo per traiettoria"
-              src={view.source || undefined}
-              data-react-managed="true"
-              onLoad={() => invokeRuntimeEvent("resizeTrajectoryCanvas")}
-            />
-            <canvas
-              id="attack-trajectory-canvas"
-              data-react-managed="true"
-              onPointerDown={(event) => pointer("down", event)}
-              onPointerMove={(event) => pointer("move", event)}
-              onClick={cancel}
-              onContextMenu={cancel}
-            />
+      <div className="attack-trajectory-body">
+        <div className="attack-trajectory-stage">
+          <img
+            id="attack-trajectory-image"
+            alt="Campo per traiettoria"
+            src={view.source || undefined}
+            onLoad={() => appEvents.resizeTrajectoryCanvas()}
+          />
+          <canvas
+            id="attack-trajectory-canvas"
+            onPointerDown={(event) => pointer("down", event)}
+            onPointerMove={(event) => pointer("move", event)}
+            onClick={cancel}
+            onContextMenu={cancel}
+          />
+        </div>
+        <div
+          id="attack-trajectory-netpoints"
+          className={
+            "attack-trajectory-netpoints" + (view.showNet ? "" : " hidden")
+          }
+          aria-label="Punti rete attacco"
+        >
+          <span className="attack-trajectory-netpoints-label">Punto rete</span>
+          {[
+            { id: "5", x: "0.1667" },
+            { id: "7-9", x: "0.3333" },
+            { id: "3", x: "0.5" },
+            { id: "4", x: "0.6667" },
+            { id: "6-F", x: "0.8333" },
+          ].map((point) => (
+            <button
+              key={point.id}
+              type="button"
+              data-net-point={point.id}
+              style={{ "--net-x": point.x }}
+              className={view.netPoint === point.id ? "active" : undefined}
+              onClick={() => run("chooseReactTrajectoryNetPoint", point.id)}
+            >
+              {point.id}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="attack-trajectory-actions">
+        <div className="attack-trajectory-info">
+          <div
+            id="attack-trajectory-instructions"
+            className={
+              "attack-trajectory-instructions" +
+              (!view.instructions ? " hidden" : "")
+            }
+          >
+            {view.instructions}
           </div>
           <div
-            id="attack-trajectory-netpoints"
-            className={
-              "attack-trajectory-netpoints" + (view.showNet ? "" : " hidden")
-            }
-            data-react-managed="true"
-            aria-label="Punti rete attacco"
+            id="serve-type-buttons"
+            className={"serve-type-buttons" + (view.showServe ? "" : " hidden")}
+            role="group"
+            aria-label="Tipo battuta"
           >
-            <span className="attack-trajectory-netpoints-label">
-              Punto rete
-            </span>
             {[
-              { id: "5", x: "0.1667" },
-              { id: "7-9", x: "0.3333" },
-              { id: "3", x: "0.5" },
-              { id: "4", x: "0.6667" },
-              { id: "6-F", x: "0.8333" },
-            ].map((point) => (
+              { id: "F", label: "Float (F)" },
+              { id: "JF", label: "Jump float (JF)" },
+              { id: "S", label: "Spin (S)" },
+            ].map((type) => (
               <button
-                key={point.id}
+                key={type.id}
                 type="button"
-                data-react-managed="true"
-                data-net-point={point.id}
-                style={{ "--net-x": point.x }}
-                className={view.netPoint === point.id ? "active" : undefined}
-                onClick={() => run("chooseReactTrajectoryNetPoint", point.id)}
+                data-serve-type={type.id}
+                className={view.serveType === type.id ? "active" : undefined}
+                onClick={() => run("setServeTypeSelection", type.id)}
               >
-                {point.id}
+                {type.label}
               </button>
             ))}
           </div>
         </div>
-        <div className="attack-trajectory-actions">
-          <div className="attack-trajectory-info">
-            <div
-              id="attack-trajectory-instructions"
-              className={
-                "attack-trajectory-instructions" +
-                (!view.instructions ? " hidden" : "")
-              }
-              data-react-managed="true"
-            >
-              {view.instructions}
-            </div>
-            <div
-              id="serve-type-buttons"
-              className={
-                "serve-type-buttons" + (view.showServe ? "" : " hidden")
-              }
-              data-react-managed="true"
-              role="group"
-              aria-label="Tipo battuta"
-            >
-              {[
-                { id: "F", label: "Float (F)" },
-                { id: "JF", label: "Jump float (JF)" },
-                { id: "S", label: "Spin (S)" },
-              ].map((type) => (
-                <button
-                  key={type.id}
-                  type="button"
-                  data-react-managed="true"
-                  data-serve-type={type.id}
-                  className={view.serveType === type.id ? "active" : undefined}
-                  onClick={() => run("setServeTypeSelection", type.id)}
-                >
-                  {type.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <button
-            id="attack-trajectory-close-btn"
-            className="pill-remove"
-            type="button"
-            data-react-managed="true"
-            aria-label="Chiudi"
-            onClick={close}
-          >
-            ✕
-          </button>
-        </div>
+        <ModalCloseButton
+          id="attack-trajectory-close-btn"
+          className="pill-remove"
+          type="button"
+          aria-label="Chiudi"
+          onClick={close}
+        >
+          ✕
+        </ModalCloseButton>
       </div>
-    </div>
+    </ModalFrame>
   );
 }

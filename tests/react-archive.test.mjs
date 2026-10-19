@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import vm from "node:vm";
 import test from "node:test";
 
-const repository = readFileSync(
-  new URL("../js/roster/storage/match-repository.js", import.meta.url),
+const repository = readFileSync(new URL("../src/features/storage/match-repository.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/teams/archive-labels.js", import.meta.url), "utf8") + readFileSync(
+  new URL("../src/features/teams/storage/match-repository.js", import.meta.url),
   "utf8",
 );
 function setup() {
@@ -46,11 +46,11 @@ test("archive selection rejects stale names and supports clearing the selection"
   assert.equal(context.getSelectedArchivedMatch(), "");
   assert.equal(state.loadedMatchName, "A");
 });
-test("classic archive keeps the select element as its selection source", () => {
+test("archive state ignores stale select values before React commits", () => {
   const { context } = setup();
   context.elSavedMatchesSelect.dataset.reactManaged = "false";
   context.elSavedMatchesSelect.value = "B";
-  assert.equal(context.getSelectedArchivedMatch(), "B");
+  assert.equal(context.getSelectedArchivedMatch(), "A");
 });
 
 test("archive view preserves immutable labels across points and refreshes renamed duplicates", () => {
@@ -66,6 +66,7 @@ test("archive view preserves immutable labels across points and refreshes rename
   Object.assign(context, {
     buildMatchDisplayName: (match) => match.name || "",
     publishReactSettings: () => {},
+    publishReactVideoView: () => {},
     getMatchArchiveLabel(...args) {
       resolvedLabels++;
       return getLabel(...args);
@@ -87,18 +88,10 @@ test("archive view preserves immutable labels across points and refreshes rename
     },
   });
   const adapter = readFileSync(
-    new URL("../src/compat/runtime-adapter.js", import.meta.url),
+    new URL("../src/features/core/runtime-view.js", import.meta.url),
     "utf8",
   );
-  vm.runInContext(
-    adapter
-      .slice(
-        adapter.indexOf("let archiveRows"),
-        adapter.indexOf("export function start"),
-      )
-      .replaceAll("export function", "function"),
-    context,
-  );
+  vm.runInContext(readFileSync(new URL("../src/app/lifecycle.js", import.meta.url), "utf8") + adapter, context);
   context.publishRuntimeView();
   const previous = latest.archivedMatches;
   assert.equal(previous[0].label, "Aurora (1)");

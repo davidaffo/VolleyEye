@@ -1,14 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
-import { readFileSync } from 'node:fs';
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import { IDBFactory } from 'fake-indexeddb';
 
-const storageSource = readFileSync('js/shared/persistent-storage.js', 'utf8');
-const config = readFileSync('js/roster/settings/scouting-config.js', 'utf8');
-const dbSource = config.slice(config.indexOf('const STATE_DB_NAME'), config.indexOf('function makeUniqueMatchName'));
-const stateSource = readFileSync('js/roster/core/state-store.js', 'utf8');
-const uiSource = stateSource.slice(stateSource.indexOf('function buildLocalUiSnapshot'), stateSource.indexOf('function buildCompactLocalStateSnapshot'));
+const storageSource = readFileSync('src/features/storage/persistent-storage.js', 'utf8');
+const dbSource = readFileSync('src/features/state/storage-state-db.js', 'utf8') + readFileSync('src/features/storage/state-db.js', 'utf8');
+const uiSource = readFileSync('src/features/storage/ui-preferences.js', 'utf8');
 function harness({ indexedDB = new IDBFactory(), saved = new Map() } = {}) {
   const ctx = vm.createContext({
     indexedDB, console: { error() {} },

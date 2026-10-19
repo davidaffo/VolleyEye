@@ -1,4 +1,6 @@
-import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+
+import { useViewStore } from "../hooks/useViewStore.js";
+import { useLayoutEffect, useRef, useState } from "react";
 import { courtPlacementStore } from "../state/roster-import-store.mjs";
 import { createPortal } from "react-dom";
 
@@ -6,11 +8,7 @@ import { createPortal } from "react-dom";
 // remounts its controls or invalidates the media/gesture service references.
 export function CourtModalPortal({ children }) {
   const anchor = useRef(null);
-  const placement = useSyncExternalStore(
-    courtPlacementStore.subscribe,
-    courtPlacementStore.getSnapshot,
-    courtPlacementStore.getSnapshot,
-  );
+  const placement = useViewStore(courtPlacementStore);
   const [host] = useState(() => {
     if (typeof document === "undefined") return null;
     const element = document.createElement("div");

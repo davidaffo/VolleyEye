@@ -1,5 +1,7 @@
+import { createViewStore } from "./view-store.mjs";
+
 export function createSkillModalStore() {
-  let snapshot = Object.freeze({
+  return createViewStore({
     open: false,
     cancelVisible: false,
     courtModal: false,
@@ -8,17 +10,5 @@ export function createSkillModalStore() {
     controls: null,
     onBack: null,
   });
-  const listeners = new Set();
-  return {
-    getSnapshot: () => snapshot,
-    subscribe(listener) {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
-    publish(patch) {
-      snapshot = Object.freeze({ ...snapshot, ...patch });
-      listeners.forEach((listener) => listener());
-    },
-  };
 }
 export const skillModalStore = createSkillModalStore();

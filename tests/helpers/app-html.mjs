@@ -7,7 +7,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 const require = createRequire(import.meta.url);
 const result = buildSync({
   entryPoints: [new URL('../../src/components/AppLayout.jsx', import.meta.url).pathname],
-  bundle: true, write: false, platform: 'node', format: 'cjs', packages: 'external', external: ['virtual:volleyeye-runtime'], jsx: 'automatic'
+  bundle: true, write: false, platform: 'node', format: 'cjs', packages: 'external',  jsx: 'automatic'
 });
 const module = { exports: {} };
 new Function('require', 'module', 'exports', result.outputFiles[0].text)(require, module, module.exports);

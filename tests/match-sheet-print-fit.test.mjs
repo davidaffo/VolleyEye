@@ -1,9 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {readFileSync} from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import vm from "node:vm";
 
-const source = readFileSync("js/scout/io/exports.js", "utf8");
+const source = readFileSync("src/features/io/exports.js", "utf8");
 const start = source.indexOf("function getMatchSheetPrintScale(");
 const end = source.indexOf("function prepareMatchSheetPrint(", start);
 const context = vm.createContext({});

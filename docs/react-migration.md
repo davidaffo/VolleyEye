@@ -14,22 +14,38 @@ L'applicazione usa React per pagine, controlli, dialoghi e viste dinamiche. Vite
 
 I limiti sono in `js/globals.js`: 8 cambi e 2 tempi. Il superamento rimane consentito. I contatori mostrano zero dopo aver esaurito il limite, conservando tutti gli eventi ulteriori.
 
-## Motore e servizi
+## Componenti condivisi
 
-`AppLayout` viene montato prima di avviare il motore. `config/runtime-files.mjs` e `build/runtime-plugin.mjs` compilano le sorgenti esistenti in un modulo ES isolato, senza eval o document.write. Gli adattatori espongono comandi e pubblicano modelli di vista negli store React. Le azioni che richiedono un gesto del browser, come apertura file e copia, vengono eseguite sincronicamente.
+Le strutture ricorrenti sono definite una sola volta e ricevono dati e callback tramite props:
 
-Il motore JavaScript è ancora riutilizzato tramite `src/compat/`: non è stato riscritto in hook né suddiviso interamente in servizi ES indipendenti. I renderer classici restano necessari per l'HTML di analisi esportabile senza React. Canvas, ridimensionamento, SDK YouTube e layout della finestra usano effetti imperativi; React gestisce i relativi controlli e le viste.
+- `src/components/ui/Modal.jsx`: contenitore, intestazione, corpo e chiusura dei dialoghi, incluse formazione, punto/errore, squadre, traiettorie e sorgente video mobile. I dialoghi mantengono i propri contenuti e le proprie azioni. Il contenitore inoltra i ref al nodo DOM e permette di omettere il backdrop quando il dialogo originario non lo prevede.
+- `AttackShortcutModal`: un solo dialogo configurabile per base, tipo di attacco, numero di muri e palleggiatrice.
+- `ScoutTeamSettings`: lo stesso pannello per entrambe le squadre, con contatori e opzioni configurati dalla prop `scope`.
+- `FilterField`: struttura comune dei campi filtro nelle analisi, nei video e nei dialoghi.
+- `CommandButton` e `FileImportInput`: esecuzione dei comandi e importazione file condivise. `immediate` conserva il gesto sincrono del browser richiesto da selettori file e clipboard.
+- `AnalysisFilterFields`: gruppi di filtri configurati tramite dati, senza ripetere il markup.
+- `ScoutWidgetHandle` e `LiberoBench`: interazioni condivise per pannelli e liberi di entrambe le squadre.
+- `src/state/view-store.mjs`: snapshot e sottoscrizioni comuni delle viste e dei dialoghi.
+- `src/hooks/useViewStore.js`: sottoscrizione comune agli store tramite `useSyncExternalStore`, con cleanup automatico delle sottoscrizioni.
 
-Listener globali e timer sono circoscritti al runtime. Il teardown rimuove gli effetti, salva il tempo video, disconnette l'observer, ferma i player e libera il blob locale. Il bootstrap resta unico per documento; le modifiche al motore durante lo sviluppo richiedono un ricaricamento completo. StrictMode non è abilitato perché il motore conserva riferimenti agli elementi montati all'avvio.
+Per nuove viste, riutilizzare questi componenti e i controlli di dominio già presenti, come `AnalysisFilter`, `TeamCounter` e `VideoSourceControls`. ID, classi e attributi dell’interfaccia restano stabili; i contenuti con interazioni specifiche rimangono nei componenti di dominio.
+
+## Moduli e stato
+
+`src/main.jsx` monta l'app e avvia i servizi dal ciclo di vita React. Le funzionalità in `src/features/` e le librerie in `src/domain/` sono moduli ES con import ed export espliciti. Le azioni in `src/app/actions.mjs` chiamano direttamente questi moduli e pubblicano gli aggiornamenti delle viste. Non esistono un caricatore di script ordinati, un modulo virtuale o adattatori del programma classico.
+
+React genera pagine, campi, tabelle e dialoghi. I componenti condividono i modelli tramite gli store in `src/state/` e `useViewStore`; i moduli di dominio conservano le regole di scouting, i calcoli e i formati dei dati. Navigazione, bozze, selezioni e inserimento DataVolley sono controllati dallo stato. I riferimenti al browser servono per player, canvas, geometria del trascinamento, focus, clipboard e stampa.
+
+Gli effetti di avvio e stampa vengono registrati da `useEffect` e rimossi alla chiusura dell'app. La pulizia dei servizi conserva il tempo video, disconnette gli observer, ferma i player e libera le risorse locali. L'export autonomo usa lo stesso entrypoint React, con dati, CSS e immagini incorporati nel documento e un bundle `analysis-react.js`.
 
 ## GitHub Pages
 
 `npm run build` genera `dist/` con asset e service worker basati sui chunk effettivi. Il percorso di produzione rimane `/VolleyEye/`, mantenendo origine e storage del sito.
 
-Il workflow `.github/workflows/pages.yml` esegue installazione, test della logica, build e prove browser. Le pull request verso `main` vengono verificate; i push su `main` pubblicano `dist/` con GitHub Pages. Per attivarlo, la Source di Pages deve essere **GitHub Actions**. La configurazione remota verificata durante questa conversione usa ancora `main` dalla radice: non va confusa con un deploy React già eseguito.
+Il workflow `.github/workflows/pages.yml` esegue installazione, test della logica, build e prove browser. Le pull request verso `main` vengono verificate; i push su `main` pubblicano `dist/` con GitHub Pages. Per attivarlo, la Source di Pages deve essere **GitHub Actions**. Alla verifica del 13 ottobre 2026, Pages usa ancora la pubblicazione dalla radice di `main` (`build_type: legacy`). Per pubblicare React occorrono la Source **GitHub Actions** e il workflow presente su `main`. Lavorare su un branch di migrazione non pubblica automaticamente il sito.
 
 ## Verifiche
 
-Le prove DOM usano il markup dei componenti React. I confronti differenziali verificano campo, grafici, editor, tabelle e anteprima DataVolley rispetto ai calcoli precedenti. Le prove Playwright esercitano la build sotto `/VolleyEye/`, compresi persistenza, riapertura offline, import/export, contatori oltre i limiti e identità del canvas nei portal.
+I test di integrazione compilano e caricano il vero grafo dei moduli ES e montano i componenti React. Le unità che simulano dipendenze estraggono i corpi delle funzioni dalle sorgenti native; non mantengono copie del programma classico. I riferimenti di 93 prove su campo, grafici, editor, tabelle e anteprima DataVolley sono salvati in `tests/fixtures/react-ui-reference.json`, acquisiti prima della rimozione dei renderer. Le prove DOM dei campi e dei match importati montano i componenti React reali. Le prove Playwright esercitano la build sotto `/VolleyEye/`, compresi persistenza, riapertura offline, import/export, contatori oltre i limiti e identità del canvas nei portal.
 
 Il video locale usa una fixture WebM di 10 secondi. La prova YouTube usa un SDK simulato e non verifica il servizio esterno reale.

@@ -1,14 +1,12 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+
+import { useViewStore } from "../hooks/useViewStore.js";
+import { useEffect, useRef, useState } from "react";
 import { videoPresetsStore } from "../state/roster-import-store.mjs";
-import { invokeRuntime } from "../compat/runtime.js";
+import { actions as appActions } from "../app/actions.mjs";
 const run = (command, ...args) =>
-  invokeRuntime(command, ...args).catch(console.error);
+  appActions[command]( ...args).catch(console.error);
 function usePresets() {
-  return useSyncExternalStore(
-    videoPresetsStore.subscribe,
-    videoPresetsStore.getSnapshot,
-    videoPresetsStore.getSnapshot,
-  );
+  return useViewStore(videoPresetsStore);
 }
 function Preset({ entry, drag, move }) {
   const [editing, setEditing] = useState(false),
@@ -143,7 +141,6 @@ export function VideoPresetCreate() {
         type="text"
         placeholder="Nome preset"
         maxLength={40}
-        data-react-managed="true"
         value={view.name}
         onChange={(event) =>
           videoPresetsStore.publish({ name: event.target.value })
@@ -159,7 +156,6 @@ export function VideoPresetCreate() {
         id="video-filter-preset-save"
         type="button"
         className="small"
-        data-react-managed="true"
         onClick={save}
       >
         Salva filtri
@@ -184,7 +180,6 @@ export function VideoPresets() {
     <div
       id="video-filter-presets-list"
       className="video-filter-presets-list"
-      data-react-managed="true"
     >
       {view.entries.length ? (
         view.entries.map((entry) => (

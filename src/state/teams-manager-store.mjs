@@ -1,23 +1,11 @@
+import { createViewStore } from './view-store.mjs';
+
 export function createTeamsManagerStore() {
-  let snapshot = Object.freeze({
-    open: false,
-    selectedName: "",
-    teams: Object.freeze([]),
-  });
-  const listeners = new Set();
+  const store = createViewStore({ open: false, selectedName: '', teams: Object.freeze([]) });
   return {
-    getSnapshot: () => snapshot,
-    subscribe(listener) {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
+    ...store,
     publish(patch) {
-      snapshot = Object.freeze({
-        ...snapshot,
-        ...patch,
-        ...(patch.teams ? { teams: Object.freeze([...patch.teams]) } : {}),
-      });
-      listeners.forEach((listener) => listener());
+      store.publish({ ...patch, ...(patch.teams ? { teams: Object.freeze([...patch.teams]) } : {}) });
     },
   };
 }

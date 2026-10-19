@@ -1,94 +1,71 @@
+import { ThemePicker } from '../ThemePicker.jsx';
+import { ButtonList } from "../ui/ButtonList.jsx";
+import { TabPanel } from "../ui/TabPanel.jsx";
 import { OpponentSkillToggle } from "../ScoutOptions.jsx";
 import { AppActionButton } from "../AppActions.jsx";
 import { MetricsConfig } from "../MetricsConfig.jsx";
-import { ThemeButton } from "../RuntimeControls.jsx";
 
 export function InfoPage() {
   return (
-    <div className={"tab-panel"} data-tab={"info"}>
-      <div className={"section"}>
+    <TabPanel className="tab-panel" data-tab="info">
+      <div className="section">
         <h2>{"Impostazioni"}</h2>
       </div>
-      <div className={"section global-team-settings"}>
-        <div className={"global-settings-grid"}>
-          <div className={"global-settings-card"}>
+      <div className="section global-team-settings">
+        <div className="global-settings-grid">
+          <div className="global-settings-card">
             <h3>{"Aspetto"}</h3>
-            <p className={"section-note"}>
+            <p className="section-note">
               {
                 "Scegli il tema usato in tutta l’applicazione oppure segui quello del dispositivo."
               }
             </p>
-            <div
-              className={"theme-toggle"}
-              role={"group"}
-              aria-label={"Tema applicazione"}
-            >
-              <ThemeButton
-                type={"button"}
-                id={"theme-dark"}
-                className={"secondary"}
-                data-theme-choice={"dark"}
-                aria-pressed={"false"}
-                title={"Tema scuro"}
-              >
-                {"🌙 Scuro"}
-              </ThemeButton>
-              <ThemeButton
-                type={"button"}
-                id={"theme-light"}
-                className={"secondary"}
-                data-theme-choice={"light"}
-                aria-pressed={"false"}
-                title={"Tema chiaro"}
-              >
-                {"☀️ Chiaro"}
-              </ThemeButton>
-            </div>
+            <ThemePicker />
           </div>
-          <div className={"global-settings-card"}>
+          <div className="global-settings-card">
             <h3>{"Scouting squadra avversaria"}</h3>
-            <p className={"section-note"}>
+            <p className="section-note">
               {
                 "Scegli quali fondamentali sono disponibili quando la partita usa due squadre."
               }
             </p>
-            <div className={"opponent-skill-toggles"}>
-              <label className={"auto-rotate-toggle skill-serve"}>
-                <OpponentSkillToggle id={"opponent-skill-serve"} />
+            <div className="opponent-skill-toggles">
+              <label className="auto-rotate-toggle skill-serve">
+                <OpponentSkillToggle id="opponent-skill-serve" />
                 {" Battuta"}
               </label>
-              <label className={"auto-rotate-toggle skill-pass"}>
-                <OpponentSkillToggle id={"opponent-skill-pass"} />
+              <label className="auto-rotate-toggle skill-pass">
+                <OpponentSkillToggle id="opponent-skill-pass" />
                 {" Ricezione"}
               </label>
-              <label className={"auto-rotate-toggle skill-freeball"}>
-                <OpponentSkillToggle id={"opponent-skill-freeball"} />
+              <label className="auto-rotate-toggle skill-freeball">
+                <OpponentSkillToggle id="opponent-skill-freeball" />
                 {" Freeball"}
               </label>
-              <label className={"auto-rotate-toggle skill-second"}>
-                <OpponentSkillToggle id={"opponent-skill-second"} />
+              <label className="auto-rotate-toggle skill-second">
+                <OpponentSkillToggle id="opponent-skill-second" />
                 {" Alzata"}
               </label>
-              <label className={"auto-rotate-toggle skill-attack"}>
-                <OpponentSkillToggle id={"opponent-skill-attack"} />
+              <label className="auto-rotate-toggle skill-attack">
+                <OpponentSkillToggle id="opponent-skill-attack" />
                 {" Attacco"}
               </label>
-              <label className={"auto-rotate-toggle skill-defense"}>
-                <OpponentSkillToggle id={"opponent-skill-defense"} />
+              <label className="auto-rotate-toggle skill-defense">
+                <OpponentSkillToggle id="opponent-skill-defense" />
                 {" Difesa"}
               </label>
-              <label className={"auto-rotate-toggle skill-block"}>
-                <OpponentSkillToggle id={"opponent-skill-block"} />
+              <label className="auto-rotate-toggle skill-block">
+                <OpponentSkillToggle id="opponent-skill-block" />
                 {" Muro"}
               </label>
             </div>
           </div>
         </div>
       </div>
-      <div className={"section"}>
-        <details className={"import-panel metrics-panel"} open={true}>
+      <div className="section">
+        <details className="import-panel metrics-panel" open={true}>
           <summary>{"Regole calcolo efficienza/positività"}</summary>
-          <p className={"section-note"}>
+          <p className="section-note">
             {
               "Positività = positivi / totali · Efficienza = (positivi - negativi) / totali · Perfezione = # / totali."
             }
@@ -97,20 +74,18 @@ export function InfoPage() {
               "Nota bene: è sconsigliato togliere codici, disattivare battuta, ricezione attacco e modificare le regole di assegnazione punto quando si utilizza la modalità automatica. "
             }
           </p>
-          <div className={"controls-row metrics-actions"}>
-            <AppActionButton id={"btn-reset-codes"} className={"secondary"}>
-              {"Riattiva tutte le valutazioni"}
-            </AppActionButton>
-            <AppActionButton id={"btn-reset-metrics"} className={"secondary"}>
-              {"Ripristina criteri calcolo efficienza"}
-            </AppActionButton>
-            <AppActionButton id={"btn-reset-points"} className={"secondary"}>
-              {"Ripristina punti default"}
-            </AppActionButton>
+          <div className="controls-row metrics-actions">
+            <ButtonList as={AppActionButton} className="secondary"
+                items={[
+                  ["btn-reset-codes","Riattiva tutte le valutazioni"],
+                  ["btn-reset-metrics","Ripristina criteri calcolo efficienza"],
+                  ["btn-reset-points","Ripristina punti default"],
+                ]}
+              />
           </div>
           <MetricsConfig />
         </details>
       </div>
-    </div>
+    </TabPanel>
   );
 }

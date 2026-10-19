@@ -1,10 +1,14 @@
-import { useSyncExternalStore } from "react";
+import { CommandButton } from "./ui/CommandButton.jsx";
+import { FileImportInput } from "./ui/FileImportInput.jsx";
+
+import { useViewStore } from "../hooks/useViewStore.js";
+
 import {
   demoActionStore,
   databaseImportStore,
 } from "../state/roster-import-store.mjs";
 import { runtimeStore } from "../state/runtime-store.mjs";
-import { invokeRuntime, invokeRuntimeEvent } from "../compat/runtime.js";
+import { actions as appActions, events as appEvents } from "../app/actions.mjs";
 const actions = {
   "traj-filter-reset": "resetTrajectoryFilters",
   "serve-traj-filter-reset": "resetServeTrajectoryFilters",
@@ -53,13 +57,9 @@ const actions = {
   "btn-reset-points": "resetPointRulesToDefault",
 };
 export function AppActionButton({ id, children, ...props }) {
-  const controls = useSyncExternalStore(
-    runtimeStore.subscribe,
-    runtimeStore.getSnapshot,
-    runtimeStore.getSnapshot,
-  );
+  const controls = useViewStore(runtimeStore);
   return (
-    <button
+    <CommandButton
       id={id}
       {...props}
       disabled={
@@ -88,88 +88,68 @@ export function AppActionButton({ id, children, ...props }) {
         ].includes(id) &&
           !!controls.scoutControlsDisabled)
       }
-      data-react-managed="true"
-      onClick={() => {
-        Promise.resolve(
-          invokeRuntimeEvent("runReactAppAction", actions[id]),
-        ).catch(console.error);
-      }}
+      command="runReactAppAction"
+      args={[actions[id]]}
+      immediate
     >
       {children}
-    </button>
+    </CommandButton>
   );
 }
 export function MatchImportButton({ children, ...props }) {
   return (
-    <button
+    <CommandButton
       {...props}
-      data-react-managed="true"
-      onClick={() => invokeRuntimeEvent("openReactMatchFilePicker")}
+      command="openReactMatchFilePicker"
+      immediate
     >
       {children}
-    </button>
+    </CommandButton>
   );
 }
 export function MatchImportInput(props) {
   return (
-    <input
+    <FileImportInput
       {...props}
-      data-react-managed="true"
-      onChange={(event) => {
-        const file = event.target.files?.[0];
-        if (file)
-          invokeRuntime("handleImportMatchFile", file).catch(console.error);
-      }}
+      onFile={(file) => appActions.handleImportMatchFile(file)}
     />
   );
 }
+
 export function ScoutDrawerButton({ drawer, children, ...props }) {
-  const controls = useSyncExternalStore(
-    runtimeStore.subscribe,
-    runtimeStore.getSnapshot,
-    runtimeStore.getSnapshot,
-  );
+  const controls = useViewStore(runtimeStore);
   return (
-    <button
+    <CommandButton
       {...props}
-      data-react-managed="true"
       disabled={!!controls.scoutControlsDisabled}
-      onClick={() => invokeRuntimeEvent("changeReactScoutDrawer", drawer)}
+      command="changeReactScoutDrawer"
+      args={[drawer]}
+      immediate
     >
       {children}
-    </button>
+    </CommandButton>
   );
 }
 export function ScoutDrawerBackdrop(props) {
   return (
     <div
       {...props}
-      data-react-managed="true"
-      onClick={() => invokeRuntimeEvent("changeReactScoutDrawer", "")}
+      onClick={() => appEvents.changeReactScoutDrawer("")}
     />
   );
 }
 
 export function DatabaseImportInput(props) {
   return (
-    <input
+    <FileImportInput
       {...props}
-      data-react-managed="true"
-      onChange={(event) => {
-        const file = event.target.files?.[0];
-        if (file)
-          invokeRuntime("handleImportDatabaseFile", file).catch(console.error);
-      }}
+      onFile={(file) => appActions.handleImportDatabaseFile(file)}
     />
   );
 }
 
 export function DemoDeleteButton({ className, ...props }) {
-  const view = useSyncExternalStore(
-    demoActionStore.subscribe,
-    demoActionStore.getSnapshot,
-    demoActionStore.getSnapshot,
-  );
+  const view = useViewStore(demoActionStore);
   return (
     <AppActionButton
       {...props}
@@ -185,15 +165,10 @@ export function DemoDeleteButton({ className, ...props }) {
 }
 
 export function DatabaseUrlInput(props) {
-  const view = useSyncExternalStore(
-    databaseImportStore.subscribe,
-    databaseImportStore.getSnapshot,
-    databaseImportStore.getSnapshot,
-  );
+  const view = useViewStore(databaseImportStore);
   return (
     <input
       {...props}
-      data-react-managed="true"
       value={view.url}
       onChange={(event) =>
         databaseImportStore.publish({ url: event.target.value })

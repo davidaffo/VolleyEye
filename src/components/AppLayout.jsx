@@ -1,11 +1,14 @@
+import { AttributionModal } from './AttributionModal.jsx';
+import { AttackShortcutModal } from './AttackShortcutModal.jsx';
+import { VideoEditModal } from './VideoEditModal.jsx';
 import { StartupError } from "./StartupError.jsx";
-import { memo } from "react";
 import { CourtModalPortal } from "./CourtModalPortal.jsx";
 import { UpdateBanner } from "./layout/UpdateBanner.jsx";
 import { AppNavigation } from "./layout/AppNavigation.jsx";
 import { MobileNavigation } from "./layout/MobileNavigation.jsx";
 import { BtnToggleTopbar } from "./layout/BtnToggleTopbar.jsx";
 import { MatchPage } from "./layout/MatchPage.jsx";
+import { AppDialogs } from "./AppDialogs.jsx";
 import { InfoPage } from "./layout/InfoPage.jsx";
 import { ScoutPage } from "./layout/ScoutPage.jsx";
 import { AggregatedPage } from "./layout/AggregatedPage.jsx";
@@ -17,16 +20,10 @@ import { PastePlayersModal } from "./layout/PastePlayersModal.jsx";
 import { Camp3ConfirmModal } from "./layout/Camp3ConfirmModal.jsx";
 import { SkillModal } from "./layout/SkillModal.jsx";
 import { AggSkillModal } from "./layout/AggSkillModal.jsx";
-import { BaseModal } from "./layout/BaseModal.jsx";
-import { AttackTypeModal } from "./layout/AttackTypeModal.jsx";
-import { AttackSetterModal } from "./layout/AttackSetterModal.jsx";
-import { BlockNumberModal } from "./layout/BlockNumberModal.jsx";
 import { BulkEditModal } from "./layout/BulkEditModal.jsx";
 import { VideoScoreModal } from "./layout/VideoScoreModal.jsx";
 import { SetStartModal } from "./layout/SetStartModal.jsx";
 import { LineupModal } from "./layout/LineupModal.jsx";
-import { ErrorModal } from "./layout/ErrorModal.jsx";
-import { PointModal } from "./layout/PointModal.jsx";
 import { AttackTrajectoryModal } from "./layout/AttackTrajectoryModal.jsx";
 import { DebugModal } from "./layout/DebugModal.jsx";
 import { NewMatchModal } from "./layout/NewMatchModal.jsx";
@@ -34,15 +31,13 @@ import { TeamsManagerModal } from "./layout/TeamsManagerModal.jsx";
 import { PlayersDbModal } from "./layout/PlayersDbModal.jsx";
 import { PlayerPhotoModal } from "./layout/PlayerPhotoModal.jsx";
 import { SettingsModal } from "./layout/SettingsModal.jsx";
-import { OffsetModal } from "./layout/OffsetModal.jsx";
-import { UnifyTimesModal } from "./layout/UnifyTimesModal.jsx";
 import { MultiscoutModal } from "./layout/MultiscoutModal.jsx";
-import { SkillDurationModal } from "./layout/SkillDurationModal.jsx";
 import { FfmpegEncoderModal } from "./layout/FfmpegEncoderModal.jsx";
 import { FloatingServeErrorBtn } from "./layout/FloatingServeErrorBtn.jsx";
 import { AppFooter } from "./layout/AppFooter.jsx";
 
-// Keep the compatibility engine's DOM stable while React counters update independently.
+import { memo } from "react";
+
 export const AppLayout = memo(function AppLayout() {
   return (
     <>
@@ -65,10 +60,10 @@ export const AppLayout = memo(function AppLayout() {
         <SkillModal />
       </CourtModalPortal>
       <AggSkillModal />
-      <BaseModal />
-      <AttackTypeModal />
-      <AttackSetterModal />
-      <BlockNumberModal />
+      <AttackShortcutModal kind="base" />
+      <AttackShortcutModal kind="type" />
+      <AttackShortcutModal kind="setter" />
+      <AttackShortcutModal kind="block" />
       <BulkEditModal />
       <VideoScoreModal />
       <SetStartModal />
@@ -76,10 +71,10 @@ export const AppLayout = memo(function AppLayout() {
         <LineupModal />
       </CourtModalPortal>
       <CourtModalPortal>
-        <ErrorModal />
+        <AttributionModal kind="error" />
       </CourtModalPortal>
       <CourtModalPortal>
-        <PointModal />
+        <AttributionModal kind="point" />
       </CourtModalPortal>
       <CourtModalPortal>
         <AttackTrajectoryModal />
@@ -90,13 +85,14 @@ export const AppLayout = memo(function AppLayout() {
       <PlayersDbModal />
       <PlayerPhotoModal />
       <SettingsModal />
-      <OffsetModal />
-      <UnifyTimesModal />
+      <VideoEditModal kind="offset" />
+      <VideoEditModal kind="unify" />
       <MultiscoutModal />
-      <SkillDurationModal />
+      <VideoEditModal kind="duration" />
       <FfmpegEncoderModal />
       <FloatingServeErrorBtn />
       <AppFooter />
+      <AppDialogs />
     </>
   );
 });

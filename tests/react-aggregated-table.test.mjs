@@ -1,5 +1,6 @@
+import {reference} from "./helpers/ui-reference.mjs";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import vm from "node:vm";
 import test from "node:test";
 import { JSDOM } from "jsdom";
@@ -161,7 +162,7 @@ for (const both of [false, true])
           },
         },
       });
-      const tableSource = read("../js/scout/analysis/skill-tables.js");
+      const tableSource = read("../src/features/analysis/skill-tables.js");
       vm.runInContext(
         extract(
           tableSource,
@@ -173,22 +174,22 @@ for (const both of [false, true])
             "buildAggBodyHeaderRows",
             "applySkillClassToCells",
           ) +
-          read("../js/scout/analysis/aggregated-table.js") +
-          read("../src/compat/aggregated-table-adapter.js"),
+          read("../src/domain/analysis-columns.js") +
+          read("../src/features/analysis/table-cells.js") +
+          read("../src/features/analysis/statistic-model.js") +
+          read("../src/features/analysis/aggregated-table.js") +
+          read("../src/features/analysis/summary-model.js"),
         context,
       );
-      context.renderAggregatedTable();
+
       const rows = (element) =>
           [...element.children].map((row) =>
             [...row.children].map((cell) => ({
               text: cell.textContent,
               span: cell.colSpan || 1,
             })),
-          ),
-        legacyRows = rows(body),
-        legacyExtra = rows(extra),
-        legacyHeaders = rows(document.querySelector("thead"));
-      context.publishReactAggregatedTable();
+          );
+      context.renderAggregatedTable();
       const nativeRows = (rows) =>
         JSON.parse(
           JSON.stringify(
@@ -200,8 +201,8 @@ for (const both of [false, true])
             ),
           ),
         );
-      assert.deepEqual(nativeRows(view.rows), legacyRows);
-      assert.deepEqual(nativeRows(view.extraRows), legacyExtra);
+      assert.deepEqual(nativeRows(view.rows), reference("react-aggregated-table:8060"));
+      assert.deepEqual(nativeRows(view.extraRows), reference("react-aggregated-table:8119"));
       assert.deepEqual(
         JSON.parse(
           JSON.stringify(
@@ -213,6 +214,6 @@ for (const both of [false, true])
             ),
           ),
         ),
-        legacyHeaders,
+        reference("react-aggregated-table:8184"),
       );
     });

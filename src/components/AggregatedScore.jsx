@@ -1,16 +1,14 @@
-import { useSyncExternalStore } from "react";
+
+import { useViewStore } from "../hooks/useViewStore.js";
+
 import { aggregatedScoreStore } from "../state/roster-import-store.mjs";
 function useView() {
-  return useSyncExternalStore(
-    aggregatedScoreStore.subscribe,
-    aggregatedScoreStore.getSnapshot,
-    aggregatedScoreStore.getSnapshot,
-  );
+  return useViewStore(aggregatedScoreStore);
 }
 export function AggregatedTotalScore() {
   const view = useView();
   return (
-    <div id="agg-score" className="score-value" data-react-managed="true">
+    <div id="agg-score" className="score-value">
       {view.label}
     </div>
   );
@@ -21,7 +19,6 @@ export function AggregatedSetCards() {
     <div
       id="agg-set-cards"
       className="score-sets cards"
-      data-react-managed="true"
     >
       {view.sets.length ? (
         view.sets.map((set) => (

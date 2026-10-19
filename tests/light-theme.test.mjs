@@ -1,7 +1,7 @@
 import { readAppHtml } from './helpers/app-html.mjs';
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 
 const index = readAppHtml();
 const entrypoint = readFileSync("src/main.jsx", "utf8");
@@ -9,12 +9,12 @@ const themeCss = readFileSync("styles/light-theme.css", "utf8");
 const skillPaletteCss = readFileSync("styles/skill-palette.css", "utf8");
 const skillChartsCss = readFileSync("styles/skill-charts.css", "utf8");
 const videoFiltersCss = readFileSync("styles/video-filters.css", "utf8");
-const stateStore = readFileSync("js/roster/core/state-store.js", "utf8");
+const stateStore = readFileSync("src/features/storage/ui-preferences.js", "utf8") + readFileSync("src/features/teams/preferences.js", "utf8") + readFileSync("src/features/teams/core/state-store.js", "utf8");
 const globals = readFileSync("js/globals.js", "utf8");
-const themeBindings = readFileSync("js/scout/core/bindings-roster.js", "utf8");
-const matchIo = readFileSync("js/scout/io/match-io.js", "utf8");
-const exportsSource = readFileSync("js/scout/io/exports.js", "utf8");
-const serviceWorker = readFileSync("service-worker.js", "utf8");
+const themeBindings = readFileSync("src/features/core/bindings-roster.js", "utf8");
+const matchIo = readFileSync("src/features/io/match-io.js", "utf8");
+const exportsSource = readFileSync("src/features/io/exports.js", "utf8");
+const serviceWorker = readFileSync("src/main.jsx", "utf8");
 
 function rgb(hex) {
   const value = hex.replace("#", "");
@@ -40,9 +40,8 @@ test("il completamento del tema chiaro viene caricato dopo tutti i componenti e 
   const printPosition = entrypoint.indexOf("../styles/print.css");
   assert.ok(componentPosition >= 0 && componentPosition < lightPosition);
   assert.ok(lightPosition < printPosition);
-  assert.match(serviceWorker, /withVersion\("\.\/styles\/light-theme\.css"\)/);
-  assert.match(serviceWorker, /"\/styles\/light-theme\.css"/);
-  assert.match(serviceWorker, /withVersion\("\.\/styles\/skill-palette\.css"\)/);
+  assert.match(serviceWorker, /styles\/light-theme\.css/);
+  assert.match(serviceWorker, /styles\/skill-palette\.css/);
 });
 
 test("il cambio tema aggiorna anche controlli nativi e colore della finestra", () => {

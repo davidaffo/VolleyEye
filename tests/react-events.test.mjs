@@ -1,13 +1,14 @@
+import {reference} from "./helpers/ui-reference.mjs";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import vm from "node:vm";
 import test from "node:test";
 import { JSDOM } from "jsdom";
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
-const old = read("../js/scout/video/event-editor.js"),
-  model = read("../src/compat/event-table-adapter.js"),
-  live = read("../js/scout/live/live-entry.js"),
-  adapter = read("../src/compat/runtime-adapter.js");
+const old = read("../src/features/events/point-direction.js") + read("../src/features/video/event-editor.js"),
+  model = read("../src/features/events/table-view.js"),
+  live = read("../src/domain/value-string.js") + read("../src/features/live/live-entry.js"),
+  adapter = read("../src/features/events/editor-controls.js");
 function setup() {
   const dom = new JSDOM('<div id="target"></div>'),
     state = {
@@ -79,12 +80,9 @@ function setup() {
     console,
   });
   vm.runInContext(
-    live.slice(0, live.indexOf("function createCheckboxInput")) +
+    live +
       old +
-      adapter.slice(
-        adapter.indexOf("function buildReactBulkControl"),
-        adapter.indexOf("function openReactBulkEditor"),
-      ) +
+      adapter +
       model,
     context,
   );
@@ -148,13 +146,9 @@ for (const flags of [
         target = dom.window.document.getElementById("target");
       const input = structuredClone(events);
       context.state.events = input;
-      context.renderEventTableRows(target, input, flags);
-      const oldRows = [...target.querySelectorAll("tbody tr")].map((row) =>
-        [...row.querySelectorAll("td")].map((cell) => cell.textContent),
-      );
-      const oldHeads = [...target.querySelectorAll("th")].map(
-        (cell) => cell.textContent,
-      );
+
+
+
       context.publishReactEventTable(target, input, flags);
       const native = view();
       assert.deepEqual(
@@ -167,7 +161,7 @@ for (const flags of [
             ]),
           ),
         ),
-        oldRows,
+        reference("react-events:5077"),
       );
       assert.deepEqual(
         JSON.parse(
@@ -177,7 +171,7 @@ for (const flags of [
             ),
           ),
         ),
-        oldHeads,
+        reference("react-events:5376"),
       );
     },
   );
@@ -207,32 +201,7 @@ for (const field of [
       first = { ...events[0], rotation: 1 },
       second = structuredClone(first),
       scope = context;
-    const factory = {
-      player: () => scope.createPlayerSelect(first),
-      setter: () => scope.createPlayerSelect(first, null, { target: "setter" }),
-      skill: () => scope.createSkillSelect(first),
-      code: () => scope.createCodeSelect(first),
-      rotation: () => scope.createNumberSelect(first, "rotation", 1, 6),
-      base: () => scope.createBaseSelect(first),
-      setType: () => scope.createSetTypeSelect(first),
-      serveType: () => scope.createServeTypeSelect(first),
-      receiveEvaluation: () =>
-        scope.createEvalSelect(first, "receiveEvaluation", null, {
-          includeFb: true,
-        }),
-      attackEvaluation: () => scope.createEvalSelect(first, "attackEvaluation"),
-      attackBp: () => scope.createPhaseSelect(first),
-      playerIn: () => scope.createPlayerNameSelect(first, "playerIn"),
-      durationMs: () => scope.createNumberInput(first, "durationMs", 0),
-      combination: () => scope.createTextInput(first, "combination"),
-      relatedEvents: () => scope.createRelatedEventsInput(first),
-      errorType: () => scope.createErrorTypeSelect(first),
-      fromFreeball: () => scope.createBooleanInput(first, "fromFreeball"),
-      team: () => scope.createEventTeamSelect(first),
-      homeScore: () => scope.createNumberInput(first, "homeScore", 0),
-    }[field];
-    const control = factory(),
-      view = scope.buildReactEventControl(second, field, null, 0),
+    const view = scope.buildReactEventControl(second, field, null, 0),
       value =
         field === "fromFreeball"
           ? true
@@ -245,12 +214,9 @@ for (const field of [
                 : view.type === "select"
                   ? view.options.at(-1).value
                   : "2750";
-    if (control.type === "checkbox") control.checked = value;
-    else control.value = value;
-    control.dispatchEvent(new dom.window.Event("change"));
     view.onChange(value);
     assert.deepEqual(
       JSON.parse(JSON.stringify(second)),
-      JSON.parse(JSON.stringify(first)),
+      reference("react-events:8096"),
     );
   });
