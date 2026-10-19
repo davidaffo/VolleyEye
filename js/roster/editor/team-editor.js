@@ -274,9 +274,22 @@ function renderTeamManagerTable() {
     });
     photoCell.appendChild(photoPreview);
     const syncFullName = () => {
+      const previousName = p.name;
       p.lastName = lastNameInput.value.trim();
       p.firstName = firstNameInput.value.trim();
       p.name = buildFullName(p.lastName, p.firstName);
+      if (previousName && previousName !== p.name) {
+        teamManagerState.defaultLineup = (teamManagerState.defaultLineup || []).map(name =>
+          name === previousName ? p.name : name
+        );
+        if (teamManagerState.preferredLibero === previousName) {
+          teamManagerState.preferredLibero = p.name;
+        }
+      }
+    };
+    const refreshPlayerName = () => {
+      syncFullName();
+      renderDefaultLineupEditor();
     };
     const maybeMatchPlayersDb = () => {
       const first = p.firstName || "";
@@ -306,12 +319,14 @@ function renderTeamManagerTable() {
       p.__dbPromptKey = key;
     };
     syncFullName();
+    lastNameInput.addEventListener("input", refreshPlayerName);
+    firstNameInput.addEventListener("input", refreshPlayerName);
     lastNameInput.addEventListener("change", () => {
-      syncFullName();
+      refreshPlayerName();
       maybeMatchPlayersDb();
     });
     firstNameInput.addEventListener("change", () => {
-      syncFullName();
+      refreshPlayerName();
       maybeMatchPlayersDb();
     });
     let liberoChk = null;
