@@ -527,7 +527,8 @@ function renderTeamLiberoChipsInline(scope) {
   const replaced = getReplacedByLiberosForScope(scope);
   const lockedMap = getLockedMapForScope(scope);
   const names = orderLiberosByPreference(
-    Array.from(new Set([...getTeamPlayers(scope).filter(name => liberoSet.has(name)), ...replaced])),
+    Array.from(new Set([...getTeamPlayers(scope).filter(name => liberoSet.has(name)), ...replaced]))
+      .filter(name => !used.has(name)),
     scope,
     numbers
   );

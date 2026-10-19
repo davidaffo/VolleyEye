@@ -1179,26 +1179,8 @@ function setCourtAreaLocked(isLocked) {
   if (!courtArea) return;
   if (isLocked) {
     if (lockedCourtAreaHeight === null) {
-      const playerEl = courtArea.querySelector("#players-container");
-      const actionsEls = Array.from(courtArea.querySelectorAll(".court-actions-bar"));
-      const gapValue = window.getComputedStyle(courtArea).gap || "0px";
-      const gap = parseFloat(gapValue) || 0;
-      const getOuterHeight = el => {
-        if (!el) return 0;
-        const rect = el.getBoundingClientRect();
-        const styles = window.getComputedStyle(el);
-        const marginTop = parseFloat(styles.marginTop) || 0;
-        const marginBottom = parseFloat(styles.marginBottom) || 0;
-        return rect.height + marginTop + marginBottom;
-      };
-      if (playerEl && actionsEls.length) {
-        const actionsHeight = actionsEls.reduce((sum, el) => sum + getOuterHeight(el), 0);
-        const itemsCount = (playerEl ? 1 : 0) + actionsEls.length;
-        const gapCount = Math.max(0, itemsCount - 1);
-        lockedCourtAreaHeight = Math.ceil(getOuterHeight(playerEl) + actionsHeight + gap * gapCount);
-      } else {
-        lockedCourtAreaHeight = courtArea.offsetHeight || null;
-      }
+      // offsetHeight resta nelle coordinate originali anche quando lo scout è scalato.
+      lockedCourtAreaHeight = courtArea.offsetHeight || null;
     }
     if (lockedCourtAreaHeight) {
       courtArea.style.height = `${lockedCourtAreaHeight}px`;

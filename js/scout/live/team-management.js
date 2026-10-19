@@ -493,10 +493,7 @@ function syncOpponentSettingsUI() {
   }
   const opponentPanel = document.querySelector('[data-team-panel="opponent"]');
   if (opponentPanel) {
-    opponentPanel.classList.remove("hidden");
-    opponentPanel
-      .querySelectorAll(".score-actions, .team-controls-panel")
-      .forEach(node => node.classList.toggle("hidden", !enabled));
+    opponentPanel.classList.toggle("hidden", !enabled);
   }
   const opponentSettingsPanel = document.querySelector('[data-team-panel="opponent-settings"]');
   if (opponentSettingsPanel) {

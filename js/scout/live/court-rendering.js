@@ -706,6 +706,8 @@ function renderTeamCourtCards(options = {}) {
     allowSkills = true
   } = options;
   if (!container) return;
+  if (container.__courtPhotoResizeObserver) container.__courtPhotoResizeObserver.disconnect();
+  const photoHeaders = [];
   const players = getPlayersForScope(scope);
   const renderOrder = [3, 2, 1, 4, 5, 0];
   const map = displayCourt || court.map((slot, idx) => ({ slot, idx }));
@@ -810,7 +812,7 @@ function renderTeamCourtCards(options = {}) {
           handleReturn(e);
         }
       });
-      tagBar.appendChild(btnReturn);
+      card.appendChild(btnReturn);
     }
     header.appendChild(tagBar);
     const nameBlock = document.createElement("div");
@@ -836,6 +838,7 @@ function renderTeamCourtCards(options = {}) {
     }
     header.appendChild(nameBlock);
     card.appendChild(header);
+    if (playerPhoto) photoHeaders.push(header);
 
     if (allowDrop) {
       card.addEventListener("dragenter", e => handlePositionDragOver(e, card), true);
@@ -883,6 +886,17 @@ function renderTeamCourtCards(options = {}) {
     }
     container.appendChild(card);
   });
+  const updatePhotoInset = header => {
+    if (header.offsetHeight > 0) {
+      header.parentElement.style.setProperty("--court-photo-top", `${header.offsetTop + header.offsetHeight}px`);
+    }
+  };
+  photoHeaders.forEach(updatePhotoInset);
+  if (photoHeaders.length && typeof ResizeObserver === "function") {
+    const observer = new ResizeObserver(entries => entries.forEach(entry => updatePhotoInset(entry.target)));
+    photoHeaders.forEach(header => observer.observe(header));
+    container.__courtPhotoResizeObserver = observer;
+  }
   if (!errorPickModeActive && !pointPickModeActive) return;
   if (!parentBox) return;
   if (pointPickModeActive) {

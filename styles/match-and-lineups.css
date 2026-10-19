@@ -1061,6 +1061,9 @@ body.scout-widget-dragging [data-scout-widget-zone="center-top"]:empty::before {
 body.scout-widget-dragging [data-scout-widget-zone="center-bottom"]:empty::before {
   content: "Rilascia sotto il campo";
 }
+body.scout-widget-dragging [data-scout-widget-zone="center-court"]:empty::before {
+  content: "Rilascia al centro";
+}
 body.scout-widget-dragging [data-scout-widget-zone="right"]:empty::before {
   content: "Rilascia nella colonna destra";
 }

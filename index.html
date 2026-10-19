@@ -412,22 +412,6 @@
         title="Trascina per ridimensionare. Doppio clic per ripristinare."
       ></button>
       <div class="section scout-col-center" data-scout-panel="team">
-        <div class="set-type-wrapper">
-          <div class="set-type-shortcuts set-type-inline" id="set-type-shortcuts" style="display: none">
-            <div class="set-type-shortcuts__head">
-              <span class="set-type-shortcuts__label">Tipo alzata</span>
-            </div>
-            <div class="set-type-shortcuts__buttons">
-              <button class="set-type-btn" data-settype="mezza" type="button">Mezza</button>
-              <button class="set-type-btn" data-settype="super" type="button">Super</button>
-              <button class="set-type-btn" data-settype="quick" type="button">Quick</button>
-              <button class="set-type-btn" data-settype="veloce" type="button">Veloce</button>
-              <button class="set-type-btn" data-settype="fast" type="button">Fast</button>
-              <button class="set-type-btn" data-settype="alta" type="button">Alta</button>
-              <button class="set-type-btn secondary" data-clear-settype type="button">Nessuna</button>
-            </div>
-          </div>
-        </div>
         <div id="scout-widgets-center-top" class="scout-widget-zone scout-widget-zone--center" data-scout-widget-zone="center-top">
         <div id="video-scout-container" class="video-scout-container scout-widget hidden" data-scout-widget="video">
           <div class="video-scout-panel">
@@ -448,18 +432,47 @@
                 id="video-scout-resize-handle"
                 class="video-resize-handle"
                 type="button"
-                aria-label="Allarga finestra video scout"
-                title="Trascina per allargare. Doppio click per reset."
+                aria-label="Ridimensiona altezza video scout"
+                title="Trascina per ridimensionare. Doppio clic per ripristinare."
               ></button>
             </div>
           </div>
         </div>
         </div>
+        <div class="scout-widget-zone scout-widget-zone--center" data-scout-widget-zone="center-court">
+        <div class="scout-widget scout-court-widget" data-scout-widget="court">
+        <div class="set-type-wrapper">
+          <div class="set-type-shortcuts set-type-inline" id="set-type-shortcuts" style="display: none">
+            <div class="set-type-shortcuts__head">
+              <span class="set-type-shortcuts__label">Tipo alzata</span>
+            </div>
+            <div class="set-type-shortcuts__buttons">
+              <button class="set-type-btn" data-settype="mezza" type="button">Mezza</button>
+              <button class="set-type-btn" data-settype="super" type="button">Super</button>
+              <button class="set-type-btn" data-settype="quick" type="button">Quick</button>
+              <button class="set-type-btn" data-settype="veloce" type="button">Veloce</button>
+              <button class="set-type-btn" data-settype="fast" type="button">Fast</button>
+              <button class="set-type-btn" data-settype="alta" type="button">Alta</button>
+              <button class="set-type-btn secondary" data-clear-settype type="button">Nessuna</button>
+            </div>
+          </div>
+        </div>
         <div class="players-area" id="court-area">
+          <div id="single-team-opponent-panel" class="single-team-opponent-panel team-field-box--opponent hidden" aria-label="Comandi avversaria in squadra singola">
+            <span class="single-team-opponent-label">Avversaria</span>
+            <div data-single-opponent-rotation></div>
+            <div class="single-team-opponent-actions">
+              <div id="single-team-score-actions" class="score-actions-inline">
+                <button id="btn-score-opp-point-single" class="small success" aria-label="Punto avversaria">Punto</button>
+                <button id="btn-score-opp-error-single" class="small danger" aria-label="Errore avversaria">Errore</button>
+              </div>
+              <button id="btn-freeball-opp-single" class="small danger" aria-label="Freeball avversaria">Freeball</button>
+            </div>
+          </div>
           <div class="team-panel team-panel--far team-panel--opponent" data-team-panel="opponent">
             <div class="team-field-box team-field-box--opponent">
               <div class="court-actions-bar court-actions-inline sl-toolbar team-panel__bar team-panel__bar--opponent">
-                <div class="rotation-block court-rotation-block">
+                <div id="opponent-rotation-controls" class="rotation-block court-rotation-block">
                 <div class="rotation-controls">
                   <button id="btn-rotate-cw-opp" class="small rotate-cw">↺</button>
                   <div class="rotation-display">
@@ -546,13 +559,8 @@
                 <div class="score-actions court-game-actions sl-action-row">
                   <button id="btn-score-team-point" class="small">Punto</button>
                   <button id="btn-score-team-error" class="small danger">Errore</button>
-                  <div id="single-team-score-actions" class="score-actions-inline hidden">
-                    <button id="btn-score-opp-point-single" class="small success">Punto avv</button>
-                    <button id="btn-score-opp-error-single" class="small danger">Errore avv</button>
-                  </div>
                   <div class="freeball-actions-inline">
                     <button id="btn-freeball" class="secondary small">Freeball</button>
-                    <button id="btn-freeball-opp-single" class="small danger hidden">Freeball avv</button>
                   </div>
                 </div>
                 <div class="team-controls-panel sl-team-controls">
@@ -683,6 +691,8 @@
               </div>
             </div>
           </div>
+        </div>
+        </div>
         </div>
         <div id="scout-widgets-center-bottom" class="scout-widget-zone scout-widget-zone--center" data-scout-widget-zone="center-bottom"></div>
       </div>
@@ -1575,8 +1585,8 @@
             id="video-analysis-resize-handle"
             class="video-resize-handle"
             type="button"
-            aria-label="Allarga finestra video"
-            title="Trascina per allargare. Doppio click per reset."
+            aria-label="Ridimensiona altezza video"
+            title="Trascina per ridimensionare. Doppio clic per ripristinare."
           ></button>
           <div class="video-frame-actions">
             <button id="btn-video-frame-prev" class="secondary" type="button">Frame - (Shift + ←)</button>

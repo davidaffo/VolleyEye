@@ -205,7 +205,15 @@ function captureScoutActionSnapshot() {
   const clone = window.VolleyEye && window.VolleyEye.stateIsolation
     ? window.VolleyEye.stateIsolation.cloneData
     : value => JSON.parse(JSON.stringify(value));
-  return clone(state);
+  const snapshot = clone(state);
+  // Le proprietà non enumerabili non vengono clonate: conserva la catena
+  // degli annullamenti senza serializzarla o duplicare gli snapshot precedenti.
+  (state.events || []).forEach((event, index) => {
+    if (event && event.__undoSnapshot && snapshot.events[index]) {
+      attachScoutActionSnapshot(snapshot.events[index], event.__undoSnapshot);
+    }
+  });
+  return snapshot;
 }
 function attachScoutActionSnapshot(event, snapshot) {
   if (!event || !snapshot) return event;
@@ -216,10 +224,17 @@ function attachScoutActionSnapshot(event, snapshot) {
   });
   return event;
 }
+function clearScoutFlowOverridesAfterUndo() {
+  state.skillFlowOverride = null;
+  state.opponentSkillFlowOverride = null;
+  state.forceSkillActive = false;
+  state.forceSkillScope = null;
+}
 function restoreScoutActionSnapshot(snapshot) {
   if (!snapshot || typeof snapshot !== "object") return false;
   Object.keys(state).forEach(key => delete state[key]);
   Object.assign(state, snapshot);
+  clearScoutFlowOverridesAfterUndo();
   if (typeof resetSetTypeState === "function") resetSetTypeState();
   saveState({ persistLocal: true });
   recalcAllStatsAndUpdateUI();
@@ -242,6 +257,10 @@ function undoLastEvent() {
     return;
   }
   state.events.pop();
+  clearScoutFlowOverridesAfterUndo();
+  state.freeballPending = false;
+  state.freeballPendingScope = null;
+  state.pendingServe = null;
   if (!ev) {
     saveState();
     recalcAllStatsAndUpdateUI();

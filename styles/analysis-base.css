@@ -161,6 +161,7 @@ body[data-theme="light"] .player-card {
   content: "";
   position: absolute;
   inset: 0;
+  top: var(--court-photo-top, 2rem);
   background-image:
     linear-gradient(180deg, rgba(8, 15, 28, 0.12) 0%, rgba(8, 15, 28, 0.58) 56%, rgba(8, 15, 28, 0.76) 100%),
     var(--player-photo-image);
@@ -535,6 +536,16 @@ body[data-theme="light"] .court-card.setter-card {
   background: #2563eb;
   border-color: #2563eb;
   color: #fff;
+}
+.court-card > .libero-return-btn {
+  position: absolute;
+  top: 0.2rem;
+  right: 0.2rem;
+  margin: 0;
+  z-index: 2;
+}
+.court-card.libero-card:has(> .libero-return-btn) .court-header {
+  padding-right: 1.75rem;
 }
 body[data-theme="light"] .court-libero-pill {
   background: #daf5e7;

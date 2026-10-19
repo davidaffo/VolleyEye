@@ -109,6 +109,49 @@ test("il renderer condiviso gestisce singola squadra, mobile e inversione dei ca
   dom.window.close();
 });
 
+test("la singola usa il pannello compatto e ripristina quello completo passando alla doppia", () => {
+  const { context: c, dom } = setup();
+  const document = dom.window.document;
+  const single = document.getElementById('single-team-opponent-panel');
+  const opponent = document.querySelector('[data-team-panel="opponent"]');
+  const rotation = document.getElementById('opponent-rotation-controls');
+  const select = document.getElementById('rotation-select-opp');
+  select.value = '4';
+  const originalCourt = JSON.stringify(c.state.opponentCourt);
+  try {
+    c.state.useOpponentTeam = false;
+    c.renderPlayers();
+    assert.equal(single.classList.contains('hidden'), false);
+    assert.equal(opponent.classList.contains('hidden'), true);
+    assert.ok(single.contains(rotation));
+    assert.equal(single.querySelectorAll('.court-card, .libero-inline, .skill-flow-panel').length, 0);
+    for (const id of ['btn-score-opp-point-single', 'btn-score-opp-error-single', 'btn-freeball-opp-single']) {
+      const button = document.getElementById(id);
+      assert.ok(single.contains(button));
+      assert.equal(button.closest('.hidden'), null);
+    }
+    assert.equal(document.querySelectorAll('#players-container .court-card').length, 6);
+    assert.equal(document.querySelectorAll('#opponent-players-container .court-card').length, 0);
+    c.state.useOpponentTeam = true;
+    c.renderPlayers();
+    assert.equal(single.classList.contains('hidden'), true);
+    assert.equal(opponent.classList.contains('hidden'), false);
+    assert.ok(opponent.querySelector('.sl-toolbar').contains(rotation));
+    assert.equal(document.getElementById('rotation-select-opp'), select);
+    assert.equal(select.value, '4');
+    assert.equal(document.querySelectorAll('#rotation-select-opp').length, 1);
+    assert.equal(document.querySelectorAll('#opponent-players-container .court-card').length, 6);
+    assert.equal(JSON.stringify(c.state.opponentCourt), originalCourt);
+    c.state.forceMobileLayout = true;
+    c.state.useOpponentTeam = false;
+    c.renderPlayers();
+    assert.ok(single.contains(rotation));
+    assert.equal(opponent.classList.contains('hidden'), true);
+  } finally {
+    dom.window.close();
+  }
+});
+
 test("la scelta errore mostra la panchina solo durante la selezione e la rimuove alla chiusura", () => {
   const { context: c, dom } = setup();
   for (const scope of ["our", "opponent"]) {
@@ -137,8 +180,8 @@ test("liberi e rientri usano le stesse interazioni per entrambe le squadre", () 
   load(c, roster, ['getTeamNumbers', 'getTeamPlayers', 'getTeamLiberos', 'renderTeamLiberoChipsInline', 'renderLiberoChipsInline', 'renderOpponentLiberoChipsInline']);
   for (const scope of ['our', 'opponent']) {
     const prefix = scope === 'our' ? '' : 'opponent';
-    c.state[prefix ? 'opponentPlayers' : 'players'].push('Libero');
-    c.state[prefix ? 'opponentLiberos' : 'liberos'] = ['Libero'];
+    c.state[prefix ? 'opponentPlayers' : 'players'].push('Libero', 'Altro libero');
+    c.state[prefix ? 'opponentLiberos' : 'liberos'] = ['Libero', 'Altro libero'];
     c.renderLiberoChipsInline();
     const chip = dom.window.document.querySelector(`.libero-tags [data-team-scope="${scope}"][data-player-name="Libero"]`);
     chip.click();
@@ -148,9 +191,18 @@ test("liberi e rientri usano le stesse interazioni per entrambe le squadre", () 
     c.getTeamCourt(scope)[4] = { main: 'Libero', replaced: replacedName };
     c.renderLiberoChipsInline();
     const used = dom.window.document.querySelector(`.libero-tags [data-team-scope="${scope}"][data-player-name="Libero"]`);
-    assert.equal(used.getAttribute('aria-disabled'), 'true');
+    assert.equal(used, null);
+    const available = dom.window.document.querySelector(`.libero-tags [data-team-scope="${scope}"][data-player-name="Altro libero"]`);
+    assert.ok(available.draggable);
     const replaced = dom.window.document.querySelector(`.libero-tags [data-team-scope="${scope}"][data-player-name="${replacedName}"]`);
     replaced.click();
+    assert.deepEqual(c.restored, [4, scope]);
+    c.renderPlayers();
+    const card = dom.window.document.querySelector(`.court-card[data-team-scope="${scope}"][data-player-name="Libero"]`);
+    const arrow = card.querySelector(':scope > .libero-return-btn');
+    assert.ok(arrow);
+    assert.equal(card.querySelector('.court-header .libero-return-btn'), null);
+    arrow.click();
     assert.deepEqual(c.restored, [4, scope]);
   }
   dom.window.close();

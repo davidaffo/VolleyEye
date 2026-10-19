@@ -120,6 +120,28 @@ function syncCourtSideLayout() {
   const courtArea = document.getElementById("court-area");
   const opponentPanel = document.querySelector('[data-team-panel="opponent"]');
   const homePanel = document.querySelector('[data-team-panel="home"]');
+  const singleOpponentPanel = document.getElementById("single-team-opponent-panel");
+  const opponentRotation = document.getElementById("opponent-rotation-controls");
+  const useOpponentTeam = !!state.useOpponentTeam;
+  if (singleOpponentPanel) singleOpponentPanel.classList.toggle("hidden", useOpponentTeam);
+  ["single-team-score-actions", "btn-freeball-opp-single"].forEach(id => {
+    const controls = document.getElementById(id);
+    if (controls) controls.classList.toggle("hidden", useOpponentTeam);
+  });
+  if (opponentPanel) {
+    opponentPanel.classList.toggle("hidden", !useOpponentTeam);
+    // Il pannello completo è visibile soltanto in doppia squadra.
+    opponentPanel.querySelectorAll(".score-actions, .team-controls-panel")
+      .forEach(node => node.classList.remove("hidden"));
+  }
+  const rotationHost = useOpponentTeam
+    ? opponentPanel && opponentPanel.querySelector(".sl-toolbar")
+    : singleOpponentPanel && singleOpponentPanel.querySelector("[data-single-opponent-rotation]");
+  if (opponentRotation && rotationHost && opponentRotation.parentElement !== rotationHost) {
+    rotationHost.prepend(opponentRotation);
+  }
+  const opponentSettings = document.querySelector('[data-team-panel="opponent-settings"]');
+  if (opponentSettings) opponentSettings.classList.toggle("hidden", !useOpponentTeam);
   const swapped = !!state.courtSideSwapped;
   const homeIsFar = swapped;
   const opponentIsFar = !swapped;

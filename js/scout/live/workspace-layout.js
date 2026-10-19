@@ -1,6 +1,7 @@
 function getDefaultScoutWidgetLayout() {
   return {
     customized: false,
+    "center-court": ["court"],
     "center-top": state.useOpponentTeam ? [] : ["video"],
     "center-bottom": [],
     right: state.useOpponentTeam
@@ -16,7 +17,7 @@ function normalizeScoutWidgetLayout() {
     state.uiScoutWidgetLayout = getDefaultScoutWidgetLayout();
     return state.uiScoutWidgetLayout;
   }
-  const normalized = { customized: true, "center-top": [], "center-bottom": [], right: [] };
+  const normalized = { customized: true, "center-top": [], "center-court": [], "center-bottom": [], right: [] };
   const used = new Set();
   SCOUT_WIDGET_ZONE_IDS.forEach(zoneId => {
     const entries = Array.isArray(raw[zoneId]) ? raw[zoneId] : [];
@@ -27,7 +28,7 @@ function normalizeScoutWidgetLayout() {
     });
   });
   SCOUT_WIDGET_IDS.forEach(widgetId => {
-    if (!used.has(widgetId)) normalized.right.push(widgetId);
+    if (!used.has(widgetId)) normalized[widgetId === "court" ? "center-court" : "right"].push(widgetId);
   });
   state.uiScoutWidgetLayout = normalized;
   return normalized;
@@ -47,7 +48,7 @@ function applyScoutWidgetLayout() {
   });
 }
 function saveScoutWidgetLayout() {
-  const layout = { customized: true, "center-top": [], "center-bottom": [], right: [] };
+  const layout = { customized: true, "center-top": [], "center-court": [], "center-bottom": [], right: [] };
   SCOUT_WIDGET_ZONE_IDS.forEach(zoneId => {
     const zone = getScoutWidgetZone(zoneId);
     if (!zone) return;
@@ -187,11 +188,13 @@ function moveScoutWidgetWithKeyboard(event, widget) {
   let before = null;
   if (event.key === "ArrowUp") {
     if (index > 0) before = siblings[index - 1];
-    else if (zoneId === "center-bottom") destination = getScoutWidgetZone("center-top");
+    else if (zoneId === "center-bottom") destination = getScoutWidgetZone("center-court");
+    else if (zoneId === "center-court") destination = getScoutWidgetZone("center-top");
     else return;
   } else if (event.key === "ArrowDown") {
     if (index < siblings.length - 1) before = siblings[index + 1].nextElementSibling;
-    else if (zoneId === "center-top") destination = getScoutWidgetZone("center-bottom");
+    else if (zoneId === "center-top") destination = getScoutWidgetZone("center-court");
+    else if (zoneId === "center-court") destination = getScoutWidgetZone("center-bottom");
     else return;
   } else if (event.key === "ArrowLeft") {
     if (zoneId === "center-top") return;
@@ -212,6 +215,7 @@ function moveScoutWidgetWithKeyboard(event, widget) {
 function bindScoutWidgetLayout() {
   applyScoutWidgetLayout();
   document.querySelectorAll("[data-scout-widget]").forEach(widget => {
+    if (widget.dataset.scoutWidget === "court") return;
     if (widget.querySelector(":scope > .scout-widget-handle")) return;
     const widgetId = widget.dataset.scoutWidget;
     const handle = document.createElement("button");

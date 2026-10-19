@@ -459,9 +459,10 @@ function forceNextSkill(skillId, scope = "our") {
   const toggle = document.getElementById("predictive-skill-toggle");
   if (toggle) toggle.checked = true;
 }
-const SCOUT_WIDGET_IDS = ["video", "dvw", "events", "serve-trajectories"];
-const SCOUT_WIDGET_ZONE_IDS = ["center-top", "center-bottom", "right"];
+const SCOUT_WIDGET_IDS = ["video", "dvw", "events", "serve-trajectories", "court"];
+const SCOUT_WIDGET_ZONE_IDS = ["center-top", "center-court", "center-bottom", "right"];
 const SCOUT_WIDGET_LABELS = {
+  court: "Interfaccia scout",
   video: "Video scout",
   dvw: "Codice DataVolley",
   events: "Tabella eventi",
