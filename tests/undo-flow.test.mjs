@@ -69,13 +69,16 @@ for (const snapshots of [false, true]) {
   }
 }
 
-test("gli snapshot precedenti restano privati anche con il clone JSON", () => {
+test("le ricevute sono persistenti e non contengono copie dello storico", () => {
   const c = setup(false);
   for (const skillId of ["serve", "defense", "second"]) {
     const before = c.captureScoutActionSnapshot();
     c.state.events.push(c.attachScoutActionSnapshot({ skillId, code: "+" }, before));
   }
-  assert.ok(c.state.events[2].__undoSnapshot.events[1].__undoSnapshot);
+  assert.equal(c.state.events[2].undoState.events, undefined);
+  assert.equal(c.state.events[2].undoState.before.events, undefined);
+  c.state = JSON.parse(JSON.stringify(c.state));
+  assert.ok(c.state.events.every(event => event.undoState.version === 1));
   assert.equal(JSON.stringify(c.state).includes("__undoSnapshot"), false);
   c.undoLastEvent();
   c.undoLastEvent();

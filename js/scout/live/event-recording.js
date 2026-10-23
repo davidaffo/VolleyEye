@@ -106,7 +106,7 @@ function findLastEventBySkills(events, { scope = null, skillIds = [] } = {}) {
   const ids = Array.isArray(skillIds) ? skillIds : [skillIds];
   for (let i = list.length - 1; i >= 0; i -= 1) {
     const ev = list[i];
-    if (!ev || !ids.includes(ev.skillId)) continue;
+    if (!ev || Number(ev.set || 1) !== Number(state.currentSet || 1) || !ids.includes(ev.skillId)) continue;
     if (scope && getTeamScopeFromEvent(ev) !== scope) continue;
     return ev;
   }

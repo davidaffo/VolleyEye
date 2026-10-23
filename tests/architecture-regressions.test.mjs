@@ -87,7 +87,9 @@ test("l'annullamento del cambio set ripristina anche orologi e stato controlli",
   assert.match(structural, /restoreSkillClock/);
   assert.match(structural, /restoreVideoClock/);
   assert.match(structural, /updateMatchStatusUI/);
-  assert.match(structural, /updateSetScoreDisplays/);
+  assert.match(structural, /refreshScoutAfterUndo/);
+  const refresh = scout.slice(scout.indexOf("function refreshScoutAfterUndo"), scout.indexOf("function restoreScoutActionSnapshot"));
+  assert.match(refresh, /updateSetScoreDisplays/);
 });
 
 test("timeout, cambi e annullamento rispettano lo scope della squadra", () => {

@@ -202,6 +202,7 @@ Per effettuare una **sostituzione**, premi il tasto Formazione/Sostituzione dell
 Tutti gli eventi inseriti sono visualizzati nel log della colonna di destra.
 
 - **Annulla**: annulla l'ultimo evento inserito; funziona su più eventi in catena, puoi annullarne quanti ne vuoi. Attenzione: per eliminare invece parzialmente un inserimento di un fondamentale (ad esempio hai inserito una traiettoria di attacco ma non volevi valutare l'attacco, puoi premere sul tasto x in corrispondenza del giocatore da valutare).
+- Arrivato all’inizio di un set, **Annulla** chiede conferma prima di tornare al set precedente e al suo punteggio. Per correggere la formazione del set appena iniziato, fermati a 0–0 e modifica la formazione. Per le nuove azioni, l’annullamento resta disponibile anche dopo aver riaperto o esportato la partita; battuta derivata e ricezione vengono annullate insieme.
 - **Modifica**: fai doppio clic su un campo nel log per correggere una valutazione, aggiungere una traiettoria mancante o modificare qualsiasi altro dato
 - **Elimina**: puoi eliminare direttamente un fondamentale dal log premendo il tasto x nell'ultima colonna.
 

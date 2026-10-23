@@ -112,7 +112,39 @@ function enforceSingleCaptainFlag(players, preferredName = "") {
   });
   return players;
 }
+function renamePlayerInScoutUndoStates(oldName, newName, scope = "our") {
+  const opponent = scope === "opponent";
+  const courtKeys = opponent ? ["opponentCourt", "opponentAutoRoleBaseCourt"] : ["court", "autoRoleBaseCourt"];
+  const mapKey = opponent ? "opponentLiberoAutoMap" : "liberoAutoMap";
+  const preferredKey = opponent ? "opponentPreferredLibero" : "preferredLibero";
+  const renameStarts = starts => Object.values(starts || {}).forEach(start => {
+    const side = start && start[opponent ? "opponent" : "our"];
+    if (side) side.court = replacePlayerNameInLineup(side.court, oldName, newName);
+  });
+  (state.events || []).forEach(event => {
+    if (!event) return;
+    const receipt = event.undoState || event.__undoSnapshot;
+    const before = receipt && receipt.before;
+    if (before) {
+      courtKeys.forEach(key => {
+        if (Array.isArray(before[key])) before[key] = replacePlayerNameInLineup(before[key], oldName, newName);
+      });
+      if (before[mapKey]) before[mapKey] = Object.fromEntries(Object.entries(before[mapKey]).map(([replaced, libero]) => [
+        replaced === oldName ? newName : replaced, libero === oldName ? newName : libero
+      ]));
+      if (before[preferredKey] === oldName) before[preferredKey] = newName;
+      if (before.pendingServe && before.pendingServe.scope === scope && before.pendingServe.playerName === oldName) {
+        before.pendingServe.playerName = newName;
+      }
+      renameStarts(before.setStarts);
+    }
+    renameStarts(event.prevSetStarts);
+    renameStarts(event.nextSetStarts);
+  });
+}
 function replacePlayerNameEverywhere(oldName, newName, idx) {
+  renamePlayerInScoutUndoStates(oldName, newName, "our");
+  if (state.preferredLibero === oldName) state.preferredLibero = newName;
   ensureCourtShape();
   state.court = state.court.map(slot => {
     const updated = Object.assign({}, slot);
@@ -189,6 +221,8 @@ function renamePlayerAcrossCurrentMatchById(playerId, nextNameRaw, oldNameHint =
   return true;
 }
 function replaceOpponentPlayerNameEverywhere(oldName, newName, idx, playerId = "") {
+  renamePlayerInScoutUndoStates(oldName, newName, "opponent");
+  if (state.opponentPreferredLibero === oldName) state.opponentPreferredLibero = newName;
   state.opponentCourt = ensureCourtShapeFor(state.opponentCourt).map(slot => {
     const updated = Object.assign({}, slot);
     if (updated.main === oldName) updated.main = newName;

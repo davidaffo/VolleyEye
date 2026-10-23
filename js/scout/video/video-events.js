@@ -862,15 +862,16 @@ function recordOpponentTimeoutEvent() {
   renderLineupChips();
   updateRotationDisplay();
 }
-function recordSubstitutionEvent({ playerIn, playerOut, teamScope = "our" }) {
+function recordSubstitutionEvent({ playerIn, playerOut, teamScope = "our", actionSnapshot = null }) {
   const label = playerIn || "Cambio";
-  recordSetAction("substitution", {
+  const event = recordSetAction("substitution", {
     playerName: label,
     playerIn: playerIn || null,
     playerOut: playerOut || null,
     code: "SUB",
     teamScope
   });
+  if (actionSnapshot) attachScoutActionSnapshot(event, actionSnapshot);
   saveState({ persistLocal: true });
   renderEventsLog();
   renderPlayers();

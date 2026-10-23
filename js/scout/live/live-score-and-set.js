@@ -166,29 +166,24 @@ function handleAutoRotationFromEvent(eventObj, scope = "our") {
   }
 }
 function recomputeServeFlagsFromHistory(options = {}) {
-  let servingScope = state.isServing ? "our" : "opponent";
-  if (!state || !state.autoRotate) {
-    state.isServing = servingScope === "our";
-    state.autoRotatePending = false;
-    return;
-  }
+  const currentSet = Number(state.currentSet || 1);
+  const start = state.setStarts && state.setStarts[currentSet];
+  let servingScope = (start ? start.isServing : state.isServing) ? "our" : "opponent";
   (state.events || []).forEach(ev => {
-    if (!ev) return;
+    if (!ev || Number(ev.set || 1) !== currentSet) return;
     const scope = getTeamScopeFromEvent(ev);
-    if (ev.skillId === "serve") {
-      servingScope = scope;
-      return;
-    }
     const dir = getPointDirection(ev);
     if (dir === "for") {
       servingScope = scope;
     } else if (dir === "against") {
       servingScope = getOppositeScope(scope);
+    } else if (ev.skillId === "serve") {
+      servingScope = scope;
     }
   });
   state.isServing = servingScope === "our";
-  state.autoRotatePending = !state.isServing;
-  state.opponentAutoRotatePending = state.isServing;
+  state.autoRotatePending = !!state.autoRotate && !state.isServing;
+  state.opponentAutoRotatePending = !!state.autoRotate && state.isServing;
   if (state.useOpponentTeam && state.predictiveSkillFlow) {
     const lastFlowEvent = getLastFlowEvent(state.events || []);
     if (lastFlowEvent) {
@@ -432,10 +427,12 @@ function recordSetAction(actionType, payload) {
     })
   );
   clearReceiveContext();
+  if (actionType === "timeout") attachScoutActionSnapshot(event, captureScoutActionSnapshot());
   state.events.push(event);
+  return event;
 }
 function applySetChange(nextSet, options = {}) {
-  const actionSnapshot = captureScoutActionSnapshot();
+  const actionSnapshot = options.actionSnapshot || captureScoutActionSnapshot({ includeSetState: true });
   const {
     prevSet = state.currentSet || 1,
     prevFinished = !!state.matchFinished,
@@ -522,6 +519,7 @@ function endMatch() {
     updateMatchStatusUI();
     return;
   }
+  const actionSnapshot = captureScoutActionSnapshot({ includeSetState: true });
   const current = state.currentSet || 1;
   const winner = computeSetWinner(current);
   if (winner) {
@@ -534,6 +532,7 @@ function endMatch() {
     state.matchEndSetRecorded = { set: current, winner: null };
   }
   applySetChange(current, {
+    actionSnapshot,
     prevSet: current,
     nextSet: current,
     prevFinished: !!state.matchFinished,

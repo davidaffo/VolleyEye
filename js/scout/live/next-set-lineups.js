@@ -581,6 +581,7 @@ function closeNextSetModal({ force = false } = {}) {
 }
 function applyNextSetDraft() {
   if (!nextSetDraft) return;
+  const actionSnapshot = captureScoutActionSnapshot({ includeSetState: true });
   const prevSet = state.currentSet || 1;
   const nextSet = nextSetDraft.setNum || prevSet;
   const prevSetResults = cloneSetMap(state.setResults);
@@ -652,6 +653,7 @@ function applyNextSetDraft() {
   }
   if (nextSet !== prevSet) {
     applySetChange(nextSet, {
+      actionSnapshot,
       prevSet,
       nextSet,
       prevFinished: !!state.matchFinished,

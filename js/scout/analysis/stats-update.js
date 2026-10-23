@@ -102,32 +102,17 @@ function recalcAllStatsAndUpdateUI() {
   analysisEventsCacheRevision += 1;
   invalidateSkillChartCaches();
   initStats();
+  state.opponentStats = {};
   state.events.forEach(ev => {
+    if (!ev || ev.skillId === "manual" || ev.actionType === "timeout" || ev.actionType === "substitution") return;
+    const opponent = ev.team === "opponent";
+    const players = opponent ? state.opponentPlayers || [] : state.players;
     const idx = ev.playerIdx;
-    if (ev && ev.team === "opponent") {
-      return;
-    }
-    if (ev.skillId === "manual" || ev.actionType === "timeout" || ev.actionType === "substitution") {
-      return;
-    }
-    if (idx === null || idx === undefined || idx < 0 || !state.players[idx]) {
-      return;
-    }
-    if (!state.stats[idx]) {
-      state.stats[idx] = {};
-    }
-    if (!state.stats[idx][ev.skillId]) {
-      state.stats[idx][ev.skillId] = {
-        "#": 0,
-        "+": 0,
-        "!": 0,
-        "-": 0,
-        "=": 0,
-        "/": 0
-      };
-    }
-    state.stats[idx][ev.skillId][ev.code] =
-      (state.stats[idx][ev.skillId][ev.code] || 0) + 1;
+    if (idx === null || idx === undefined || idx < 0 || !players[idx]) return;
+    const stats = opponent ? state.opponentStats : state.stats;
+    if (!stats[idx]) stats[idx] = {};
+    if (!stats[idx][ev.skillId]) stats[idx][ev.skillId] = emptyCounts();
+    stats[idx][ev.skillId][ev.code] = (stats[idx][ev.skillId][ev.code] || 0) + 1;
   });
   state.players.forEach((_, idx) => {
     SKILLS.forEach(skill => {

@@ -44,15 +44,15 @@ test("contesa annulla fino alla battuta inclusa lasciando l’azione precedente"
 
 test("contesa usa gli snapshot di annulla per ripristinare punteggio, servizio e rotazione", () => {
   const { context } = setup([{ skillId: "attack", set: 1 }]);
-  Object.assign(context.state, { score: 4, isServing: false, rotation: 2 });
+  Object.assign(context.state, { isServing: false, rotation: 2 });
   const beforeServe = context.captureScoutActionSnapshot();
   context.state.events.push(context.attachScoutActionSnapshot({ skillId: "serve", set: 1 }, beforeServe));
   const beforeAttack = context.captureScoutActionSnapshot();
   context.state.events.push(context.attachScoutActionSnapshot({ skillId: "attack", code: "#", set: 1 }, beforeAttack));
-  Object.assign(context.state, { score: 5, isServing: true, rotation: 3 });
+  Object.assign(context.state, { isServing: true, rotation: 3 });
   context.undoContestedRally();
   assert.equal(context.state.events.length, 1);
-  assert.equal(context.state.score, 4);
+  assert.equal(context.state.events.filter(event => event.code === "#").length, 0);
   assert.equal(context.state.isServing, false);
   assert.equal(context.state.rotation, 2);
 });

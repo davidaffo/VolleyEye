@@ -634,6 +634,8 @@ function setCourtPlayerForScope(posIdx, target, playerName, scope = "our") {
     commitCourtChangeForScope(next, scope);
     return;
   }
+  const actionSnapshot = shouldRecordSub && typeof captureScoutActionSnapshot === "function"
+    ? captureScoutActionSnapshot() : null;
   let nextCourt = null;
   const liberos = getTeamLiberos(scope);
   if (lineupCore && typeof lineupCore.setPlayerOnCourt === "function") {
@@ -681,7 +683,7 @@ function setCourtPlayerForScope(posIdx, target, playerName, scope = "our") {
   }
   commitCourtChangeForScope(nextCourt, scope);
   if (shouldRecordSub && typeof recordSubstitutionEvent === "function") {
-    recordSubstitutionEvent({ playerIn: name, playerOut: prevMain, teamScope: scope });
+    recordSubstitutionEvent({ playerIn: name, playerOut: prevMain, teamScope: scope, actionSnapshot });
   }
 }
 function clearCourtAssignment(posIdx, target) {

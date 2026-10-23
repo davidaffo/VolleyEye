@@ -257,6 +257,8 @@ function getLastFlowEvent(events) {
   for (let i = list.length - 1; i >= 0; i -= 1) {
     const ev = list[i];
     if (!ev) continue;
+    if (ev.actionType === "set-change" || ev.actionType === "match-end") break;
+    if (Number(ev.set || 1) !== Number(state.currentSet || 1)) continue;
     if (skillIds.has(ev.skillId)) return ev;
     if (ev.skillId === "manual") {
       const dir = typeof getPointDirection === "function" ? getPointDirection(ev) : null;
@@ -465,7 +467,7 @@ function applyBlockInference(blockEvent, blockScope, blockCode) {
   let attackEvent = null;
   for (let i = events.length - 1; i >= 0; i -= 1) {
     const ev = events[i];
-    if (!ev || ev.skillId !== "attack") continue;
+    if (!ev || Number(ev.set || 1) !== Number(state.currentSet || 1) || ev.skillId !== "attack") continue;
     if (getTeamScopeFromEvent(ev) !== attackScope) continue;
     if (ev.pendingBlockEval || ev.code === "/") {
       attackEvent = ev;
@@ -473,6 +475,15 @@ function applyBlockInference(blockEvent, blockScope, blockCode) {
     }
   }
   if (!attackEvent) return null;
+  const undo = blockEvent.undoState;
+  const keys = ["code", "pendingBlockEval", "derivedFromBlock"];
+  const patch = { eventId: attackEvent.eventId, before: {}, after: {} };
+  keys.forEach(key => { patch.before[key] = attackEvent[key] ?? null; });
+  const finish = () => {
+    keys.forEach(key => { patch.after[key] = attackEvent[key]; });
+    if (undo) (undo.eventPatches || (undo.eventPatches = [])).push(patch);
+    return attackEvent;
+  };
   if (blockCode === "/") {
     const prevCode = attackEvent.code;
     attackEvent.code = "";
@@ -480,7 +491,7 @@ function applyBlockInference(blockEvent, blockScope, blockCode) {
     attackEvent.derivedFromBlock = true;
     const attackIdx = resolvePlayerIdx(attackEvent);
     updateSkillStatsForEvent(attackScope, attackIdx, "attack", prevCode, "");
-    return attackEvent;
+    return finish();
   }
   const prevCode = attackEvent.code;
   const nextCode = getAttackCodeFromBlockCode(blockCode);
@@ -489,7 +500,7 @@ function applyBlockInference(blockEvent, blockScope, blockCode) {
   attackEvent.derivedFromBlock = true;
   const attackIdx = resolvePlayerIdx(attackEvent);
   updateSkillStatsForEvent(attackScope, attackIdx, "attack", prevCode, attackEvent.code);
-  return attackEvent;
+  return finish();
 }
 function getPredictedSkillIdForScope(scope) {
   if (scope === "opponent" && !state.useOpponentTeam) return null;

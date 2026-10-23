@@ -129,11 +129,12 @@ test("la difesa slash viene rimossa anche dalle regole già salvate", () => {
   assert.deepEqual(Array.from(state.pointRules.defense.against), ["="]);
 });
 
-test("annulla usa uno snapshot atomico non serializzato e non lo ricalcola", () => {
+test("annulla usa una ricevuta atomica persistente senza ricalcolare il servizio", () => {
   const lifecycle = readFileSync(new URL("../js/scout/core/app-lifecycle.js", import.meta.url), "utf8");
   const snapshotCode = extract(lifecycle, "function captureScoutActionSnapshot", "function undoLastEvent");
   assert.match(snapshotCode, /Object\.defineProperty\(event, "__undoSnapshot"/);
   assert.match(snapshotCode, /enumerable:\s*false/);
+  assert.match(snapshotCode, /event\.undoState = snapshot/);
   const restore = lifecycle.slice(
     lifecycle.indexOf("function restoreScoutActionSnapshot"),
     lifecycle.indexOf("function undoLastEvent")

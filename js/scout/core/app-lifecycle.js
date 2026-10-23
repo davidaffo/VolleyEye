@@ -201,22 +201,44 @@ async function forceRefreshAppAssets() {
   url.searchParams.set("_", bust);
   window.location.replace(url.toString());
 }
-function captureScoutActionSnapshot() {
-  const clone = window.VolleyEye && window.VolleyEye.stateIsolation
-    ? window.VolleyEye.stateIsolation.cloneData
-    : value => JSON.parse(JSON.stringify(value));
-  const snapshot = clone(state);
-  // Le proprietà non enumerabili non vengono clonate: conserva la catena
-  // degli annullamenti senza serializzarla o duplicare gli snapshot precedenti.
-  (state.events || []).forEach((event, index) => {
-    if (event && event.__undoSnapshot && snapshot.events[index]) {
-      attachScoutActionSnapshot(snapshot.events[index], event.__undoSnapshot);
-    }
+function captureScoutActionSnapshot({ includeSetState = false } = {}) {
+  // Una ricevuta contiene solo lo stato di gioco, mai storico, archivi o video.
+  const keys = [
+    "currentSet", "rotation", "opponentRotation", "isServing", "matchFinished",
+    "court", "opponentCourt", "courtSideSwapped", "autoRotatePending",
+    "opponentAutoRotatePending", "autoRoleBaseCourt", "opponentAutoRoleBaseCourt",
+    "liberoAutoMap", "opponentLiberoAutoMap", "preferredLibero", "opponentPreferredLibero",
+    "pendingServe", "freeballPending", "freeballPendingScope", "flowTeamScope"
+  ];
+  if (includeSetState) keys.push(
+    "setResults", "setStarts", "skillClock", "videoClock",
+    "matchEndSetSnapshot", "matchEndSetRecorded"
+  );
+  const before = {};
+  const missing = [];
+  keys.forEach(key => {
+    if (state[key] === undefined) missing.push(key);
+    else before[key] = state[key];
   });
-  return snapshot;
+  const events = state.events || [];
+  return JSON.parse(JSON.stringify({
+    version: 1,
+    eventCount: events.length,
+    previousEventId: events.length ? events[events.length - 1].eventId ?? null : null,
+    before,
+    missing
+  }));
 }
 function attachScoutActionSnapshot(event, snapshot) {
   if (!event || !snapshot) return event;
+  // Identifica gli eventi dell'operazione: il log può ricevere inserimenti
+  // dall'analisi anche tra due eventi già registrati.
+  if (event.eventId != null) {
+    snapshot.actionEventIds = Array.from(new Set((state.events || []).slice(snapshot.eventCount)
+      .concat(event).map(item => item && item.eventId).filter(id => id != null)));
+  }
+  // Il dato enumerabile sopravvive a JSON, IndexedDB e archivio partite.
+  event.undoState = snapshot;
   Object.defineProperty(event, "__undoSnapshot", {
     value: snapshot,
     enumerable: false,
@@ -230,22 +252,134 @@ function clearScoutFlowOverridesAfterUndo() {
   state.forceSkillActive = false;
   state.forceSkillScope = null;
 }
-function restoreScoutActionSnapshot(snapshot) {
-  if (!snapshot || typeof snapshot !== "object") return false;
-  Object.keys(state).forEach(key => delete state[key]);
-  Object.assign(state, snapshot);
+function removeScoutEventReferences(removed) {
+  const ids = new Set(removed.map(event => event && event.eventId).filter(id => id != null));
+  (state.events || []).forEach(event => {
+    if (!event) return;
+    if (Array.isArray(event.relatedEvents)) event.relatedEvents = event.relatedEvents.filter(id => !ids.has(id));
+    if (Array.isArray(event.relatedLinks)) event.relatedLinks = event.relatedLinks.filter(link => link && !ids.has(link.eventId));
+  });
+}
+function refreshScoutAfterUndo() {
+  if (typeof cancelPartialSkillFlowForScope === "function") {
+    cancelPartialSkillFlowForScope("our");
+    cancelPartialSkillFlowForScope("opponent");
+  }
   clearScoutFlowOverridesAfterUndo();
   if (typeof resetSetTypeState === "function") resetSetTypeState();
-  saveState({ persistLocal: true });
+  // Anche il contesto fuori da state deve corrispondere agli eventi rimasti.
+  if (typeof lastReceiveContext !== "undefined") {
+    lastReceiveContext = { our: null, opponent: null };
+    const set = Number(state.currentSet || 1);
+    (state.events || []).forEach(event => {
+      if (!event || Number(event.set || 1) !== set) return;
+      const scope = getTeamScopeFromEvent(event);
+      if (event.skillId === "serve" || event.skillId === "attack" || getPointDirection(event)) {
+        lastReceiveContext[scope] = null;
+      } else if (event.skillId === "pass" && typeof rememberReceiveContext === "function") {
+        rememberReceiveContext(event);
+      }
+    });
+  }
+  const restoredBaseCourt = (base, court) => JSON.parse(JSON.stringify(
+    Array.isArray(base) && base.length === 6 ? base : court || []
+  ));
+  if (typeof autoRoleBaseCourt !== "undefined") autoRoleBaseCourt = restoredBaseCourt(state.autoRoleBaseCourt, state.court);
+  if (typeof opponentAutoRoleBaseCourt !== "undefined") opponentAutoRoleBaseCourt = restoredBaseCourt(state.opponentAutoRoleBaseCourt, state.opponentCourt);
+  if (typeof resetAutoRoleCache === "function") resetAutoRoleCache();
+  if (typeof syncCurrentSetUI === "function") syncCurrentSetUI(state.currentSet || 1);
+  if (typeof syncCourtSideLayout === "function") syncCourtSideLayout();
   recalcAllStatsAndUpdateUI();
+  saveState({ persistLocal: true });
   renderEventsLog();
   renderPlayers();
   renderLiberoChipsInline();
   renderLineupChips();
   updateRotationDisplay();
+  if (typeof renderOpponentPlayers === "function") renderOpponentPlayers();
+  if (typeof renderOpponentLiberoChipsInline === "function") renderOpponentLiberoChipsInline();
+  if (typeof updateOpponentRotationDisplay === "function") updateOpponentRotationDisplay();
   renderLiveScore();
   updateSetScoreDisplays();
+  if (typeof updateMatchStatusUI === "function") updateMatchStatusUI();
+}
+function restoreScoutActionSnapshot(snapshot) {
+  if (!snapshot || snapshot.version !== 1 || !snapshot.before || typeof snapshot.before !== "object" ||
+      Array.isArray(snapshot.before) || !Array.isArray(snapshot.missing)) return false;
+  const patches = snapshot.eventPatches || [];
+  if (!Array.isArray(patches) || patches.some(patch => !patch || !patch.before || !patch.after)) return false;
+  const events = state.events || [];
+  let removed;
+  if (Array.isArray(snapshot.actionEventIds) && snapshot.actionEventIds.length) {
+    const owned = new Set(snapshot.actionEventIds);
+    const last = events[events.length - 1];
+    if (!last || !owned.has(last.eventId)) return false;
+    removed = events.filter(event => event && owned.has(event.eventId));
+    for (let index = events.length - 1; index >= 0; index--) {
+      if (events[index] && owned.has(events[index].eventId)) events.splice(index, 1);
+    }
+  } else {
+    // Compatibilità con ricevute precedenti prive degli identificativi del gruppo.
+    let count = snapshot.eventCount;
+    if (snapshot.previousEventId != null) {
+      const index = events.findIndex(event => event && event.eventId === snapshot.previousEventId);
+      if (index === -1) return false;
+      count = index + 1;
+    }
+    if (!Number.isInteger(count) || count < 0 || count >= events.length) return false;
+    removed = events.splice(count);
+  }
+  // Non sostituiamo gli eventi precedenti: eventuali correzioni restano valide.
+  patches.forEach(patch => {
+    const event = events.find(item => item.eventId === patch.eventId);
+    if (!event) return;
+    ["code", "pendingBlockEval", "derivedFromBlock"].filter(key => Object.hasOwn(patch.before, key)).forEach(key => {
+      if (JSON.stringify(event[key]) !== JSON.stringify(patch.after[key])) return;
+      const value = patch.before[key];
+      if (value === null) delete event[key];
+      else event[key] = value;
+    });
+  });
+  const schema = captureScoutActionSnapshot({ includeSetState: true });
+  const allowed = new Set(Object.keys(schema.before).concat(schema.missing));
+  snapshot.missing.forEach(key => { if (allowed.has(key)) delete state[key]; });
+  Object.keys(snapshot.before).forEach(key => {
+    if (allowed.has(key)) state[key] = JSON.parse(JSON.stringify(snapshot.before[key]));
+  });
+  removeScoutEventReferences(removed);
+  refreshScoutAfterUndo();
   return true;
+}
+function restoreLegacyScoutSet(setNum) {
+  const start = state.setStarts && state.setStarts[setNum];
+  if (!start) return;
+  state.courtSideSwapped = !!start.swapCourt;
+  for (const scope of ["our", "opponent"]) {
+    const initial = scope === "our" ? start.our : start.opponent;
+    if (!initial || !Array.isArray(initial.court)) continue;
+    let court = JSON.parse(JSON.stringify(initial.court));
+    let rotation = Number(initial.rotation || 1);
+    const rotateTo = value => {
+      const target = Number(value);
+      if (!Number.isInteger(target) || target < 1 || target > 6) return;
+      const steps = (rotation - target + 6) % 6;
+      court = court.slice(steps).concat(court.slice(0, steps));
+      rotation = target;
+    };
+    (state.events || []).forEach(event => {
+      if (Number(event.set || 1) !== Number(setNum)) return;
+      const eventScope = getTeamScopeFromEvent(event);
+      rotateTo(eventScope === scope ? event.rotation : event.opponentSetterPosition);
+      if (eventScope === scope && event.actionType === "substitution") {
+        court.forEach(slot => { if (slot.main === event.playerOut) slot.main = event.playerIn; });
+      }
+      if (event.autoRotationDirection && (event.autoRotationScope || "our") === scope) {
+        rotateTo(event.autoRotationDirection === "ccw" ? (rotation + 4) % 6 + 1 : rotation % 6 + 1);
+      }
+    });
+    state[scope === "our" ? "court" : "opponentCourt"] = court;
+    state[scope === "our" ? "rotation" : "opponentRotation"] = rotation;
+  }
 }
 function undoLastEvent() {
   if (!state.events || state.events.length === 0) {
@@ -253,22 +387,35 @@ function undoLastEvent() {
     return;
   }
   const ev = state.events[state.events.length - 1];
-  if (ev && ev.__undoSnapshot && restoreScoutActionSnapshot(ev.__undoSnapshot)) {
+  if (ev && ev.actionType === "set-change" &&
+      !confirm(`Annullare il passaggio al set ${ev.nextSet || ev.set}? Tornerai al set ${ev.prevSet || 1} e al suo punteggio.`)) return;
+  if (ev && restoreScoutActionSnapshot(ev.undoState || ev.__undoSnapshot)) {
     return;
   }
-  state.events.pop();
+  const removed = [state.events.pop()];
+  // Compatibilità con vecchi file: una ricezione e la battuta derivata sono una sola azione.
+  const previous = state.events[state.events.length - 1];
+  if (ev && ev.skillId === "pass" && previous && previous.derivedFromPassServe &&
+      Number(previous.set || 1) === Number(ev.set || 1) &&
+      (ev.relatedEvents || []).includes(previous.eventId)) removed.push(state.events.pop());
+  if (ev && ev.skillId === "block") {
+    (state.events || []).forEach(event => {
+      if (event.skillId === "attack" && event.derivedFromBlock &&
+          Number(event.set || 1) === Number(ev.set || 1) &&
+          (event.relatedEvents || []).includes(ev.eventId)) {
+        event.code = "/";
+        event.pendingBlockEval = true;
+        delete event.derivedFromBlock;
+      }
+    });
+  }
+  removeScoutEventReferences(removed);
   clearScoutFlowOverridesAfterUndo();
   state.freeballPending = false;
   state.freeballPendingScope = null;
   state.pendingServe = null;
   if (!ev) {
-    saveState();
-    recalcAllStatsAndUpdateUI();
-    renderEventsLog();
-    renderPlayers();
-    renderLiberoChipsInline();
-    renderLineupChips();
-    updateRotationDisplay();
+    refreshScoutAfterUndo();
     return;
   }
   if (ev.actionType === "set-change" || ev.actionType === "match-end") {
@@ -276,9 +423,13 @@ function undoLastEvent() {
     const prevFinished = !!ev.prevMatchFinished;
     if (ev.prevSetResults) {
       state.setResults = ev.prevSetResults;
+    } else if (ev.actionType === "set-change") {
+      state.setResults = Object.fromEntries(Object.entries(state.setResults || {}).filter(([key]) => Number(key) < Number(prevSet)));
     }
     if (ev.prevSetStarts) {
       state.setStarts = ev.prevSetStarts;
+    } else if (ev.actionType === "set-change") {
+      state.setStarts = Object.fromEntries(Object.entries(state.setStarts || {}).filter(([key]) => Number(key) <= Number(prevSet)));
     }
     state.matchFinished = prevFinished;
     restoreSkillClock(ev.prevClock || null);
@@ -286,14 +437,9 @@ function undoLastEvent() {
     setCurrentSet(prevSet, { save: false });
     updateMatchStatusUI();
     setScoutControlsDisabled(!!state.matchFinished);
-    saveState();
-    recalcAllStatsAndUpdateUI();
-    renderEventsLog();
-    renderPlayers();
-    renderLiberoChipsInline();
-    renderLineupChips();
-    updateRotationDisplay();
-    updateSetScoreDisplays();
+    restoreLegacyScoutSet(prevSet);
+    recomputeServeFlagsFromHistory({ skipAutoLibero: true });
+    refreshScoutAfterUndo();
     return;
   }
   if (ev && ev.autoRotationDirection) {
@@ -309,15 +455,6 @@ function undoLastEvent() {
   }
   if (ev && ev.actionType === "substitution") {
     undoSubstitutionEvent(ev);
-  }
-  const idx = ev.playerIdx;
-  const skillId = ev.skillId;
-  if (
-    state.stats[idx] &&
-    state.stats[idx][skillId] &&
-    state.stats[idx][skillId][ev.code] > 0
-  ) {
-    state.stats[idx][skillId][ev.code]--;
   }
   if (state.predictiveSkillFlow) {
     if (typeof resetSetTypeState === "function") {
@@ -338,13 +475,7 @@ function undoLastEvent() {
     }
   }
   recomputeServeFlagsFromHistory({ skipAutoLibero: true });
-  saveState();
-  recalcAllStatsAndUpdateUI();
-  renderEventsLog();
-  renderPlayers();
-  renderLiberoChipsInline();
-  renderLineupChips();
-  updateRotationDisplay();
+  refreshScoutAfterUndo();
 }
 function undoContestedRally() {
   const events = state.events || [];
