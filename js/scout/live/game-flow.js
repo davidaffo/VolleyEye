@@ -195,6 +195,9 @@ function getPredictedSkillIdSingle() {
   const dir = typeof getPointDirection === "function" ? getPointDirection(last) : null;
   if (dir === "for") return resolveEnabledSkill("serve") || fallback;
   if (dir === "against") return resolveEnabledSkill("pass") || fallback;
+  if (last.skillId === "block" && last.code === "+" && !state.evaluateDefenseAfterBlock) {
+    return resolveEnabledSkill("second") || fallback;
+  }
   return resolveEnabledSkill(flowNext(last.skillId)) || fallback;
 }
 function computeTwoTeamFlowFromEvent(ev) {
@@ -217,8 +220,11 @@ function computeTwoTeamFlowFromEvent(ev) {
   if (ev.skillId === "defense" && ev.code === "-") {
     return { teamScope: other, skillId: "defense" };
   }
-  if (ev.skillId === "block" && ev.code === "-") {
-    return { teamScope: other, skillId: "defense" };
+  if (ev.skillId === "block" && (ev.code === "+" || ev.code === "-")) {
+    const evaluateDefense = scope === "opponent"
+      ? state.opponentEvaluateDefenseAfterBlock
+      : state.evaluateDefenseAfterBlock;
+    return { teamScope: ev.code === "+" ? scope : other, skillId: evaluateDefense ? "defense" : "second" };
   }
   switch (ev.skillId) {
     case "serve":

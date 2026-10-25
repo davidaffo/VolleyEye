@@ -33,7 +33,8 @@ body[data-theme="light"] .base-modal-btn {
   color: #0f172a;
   border-color: #cbd5f5;
 }
-.players-area > [data-team-panel="opponent"] {
+.players-area > [data-team-panel="opponent"],
+.players-area > .single-team-opponent-panel {
   order: 1;
 }
 .players-area > .court-net-divider {
@@ -48,7 +49,8 @@ body[data-theme="light"] .base-modal-btn {
 .players-area.court-area--swapped > .court-net-divider {
   order: 3;
 }
-.players-area.court-area--swapped > [data-team-panel="opponent"] {
+.players-area.court-area--swapped > [data-team-panel="opponent"],
+.players-area.court-area--swapped > .single-team-opponent-panel {
   order: 4;
 }
 body.desktop-court-modal-open #court-area {

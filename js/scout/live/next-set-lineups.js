@@ -83,8 +83,10 @@ function swapNextSetSlots(scope, fromIdx, toIdx) {
 function clearNextSetSlot(scope, posIdx) {
   const entry = getNextSetEntry(scope);
   if (!entry) return;
+  const liberos = new Set(getLiberosForScope(scope));
   const nextCourt = getCourtShape(entry.court || []).map((slot, idx) => {
     if (idx !== posIdx) return slot;
+    if (liberos.has(slot.main) && slot.replaced) return { main: slot.replaced, replaced: "" };
     return { main: "", replaced: "" };
   });
   updateNextSetEntry(scope, Object.assign({}, entry, { court: nextCourt }));
@@ -183,8 +185,9 @@ function renderNextSetLineup(scope, courtEl, benchEl) {
     benchEl.appendChild(empty);
   } else {
     benchNames.forEach(name => {
+      const replacedIdx = court.findIndex(slot => slot.replaced === name && getLiberosForScope(scope).includes(slot.main));
       const chip = document.createElement("div");
-      chip.className = "lineup-chip";
+      chip.className = "lineup-chip" + (replacedIdx !== -1 ? " replaced-chip" : "");
       chip.draggable = true;
       chip.dataset.playerName = name;
       chip.dataset.lineupContext = "next-set";
@@ -204,7 +207,7 @@ function renderNextSetLineup(scope, courtEl, benchEl) {
       });
       chip.addEventListener("click", () => {
         const nextEmpty = court.findIndex(slot => !slot.main);
-        const targetIdx = nextEmpty !== -1 ? nextEmpty : 0;
+        const targetIdx = replacedIdx !== -1 ? replacedIdx : nextEmpty !== -1 ? nextEmpty : 0;
         setNextSetPlayer(scope, targetIdx, name);
         renderNextSetLineups();
       });
@@ -532,7 +535,7 @@ function openNextSetModal(setNum) {
     elNextSetTeamOpp.textContent = getTeamNameForScope("opponent");
   }
   if (elNextSetSwapCourt) {
-    elNextSetSwapCourt.checked = !!nextSetDraft.swapCourt;
+    elNextSetSwapCourt.checked = !!nextSetDraft.swapCourt !== !!state.courtSideSwapped;
     elNextSetSwapCourt.disabled = false;
   }
   if (elNextSetServeOur) elNextSetServeOur.checked = !!nextSetDraft.isServing;
@@ -556,10 +559,8 @@ function openNextSetModal(setNum) {
   elNextSetInline.setAttribute("aria-hidden", "false");
   nextSetModalOpen = true;
   setScoutControlsDisabled(true);
-  const courtArea = document.getElementById("court-area");
-  if (courtArea) {
-    courtArea.classList.add("court-area--next-set");
-  }
+  const card = elNextSetInline.querySelector(".next-set-inline__card");
+  if (card) card.focus();
   renderNextSetLineups();
   syncNextSetPreferredLiberoSelects();
 }
@@ -574,10 +575,6 @@ function closeNextSetModal({ force = false } = {}) {
   nextSetDragName = "";
   nextSetDragFromIdx = null;
   nextSetDragScope = null;
-  const courtArea = document.getElementById("court-area");
-  if (courtArea) {
-    courtArea.classList.remove("court-area--next-set");
-  }
 }
 function applyNextSetDraft() {
   if (!nextSetDraft) return;

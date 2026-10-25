@@ -790,6 +790,10 @@ function renderEventsLog(options = {}) {
   if (elEventsLog && !suppressScroll) {
     requestAnimationFrame(() => {
       elEventsLog.scrollTop = elEventsLog.scrollHeight;
+      const lastRow = elEventsLog.querySelector("tbody tr:last-child");
+      if (lastRow && typeof lastRow.scrollIntoView === "function") {
+        lastRow.scrollIntoView({ block: "nearest", inline: "nearest" });
+      }
     });
   }
   if (elEventsLogSummary) {

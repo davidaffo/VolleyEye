@@ -111,7 +111,8 @@ function getServeDisplayCourt(scope = "our") {
   if (!Array.isArray(baseCourt) || baseCourt.length === 0) return [];
   const shaped = typeof ensureCourtShapeFor === "function" ? ensureCourtShapeFor(baseCourt) : getCourtShape(baseCourt);
   if (isServingForScope(scope) && typeof removeLiberosAndRestoreForScope === "function") {
-    return removeLiberosAndRestoreForScope(shaped, scope);
+    const restored = removeLiberosAndRestoreForScope(shaped, scope);
+    return shaped.map((slot, idx) => idx === 0 ? restored[idx] : slot);
   }
   return shaped;
 }
@@ -404,6 +405,7 @@ function isPlayerKeyInScope(key, scope) {
 const selectedSkillPerPlayer = {};
 const serveMetaByPlayer = {};
 const attackMetaByPlayer = {};
+const partialSkillFlowVersions = { our: 0, opponent: 0 };
 const blockConfirmByPlayer = {};
 const serveTypeSelectHandlers = {};
 let blockInlinePlayer = null;

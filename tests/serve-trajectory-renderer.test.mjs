@@ -1,12 +1,57 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import vm from "node:vm";
+import { JSDOM } from "jsdom";
 import { readScoutSource } from "./helpers/scout-source.mjs";
 import { readStyleSource } from "./helpers/style-source.mjs";
 
 const source = readScoutSource();
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const css = readStyleSource();
+
+test("i punti rete dell'attacco seguono l'orientamento del campo e mantengono la selezione riaprendo la traiettoria", async () => {
+  const dom = new JSDOM(html);
+  const open = functionSource("openAttackTrajectoryModal", "closeAttackTrajectoryModal");
+  const c = vm.createContext({
+    state: { attackTrajectorySimplified: true },
+    window: { addEventListener() {}, removeEventListener() {} },
+    isDesktopCourtModalLayout: () => false,
+    updateCourtModalPlacement() {}, setAttackTrajectoryCourtSizing() {}, restoreModalToPopup() {},
+    resetTrajectoryState() {}, setModalOpenState() {}, renderLogServeTrajectories() {},
+    requestAnimationFrame() {},
+    serveTypeKeyHandler: null, trajectoryEscapeHandler: null,
+    TRAJECTORY_IMG_NEAR: "near.png", TRAJECTORY_IMG_FAR: "far.png",
+    clamp01: x => Math.max(0, Math.min(1, x)),
+    TRAJECTORY_NET_POINTS: [{ id: "5", x: 0.1 }, { id: "3", x: 0.5 }, { id: "6-F", x: 0.9 }]
+  });
+  for (const name of open.match(/\belAttackTrajectory\w+/g)) c[name] = null;
+  c.elServeTypeButtons = null;
+  c.elAttackTrajectoryModal = dom.window.document.getElementById('attack-trajectory-modal');
+  c.elAttackTrajectoryCanvas = dom.window.document.getElementById('attack-trajectory-canvas');
+  c.elAttackTrajectoryImage = dom.window.document.getElementById('attack-trajectory-image');
+  c.elAttackTrajectoryNetpoints = dom.window.document.getElementById('attack-trajectory-netpoints');
+  vm.runInContext(open + functionSource("getNearestTrajectoryNetPointId", "setTrajectoryNetPointId"), c);
+  try {
+    for (const scope of ["our", "opponent"]) {
+      for (const far of [false, true, false]) {
+        for (const forceFar of [false, far]) {
+          c.state.courtViewMirrored = far;
+          c.state.opponentCourtViewMirrored = far;
+          const pending = c.openAttackTrajectoryModal({ scope, forceFar });
+          assert.equal(c.elAttackTrajectoryNetpoints.classList.contains('attack-trajectory-netpoints--far'), far);
+          assert.equal(c.getNearestTrajectoryNetPointId({ x: far ? 0.9 : 0.1 }), '5');
+          assert.equal(c.getNearestTrajectoryNetPointId({ x: far ? 0.1 : 0.9 }), '6-F');
+          c.trajectoryResolver(null);
+          await pending;
+        }
+      }
+    }
+    assert.match(css, /\.attack-trajectory-netpoints--far button\[data-net-point\]\s*\{\s*left:\s*calc\(100% - var\(--net-x, 0\.5\) \* 100%\)/);
+  } finally {
+    dom.window.close();
+  }
+});
 
 function functionSource(name, nextName) {
   const start = source.indexOf(`function ${name}(`);

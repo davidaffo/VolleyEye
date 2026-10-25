@@ -93,7 +93,7 @@ function getBenchForLineupWithRoster(court, rosterNames, liberos, numbersMap) {
   getCourtShape(court).forEach(slot => {
     const name = slot.main || "";
     if (name) used.add(name);
-    if (slot.replaced) used.add(slot.replaced);
+    if (slot.replaced && !libSet.has(name)) used.add(slot.replaced);
   });
   const bench = (rosterNames || []).filter(name => name && !libSet.has(name) && !used.has(name));
   if (typeof sortNamesByNumber === "function") {
@@ -354,6 +354,14 @@ function resetSkillSelectionForPlayer(playerIdx, scope = "our") {
 }
 function cancelPartialSkillFlowForScope(scope = "our") {
   const targetScope = scope || "our";
+  partialSkillFlowVersions[targetScope] += 1;
+  if (state.pendingServe && state.pendingServe.scope === targetScope) state.pendingServe = null;
+  if (targetScope === "opponent") state.opponentSkillFlowOverride = null;
+  else state.skillFlowOverride = null;
+  if (state.forceSkillScope === targetScope) {
+    state.forceSkillActive = false;
+    state.forceSkillScope = null;
+  }
   const prefix = targetScope + ":";
   const playerIdxs = new Set();
   const collectFromKey = key => {
@@ -403,6 +411,7 @@ function applyAttackTrajectoryToEvent(event, payload) {
   }
 }
 async function startAttackSelection(playerIdx, setTypeChoice, onDone, scope = "our") {
+  const flowVersion = partialSkillFlowVersions[scope];
   const key = makePlayerKey(scope, playerIdx);
   if (
     attackInlinePlayer !== null &&
@@ -428,6 +437,7 @@ async function startAttackSelection(playerIdx, setTypeChoice, onDone, scope = "o
       forceFar,
       scope
     });
+    if (flowVersion !== partialSkillFlowVersions[scope]) return;
     if (coords) {
       meta.trajectory = coords;
       meta.trajectorySkipped = false;
@@ -460,6 +470,7 @@ function maybeRotateServeToZoneOne(playerIdx, scope = "our") {
   // disabilitato: la battuta è consentita solo alla giocatrice in zona 1
 }
 async function startServeTypeSelection(playerIdx, type, onDone, scope = "our") {
+  const flowVersion = partialSkillFlowVersions[scope];
   const key = makePlayerKey(scope, playerIdx);
   if (serveTypeInlinePlayer !== null && serveTypeInlinePlayer !== key) return;
   serveTypeInlinePlayer = key;
@@ -476,6 +487,7 @@ async function startServeTypeSelection(playerIdx, type, onDone, scope = "our") {
   if (serveTrajEnabled) {
     const forceFar = isFarSideForScope(scope);
     const traj = await collectServeTrajectory(Object.assign({}, meta, { forceFar, scope }));
+    if (flowVersion !== partialSkillFlowVersions[scope]) return;
     meta.serveType = traj.serveType || type;
     meta.serveStart = traj.serveStart || null;
     meta.serveEnd = traj.serveEnd || null;
@@ -517,6 +529,7 @@ async function startServeTypeSelection(playerIdx, type, onDone, scope = "our") {
   }
 }
 async function collectServeTrajectory(prefill = {}) {
+  const flowVersion = partialSkillFlowVersions[prefill.scope || "our"];
   const startRes = await openAttackTrajectoryModal({
     mode: "serve-start",
     start: prefill.serveStart || null,
@@ -524,6 +537,7 @@ async function collectServeTrajectory(prefill = {}) {
     forceFar: prefill.forceFar,
     scope: prefill.scope
   });
+  if (flowVersion !== partialSkillFlowVersions[prefill.scope || "our"]) return null;
   const serveType = (startRes && startRes.serveType) || prefill.serveType || "JF";
   const serveStart = startRes && startRes.point ? startRes.point : prefill.serveStart || null;
   const endRes = await openAttackTrajectoryModal({
@@ -532,6 +546,7 @@ async function collectServeTrajectory(prefill = {}) {
     forceFar: prefill.forceFar,
     scope: prefill.scope
   });
+  if (flowVersion !== partialSkillFlowVersions[prefill.scope || "our"]) return null;
   const serveEnd = endRes && endRes.point ? endRes.point : prefill.serveEnd || null;
   let videoTime = null;
   if (state.videoScoutMode && endRes && endRes.point) {

@@ -470,6 +470,11 @@ function canPlaceInSlotForScope(name, posIdx, showAlert = true, scope = "our") {
     if (showAlert) alert("Non puoi mettere il libero in prima linea.");
     return false;
   }
+  const isServing = scope === "opponent" ? !state.isServing : !!state.isServing;
+  if (isLiberoForScope(name, scope) && isServing && posIdx === 0) {
+    if (showAlert) alert("Non puoi mettere il libero in zona 1 quando la squadra è in battuta.");
+    return false;
+  }
   if (isLiberoForScope(name, scope)) {
     const anotherLiberoIdx = court.findIndex(
       slot => slot.main && slot.main !== name && isLiberoForScope(slot.main, scope)
@@ -546,9 +551,22 @@ function sanitizeAutoRoleBaseCourtForScope(scope = "our") {
   }
   return true;
 }
+function cancelPartialSkillFlowForCourtChange(baseCourt, scope = "our") {
+  if (typeof cancelPartialSkillFlowForScope !== "function") return;
+  const names = court => Array.from(new Set((court || []).flatMap(slot => [slot.main, slot.replaced]).filter(Boolean))).sort();
+  const previous = names(getTeamCourt(scope));
+  const next = names(baseCourt);
+  if (previous.length === next.length && previous.every((name, idx) => name === next[idx])) return;
+  cancelPartialSkillFlowForScope("our");
+  cancelPartialSkillFlowForScope("opponent");
+  if (typeof trajectoryResolver !== "undefined" && trajectoryResolver && typeof closeAttackTrajectoryModal === "function") {
+    closeAttackTrajectoryModal(null);
+  }
+}
 function commitCourtChange(baseCourt, options = {}) {
   const { clean = true } = options;
   if (clean) cleanCourtPlayers(baseCourt);
+  cancelPartialSkillFlowForCourtChange(baseCourt, "our");
   resetAutoRoleCache();
   if (state.autoRolePositioning) {
     updateAutoRoleBaseCourtCache(baseCourt);
@@ -570,6 +588,7 @@ function commitCourtChangeForScope(baseCourt, scope = "our") {
     commitCourtChange(baseCourt);
     return;
   }
+  cancelPartialSkillFlowForCourtChange(baseCourt, scope);
   state.opponentCourt = ensureCourtShapeFor(baseCourt);
   if (state.autoRolePositioning) {
     updateOpponentAutoRoleBaseCourtCache(state.opponentCourt);

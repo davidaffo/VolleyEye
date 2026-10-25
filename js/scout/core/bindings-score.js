@@ -112,7 +112,9 @@ function bindScoreAndSetControls() {
   if (elNextSetSwapCourt) {
     elNextSetSwapCourt.addEventListener("change", () => {
       if (nextSetDraft) {
-        nextSetDraft.swapCourt = !!elNextSetSwapCourt.checked;
+        nextSetDraft.swapCourt = elNextSetSwapCourt.checked
+          ? !state.courtSideSwapped
+          : !!state.courtSideSwapped;
       }
     });
   }

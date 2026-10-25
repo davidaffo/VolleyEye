@@ -306,6 +306,16 @@ body[data-theme="light"] .lineup-number-input {
   border-color: #2563eb;
   box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.6);
 }
+.lineup-chip.replaced-chip {
+  background: #14532d;
+  border-color: #22c55e;
+  color: #dcfce7;
+}
+body[data-theme="light"] .lineup-chip.replaced-chip {
+  background: #dcfce7;
+  border-color: #16a34a;
+  color: #14532d;
+}
 .lineup-modal__foot {
   display: flex;
   justify-content: flex-end;
@@ -1108,20 +1118,18 @@ body.scout-widget-dragging [data-scout-widget-zone="right"]:empty::before {
     overflow-y: auto;
   }
 }
-.players-area.court-area--next-set > :not(.next-set-inline) {
-  pointer-events: none;
-  filter: grayscale(0.2) blur(1px);
-  opacity: 0.25;
+body:has(.next-set-inline:not(.hidden)) {
+  overflow: hidden;
 }
 .next-set-inline {
-  position: absolute;
+  position: fixed;
   inset: 0;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   padding: 1rem;
   background: rgba(10, 12, 20, 0.6);
-  z-index: 6;
+  z-index: 1900;
   overflow-y: auto;
   overscroll-behavior: contain;
   box-sizing: border-box;
@@ -1130,7 +1138,7 @@ body.scout-widget-dragging [data-scout-widget-zone="right"]:empty::before {
   display: none;
 }
 .next-set-inline__card {
-  width: min(1040px, 100%);
+  width: min(1200px, 100%);
   max-height: 100%;
   min-height: 0;
   overflow-y: auto;

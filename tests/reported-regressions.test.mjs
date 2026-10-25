@@ -343,7 +343,7 @@ test("il conteggio damp mantiene rotazioni e totale separati dalle percentuali",
 });
 
 test("campi squadra, foto e ruoli hanno gli stili richiesti", () => {
-  assert.match(css, /\.team-manager-table th:nth-child\(2\)[\s\S]*?min-width:\s*190px/);
+  assert.match(css, /\.team-manager-table th:nth-child\(2\)[\s\S]*?min-width:\s*140px/);
   assert.match(css, /\.court-card\.setter-card/);
   assert.match(css, /\.court-setter-pill/);
   assert.match(css, /\.base-modal-btn\.player-role-setter/);

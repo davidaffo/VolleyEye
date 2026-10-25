@@ -38,6 +38,7 @@ async function init() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  if (window.__EXPORT_ANALYSIS_HTML__) return;
   init().catch(error => {
     console.error("Avvio archivio non riuscito", error);
     alert("Impossibile aprire l’archivio. " + error.message);

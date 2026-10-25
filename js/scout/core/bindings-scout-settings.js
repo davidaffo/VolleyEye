@@ -1,4 +1,17 @@
 function bindScoutSettingsControls() {
+  [
+    ["evaluate-defense-after-block", "evaluateDefenseAfterBlock"],
+    ["evaluate-defense-after-block-opp", "opponentEvaluateDefenseAfterBlock"]
+  ].forEach(([id, key]) => {
+    const toggle = document.getElementById(id);
+    if (!toggle) return;
+    toggle.checked = !!state[key];
+    toggle.addEventListener("change", () => {
+      state[key] = toggle.checked;
+      saveState();
+      renderPlayers();
+    });
+  });
   if (typeof bindViewportResizeUpdates === "function") bindViewportResizeUpdates();
   if (elBtnRotateCw) {
     elBtnRotateCw.addEventListener("click", () => rotateCourt("cw"));

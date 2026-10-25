@@ -17,6 +17,13 @@ function bindDataAndNavigationControls() {
   if (elBtnExportPdf) elBtnExportPdf.addEventListener("click", exportAnalysisPdf);
   if (elBtnExportHtml) elBtnExportHtml.addEventListener("click", exportAnalysisHtml);
   if (elBtnExportMatch) elBtnExportMatch.addEventListener("click", exportMatchToFile);
+  document.querySelectorAll("[data-export-match]").forEach(button => {
+    button.addEventListener("click", () => {
+      const mobileNavigation = document.getElementById("mobile-navigation");
+      if (mobileNavigation) mobileNavigation.open = false;
+      exportMatchToFile();
+    });
+  });
   if (elBtnExportDvw) elBtnExportDvw.addEventListener("click", exportDataVolleyToFile);
   if (elBtnImportMatch && elMatchFileInput) {
     elBtnImportMatch.addEventListener("click", () => elMatchFileInput.click());

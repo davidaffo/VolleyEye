@@ -152,6 +152,38 @@ test("la singola usa il pannello compatto e ripristina quello completo passando 
   }
 });
 
+test("in singola i comandi avversari seguono il campo vicino o lontano rispetto alla rete", () => {
+  const { context: c, dom } = setup();
+  const document = dom.window.document;
+  const style = document.createElement('style');
+  style.textContent = read('styles/scout-live.css') + read('styles/analysis-base.css');
+  document.head.appendChild(style);
+  const single = document.getElementById('single-team-opponent-panel');
+  const home = document.querySelector('[data-team-panel="home"]');
+  const net = document.querySelector('.court-net-divider');
+  const order = element => Number(dom.window.getComputedStyle(element).order);
+  try {
+    c.state.useOpponentTeam = false;
+    for (const mobile of [false, true]) {
+      c.state.forceMobileLayout = mobile;
+      for (const swapped of [false, true, false]) {
+        c.state.courtSideSwapped = swapped;
+        c.renderPlayers();
+        assert.equal(single.classList.contains('hidden'), false);
+        if (swapped) {
+          assert.ok(order(home) < order(net));
+          assert.ok(order(net) < order(single));
+        } else {
+          assert.ok(order(single) < order(net));
+          assert.ok(order(net) < order(home));
+        }
+      }
+    }
+  } finally {
+    dom.window.close();
+  }
+});
+
 test("la scelta errore mostra la panchina solo durante la selezione e la rimuove alla chiusura", () => {
   const { context: c, dom } = setup();
   for (const scope of ["our", "opponent"]) {

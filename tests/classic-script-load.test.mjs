@@ -76,6 +76,26 @@ function buildBrowserContext() {
   return vm.createContext(context);
 }
 
+test("le preferenze di difesa dopo muro restano separate e persistono negli snapshot", async () => {
+  const context = buildBrowserContext();
+  runtimeFiles.forEach(path => vm.runInContext(readFileSync(new URL(path, rootUrl), "utf8"), context, { filename: path }));
+  await Promise.resolve(vm.runInContext("init()", context));
+  for (const [our, opponent] of [[true, false], [false, true]]) {
+    context.blockPreferences = { evaluateDefenseAfterBlock: our, opponentEvaluateDefenseAfterBlock: opponent };
+    vm.runInContext(`
+      Object.assign(state, blockPreferences);
+      globalThis.blockSnapshot = buildCompactLocalStateSnapshot(state);
+      state.evaluateDefenseAfterBlock = false;
+      state.opponentEvaluateDefenseAfterBlock = false;
+      applyStateSnapshot(blockSnapshot, { skipStorageSync: true });
+      globalThis.restoredBlockPreferences = [state.evaluateDefenseAfterBlock, state.opponentEvaluateDefenseAfterBlock];
+    `, context);
+    assert.deepEqual(Array.from(context.restoredBlockPreferences), [our, opponent]);
+    assert.equal(context.blockSnapshot.evaluateDefenseAfterBlock, our);
+    assert.equal(context.blockSnapshot.opponentEvaluateDefenseAfterBlock, opponent);
+  }
+});
+
 test("gli script modulari condividono lo stesso contesto classico senza collisioni", async () => {
   const context = buildBrowserContext();
   runtimeFiles.forEach(path => {

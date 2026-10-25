@@ -89,11 +89,17 @@
       }
 
       const numInput = document.createElement("input");
-      numInput.type = "number";
-      numInput.min = "0";
-      numInput.max = "999";
+      numInput.type = "text";
+      numInput.inputMode = "numeric";
+      numInput.pattern = "[0-9]{0,3}";
+      numInput.maxLength = 3;
       numInput.className = "pill-number-input";
       numInput.value = mappedNum || "";
+      numInput.addEventListener("focus", () => numInput.select());
+      numInput.addEventListener("click", () => numInput.select());
+      numInput.addEventListener("input", () => {
+        numInput.value = numInput.value.replace(/\D/g, "").slice(0, 3);
+      });
       if (onNumberChange) {
         numInput.addEventListener("change", () => onNumberChange(name, numInput.value));
       } else {

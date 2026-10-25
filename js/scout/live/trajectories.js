@@ -148,7 +148,7 @@ function getDefaultTrajectoryNetPointId(baseZone, setType) {
 }
 function getNearestTrajectoryNetPointId(start) {
   if (!start) return null;
-  const x = clamp01(start.x);
+  const x = trajectoryMirror || trajectoryForceFar ? 1 - clamp01(start.x) : clamp01(start.x);
   let closest = TRAJECTORY_NET_POINTS[0];
   let best = Math.abs(x - closest.x);
   for (let i = 1; i < TRAJECTORY_NET_POINTS.length; i++) {
@@ -240,6 +240,7 @@ function openAttackTrajectoryModal(prefill = null) {
     if (elAttackTrajectoryNetpoints) {
       const shouldShowNet = mode === "attack" && simplified;
       elAttackTrajectoryNetpoints.classList.toggle("hidden", !shouldShowNet);
+      elAttackTrajectoryNetpoints.classList.toggle("attack-trajectory-netpoints--far", trajectoryMirror || trajectoryForceFar);
     }
     if (elServeTypeButtons) {
       elServeTypeButtons.classList.toggle("hidden", mode !== "serve-start");

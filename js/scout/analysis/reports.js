@@ -615,11 +615,8 @@ async function exportAnalysisHtml() {
       btn.remove();
     });
     exportBody.querySelectorAll(".tab-panel").forEach(panel => {
-      if (panel.dataset.tab !== "aggregated") {
-        panel.remove();
-      } else {
-        panel.classList.add("active");
-      }
+      if (panel.dataset.tab !== "aggregated") panel.remove();
+      else panel.classList.add("active");
     });
     exportBody.querySelectorAll(".agg-subtab-btn").forEach(btn => {
       btn.classList.toggle("active", btn.dataset.aggTabTarget === "summary");
@@ -653,7 +650,10 @@ async function exportAnalysisHtml() {
         "#analysis-score-summary.hidden{display:none;}"
       ].join("\n");
     }
-    const scripts = Array.from(document.querySelectorAll("script[src]"));
+    const scripts = Array.from(document.querySelectorAll("script[src]")).filter(script => {
+      const url = new URL(script.getAttribute("src"), window.location.href);
+      return url.origin === window.location.origin;
+    });
     const scriptChunks = [];
     const failedScripts = [];
     for (const script of scripts) {
@@ -718,21 +718,21 @@ if (typeof getTrajectoryImageForZone === "function" && window.__analysisAssetMap
     return assetMap && assetMap[path] ? assetMap[path] : path;
   };
 }
-if (typeof init === "function") {
-  init();
-}
-if (typeof setActiveTab === "function") setActiveTab("aggregated");
-if (typeof setActiveAggTab === "function") setActiveAggTab("summary");
+window.__exportedAnalysisReady = (async function() {
+  if (typeof init === "function") await init();
+  if (typeof setActiveTab === "function") setActiveTab("aggregated");
+  if (typeof setActiveAggTab === "function") setActiveAggTab("summary");
+})();
 `;
     const title = "Analisi - " + (getCurrentMatchLabel() || "Match");
     const styleTag = `<style>${cssText}</style>`;
     const mergedScripts = scriptChunks.map(chunk => replaceExportAssetsInScript(chunk, assetMap));
-    const scriptTag = `<script>${prelude}\n${mergedScripts.join("\n")}\n${postlude}<\/script>`;
+    const scriptTag = `<script>${prelude}\n;\n${mergedScripts.join("\n;\n")}\n;\n${postlude}<\/script>`;
     exportHead.insertAdjacentHTML("beforeend", styleTag);
     exportBody.insertAdjacentHTML("beforeend", scriptTag);
     exportHead.querySelectorAll("title").forEach(el => el.remove());
     exportHead.insertAdjacentHTML("afterbegin", `<title>${title}</title>`);
-    const html = replaceExportAssetsInText("<!doctype html>\n" + exportRoot.outerHTML, assetMap);
+    const html = "<!doctype html>\n" + exportRoot.outerHTML;
     const fileName = "analisi_" + safeMatchSlug() + ".html";
     downloadBlob(new Blob([html], { type: "text/html" }), fileName);
   } finally {

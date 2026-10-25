@@ -224,6 +224,7 @@ function applyStateSnapshot(parsed, options = {}) {
   state.opponentRotation = Math.min(6, Math.max(1, parseInt(parsed.opponentRotation, 10) || 1));
   state.opponentCourtViewMirrored = !!parsed.opponentCourtViewMirrored;
   state.opponentAutoRoleP1American = !!parsed.opponentAutoRoleP1American;
+  state.opponentEvaluateDefenseAfterBlock = !!parsed.opponentEvaluateDefenseAfterBlock;
   state.opponentAttackTrajectoryEnabled = parsed.opponentAttackTrajectoryEnabled !== false;
   state.opponentServeTrajectoryEnabled = parsed.opponentServeTrajectoryEnabled !== false;
   state.opponentSetTypePromptEnabled = parsed.opponentSetTypePromptEnabled !== false;
@@ -297,6 +298,7 @@ function applyStateSnapshot(parsed, options = {}) {
   state.autoLiberoRoleDefaultVersion = AUTO_LIBERO_ROLE_DEFAULT_VERSION;
   state.preferredLibero = typeof parsed.preferredLibero === "string" ? parsed.preferredLibero : "";
   state.autoRoleP1American = !!parsed.autoRoleP1American;
+  state.evaluateDefenseAfterBlock = !!parsed.evaluateDefenseAfterBlock;
   state.courtViewMirrored = !!parsed.courtViewMirrored;
   state.courtSideSwapped = !!parsed.courtSideSwapped;
   state.courtViewMirrored = !!state.courtSideSwapped;
@@ -435,6 +437,8 @@ function buildCompactLocalStateSnapshot(snapshot) {
     opponentAutoRoleBaseCourt: Array.isArray(snapshot.opponentAutoRoleBaseCourt) ? snapshot.opponentAutoRoleBaseCourt : [],
     autoRoleP1American: !!snapshot.autoRoleP1American,
     opponentAutoRoleP1American: !!snapshot.opponentAutoRoleP1American,
+    evaluateDefenseAfterBlock: !!snapshot.evaluateDefenseAfterBlock,
+    opponentEvaluateDefenseAfterBlock: !!snapshot.opponentEvaluateDefenseAfterBlock,
     isServing: !!snapshot.isServing,
     autoRotate: snapshot.autoRotate !== false,
     autoRotatePending: !!snapshot.autoRotatePending,

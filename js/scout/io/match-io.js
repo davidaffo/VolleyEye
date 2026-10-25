@@ -37,6 +37,8 @@ function applyImportedMatch(nextState, options = {}) {
   const preservedOpponentSkillConfig = state.opponentSkillConfig || {};
   resetSetTypeState();
   const merged = Object.assign({}, state, nextState);
+  merged.evaluateDefenseAfterBlock = !!nextState.evaluateDefenseAfterBlock;
+  merged.opponentEvaluateDefenseAfterBlock = !!nextState.opponentEvaluateDefenseAfterBlock;
   const normalizedPlayers = normalizePlayers(nextState.players || []);
   merged.match = nextState.match && typeof nextState.match === "object" ? nextState.match : {};
   merged.players = normalizedPlayers;

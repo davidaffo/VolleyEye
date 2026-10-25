@@ -117,6 +117,13 @@ function renderScoutTeamCourt(scope, { nextSkillId = null, animate = false } = {
   if (shouldAnimate) animateFlip(previousRects, selector, animationKey);
 }
 function syncCourtSideLayout() {
+  [
+    ["evaluate-defense-after-block", "evaluateDefenseAfterBlock"],
+    ["evaluate-defense-after-block-opp", "opponentEvaluateDefenseAfterBlock"]
+  ].forEach(([id, key]) => {
+    const toggle = document.getElementById(id);
+    if (toggle) toggle.checked = !!state[key];
+  });
   const courtArea = document.getElementById("court-area");
   const opponentPanel = document.querySelector('[data-team-panel="opponent"]');
   const homePanel = document.querySelector('[data-team-panel="home"]');
@@ -174,6 +181,7 @@ function swapTeamsInMatch() {
   swapState("rotation", "opponentRotation");
   swapState("courtViewMirrored", "opponentCourtViewMirrored");
   swapState("autoRoleP1American", "opponentAutoRoleP1American");
+  swapState("evaluateDefenseAfterBlock", "opponentEvaluateDefenseAfterBlock");
   swapState("attackTrajectoryEnabled", "opponentAttackTrajectoryEnabled");
   swapState("serveTrajectoryEnabled", "opponentServeTrajectoryEnabled");
   swapState("setTypePromptEnabled", "opponentSetTypePromptEnabled");

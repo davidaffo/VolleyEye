@@ -218,10 +218,16 @@ function renderTeamManagerTable() {
     if (isLibero) tr.classList.add("team-manager-row--libero");
     if (p.out) tr.classList.add("team-manager-row--out");
     const numberInput = document.createElement("input");
-    numberInput.type = "number";
-    numberInput.min = "0";
-    numberInput.max = "99";
+    numberInput.type = "text";
+    numberInput.inputMode = "numeric";
+    numberInput.pattern = "[0-9]{0,2}";
+    numberInput.maxLength = 2;
     numberInput.value = p.number || "";
+    numberInput.addEventListener("focus", () => numberInput.select());
+    numberInput.addEventListener("click", () => numberInput.select());
+    numberInput.addEventListener("input", () => {
+      numberInput.value = numberInput.value.replace(/\D/g, "").slice(0, 2);
+    });
     numberInput.addEventListener("change", () => {
       p.number = numberInput.value;
       renderTeamManagerTable();

@@ -366,6 +366,8 @@ function buildMatchExportPayload() {
       opponentRotation: state.opponentRotation,
       opponentCourtViewMirrored: !!state.opponentCourtViewMirrored,
       opponentAutoRoleP1American: !!state.opponentAutoRoleP1American,
+      evaluateDefenseAfterBlock: !!state.evaluateDefenseAfterBlock,
+      opponentEvaluateDefenseAfterBlock: !!state.opponentEvaluateDefenseAfterBlock,
       opponentAttackTrajectoryEnabled: state.opponentAttackTrajectoryEnabled !== false,
       opponentServeTrajectoryEnabled: state.opponentServeTrajectoryEnabled !== false,
       opponentSetTypePromptEnabled: state.opponentSetTypePromptEnabled !== false,

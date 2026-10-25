@@ -381,8 +381,9 @@ function renderLineupModal() {
     elLineupModalBench.appendChild(empty);
   } else {
     benchNames.forEach(name => {
+      const replacedIdx = court.findIndex(slot => slot.replaced === name && getLineupModalLiberos().includes(slot.main));
       const chip = document.createElement("div");
-      chip.className = "lineup-chip" + (lineupSelectedName === name ? " selected" : "");
+      chip.className = "lineup-chip" + (replacedIdx !== -1 ? " replaced-chip" : "") + (lineupSelectedName === name ? " selected" : "");
       chip.draggable = true;
       chip.dataset.playerName = name;
       chip.dataset.lineupContext = "modal";
@@ -400,7 +401,7 @@ function renderLineupModal() {
       });
       chip.addEventListener("click", () => {
         const nextEmpty = court.findIndex(slot => !slot.main);
-        const targetIdx = nextEmpty !== -1 ? nextEmpty : 0;
+        const targetIdx = replacedIdx !== -1 ? replacedIdx : nextEmpty !== -1 ? nextEmpty : 0;
         assignPlayerToLineup(name, targetIdx);
         lineupSelectedName = "";
         renderLineupModal();
