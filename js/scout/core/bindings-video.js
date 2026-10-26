@@ -99,6 +99,10 @@ function bindVideoControls() {
   if (videoFrameNextBtn) {
     videoFrameNextBtn.addEventListener("click", () => stepActiveVideoByFrame(1));
   }
+  const saveVideoFrameBtn = document.getElementById("btn-save-video-frame");
+  if (saveVideoFrameBtn) {
+    saveVideoFrameBtn.addEventListener("click", saveCurrentVideoFrame);
+  }
   if (elBtnCopyFfmpeg) {
     elBtnCopyFfmpeg.addEventListener("click", copyFfmpegFromSelection);
   }

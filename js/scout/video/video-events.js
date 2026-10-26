@@ -270,8 +270,7 @@ function buildSelectedSegments() {
           " " +
           (ev.skillId || "") +
           " " +
-          (ev.code || ""),
-        overlayLines: buildVideoOverlayLinesForEvent(ev)
+          (ev.code || "")
       };
     })
     .filter(seg => isFinite(seg.start) && isFinite(seg.end))
@@ -330,26 +329,6 @@ function updateVideoAnalysisOverlay() {
   if (elVideoOverlaySkill) elVideoOverlaySkill.textContent = "";
   if (elVideoOverlayRotation) elVideoOverlayRotation.textContent = "";
   elVideoOverlay.classList.remove("hidden");
-}
-function escapeFfmpegText(text) {
-  return String(text)
-    .replace(/\\/g, "\\\\")
-    .replace(/:/g, "\\:")
-    .replace(/'/g, "\\'")
-    .replace(/\n/g, "\\n");
-}
-function buildFfmpegOverlayFilter(lines) {
-  if (!lines || !lines.length) return "";
-  const x = 24;
-  const yStart = 24;
-  const step = 28;
-  return lines
-    .map((line, idx) => {
-      const safe = escapeFfmpegText(line || "");
-      const y = yStart + step * idx;
-      return `,drawtext=text='${safe}':x=${x}:y=${y}:fontcolor=white:fontsize=24:box=1:boxcolor=black@0.55:boxborderw=8`;
-    })
-    .join("");
 }
 function openVideoScoreModal() {
   if (!elVideoScoreModal) return;
@@ -593,56 +572,31 @@ function sanitizeVideoOutputBase(name) {
     .replace(/^\.+|\.+$/g, "")
     .slice(0, 120);
 }
-function buildFfmpegConcatCommand(segments, inputName, outputName, encoder = "cpu") {
+function buildFfmpegConcatCommand(segments, inputName, outputName) {
   if (!segments || !segments.length) return "";
-  const useGpu = encoder === "gpu";
-  const trims = segments
-    .map((seg, idx) => {
-      const start = seg.start.toFixed(3);
-      const end = seg.end.toFixed(3);
-      const overlay = buildFfmpegOverlayFilter(seg.overlayLines || []);
-      return `[0:v]trim=start=${start}:end=${end},setpts=PTS-STARTPTS${overlay}[v${idx}]`;
-    })
-    .join(";");
-  const concatOutput = useGpu
-    ? "[outv_raw];[outv_raw]format=nv12,hwupload[outv]"
-    : "[outv]";
-  const concat = segments.map((_, idx) => `[v${idx}]`).join("") +
-    `concat=n=${segments.length}:v=1:a=0${concatOutput}`;
-  const input = inputName || "input.mp4";
-  const output = outputName || "output.mp4";
-  const deviceArgs = useGpu ? " -vaapi_device /dev/dri/renderD128" : "";
-  const videoEncoder = useGpu
-    ? "-c:v h264_vaapi -rc_mode CQP -qp 24 -quality 8 -profile:v high"
-    : "-c:v libx264 -preset ultrafast -crf 24 -pix_fmt yuv420p";
-  return `ffmpeg -hide_banner${deviceArgs} -i "${input}" -filter_complex "${trims};${concat}" ` +
-    `-map "[outv]" -an ${videoEncoder} "${output}"`;
-}
-function chooseFfmpegEncoder() {
-  const modal = document.getElementById("ffmpeg-encoder-modal");
-  const gpuButton = document.getElementById("ffmpeg-copy-gpu");
-  const cpuButton = document.getElementById("ffmpeg-copy-cpu");
-  if (!modal || !gpuButton || !cpuButton) return Promise.resolve("cpu");
-  return new Promise(resolve => {
-    let settled = false;
-    const finish = choice => {
-      if (settled) return;
-      settled = true;
-      modal.classList.add("hidden");
-      setModalOpenState(false);
-      resolve(choice);
-    };
-    modal.querySelectorAll("[data-close-ffmpeg-encoder]").forEach(button => {
-      button.onclick = () => finish(null);
-    });
-    const closeButton = document.getElementById("ffmpeg-encoder-close");
-    if (closeButton) closeButton.onclick = () => finish(null);
-    gpuButton.onclick = () => finish("gpu");
-    cpuButton.onclick = () => finish("cpu");
-    modal.classList.remove("hidden");
-    setModalOpenState(true);
-    gpuButton.focus();
+  const quote = value => "'" + String(value).replace(/'/g, "'\"'\"'") + "'";
+  const input = quote(inputName || "input.mp4");
+  const output = quote(outputName || "output.mp4");
+  const copyOptions = "-map 0:v:0 -an -sn -dn -c copy -avoid_negative_ts make_zero";
+  const cut = (seg, target) =>
+    `ffmpeg -hide_banner -ss ${seg.start.toFixed(3)} -i ${input} ` +
+    `-t ${(seg.end - seg.start).toFixed(3)} ${copyOptions} ${target}`;
+  if (segments.length === 1) return cut(segments[0], output);
+  // Each cut starts at a keyframe; stream copy preserves the original video quality.
+  const extension = getFileExtension(inputName) || ".mp4";
+  const files = segments.map((_, idx) => `clip_${idx}${extension}`);
+  const commands = ['clip_dir=$(mktemp -d)'];
+  segments.forEach((seg, idx) => {
+    commands.push(cut(seg, `"$clip_dir/"${quote(files[idx])}`));
   });
+  const entries = files.map(file => quote(`file ${quote(file)}`)).join(" ");
+  commands.push(`printf '%s\\n' ${entries} > "$clip_dir/list.txt"`);
+  commands.push(
+    `ffmpeg -hide_banner -f concat -safe 0 -i "$clip_dir/list.txt" ${copyOptions} ${output}`
+  );
+  commands.push(`rm -- ${files.map(file => `"$clip_dir/"${quote(file)}`).join(" ")} "$clip_dir/list.txt"`);
+  commands.push('rmdir -- "$clip_dir"');
+  return commands.join(" &&\n");
 }
 async function copyFfmpegFromSelection() {
   const segments = buildSelectedSegments();
@@ -665,9 +619,7 @@ async function copyFfmpegFromSelection() {
   if (!outputBase) return;
   const sanitizedBase = sanitizeVideoOutputBase(stripFileExtension(outputBase.trim())) || "output";
   const outputName = sanitizedBase + ext;
-  const encoder = await chooseFfmpegEncoder();
-  if (!encoder) return;
-  const cmd = buildFfmpegConcatCommand(segments, inputName, outputName, encoder);
+  const cmd = buildFfmpegConcatCommand(segments, inputName, outputName);
   try {
     await navigator.clipboard.writeText(cmd);
   } catch (_) {
@@ -678,11 +630,7 @@ async function copyFfmpegFromSelection() {
     document.execCommand("copy");
     ta.remove();
   }
-  alert(
-    encoder === "gpu"
-      ? "Comando ffmpeg GPU con overlay copiato. La codifica userà VAAPI."
-      : "Comando ffmpeg CPU con overlay copiato. La codifica userà il preset ultrafast."
-  );
+  alert("Comando ffmpeg lossless copiato: senza overlay, audio o ricodifica. I tagli possono iniziare dal fotogramma chiave precedente.");
 }
 function renderEventsLog(options = {}) {
   const append = !!options.append;

@@ -373,6 +373,33 @@ function renderVideoAnalysis() {
     saveState();
   }
 }
+async function saveCurrentVideoFrame() {
+  if (state.video && state.video.youtubeId) {
+    alert("Per salvare un fotogramma carica il file video locale. Il player YouTube non consente di estrarre immagini dal browser.");
+    return;
+  }
+  const video = elAnalysisVideo;
+  if (!video || video.readyState < 2 || !video.videoWidth || !video.videoHeight || video.seeking) {
+    alert("Carica un video locale e attendi che il fotogramma sia visibile prima di salvarlo.");
+    return;
+  }
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("canvas-unavailable");
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const base = sanitizeVideoOutputBase(stripFileExtension(state.video && state.video.fileName)) || "video";
+    const timestamp = video.currentTime.toFixed(3).replace(".", "-");
+    const fileName = `${base}_fotogramma_${timestamp}s.jpg`;
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.9));
+    if (!blob) throw new Error("frame-export-failed");
+    downloadBlob(blob, fileName);
+  } catch (_) {
+    alert("Impossibile salvare il fotogramma. Riprova caricando il file video locale.");
+  }
+}
 function seekVideoToTime(seconds, options = {}) {
   if (!isFinite(seconds)) return;
   const preservePlayback = !!options.preservePlayback;

@@ -214,27 +214,31 @@ test("la correzione punteggio video segue l'ordine reale degli eventi e viene sa
   assert.match(correction, /saveState\(\{ persistLocal: true \}\)/);
 });
 
-test("il taglia e cuci ffmpeg offre CPU e GPU conservando gli overlay", () => {
+test("il taglia e cuci ffmpeg copia il video senza ricodifica né overlay", () => {
   const events = readFileSync(new URL("../js/scout/video/video-events.js", import.meta.url), "utf8");
-  const command = extract(events, "function buildFfmpegConcatCommand", "async function copyFfmpegFromSelection");
-  assert.match(command, /filter_complex/);
-  assert.match(command, /buildFfmpegOverlayFilter/);
-  assert.match(command, /-c:v libx264 -preset ultrafast -crf 24/);
-  assert.match(command, /-vaapi_device \/dev\/dri\/renderD128/);
-  assert.match(command, /format=nv12,hwupload/);
-  assert.match(command, /-c:v h264_vaapi/);
-  assert.match(command, /-rc_mode CQP -qp 24/);
-  assert.match(command, /concat=n=\$\{segments\.length\}:v=1:a=0/);
-  assert.match(command, /-map "\[outv\]" -an/);
-  assert.doesNotMatch(command, /atrim|-c:a|\[outa\]/);
-  assert.doesNotMatch(command, /-c copy|mktemp -d/);
+  const source = extract(events, "function getFileBasename", "async function copyFfmpegFromSelection");
+  const context = vm.createContext({});
+  vm.runInContext(source, context);
+  const segments = [{ start: 1.25, end: 3.5 }, { start: 7, end: 9 }];
+  const single = context.buildFfmpegConcatCommand(segments.slice(0, 1), "partita.mp4", "taglio.mp4");
+  assert.match(single, /-ss 1\.250 -i 'partita\.mp4' -t 2\.250/);
+  assert.match(single, /-map 0:v:0 -an -sn -dn -c copy/);
+  assert.doesNotMatch(single, /mktemp|concat|filter|drawtext|vaapi|libx264/);
+  const multiple = context.buildFfmpegConcatCommand(segments, "partita.mp4", "tagli.mp4");
+  assert.equal((multiple.match(/-c copy/g) || []).length, 3);
+  assert.match(multiple, /-ss 7\.000 -i 'partita\.mp4' -t 2\.000/);
+  assert.match(multiple, /-f concat -safe 0/);
+  assert.match(multiple, /clip_0\.mp4/);
+  assert.match(multiple, /clip_1\.mp4/);
+  assert.doesNotMatch(multiple, /filter_complex|drawtext|vaapi|libx264/);
+  assert.equal(context.buildFfmpegConcatCommand([], "in.mp4", "out.mp4"), "");
 });
 
-test("il dialogo ffmpeg permette di copiare il comando CPU o GPU", () => {
-  const index = readFileSync(new URL("../index.html", import.meta.url), "utf8");
-  assert.match(index, /id="ffmpeg-encoder-modal"/);
-  assert.match(index, /id="ffmpeg-copy-gpu"/);
-  assert.match(index, /id="ffmpeg-copy-cpu"/);
+test("il comando ffmpeg si copia senza scelta CPU o GPU", () => {
+  assert.match(index, /id="btn-copy-ffmpeg"[^>]*>Copia ffmpeg lossless/);
+  assert.doesNotMatch(index, /id="ffmpeg-encoder-modal"|id="ffmpeg-copy-gpu"|id="ffmpeg-copy-cpu"/);
+  const events = readFileSync(new URL("../js/scout/video/video-events.js", import.meta.url), "utf8");
+  assert.doesNotMatch(events, /chooseFfmpegEncoder|buildFfmpegOverlayFilter/);
 });
 
 test("il nome output ffmpeg usa il preset video attivo", () => {
