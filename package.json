@@ -12,7 +12,8 @@
     "tunnel": "PORT=${PORT:-3000} bash serve-tunnel.sh"
   },
   "dependencies": {
-    "marked": "^18.0.13"
+    "marked": "^18.0.13",
+    "mediabunny": "1.62.1"
   },
   "devDependencies": {
     "fake-indexeddb": "^6.2.5",

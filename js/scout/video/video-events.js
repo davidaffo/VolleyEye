@@ -572,45 +572,19 @@ function sanitizeVideoOutputBase(name) {
     .replace(/^\.+|\.+$/g, "")
     .slice(0, 120);
 }
-function buildFfmpegConcatCommand(segments, inputName, outputName) {
-  if (!segments || !segments.length) return "";
-  const quote = value => "'" + String(value).replace(/'/g, "'\"'\"'") + "'";
-  const input = quote(inputName || "input.mp4");
-  const output = quote(outputName || "output.mp4");
-  const copyOptions = "-map 0:v:0 -an -sn -dn -c copy -avoid_negative_ts make_zero";
-  const cut = (seg, target) =>
-    `ffmpeg -hide_banner -ss ${seg.start.toFixed(3)} -i ${input} ` +
-    `-t ${(seg.end - seg.start).toFixed(3)} ${copyOptions} ${target}`;
-  if (segments.length === 1) return cut(segments[0], output);
-  // Each cut starts at a keyframe; stream copy preserves the original video quality.
-  const extension = getFileExtension(inputName) || ".mp4";
-  const files = segments.map((_, idx) => `clip_${idx}${extension}`);
-  const commands = ['clip_dir=$(mktemp -d)'];
-  segments.forEach((seg, idx) => {
-    commands.push(cut(seg, `"$clip_dir/"${quote(files[idx])}`));
-  });
-  const entries = files.map(file => quote(`file ${quote(file)}`)).join(" ");
-  commands.push(`printf '%s\\n' ${entries} > "$clip_dir/list.txt"`);
-  commands.push(
-    `ffmpeg -hide_banner -f concat -safe 0 -i "$clip_dir/list.txt" ${copyOptions} ${output}`
-  );
-  commands.push(`rm -- ${files.map(file => `"$clip_dir/"${quote(file)}`).join(" ")} "$clip_dir/list.txt"`);
-  commands.push('rmdir -- "$clip_dir"');
-  return commands.join(" &&\n");
-}
-async function copyFfmpegFromSelection() {
+async function downloadVideoFromSelection() {
+  if (elBtnDownloadVideoClip && elBtnDownloadVideoClip.disabled) return;
   const segments = buildSelectedSegments();
   if (!segments.length) {
-    alert("Seleziona uno o più eventi per generare il comando ffmpeg.");
+    alert("Seleziona uno o più eventi da scaricare.");
     return;
   }
-  const inputName = state.video && state.video.youtubeId ? "" : getFileBasename(state.video && state.video.fileName);
-  if (!inputName) {
-    alert("Carica un file video locale per usare il comando ffmpeg.");
+  if ((state.video && state.video.youtubeId) || !videoLocalFile) {
+    alert("Carica un file video locale per scaricare il taglio.");
     return;
   }
-  const ext = getFileExtension(inputName);
-  const defaultBase = stripFileExtension(inputName) || "output";
+  const file = videoLocalFile;
+  const defaultBase = stripFileExtension(file.name) || "video";
   const presetName = typeof getActiveVideoFilterPresetName === "function"
     ? getActiveVideoFilterPresetName()
     : "";
@@ -618,19 +592,27 @@ async function copyFfmpegFromSelection() {
   const outputBase = prompt("Nome file output (senza estensione):", suggestedBase);
   if (!outputBase) return;
   const sanitizedBase = sanitizeVideoOutputBase(stripFileExtension(outputBase.trim())) || "output";
-  const outputName = sanitizedBase + ext;
-  const cmd = buildFfmpegConcatCommand(segments, inputName, outputName);
+  const button = elBtnDownloadVideoClip;
   try {
-    await navigator.clipboard.writeText(cmd);
-  } catch (_) {
-    const ta = document.createElement("textarea");
-    ta.value = cmd;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand("copy");
-    ta.remove();
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Preparazione…";
+    }
+    const version = window.__APP_VERSION__ && window.__APP_VERSION__.cacheVersion || "dev";
+    const { exportVideoClips } = await import(new URL(`js/scout/video/clip-export.js?v=${encodeURIComponent(version)}`, document.baseURI).href);
+    const result = await exportVideoClips(file, segments, (done, total) => {
+      if (button) button.textContent = `Preparazione ${done}/${total}…`;
+    });
+    downloadBlob(result.blob, sanitizedBase + result.extension);
+  } catch (error) {
+    console.error("Video clip export error", error);
+    alert("Impossibile scaricare il taglio. " + (error.message || "Riprova caricando il video locale."));
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "Scarica taglio";
+    }
   }
-  alert("Comando ffmpeg lossless copiato: senza overlay, audio o ricodifica. I tagli possono iniziare dal fotogramma chiave precedente.");
 }
 function renderEventsLog(options = {}) {
   const append = !!options.append;

@@ -566,6 +566,7 @@ function handleVideoFileChange(file, options = {}) {
   }
   const url = URL.createObjectURL(file);
   videoObjectUrl = url;
+  videoLocalFile = file;
   if (elAnalysisVideo) {
     elAnalysisVideo.src = url;
   }

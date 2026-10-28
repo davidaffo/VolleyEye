@@ -1,4 +1,4 @@
-const APP_CACHE_VERSION = "v0.19.17-433-765f6e8";
+const APP_CACHE_VERSION = "v0.19.18-434-40f6da4";
 const withVersion = asset => `${asset}?v=${encodeURIComponent(APP_CACHE_VERSION || "dev")}`;
 
 importScripts(withVersion("./js/app-version.js"));
@@ -27,6 +27,8 @@ const ASSETS = [
   "./docs/manual.md",
   "./docs/markdown-viewer.html",
   "./js/vendor/marked.umd.js",
+  "./js/vendor/mediabunny-1.62.1.min.mjs",
+  withVersion("./js/scout/video/clip-export.js"),
   withVersion("./js/app-version.js"),
   withVersion("./js/globals.js"),
   withVersion("./js/shared/namespace.js"),
@@ -136,6 +138,7 @@ const NETWORK_FIRST_PATHS = new Set([
   "/manifest.json",
   "/js/app-version.js",
   "/js/globals.js",
+  "/js/scout/video/clip-export.js",
   "/js/shared/namespace.js",
   "/js/shared/state-isolation.js",
   "/js/shared/team-ui.js",

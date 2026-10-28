@@ -103,8 +103,8 @@ function bindVideoControls() {
   if (saveVideoFrameBtn) {
     saveVideoFrameBtn.addEventListener("click", saveCurrentVideoFrame);
   }
-  if (elBtnCopyFfmpeg) {
-    elBtnCopyFfmpeg.addEventListener("click", copyFfmpegFromSelection);
+  if (elBtnDownloadVideoClip) {
+    elBtnDownloadVideoClip.addEventListener("click", downloadVideoFromSelection);
   }
   if (elBtnFixVideoScore) {
     if (!elBtnFixVideoScore._fixScoreBound) {

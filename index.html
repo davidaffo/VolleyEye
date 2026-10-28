@@ -26,14 +26,14 @@
     };
   </script>
   <script>
-    window.__APP_CACHE_VERSION__ = "v0.19.17-433-765f6e8";
+    window.__APP_CACHE_VERSION__ = "v0.19.18-434-40f6da4";
     window.__IS_LOCALHOST_DEV__ =
       location.hostname === "localhost" ||
       location.hostname === "127.0.0.1" ||
       location.hostname === "::1";
     window.__APP_ASSET_SUFFIX__ = window.__IS_LOCALHOST_DEV__
       ? `?dev=${Date.now()}`
-      : `?v=v0.19.17-433-765f6e8`;
+      : `?v=v0.19.18-434-40f6da4`;
     if (location.protocol === "file:") {
       document.documentElement.dataset.fileOrigin = "true";
     }
@@ -1445,7 +1445,7 @@
           <input id="video-file-input" type="file" accept="video/*" hidden />
           <button id="btn-clear-video" class="danger" type="button">Rimuovi video</button>
           <button id="btn-sync-first-skill" class="secondary">Sincronizza prima skill</button>
-          <button id="btn-copy-ffmpeg" class="secondary">Copia ffmpeg lossless</button>
+          <button id="btn-download-video-clip" class="secondary" title="Scarica gli eventi selezionati senza ricodifica, audio o overlay. I confini si adattano ai fotogrammi chiave.">Scarica taglio</button>
           <label class="auto-rotate-toggle">
             <input type="checkbox" id="video-playbyplay-toggle" />
             Play by play

@@ -265,6 +265,7 @@ function handleYoutubeUrlLoad(url) {
     }
     videoObjectUrl = "";
   }
+  videoLocalFile = null;
   clearCachedLocalVideo();
   if (elAnalysisVideo) {
     elAnalysisVideo.pause();
@@ -344,6 +345,7 @@ function clearLoadedVideo() {
     }
     videoObjectUrl = "";
   }
+  videoLocalFile = null;
   clearCachedLocalVideo();
   clearYoutubeSource();
   if (elAnalysisVideo) {

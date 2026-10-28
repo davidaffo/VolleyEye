@@ -583,7 +583,7 @@ Una volta sincronizzato il match:
 
 - posso cliccare su un evento e il video si sposta a quell'evento
 - posso usare il tasto play by play per vedere uno dopo l'altro gli eventi filtrati (il tempo di visualizzazione può essere modificato dall'apposito campo)
-- posso creare dei tagli video. Questo non viene fatto direttamente dal programma a causa dei limiti delle PWA, ma viene copiato un codice da usare con ffmpeg sul video originale per creare il taglio. Il comando copia il video senza ricodifica (lossless), senza audio né overlay, e unisce i segmenti selezionati. Il taglio veloce può iniziare dal fotogramma chiave precedente al punto richiesto.
+- posso selezionare gli eventi e usare **Scarica taglio** per ottenere un unico file video direttamente dal browser, anche offline dopo il caricamento dell’app. Serve un video locale: i link YouTube non sono esportabili. Il video mantiene la qualità originale senza ricodifica, audio o overlay. I confini dei segmenti si adattano ai fotogrammi chiave: l’inizio può essere anticipato e la fine posticipata. Il nome proposto usa il preset video attivo; il formato di uscita è MP4 o MKV in base al codec originale.
 
 ---
 

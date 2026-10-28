@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const playback = readFileSync(new URL('../js/scout/video/playback.js', import.meta.url), 'utf8');
 const events = readFileSync(new URL('../js/scout/video/video-events.js', import.meta.url), 'utf8');
-const source = events.slice(events.indexOf('function getFileBasename'), events.indexOf('function buildFfmpegConcatCommand')) +
+const source = events.slice(events.indexOf('function getFileBasename'), events.indexOf('async function downloadVideoFromSelection')) +
   playback.slice(playback.indexOf('async function saveCurrentVideoFrame'), playback.indexOf('function seekVideoToTime'));
 
 function setup() {

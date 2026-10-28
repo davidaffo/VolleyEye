@@ -261,6 +261,7 @@ function updateVideoScoutModeLayout() {
   }
 }
 let videoObjectUrl = "";
+let videoLocalFile = null;
 let ytPlayer = null;
 let ytApiPromise = null;
 let ytPlayerReady = false;
