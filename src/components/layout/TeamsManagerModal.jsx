@@ -121,7 +121,6 @@ export function TeamsManagerModal() {
   return (
     <ModalDialog
       id="teams-manager-modal"
-      className="settings-modal"
       aria-labelledby="teams-manager-title"
       open={view.open}
       onClose={() => run("closeTeamsManagerModal")}
@@ -131,12 +130,7 @@ export function TeamsManagerModal() {
         className: "settings-modal__content teams-manager__content",
       }}
       title={<h3 id="teams-manager-title">Gestione squadre</h3>}
-      closeProps={{
-        id: "teams-manager-close",
-        className: "pill-remove",
-        "aria-label": "Chiudi",
-        onClick: () => run("closeTeamsManagerModal"),
-      }}
+      closeProps={{ id: "teams-manager-close" }}
       bodyProps={{ className: "settings-modal__body teams-manager__body" }}
     >
       <div className="teams-manager-row">

@@ -1,8 +1,6 @@
+import { getScoutAttackTypeOptions } from "./skill-control-model.js";
 import { getScoutSkillCodes } from "./skill-control-model.js";
-import {
-  selectScoutServeType,
-  startQueuedSetterAttack,
-} from "./skill-actions.js";
+import { selectScoutServeType, startQueuedSetterAttack } from "./selection-commands.js";
 import {
   makePlayerKey,
   getEnabledSkillsForScope,
@@ -10,36 +8,15 @@ import {
   isPlayerKeyInScope,
 } from "../teams/selectors.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
-import {
-  getAttackMetaForPlayer,
-  getActiveAttackKeyForScope,
-  getSelectedSkillForScope,
-  getNetBlockPromptScope,
-  isForcedBlockScope,
-  getServerPlayerForScope,
-  isPostServeLockForScope,
-  getActiveServerName,
-  getAutoFlowState,
-  shouldSkipBlockConfirm,
-  resolveFlowSkillForScope,
-  isBlockEligibleForScope,
-  isSetterPlayerForScope,
-} from "../live/flow-model.js";
-import { setSelectedSkillForScope } from "../live/game-flow.js";
-import {
-  clearServeTypeInlineListener,
-  getServeBaseZoneForPlayer,
-  clearAttackSelection,
-  bindServeTypeInlineListener,
-  shouldPromptAttackSetType,
-} from "../live/skill-selection.js";
+import { getAttackMetaForPlayer, getActiveAttackKeyForScope, getSelectedSkillForScope, getNetBlockPromptScope, isForcedBlockScope, getServerPlayerForScope, isPostServeLockForScope, getActiveServerName, getAutoFlowState, shouldSkipBlockConfirm, resolveFlowSkillForScope, isBlockEligibleForScope, isSetterPlayerForScope } from "../live/flow-model.js";
+import { setSelectedSkillForScope } from "../live/flow-model.js";
+import { clearServeTypeInlineListener, bindServeTypeInlineListener } from "./serve-keyboard.js";
+import { getServeBaseZoneForPlayer, clearAttackSelection, shouldPromptAttackSetType } from "./selection-state.js";
 
 import { session as matchState } from "../../../js/globals.js";
 
 import { scheduleRenderPlayers } from "../live/live-entry.js";
 import { normalizeSetTypeValue } from "../../domain/skill-values.js";
-import { formatSetTypeLabelWithShortcut } from "../live/scout-shortcuts.js";
-import { session as liveScoreAndSetState } from "../state/live-live-score-and-set.js";
 import { getCodeTone } from "../settings/rules.js";
 
 export function prepareScoutSkillControls(
@@ -243,14 +220,10 @@ export function prepareScoutSkillControls(
             { value: queued, label: "Attacco", queued: true, main: true },
           ],
         });
-      const options = isSetterPlayerForScope(scope, playerIdx)
-        ? [{ value: "Damp", label: "Damp" }]
-        : liveScoreAndSetState.DEFAULT_SET_TYPE_OPTIONS;
       return finish("attack-types", {
-        options: options.map((option) => ({
-          value: option.value,
-          label: formatSetTypeLabelWithShortcut(option.value, option.label),
-        })),
+        options: getScoutAttackTypeOptions(
+          isSetterPlayerForScope(scope, playerIdx),
+        ),
       });
     }
     return finish("attack-types", {

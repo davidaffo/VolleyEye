@@ -87,6 +87,7 @@ export function refreshReactCompareSections(index, other, nodes) {
       index,
       nodes.attackBody,
       other,
+      { comparison: true },
     );
   if (nodes.charts) {
     skillAnalysisState.skillChartToneColorCache = null;
@@ -98,7 +99,7 @@ export function refreshReactCompareSections(index, other, nodes) {
         scope === "opponent"
           ? formatNameWithNumberFor(players[index], numbers)
           : formatNameWithNumber(players[index]);
-    analysisTableStore.publish(nodes.charts.id, {
+    analysisTableStore.publish(nodes.charts, {
       charts: buildPlayerSkillChartModels({
         scope,
         playerIdx: index,

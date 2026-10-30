@@ -13,16 +13,12 @@ import {
   getSetterFromEvent,
 } from "./filter-model.js";
 import { toggleFilterVisibility } from "./filter-view.js";
-import { session as rosterLineupState } from "../state/roster-lineup.js";
+
 import { getPlayerAnalysisPlayerIdx } from "./player-model.js";
 
 import { session as liveScoreAndSetState } from "../state/live-live-score-and-set.js";
-import { publishReactPreviousSkill } from "./filter-view.js";
-import {
-  publishReactDistributionGrid,
-  publishReactAttackOutcomes,
-  publishReactPlayerSecondTable,
-} from "./setting-view.js";
+import { readReactFilterSelect, publishReactPreviousSkill } from "./filter-view.js";
+import { publishReactPlayerSecondTable } from "./setting-view.js";
 
 export function syncPlayerSecondFilterState() {
   syncFilterSelections(
@@ -30,8 +26,7 @@ export function syncPlayerSecondFilterState() {
     getFilterFields("playerSecondFilterState"),
   );
   analysisFiltersState.playerSecondFilterState.prevSkill =
-    (rosterLineupState.elPlayerSecondFilterPrev &&
-      rosterLineupState.elPlayerSecondFilterPrev.value) ||
+    readReactFilterSelect("player-second-filter-prev") ||
     "any";
 }
 
@@ -42,14 +37,12 @@ export function handlePlayerSecondFilterChange() {
 
 export function resetPlayerSecondFilters() {
   clearFilterSelections(analysisFiltersState.playerSecondFilterState);
-  if (rosterLineupState.elPlayerSecondFilterPrev)
-    rosterLineupState.elPlayerSecondFilterPrev.value = "any";
   renderPlayerSecondFilters();
   renderPlayerSecondTable();
 }
 
 export function renderPlayerSecondFilters() {
-  if (!rosterLineupState.elPlayerSecondFilterSetTypes) return;
+
   const playerIdx = getPlayerAnalysisPlayerIdx();
   const attackEvents = getAnalysisEvents().filter((ev) => {
     if (!ev || ev.skillId !== "attack") return false;
@@ -93,67 +86,27 @@ export function renderPlayerSecondFilters() {
     handlePlayerSecondFilterChange,
   );
   toggleFilterVisibility(
-    rosterLineupState.elPlayerSecondFilterPrev,
+    "player-second-filter-prev",
     attackEvents.length > 0,
   );
   toggleFilterVisibility(
-    rosterLineupState.elPlayerSecondFilterReset,
+    "player-second-filter-reset",
     visibleFilters.some(Boolean),
   );
   publishReactPreviousSkill(
-    rosterLineupState.elPlayerSecondFilterPrev,
+    "player-second-filter-prev",
     analysisFiltersState.playerSecondFilterState.prevSkill,
     handlePlayerSecondFilterChange,
   );
 }
 
-export function renderDistributionGrid(targetEl, events, compareEvents = null) {
-  if (!targetEl) return;
-
-  return publishReactDistributionGrid(targetEl, events, compareEvents);
-}
-
 export function renderPlayerSecondTable() {
-  if (!rosterLineupState.elPlayerSecondBody) return;
+
   renderPlayerSecondFilters();
-  renderSecondTableForPlayer(
-    rosterLineupState.elPlayerSecondBody,
-    rosterLineupState.elPlayerSecondDistribution,
+  publishReactPlayerSecondTable(
+    "player-second-body",
+    "player-second-distribution",
     getPlayerAnalysisPlayerIdx(),
-    document.getElementById("player-second-attack-body"),
-  );
-}
-
-export function renderAttackOutcomesSummaryTable(
-  targetBody,
-  rows,
-  {
-    emptyText = "Nessun attacco trovato.",
-    totalLabel = "Totale attacchi",
-  } = {},
-) {
-  if (!targetBody) return;
-
-  return publishReactAttackOutcomes(targetBody, rows, {
-    emptyText,
-    totalLabel,
-  });
-}
-
-export function renderSecondTableForPlayer(
-  targetBody,
-  targetDistribution,
-  playerIdx,
-  targetAttackBody = null,
-  comparePlayerIdx = null,
-) {
-  if (!targetBody) return;
-
-  return publishReactPlayerSecondTable(
-    targetBody,
-    targetDistribution,
-    playerIdx,
-    targetAttackBody,
-    comparePlayerIdx,
+    "player-second-attack-body",
   );
 }

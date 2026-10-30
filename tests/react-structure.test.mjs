@@ -82,7 +82,7 @@ test('analysis models and publishers have acyclic dependencies without UI contro
   const { readFileSync } = await import('node:fs');
   const { resolve, dirname } = await import('node:path');
   const { parsers } = await import('prettier/plugins/babel');
-  const roots = ['cache-model', 'reset-model', '../scout/skill-control-model', '../scout/court-model', '../scout/pick-model', '../teams/court-state-model', '../events/edit-model', '../events/table-model', '../events/display-model', '../events/selection-model', '../video/event-model', '../video/sort-model', '../video/playback-model', 'player-snapshot-model', 'video-filter-model', '../video/overlay-model', 'summary-model', 'chart-model', 'skill-chart-model', 'score-model', 'timeline-model', 'trajectory-model', 'player-trajectory-model', 'setting-model', 'player-setting-model', 'match-sheet-model', 'setting-view', 'trajectory-view', 'match-sheet-view', 'filter-view'];
+  const roots = ['../video/reset-model', '../scout/selection-state', '../scout/serve-keyboard', '../players/database-model', 'stats-model', '../../domain/analysis-filter-schema', '../teams/player-reference-model', 'cache-model', 'reset-model', '../scout/skill-control-model', '../scout/court-model', '../scout/pick-model', '../teams/court-state-model', '../events/edit-model', '../events/table-model', '../events/display-model', '../events/selection-model', '../video/event-model', '../video/sort-model', '../video/playback-model', 'player-snapshot-model', 'video-filter-model', '../video/overlay-model', 'summary-model', 'chart-model', 'skill-chart-model', 'score-model', 'timeline-model', 'trajectory-model', 'player-trajectory-model', 'setting-model', 'player-setting-model', 'match-sheet-model', 'setting-view', 'trajectory-view', 'match-sheet-view', 'filter-view'];
   const visited = new Set(), active = new Set();
   function visit(file, allowPublish = false) {
     const key = `${allowPublish}:${file}`;
@@ -91,14 +91,23 @@ test('analysis models and publishers have acyclic dependencies without UI contro
     active.add(file);
     const ast = parsers.babel.parse(readFileSync(file, 'utf8')).program;
     for (const node of ast.body.filter(node => node.type === 'ImportDeclaration')) {
-      for (const specifier of node.specifiers) assert.ok(!(allowPublish ? /^(render|openReact|changeReact|setActive)/ : /^(render|publish|openReact|changeReact|setActive)/).test(specifier.imported?.name || ''), `${file}: imports UI action ${specifier.imported?.name}`);
+      for (const specifier of node.specifiers) {
+        const name = specifier.imported?.name || '';
+        const filterPublishers = {
+          './filter-view.js': ['renderDynamicFilter', 'renderAnalysisCourtSideRadios'],
+          './shared-filter-view.js': ['renderAnalysisTeamFilter'],
+          './filter-controls.js': ['renderFilterControls'],
+        };
+        const filterPublisher = allowPublish && filterPublishers[node.source.value]?.includes(name);
+        assert.ok(filterPublisher || !(allowPublish ? /^(render|openReact|changeReact|setActive)/ : /^(render|publish|openReact|changeReact|setActive)/).test(name), `${file}: imports UI action ${name}`);
+      }
       if (node.source.value.startsWith('.')) visit(resolve(dirname(file), node.source.value), allowPublish);
     }
     active.delete(file);
     visited.add(key);
   }
   for (const name of roots) visit(resolve(`src/features/analysis/${name}.js`));
-  for (const name of ['../scout/court-view', 'player-view', 'video-preset-view', 'multiscout-view', '../settings/metrics-view', '../video/view']) visit(resolve(`src/features/analysis/${name}.js`), true);
+  for (const name of ['../players/database-view', 'trajectory-filters', 'video-filters', 'shared-filter-view', '../scout/court-view', 'player-view', 'video-preset-view', 'multiscout-view', '../settings/metrics-view', '../video/view']) visit(resolve(`src/features/analysis/${name}.js`), true);
 });
 
 test('aggregated headers describe cloneable commands instead of closing over controllers', async () => {
@@ -169,14 +178,14 @@ test('shared filters preserve string selections and route changes through their 
   const previous = filterStore.getSnapshot();
   const calls = [];
   try {
-    publishReactFilter({ id }, [{ value: 1, label: 'Uno' }, { value: 2, label: 'Due' }], new Set([1]), { onChange: event => calls.push(['single', event]) });
-    assert.deepEqual(readReactFilterValues({ id }, true), [1]);
+    publishReactFilter(id, [{ value: 1, label: 'Uno' }, { value: 2, label: 'Due' }], new Set([1]), { onChange: event => calls.push(['single', event]) });
+    assert.deepEqual(readReactFilterValues(id, true), [1]);
     const event = { type: 'change' };
     filterStore.getView(id).onChange('2', true, event);
-    assert.deepEqual(readReactFilterValues({ id }, true), [1, 2]);
-    publishReactSplitFilter({ id }, [{ scope: 'our', options: [{ value: 'our:1', label: 'Casa' }] }, { scope: 'opponent', options: [{ value: 'opponent:1', label: 'Ospiti' }] }], new Set(['our:1']), e => calls.push(['split', e]));
+    assert.deepEqual(readReactFilterValues(id, true), [1, 2]);
+    publishReactSplitFilter(id, [{ scope: 'our', options: [{ value: 'our:1', label: 'Casa' }] }, { scope: 'opponent', options: [{ value: 'opponent:1', label: 'Ospiti' }] }], new Set(['our:1']), e => calls.push(['split', e]));
     filterStore.getView(id).onChange('opponent:1', true, event);
-    assert.deepEqual(readReactFilterValues({ id }), ['our:1', 'opponent:1']);
+    assert.deepEqual(readReactFilterValues(id), ['our:1', 'opponent:1']);
     assert.deepEqual(calls, [['single', event], ['split', event]]);
   } finally { filterStore.replace(previous); }
 });

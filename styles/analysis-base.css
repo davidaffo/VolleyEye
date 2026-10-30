@@ -1,9 +1,3 @@
-.analysis-tools {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-left: auto;
-}
 .base-modal__grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -64,13 +58,6 @@ body.desktop-court-modal.desktop-court-modal-open #court-overlay {
   pointer-events: auto;
   z-index: 260;
 }
-.bench-inline-list {
-  padding: 0.05rem 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.2rem 0.35rem;
-  width: 100%;
-}
 .libero-inline {
   display: flex;
   align-items: center;
@@ -93,9 +80,6 @@ body.desktop-court-modal.desktop-court-modal-open #court-overlay {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-}
-.undo-controls button {
-  flex: 0 0 220px;
 }
 #players-container,
 #opponent-players-container {
@@ -170,14 +154,12 @@ body[data-theme="light"] .player-card {
   z-index: 0;
 }
 .court-card.has-player-photo .court-role-tag,
-.court-card.has-player-photo .court-libero-pill,
-.court-card.has-player-photo .libero-replace-pill {
+.court-card.has-player-photo .court-libero-pill {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
 }
 .court-card .skill-picker-btn,
 .court-card .event-btn,
-.court-card .libero-return-btn,
-.court-card .clear-slot {
+.court-card .libero-return-btn {
   background: rgba(15, 23, 42, 0.32) !important;
 }
 .court-card .player-skill-cancel {
@@ -235,8 +217,7 @@ body[data-theme="light"] .player-card {
 }
 .court-card .skill-picker-btn:hover,
 .court-card .event-btn:hover,
-.court-card .libero-return-btn:hover,
-.court-card .clear-slot:hover {
+.court-card .libero-return-btn:hover {
   background: rgba(37, 99, 235, 0.42) !important;
 }
 .court-card .skill-picker-btn.skill-serve:hover {
@@ -321,8 +302,7 @@ body[data-theme="light"] .court-card.compact-card {
 }
 body[data-theme="light"] .court-card .skill-picker-btn,
 body[data-theme="light"] .court-card .event-btn,
-body[data-theme="light"] .court-card .libero-return-btn,
-body[data-theme="light"] .court-card .clear-slot {
+body[data-theme="light"] .court-card .libero-return-btn {
   background: rgba(255, 255, 255, 0.38) !important;
 }
 body[data-theme="light"] .court-card .player-skill-cancel {
@@ -345,8 +325,7 @@ body[data-theme="light"] .court-card .event-btn.block-confirm-go {
 }
 body[data-theme="light"] .court-card .skill-picker-btn:hover,
 body[data-theme="light"] .court-card .event-btn:hover,
-body[data-theme="light"] .court-card .libero-return-btn:hover,
-body[data-theme="light"] .court-card .clear-slot:hover {
+body[data-theme="light"] .court-card .libero-return-btn:hover {
   background: rgba(37, 99, 235, 0.28) !important;
 }
 .court-card.compact-card {
@@ -395,10 +374,6 @@ body[data-theme="light"] .court-card.empty::after {
   align-items: center;
   gap: 0.35rem;
   font-weight: 600;
-}
-.court-header .clear-slot {
-  margin-left: 0;
-  align-self: center;
 }
 .court-header .court-tagbar {
   display: inline-flex;
@@ -456,25 +431,8 @@ body[data-theme="light"] .court-role-tag {
   flex: 1 1 auto;
   min-width: 0;
 }
-.libero-replace-pill {
-  font-size: 0.78rem;
-  padding: 0.1rem 0.45rem;
-  border-radius: 999px;
-  background: #0f172a;
-  border: 1px dashed #38bdf8;
-  color: #bfe5ff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 .libero-return-btn {
   padding: 0.15rem 0.45rem;
-  line-height: 1;
-}
-body[data-theme="light"] .libero-replace-pill {
-  background: #eef5ff;
-  border-color: #60a5fa;
-  color: #0f172a;
 }
 .court-card.libero-card {
   background: #0b2a2a;
@@ -541,11 +499,6 @@ body[data-theme="light"] .court-libero-pill {
   border-color: #22c55e;
   color: #065f46;
 }
-.clear-slot {
-  padding: 0.25rem 0.4rem;
-  min-width: auto;
-  font-size: 0.85rem;
-}
 .court-card.pos-1 { grid-area: pos1; }
 .court-card.pos-2 { grid-area: pos2; }
 .court-card.pos-3 { grid-area: pos3; }
@@ -560,9 +513,6 @@ body[data-theme="light"] .court-libero-pill {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.2rem;
-}
-.skill-row-pair.stacked {
-  grid-template-columns: 1fr;
 }
 .skill-row-pair .skill-row {
   background: #0f0f0f;
@@ -588,9 +538,6 @@ body[data-theme="light"] .skill-row-pair .skill-row {
 body[data-theme="light"] .skill-row {
   background: #f8fafc;
   border: 1px solid #dfe3eb;
-}
-.skill-row.error-row {
-  padding: 0.12rem 0.2rem;
 }
 .skill-grid,
 .code-grid {
@@ -702,20 +649,6 @@ body[data-theme="light"] .skill-row {
   min-width: 44px;
   padding: 0.34rem 0.52rem;
   font-size: 1rem;
-}
-.error-row .skill-buttons {
-  flex-wrap: wrap;
-  justify-content: stretch;
-}
-.error-row .skill-buttons button {
-  flex: 1 1 100%;
-  min-width: 0;
-  padding: 0.2rem 0.35rem;
-  font-size: 0.86rem;
-}
-.event-btn.disabled-code {
-  opacity: 0.35;
-  pointer-events: none;
 }
 .event-btn {
   background: #2d6cdf;
@@ -956,155 +889,13 @@ body[data-theme="light"] .event-btn.code-negative:hover {
   flex: 2 1 320px;
   min-width: 220px;
 }
-.player-management {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  padding: 0.65rem 0.8rem;
-  border: 1px solid #1f2937;
-  border-radius: 0.75rem;
-  background: rgba(15, 23, 42, 0.3);
-}
-.player-management.our-team {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
-}
-.player-management.opponent-team {
-  border-color: #dc2626;
-  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.15);
-}
-.player-management.feature-disabled {
-  position: relative;
-  opacity: 0.55;
-  filter: grayscale(1);
-  pointer-events: none;
-}
-.player-management.feature-disabled::after {
-  content: "Funzionalità non ancora implementata";
-  position: absolute;
-  inset: 0.65rem;
-  border: 1px dashed #f87171;
-  color: #fecdd3;
-  background: rgba(17, 17, 17, 0.8);
-  border-radius: 0.6rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  text-align: center;
-  letter-spacing: 0.01em;
-  padding: 0.75rem;
-  pointer-events: none;
-}
-body[data-theme="light"] .player-management {
-  border-color: #e2e8f0;
-  background: #f8fafc;
-}
-body[data-theme="light"] .player-management.our-team {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
-}
-body[data-theme="light"] .player-management.opponent-team {
-  border-color: #dc2626;
-  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.18);
-}
-body[data-theme="light"] .player-management.feature-disabled::after {
-  background: rgba(255, 255, 255, 0.9);
-  color: #b91c1c;
-  border-color: #ef4444;
-}
-.feature-disabled-note {
-  color: #fca5a5;
-}
-.add-player-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: flex-end;
-}
-.add-player-inline {
-  display: flex;
-  gap: 0.35rem;
-  align-items: center;
-}
-.add-player-inline input {
-  flex: 1 1 auto;
-}
 .team-manage {
   margin-top: 0.25rem;
-}
-.team-manage-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.8rem;
-  margin-top: 0.5rem;
-}
-.team-manage-col {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  padding: 0.6rem;
-  border: 1px solid #1f2937;
-  border-radius: 0.6rem;
-  background: #0b1224;
-}
-.team-manage-col.opponent-settings {
-  background: #4c1d1d;
-  border-color: #7f1d1d;
-}
-.team-manage-col h4 {
-  margin: 0;
-}
-.team-manage-col select {
-  padding: 0.45rem 0.5rem;
-  border-radius: 6px;
-  border: 1px solid #1f2937;
-  background: #0f172a;
-  color: #e2e8f0;
-}
-.team-manage-actions {
-  margin-top: 0.6rem;
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
 }
 .opponent-skill-toggles {
   display: flex;
   flex-wrap: wrap;
   gap: 0.3rem 0.8rem;
 }
-.opponent-settings.hidden {
-  display: none;
-}
-.team-row {
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-.team-row + .team-row {
-  margin-top: 0.35rem;
-}
-.team-row select {
-  flex: 2 1 180px;
-}
-.team-row button {
-  flex: 1 1 120px;
-}
-body[data-theme="light"] .team-manage-col {
-  background: #ffffff;
-  border-color: #e5e7eb;
-}
-body[data-theme="light"] .team-manage-col.opponent-settings {
-  background: #fee2e2;
-  border-color: #fecaca;
-}
-body[data-theme="light"] .team-manage-col select {
-  background: #ffffff;
-  border-color: #e5e7eb;
-  color: #0f172a;
-}
 @media (max-width: 900px) {
-  .team-manage-grid {
-    grid-template-columns: 1fr;
   }
-}

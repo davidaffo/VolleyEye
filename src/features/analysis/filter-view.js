@@ -1,17 +1,31 @@
 import { filterStore } from "../../state/filter-store.mjs";
 import { getTeamNameForScope } from "../teams/selectors.js";
 import { session as liveScoreAndSetState } from "../state/live-live-score-and-set.js";
+// Commands keep publishers independent of the controllers that handle the gesture.
+function filterInteraction(id, handler) {
+  if (handler && typeof handler === "object") {
+    return { changeAction: handler, onChange: null };
+  }
+  return {
+    changeAction: null,
+    onChange: (value, checked, event) => {
+      filterStore.change(id, value, checked);
+      if (typeof handler === "function") handler(event);
+    },
+  };
+}
+
 export function publishReactFilter(
-  container,
+  id,
   options,
   selectedSet,
   config = {},
 ) {
-  const id = container.id,
-    type = config.type || "checkbox",
+  const type = config.type || "checkbox",
     selected = Object.freeze([...selectedSet].map(String));
   filterStore.publish(id, {
     type,
+    visible: filterStore.getView(id).visible,
     name: config.name,
     groups: Object.freeze([]),
     options: Object.freeze(
@@ -19,23 +33,19 @@ export function publishReactFilter(
     ),
     selected,
     value: selected[0] || null,
-    onChange: (value, checked, event) => {
-      filterStore.change(id, value, checked);
-      const callback = config.onChange;
-      if (typeof callback === "function") callback(event);
-    },
+    ...filterInteraction(id, config.changeAction || config.onChange),
   });
 }
 
 export function publishReactSplitFilter(
-  container,
+  id,
   groups,
   selectedSet,
   onChange,
 ) {
-  const id = container.id;
   filterStore.publish(id, {
     type: "checkbox",
+    visible: filterStore.getView(id).visible,
     options: Object.freeze([]),
     groups: Object.freeze(
       groups.map((group) =>
@@ -49,15 +59,12 @@ export function publishReactSplitFilter(
       ),
     ),
     selected: Object.freeze([...selectedSet].map(String)),
-    onChange: (value, checked, event) => {
-      filterStore.change(id, value, checked);
-      onChange(event);
-    },
+    ...filterInteraction(id, onChange),
   });
 }
 
-export function readReactFilterValues(container, asNumber = false) {
-  const view = filterStore.getView(container.id),
+export function readReactFilterValues(id, asNumber = false) {
+  const view = filterStore.getView(id),
     options = view.groups.length
       ? view.groups.flatMap((group) => group.options)
       : view.options;
@@ -66,14 +73,14 @@ export function readReactFilterValues(container, asNumber = false) {
     .map((option) => (asNumber ? Number(option.value) : String(option.value)));
 }
 
-export function readReactFilterSelect(container) {
-  return filterStore.getView(container.id).value;
+export function readReactFilterSelect(id) {
+  return filterStore.getView(id).value;
 }
 
-export function publishReactPreviousSkill(container, value, onChange) {
-  const id = container.id;
+export function publishReactPreviousSkill(id, value, onChange) {
   filterStore.publish(id, {
     type: "select",
+    visible: filterStore.getView(id).visible,
     groups: Object.freeze([]),
     selected: Object.freeze([]),
     value: value || "any",
@@ -82,77 +89,54 @@ export function publishReactPreviousSkill(container, value, onChange) {
         Object.freeze({ ...option }),
       ),
     ),
-    onChange: (value, checked, event) => {
-      filterStore.change(id, value, checked);
-      onChange(event);
-    },
+    ...filterInteraction(id, onChange),
   });
 }
 
-export function buildFilterOptions(
-  container,
-  options,
-  selectedSet,
-  { asNumber = false, onChange } = {},
-) {
-  if (!container) return;
-
-  publishReactFilter(container, options, selectedSet, { asNumber, onChange });
-  return;
-}
-
-export function toggleFilterVisibility(container, shouldShow) {
-  if (!container) return;
-  const wrapper = container.closest(".analysis-filter");
-  if (!wrapper) return;
-  wrapper.style.display = shouldShow ? "" : "none";
+export function toggleFilterVisibility(id, visible) {
+  if (!id) return;
+  filterStore.publish(id, { ...filterStore.getView(id), visible });
 }
 
 export function renderDynamicFilter(
-  container,
+  id,
   options,
   selectedSet,
   config = {},
 ) {
   const shouldShow = Array.isArray(options) && options.length > 0;
-  if (!shouldShow) {
-    if (selectedSet && typeof selectedSet.clear === "function")
-      selectedSet.clear();
-    publishReactFilter(container, [], selectedSet, config);
-  }
-  toggleFilterVisibility(container, shouldShow);
-  if (shouldShow) {
-    buildFilterOptions(container, options, selectedSet, config);
-  }
+  if (!shouldShow) selectedSet.clear();
+  publishReactFilter(id, shouldShow ? options : [], selectedSet, config);
+  toggleFilterVisibility(id, shouldShow);
   return shouldShow;
 }
 
-export function getCheckedValues(container, { asNumber = false } = {}) {
-  if (!container) return [];
+export function getCheckedValues(id, { asNumber = false } = {}) {
+  if (!id) return [];
 
-  return readReactFilterValues(container, asNumber);
+  return readReactFilterValues(id, asNumber);
 }
 
-export function getCheckedRadioValue(container) {
-  if (!container) return null;
+export function getCheckedRadioValue(id) {
+  if (!id) return null;
 
-  return readReactFilterSelect(container);
+  return readReactFilterSelect(id);
 }
 
 export function renderAnalysisCourtSideRadios(
-  container,
+  id,
   selectedValue,
   onChange,
   groupName,
 ) {
-  if (!container) return;
-  const name = groupName || container.id || "analysis-court-side";
+  if (!id) return;
+  const name = groupName || id;
   const options = [
     { value: "near", label: "Vicino" },
     { value: "far", label: "Lontano" },
   ];
 
-  publishReactFilter(container, options, new Set([selectedValue]), {
+  publishReactFilter(id, options, new Set([selectedValue]), {
     type: "radio",
     name,
     onChange,

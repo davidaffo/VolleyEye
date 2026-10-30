@@ -9,7 +9,7 @@ import {
 
 import { skillCells } from "./table-cells.js";
 import { analysisTableStore } from "../../state/analysis-table-store.mjs";
-import { session as rosterLineupState } from "../state/roster-lineup.js";
+
 
 import { getFilteredSecondEvents } from "./setting-model.js";
 import {
@@ -44,12 +44,11 @@ import { resolvePlayerIdx } from "../events/player-links.js";
 export function publishReactSecondTable() {
   const viewRows = [];
   const publish = () =>
-    analysisTableStore.publish(rosterLineupState.elAggSecondBody.id, {
+    analysisTableStore.publish("agg-second-body", {
       rows: viewRows,
     });
-  if (!rosterLineupState.elAggSecondBody) return;
 
-  const aggSecondAttackBody = document.getElementById("agg-second-attack-body");
+const aggSecondAttackBody = "agg-second-attack-body";
   const analysisScope = getAnalysisTeamScope();
   const analysisPlayers = getPlayersForScope(analysisScope);
   const analysisNumbers = getPlayerNumbersForScope(analysisScope);
@@ -148,7 +147,7 @@ export function publishReactAttackOutcomes(
   if (!targetBody) return;
   const viewRows = [];
   const publish = () =>
-    analysisTableStore.publish(targetBody.id, { rows: viewRows });
+    analysisTableStore.publish(targetBody, { rows: viewRows });
   if (!rows || rows.length === 0) {
     viewRows.push({ cells: [{ text: emptyText, colspan: 11 }] });
     publish();
@@ -170,18 +169,17 @@ export function publishReactPlayerSecondTable(
   playerIdx,
   targetAttackBody = null,
   comparePlayerIdx = null,
+  { comparison = false } = {},
 ) {
   if (!targetBody) return;
   const viewRows = [];
   const publish = () =>
-    analysisTableStore.publish(targetBody.id, { rows: viewRows });
+    analysisTableStore.publish(targetBody, { rows: viewRows });
   const attackOutcomeBody = targetAttackBody;
   const analysisScope = getAnalysisTeamScope();
   const players = getPlayersForScope(analysisScope);
   const numbers = getPlayerNumbersForScope(analysisScope);
-  const isCompareTable = !!targetBody.closest(
-    ".player-analysis-compare-subsection",
-  );
+  const isCompareTable = comparison;
   const formatScopedPlayerName = (idx) =>
     analysisScope === "opponent"
       ? formatNameWithNumberFor(players[idx], numbers)
@@ -285,7 +283,7 @@ export function publishReactPlayerSecondTable(
         className: "rotation-row total",
         cells: totalCells,
       });
-      analysisTableStore.publish(attackOutcomeBody.id, {
+      analysisTableStore.publish(attackOutcomeBody, {
         rows: attackViewRows,
       });
     }
@@ -365,7 +363,7 @@ export function publishReactDistributionGrid(
   events,
   compareEvents = null,
 ) {
-  analysisTableStore.publish(target.id, {
+  analysisTableStore.publish(target, {
     cards: buildDistributionCards(events, compareEvents),
   });
 }

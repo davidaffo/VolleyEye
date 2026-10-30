@@ -17,7 +17,6 @@ body[data-theme="light"] {
   background: var(--light-canvas);
   color: var(--light-text);
 }
-
 /* App shell and navigation */
 body[data-theme="light"] .tabs-nav.floating {
   background: rgba(255, 255, 255, 0.94);
@@ -41,7 +40,6 @@ body[data-theme="light"] .lobby-theme-picker__label,
 body[data-theme="light"] .match-list-empty {
   color: var(--light-text-muted);
 }
-
 /* Native controls: include types that the former global rule missed. */
 body[data-theme="light"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
 body[data-theme="light"] textarea,
@@ -88,14 +86,11 @@ body[data-theme="light"] .theme-toggle button.active {
   color: #ffffff;
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
 }
-
 /* Lobby, saved matches, global settings and documentation */
 body[data-theme="light"] .match-manager-panel,
 body[data-theme="light"] .match-list,
 body[data-theme="light"] .global-settings-card,
-body[data-theme="light"] .import-panel,
-body[data-theme="light"] .manual-card,
-body[data-theme="light"] .manual-content section {
+body[data-theme="light"] .import-panel {
   background: var(--light-surface-muted);
   border-color: var(--light-border-soft);
   color: var(--light-text);
@@ -110,12 +105,6 @@ body[data-theme="light"] .match-list-item.active {
 body[data-theme="light"] .match-list-item:hover {
   background: #e2e8f0;
 }
-body[data-theme="light"] .manual-page,
-body[data-theme="light"] .manual-nav {
-  background: var(--light-surface);
-  border-color: var(--light-border-soft);
-  color: var(--light-text);
-}
 body[data-theme="light"] .update-banner {
   background: #eff6ff;
   border-color: #93c5fd;
@@ -126,13 +115,10 @@ body[data-theme="light"] .update-banner .small {
   color: #1e3a8a;
   border-color: #93c5fd;
 }
-
 /* Scout workspace, lineups and live log */
 body[data-theme="light"] .scout-widget,
 body[data-theme="light"] .court-actions-bar,
-body[data-theme="light"] .card-inline,
 body[data-theme="light"] .score-card,
-body[data-theme="light"] .lineup-live,
 body[data-theme="light"] .lineup-modal__court,
 body[data-theme="light"] .lineup-modal__bench,
 body[data-theme="light"] .next-set-bench {
@@ -152,20 +138,17 @@ body[data-theme="light"] .lineup-chip.drop-over {
   background: var(--light-primary-soft);
   border-color: var(--light-primary);
 }
-
 /* Neutral Scout controls. Fundamental colors live in skill-palette.css. */
 body[data-theme="light"] .court-card .skill-picker-btn,
 body[data-theme="light"] .court-card .event-btn,
-body[data-theme="light"] .court-card .libero-return-btn,
-body[data-theme="light"] .court-card .clear-slot {
+body[data-theme="light"] .court-card .libero-return-btn {
   background: #e2e8f0 !important;
   border-color: #cbd5e1 !important;
   color: #0f172a !important;
 }
 body[data-theme="light"] .court-card .skill-picker-btn:hover,
 body[data-theme="light"] .court-card .event-btn:hover,
-body[data-theme="light"] .court-card .libero-return-btn:hover,
-body[data-theme="light"] .court-card .clear-slot:hover {
+body[data-theme="light"] .court-card .libero-return-btn:hover {
   background: #dbeafe !important;
   border-color: #60a5fa !important;
   color: #1e3a8a !important;
@@ -212,7 +195,6 @@ body[data-theme="light"] .scout-widget:hover > .scout-widget-handle {
   background: #e2e8f0;
   color: var(--light-text);
 }
-
 /* Metrics and analysis navigation */
 body[data-theme="light"] .metric-block:not([class*="skill-"]),
 body[data-theme="light"] .agg-subpanel[data-agg-tab="skill-charts"],
@@ -251,12 +233,6 @@ body[data-theme="light"] .metric-toggle.toggle-off {
   background: #b91c1c;
   color: #ffffff;
 }
-body[data-theme="light"] .pill-name-input,
-body[data-theme="light"] .pill-number-input {
-  background: var(--light-surface);
-  border-color: var(--light-border);
-  color: var(--light-text);
-}
 body[data-theme="light"] .pill-remove {
   background: #e2e8f0;
   color: var(--light-text);
@@ -280,7 +256,6 @@ body[data-theme="light"] .base-modal-btn.player-role-libero {
   border-color: #5eead4 !important;
   color: #115e59 !important;
 }
-
 /* Charts, player analysis and trends */
 body[data-theme="light"] .set-trend-panel {
   --set-trend-plot-background: linear-gradient(to bottom, #bfdbfe 0%, #dbeafe 49.5%, #fee2e2 50.5%, #fecaca 100%);
@@ -364,7 +339,6 @@ body[data-theme="light"] .set-trend-detail__event-score {
   border-color: #93c5fd;
   color: #1e3a8a;
 }
-
 /* Play-by-play and match sheet */
 body[data-theme="light"] .play-by-play-row:hover {
   background: #eff6ff;
@@ -417,12 +391,10 @@ body[data-theme="light"] .match-sheet-notes label {
 body[data-theme="light"] .match-sheet-player.is-starter {
   background: #eff6ff;
 }
-
 /* Modals and team management */
 body[data-theme="light"] .settings-modal__content,
 body[data-theme="light"] .skill-modal__content,
-body[data-theme="light"] .team-modal__dialog,
-body[data-theme="light"] .floating-actions__content {
+body[data-theme="light"] .team-modal__dialog {
   background: var(--light-surface);
   border-color: var(--light-border);
   color: var(--light-text);
@@ -439,17 +411,14 @@ body[data-theme="light"] .skill-modal__close-abs {
 }
 body[data-theme="light"] .attack-trajectory-info,
 body[data-theme="light"] .set-type-shortcuts,
-body[data-theme="light"] .camp3-confirm-section,
-body[data-theme="light"] .floating-actions__block {
+body[data-theme="light"] .camp3-confirm-section {
   background: var(--light-surface-muted);
   border-color: var(--light-border-soft);
   color: var(--light-text);
 }
 body[data-theme="light"] .serve-type-buttons button,
 body[data-theme="light"] .set-type-btn,
-body[data-theme="light"] .sub-option-btn,
-body[data-theme="light"] .modal-skill-btn,
-body[data-theme="light"] .open-skill-btn.secondary {
+body[data-theme="light"] .modal-skill-btn {
   background: var(--light-surface-raised);
   border-color: var(--light-border);
   color: var(--light-text);
@@ -460,21 +429,10 @@ body[data-theme="light"] .set-type-btn.active {
   border-color: #1d4ed8;
   color: #ffffff;
 }
-body[data-theme="light"] .sub-option-btn .sub-libero-tag,
-body[data-theme="light"] .sub-option-btn.libero {
-  background: #e0f2fe;
-  border-color: #38bdf8;
-  color: #0c4a6e;
-}
 body[data-theme="light"] .teams-manager-list,
-body[data-theme="light"] .team-manager-default,
-body[data-theme="light"] .floating-actions__block {
+body[data-theme="light"] .team-manager-default {
   background: var(--light-surface-muted);
   border-color: var(--light-border-soft);
-}
-body[data-theme="light"] .default-lineup-chip.default-lineup-out {
-  background: #f1f5f9;
-  color: #475569;
 }
 body[data-theme="light"] #team-meta-name:disabled {
   background: #e5e7eb;
@@ -484,7 +442,6 @@ body[data-theme="light"] .team-manager-table th,
 body[data-theme="light"] .team-manager-table td {
   border-color: var(--light-border-soft);
 }
-
 /* Video controls and saved filters. The actual video canvas stays black. */
 body[data-theme="light"] .video-analysis .video-table-wrapper {
   background: var(--light-surface);
@@ -543,12 +500,6 @@ body[data-theme="light"] .agg-skill-codes th {
   background: var(--light-surface-raised);
   color: var(--light-text-muted);
 }
-body[data-theme="light"] .video-seek-link {
-  background: #eff6ff;
-  border-color: #93c5fd;
-  color: #1d4ed8;
-}
-
 /* Focus is visible on both keyboard and high-brightness displays. */
 body[data-theme="light"] :where(button, a, input, select, textarea):focus-visible {
   outline: 3px solid rgba(37, 99, 235, 0.38);

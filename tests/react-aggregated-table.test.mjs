@@ -162,18 +162,7 @@ for (const both of [false, true])
           },
         },
       });
-      const tableSource = read("../src/features/analysis/skill-tables.js");
       vm.runInContext(
-        extract(
-          tableSource,
-          "renderAggSummaryHeader",
-          "buildAggBodyHeaderRows",
-        ) +
-          extract(
-            tableSource,
-            "buildAggBodyHeaderRows",
-            "applySkillClassToCells",
-          ) +
           read("../src/domain/analysis-columns.js") +
           read("../src/features/analysis/table-cells.js") +
           read("../src/features/analysis/statistic-model.js") +

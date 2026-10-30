@@ -1,3 +1,4 @@
+import { emptyCounts } from "../../domain/counts.js";
 import { getBaseZoneForPlayer, ensureCourtShapeFor, cloneCourtLineup } from "./court-model.js";
 import { getPlayersForScope, getTeamScopeFromEvent, isServingForScope } from "./selectors.js";
 import { session as matchState, SKILLS } from "../../../js/globals.js";
@@ -377,14 +378,7 @@ export function initStats() {
   matchState.state.players.forEach((_, idx) => {
     matchState.state.stats[idx] = {};
     SKILLS.forEach((skill) => {
-      matchState.state.stats[idx][skill.id] = {
-        "#": 0,
-        "+": 0,
-        "!": 0,
-        "-": 0,
-        "=": 0,
-        "/": 0,
-      };
+      matchState.state.stats[idx][skill.id] = emptyCounts();
     });
   });
 }
@@ -687,4 +681,25 @@ export function getCurrentZoneForPlayer(
     if (displayIdx !== -1) return displayIdx + 1;
   }
   return getBaseZoneForPlayer(playerIdx, scope);
+}
+
+export function cleanCourtLiberoReplacementsForScope(scope = "our") {
+  const court = scope === "opponent" ? matchState.state.opponentCourt : matchState.state.court;
+  if (!Array.isArray(court)) return;
+  let changed = false;
+  const nextCourt = court.map(slot => {
+    const main = slot && slot.main ? slot.main : "";
+    const replaced = slot && slot.replaced ? slot.replaced : "";
+    if (replaced && (!main || !isLiberoForScope(main, scope))) {
+      changed = true;
+      return { main, replaced: "" };
+    }
+    return slot && typeof slot === "object" ? Object.assign({}, slot) : { main: "", replaced: "" };
+  });
+  if (!changed) return;
+  if (scope === "opponent") {
+    matchState.state.opponentCourt = nextCourt;
+  } else {
+    matchState.state.court = nextCourt;
+  }
 }

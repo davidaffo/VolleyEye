@@ -1,12 +1,11 @@
-import { TEMPLATE_TEAM } from "../../../js/globals.js";
+import { TEMPLATE_TEAM, session as matchState, downloadBlob } from "../../../js/globals.js";
 import { applyTheme } from "../teams/core/state-store.js";
-import { session as matchState, downloadBlob } from "../../../js/globals.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { setGlobalModalState } from "../layout/modals.js";
 import { loadTeamFromStorage, deleteTeamFromStorage, syncTeamsFromStorage, listTeamsFromStorage, saveTeamToStorage, compactTeamPayload, generatePlayerId, buildTemplatePlayersDetailed } from "../teams/storage/team-repository.js";
 import { openTeamManagerModal, openNewTeamManager, renderTeamManagerTable, buildRoleBasedDefaultLineup } from "../teams/editor/team-editor.js";
 import { closeTeamsManagerModal, renderTeamsManagerList } from "../live/team-management.js";
-import { renderTeamsSelect, renderOpponentTeamsSelect } from "../teams/storage/match-repository.js";
+import { publishTeamsManagerView } from "../teams/manager-view.js";
 import { session as rosterLineupState } from "../state/roster-lineup.js";
 import { buildFullName } from "../../domain/player-names.js";
 import { pastePlayersStore } from "../../state/roster-import-store.mjs";
@@ -25,7 +24,7 @@ export function openSelectedManagedTeam() {
       openTeamManagerModal({ scope: "our", storageOnly: true, source: team });
       return;
       matchState.state.selectedTeam = name;
-      renderTeamsSelect();
+      publishTeamsManagerView();
       closeTeamsManagerModal();
       openTeamManagerModal("our");
 }
@@ -37,8 +36,8 @@ export function deleteSelectedManagedTeam() {
       if (!ok) return;
       deleteTeamFromStorage(name);
       syncTeamsFromStorage();
-      renderTeamsSelect();
-      renderOpponentTeamsSelect();
+      publishTeamsManagerView();
+
       renderTeamsManagerList();
 }
 
@@ -67,8 +66,8 @@ export function duplicateSelectedManagedTeam() {
         return;
       }
       syncTeamsFromStorage();
-      renderTeamsSelect();
-      renderOpponentTeamsSelect();
+      publishTeamsManagerView();
+
       scoutUiState.teamsManagerSelectedName = newName;
       renderTeamsManagerList();
 }
@@ -154,8 +153,7 @@ export function generateManagedTeamTemplate() {
 
 export function openManagedPlayersPaste() {
   const elPastePlayersModal=document.getElementById("paste-players-modal");
-  
+
     pastePlayersStore.publish({open:true,text:""});setGlobalModalState(true);return;
-  
-      
+
 }

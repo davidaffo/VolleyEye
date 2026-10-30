@@ -1,8 +1,9 @@
+import { getScoutAttackTypeOptions } from "./skill-control-model.js";
 import {
   buildPreparedScoutSkillView,
   getScoutSkillCodes,
 } from "./skill-control-model.js";
-import { selectScoutServeType, startScoutAttack } from "./skill-actions.js";
+import { selectScoutServeType, startScoutAttack } from "./selection-commands.js";
 import { SKILLS } from "../../../js/globals.js";
 import { skillModalStore } from "../../state/skill-modal-store.mjs";
 import { isDesktopCourtModalLayout } from "../layout/modals.js";
@@ -32,17 +33,10 @@ import {
   isSetterPlayerForScope,
 } from "../live/flow-model.js";
 import { session as matchState } from "../../../js/globals.js";
-import {
-  clearServeTypeInlineListener,
-  clearAttackSelection,
-  setServeTypeFocusPlayer,
-  bindServeTypeInlineListener,
-  shouldPromptAttackSetType,
-} from "../live/skill-selection.js";
+import { clearServeTypeInlineListener, setServeTypeFocusPlayer, bindServeTypeInlineListener } from "./serve-keyboard.js";
+import { clearAttackSelection, shouldPromptAttackSetType } from "./selection-state.js";
 import { renderPlayers } from "../live/team-rendering.js";
 import { normalizeSetTypeValue } from "../../domain/skill-values.js";
-import { formatSetTypeLabelWithShortcut } from "../live/scout-shortcuts.js";
-import { session as liveScoreAndSetState } from "../state/live-live-score-and-set.js";
 
 import { getCodeTone } from "../settings/rules.js";
 
@@ -182,15 +176,11 @@ export function publishSkillModalCodes(playerIdx, playerName, skillId, scope) {
         startScoutAttack(player, queued, true);
         return;
       }
-      const options = isSetterPlayerForScope(scope, playerIdx)
-        ? [{ value: "Damp", label: "Damp" }]
-        : liveScoreAndSetState.DEFAULT_SET_TYPE_OPTIONS;
       publish({
         kind: "attack-types",
-        options: options.map((option) => ({
-          value: option.value,
-          label: formatSetTypeLabelWithShortcut(option.value, option.label),
-        })),
+        options: getScoutAttackTypeOptions(
+          isSetterPlayerForScope(scope, playerIdx),
+        ),
       });
     } else {
       if (scoutUiState.attackInlinePlayer === key) return;

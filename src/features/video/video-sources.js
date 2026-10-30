@@ -12,18 +12,6 @@ import { renderEventsLog } from "./video-events.js";
 import { renderServeTrajectoryAnalysis, renderTrajectoryAnalysis } from "../analysis/trajectory-rendering.js";
 import { renderPlayers } from "../live/team-rendering.js";
 
-
-
-
-
-
-
-
-
-
-
-
-
 export function buildYoutubeEmbedSrc(id, startSeconds = 0, enableApi = false, autoplay = false) {
   const start = Math.max(0, Math.floor(startSeconds));
   const origin =
@@ -219,11 +207,6 @@ export async function renderYoutubePlayerScout(startSeconds = 0) {
   }
 }
 
-export function syncYoutubeUrlInputs(value) {
-  const url = value || "";
-
-}
-
 export function handleYoutubeUrlLoad(url) {
   const id = parseYoutubeId(url);
   if (!id) {
@@ -258,7 +241,7 @@ export function handleYoutubeUrlLoad(url) {
   matchState.state.video.youtubeUrl = url.trim();
   matchState.state.video.fileName = "YouTube: " + matchState.state.video.youtubeUrl;
   matchState.state.video.lastPlaybackSeconds = 0;
-  syncYoutubeUrlInputs(matchState.state.video.youtubeUrl);
+
   saveState();
   renderYoutubePlayer(0);
   renderYoutubePlayerScout(0);
@@ -273,7 +256,7 @@ export function clearYoutubeSource() {
   matchState.state.video.youtubeId = "";
   matchState.state.video.youtubeUrl = "";
   matchState.state.video.lastPlaybackSeconds = 0;
-  syncYoutubeUrlInputs("");
+
   if (workspaceLayoutState.ytPlayer && workspaceLayoutState.ytPlayer.stopVideo) {
     workspaceLayoutState.ytPlayer.stopVideo();
   }
@@ -348,7 +331,7 @@ export function clearLoadedVideo() {
   };
   if (matchState.elVideoFileInput) matchState.elVideoFileInput.value = "";
   if (matchState.elVideoFileInputScout) matchState.elVideoFileInputScout.value = "";
-  syncYoutubeUrlInputs("");
+
   saveState();
   renderVideoAnalysis();
 }
@@ -494,7 +477,7 @@ export async function openLocalVideoPicker(inputEl) {
 export function restoreYoutubeFromState() {
   if (!matchState.state.video || !matchState.state.video.youtubeId) return;
   if (matchState.state.video.youtubeUrl) {
-    syncYoutubeUrlInputs(matchState.state.video.youtubeUrl);
+
   }
   const start =
     typeof matchState.state.video.lastPlaybackSeconds === "number" && isFinite(matchState.state.video.lastPlaybackSeconds)
@@ -529,13 +512,6 @@ export function pushVideoUndoSnapshot(force = false) {
   }
 }
 
-export function markVideoUndoCapture(el) {
-  if (!el || !el.dataset) return;
-  if (el.dataset.undoCaptured === "true") return;
-  pushVideoUndoSnapshot();
-  el.dataset.undoCaptured = "true";
-}
-
 export function undoLastVideoEdit() {
   const snapshot = workspaceLayoutState.videoUndoStack.pop();
   if (!snapshot) {
@@ -551,9 +527,3 @@ export function undoLastVideoEdit() {
   renderTrajectoryAnalysis();
   renderPlayers();
 }
-
-
-
-
-
-

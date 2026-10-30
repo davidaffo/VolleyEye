@@ -149,7 +149,7 @@ for (const flags of [
 
 
 
-      context.publishReactEventTable(target, input, flags);
+      context.publishReactEventTable(target.id, input, flags);
       const native = view();
       assert.deepEqual(
         JSON.parse(

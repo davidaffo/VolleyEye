@@ -1,7 +1,5 @@
 
 
-
-
 import { session as matchState } from "../../../js/globals.js";
 import { session as workspaceLayoutState } from "../state/live-workspace-layout.js";
 import { session as browserEffectsState } from "../../app/browser-effects.js";
@@ -21,17 +19,9 @@ import { renderAggregatedTable } from "../analysis/aggregated-table.js";
 import { renderVideoAnalysis } from "../video/playback.js";
 import { renderTrajectoryAnalysis, renderServeTrajectoryAnalysis } from "../analysis/trajectory-rendering.js";
 import { publishSkillModalCancel, publishSkillModalChoice, publishSkillModalCodes, setSkillModalOpen } from "../scout/skill-dialog.js";
-import { resetSkillSelectionForPlayer } from "./skill-selection.js";
-
-
+import { resetSkillSelectionForPlayer } from "../scout/selection-state.js";
 
 import { publishAttributionView, setAttributionOpen } from "../scout/attribution-view.js";
-
-
-
-
-
-
 
 export function getNextEventId() {
   const maxId = (matchState.state.events || []).reduce((max, ev) => {
@@ -479,10 +469,6 @@ export function closeSkillModal() {
   setSkillModalCancelVisibility(false);
 }
 
-
-
-
-
 export function stopErrorPickMode(options = {}) {
   if (!scoutUiState.errorPickModeState) return;
   scoutUiState.errorPickModeState = null;
@@ -540,8 +526,6 @@ export function applyPointForPickedPlayer(scope, playerIdx, playerName) {
   stopPointPickMode();
 }
 
-
-
 export function renderErrorModal() {
   if (!matchState.elErrorModalBody) return;
 
@@ -590,4 +574,3 @@ export function closePointModal() {
   setAttributionOpen("point", false);
   setModalOpenState(false);
 }
-

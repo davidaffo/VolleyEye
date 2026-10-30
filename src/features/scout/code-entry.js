@@ -1,6 +1,7 @@
 import { expandDvwCompoundToken, normalizeDvwScoutToken } from "../io/datavolley-codec.js";
 import { parseDvwSuffixMeta, parseDvwZoneMeta } from "../io/datavolley-export.js";
-import { getDvwScoutSkillLabel, getDvwScoutTypeLabel, getDvwScoutEvalLabel, getDvwScoutChipSkillClass, renderDvwScoutPending, setDvwScoutStatus } from "../io/datavolley-live-entry.js";
+import { getDvwScoutSkillLabel, getDvwScoutTypeLabel, getDvwScoutEvalLabel, getDvwScoutChipSkillClass, setDvwScoutStatus } from "../io/datavolley-live-entry.js";
+
 import { session as teamManagementState } from "../state/live-team-management.js";
 import { dvwEntryStore } from "../../state/roster-import-store.mjs";
 
@@ -289,7 +290,7 @@ export function clearReactDvwEntry() {
     dvwEntryStore.publish({ text: "" });
     teamManagementState.elDvwScoutInput.focus();
   }
-  renderDvwScoutPending();
+  publishReactDvwEntry();
   setDvwScoutStatus("Pronto.");
 }
 
@@ -297,7 +298,7 @@ export function removeReactDvwToken(id) {
   teamManagementState.dvwScoutPendingTokens = teamManagementState.dvwScoutPendingTokens.filter(
     (token) => token.id !== id,
   );
-  renderDvwScoutPending();
+  publishReactDvwEntry();
   setDvwScoutStatus("Token rimosso.");
   teamManagementState.elDvwScoutInput?.focus();
 }

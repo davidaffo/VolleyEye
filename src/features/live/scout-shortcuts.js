@@ -1,5 +1,4 @@
 import { normalizeSetTypeValue } from "../../domain/skill-values.js";
-import { session as liveScoreAndSetState } from "../state/live-live-score-and-set.js";
 import { getSelectedVideoAttackEvents, applyAttackFieldToEvents } from "./team-management.js";
 import { publishReactSetTypeShortcuts } from "../archive/database-controls.js";
 import { session as matchState } from "../../../js/globals.js";
@@ -13,17 +12,6 @@ import { updateSetTypeVisibility } from "./game-flow.js";
 import { getPredictedSkillId } from "./flow-model.js";
 import { listenRuntime } from "../../app/browser-effects.js";
 
-
-
-export function formatSetTypeLabelWithShortcut(value, label) {
-  const key = normalizeSetTypeValue(value);
-  const shortcut = key ? liveScoreAndSetState.SET_TYPE_SHORTCUTS[key.toLowerCase()] : null;
-  const base = label || (key ? key.charAt(0).toUpperCase() + key.slice(1) : "");
-  return shortcut ? `${base} (${shortcut})` : base;
-}
-
-export function renderSetTypeShortcuts() { publishReactSetTypeShortcuts(); }
-
 export function setNextSetType(val) {
   const normalized = normalizeSetTypeValue(val) || "";
   if (!normalized) {
@@ -31,7 +19,7 @@ export function setNextSetType(val) {
   }
   matchState.state.nextSetType = normalized;
   saveState();
-  renderSetTypeShortcuts();
+  publishReactSetTypeShortcuts();
   // Aggiorna subito le card/skill aperte per mostrare il nuovo tipo alzata
   renderPlayers();
 }
@@ -89,28 +77,7 @@ export function handleVideoShortcut(e) {
   const ytCtrl = getActiveYoutubeController();
   if (!video && !ytCtrl) return;
   const duration = video && Number.isFinite(video.duration) ? video.duration : null;
-  const clampTime = next => {
-    if (duration == null) return Math.max(0, next);
-    return Math.max(0, Math.min(duration, next));
-  };
-  const seekBy = delta => {
-    if (ytCtrl && ytCtrl.player && typeof ytCtrl.player.getCurrentTime === "function") {
-      const wasPlaying = isYoutubePlayerPlaying(ytCtrl.player, ytCtrl.ready);
-      const current = ytCtrl.player.getCurrentTime();
-      if (!isFinite(current)) return;
-      ytCtrl.player.seekTo(Math.max(0, current + delta), true);
-      if (wasPlaying && typeof ytCtrl.player.playVideo === "function") {
-        ytCtrl.player.playVideo();
-      }
-      return;
-    }
-    if (!video) return;
-    const wasPaused = video.paused;
-    video.currentTime = clampTime(video.currentTime + delta);
-    if (!wasPaused) {
-      video.play().catch(() => {});
-    }
-  };
+  const seekBy = delta => seekPlaybackBy(delta, video, ytCtrl, duration);
   if (e.code === "Space") {
     e.preventDefault();
     if (ytCtrl && toggleYoutubePlayback()) return;
@@ -150,6 +117,10 @@ export function stepActiveVideoByFrame(direction) {
   const video = getActiveVideoElement();
   const ytCtrl = getActiveYoutubeController();
   if (!video && !ytCtrl) return;
+  seekPlaybackBy(delta, video, ytCtrl);
+}
+
+function seekPlaybackBy(delta, video, ytCtrl, capturedDuration) {
   if (ytCtrl && ytCtrl.player && typeof ytCtrl.player.getCurrentTime === "function") {
     const wasPlaying = isYoutubePlayerPlaying(ytCtrl.player, ytCtrl.ready);
     const current = ytCtrl.player.getCurrentTime();
@@ -161,16 +132,13 @@ export function stepActiveVideoByFrame(direction) {
     return;
   }
   if (!video) return;
-  const duration = Number.isFinite(video.duration) ? video.duration : null;
-  const clampTime = next => {
-    if (duration == null) return Math.max(0, next);
-    return Math.max(0, Math.min(duration, next));
-  };
+  const duration = capturedDuration === undefined
+    ? (Number.isFinite(video.duration) ? video.duration : null)
+    : capturedDuration;
   const wasPaused = video.paused;
-  video.currentTime = clampTime(video.currentTime + delta);
-  if (!wasPaused) {
-    video.play().catch(() => {});
-  }
+  const next = video.currentTime + delta;
+  video.currentTime = duration == null ? Math.max(0, next) : Math.max(0, Math.min(duration, next));
+  if (!wasPaused) video.play().catch(() => {});
 }
 
 export function syncMatchInfoInputs(match) {
@@ -233,7 +201,7 @@ export function handleSetTypeHotkeys(e) {
 }
 
 export function initSetTypeShortcuts() {
-  renderSetTypeShortcuts();
+  publishReactSetTypeShortcuts();
   updateSetTypeVisibility(getPredictedSkillId());
   listenRuntime(document, "keydown", handleSetTypeHotkeys);
 }

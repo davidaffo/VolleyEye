@@ -58,9 +58,9 @@ function setup() {
     }
   });
   for (const name of [
-    "syncAutoLiberoSelects", "ensureMetricsConfigDefaults", "updateSetTypeVisibility",
+    "publishReactSettings", "ensureMetricsConfigDefaults", "updateSetTypeVisibility",
     "updateOpponentRotationDisplay", "recalcAllStatsAndUpdateUI", "renderLineupChips",
-    "updateNetBlockPrompt", "renderLogServeTrajectories", "updateFloatingServeErrorButton",
+    "updateNetBlockPrompt", "publishReactLogServeTrajectories", "publishReactFloatingServeError",
     "maybeScrollToActiveCourtOnMobile", "handlePositionDragOver", "handlePositionDragLeave",
     "handlePositionDrop", "handleCourtDragStart", "handleCourtDragEnd", "stopErrorPickMode"
   ]) context[name] = () => {};

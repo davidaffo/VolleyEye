@@ -1,6 +1,6 @@
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { buildTeamMerge, commitTeamMerge, renderTeamsManagerList } from "../live/team-management.js";
-import { renderTeamsSelect, renderOpponentTeamsSelect } from "./storage/match-repository.js";
+import { publishTeamsManagerView } from "./manager-view.js";
 import { ensureMatchDefaults } from "./match-details.js";
 
 export async function mergeManagedTeams(secondaryName, choices) {
@@ -25,8 +25,8 @@ export async function mergeManagedTeams(secondaryName, choices) {
     return;
   }
   renderTeamsManagerList();
-  renderTeamsSelect();
-  renderOpponentTeamsSelect();
+  publishTeamsManagerView();
+
   ensureMatchDefaults();
   alert("Squadre unite e partite aggiornate.");
 }

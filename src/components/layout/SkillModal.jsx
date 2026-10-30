@@ -33,7 +33,6 @@ export function SkillModal() {
       onClose={() => run("closeSkillModal")}
       variant="skill"
       backdropProps={{ "data-close-skill": "" }}
-      contentProps={{ className: "skill-modal__content" }}
       title={
         <>
           <div id="skill-modal-title" className="skill-modal__title">
@@ -56,11 +55,8 @@ export function SkillModal() {
       closeProps={{
         id: "skill-modal-close",
         className: "pill-remove skill-modal__close-abs",
-        "aria-label": "Chiudi",
-        type: "button",
         "data-close-skill": "true",
         disabled: disabled,
-        onClick: () => run("closeSkillModal"),
       }}
       bodyProps={{ id: "skill-modal-body", className: "skill-modal__body" }}
     >

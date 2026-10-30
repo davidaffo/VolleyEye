@@ -32,21 +32,13 @@ export function MultiscoutModal() {
   return (
     <ModalDialog
       id="multiscout-modal"
-      className="settings-modal"
       aria-labelledby="multiscout-title"
       open={view.open}
       onClose={close}
       variant="settings"
       backdropProps={{ "data-close-multiscout": "" }}
-      contentProps={{ className: "settings-modal__content" }}
       title={<h3 id="multiscout-title">Utilizza dati di piu partite</h3>}
-      closeProps={{
-        id: "multiscout-close",
-        className: "pill-remove",
-        "aria-label": "Chiudi",
-        onClick: close,
-      }}
-      bodyProps={{ className: "settings-modal__body" }}
+      closeProps={{ id: "multiscout-close" }}
     >
       <FilterField className="analysis-filter multiscout-controls" label="Squadra">
         <div className="analysis-filter__row">

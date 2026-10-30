@@ -1,4 +1,5 @@
-import { ThemePicker } from '../ThemePicker.jsx';
+import { SKILLS } from "../../../js/globals.js";
+import { ThemePicker } from "../ThemePicker.jsx";
 import { ButtonList } from "../ui/ButtonList.jsx";
 import { TabPanel } from "../ui/TabPanel.jsx";
 import { OpponentSkillToggle } from "../ScoutOptions.jsx";
@@ -30,34 +31,12 @@ export function InfoPage() {
               }
             </p>
             <div className="opponent-skill-toggles">
-              <label className="auto-rotate-toggle skill-serve">
-                <OpponentSkillToggle id="opponent-skill-serve" />
-                {" Battuta"}
-              </label>
-              <label className="auto-rotate-toggle skill-pass">
-                <OpponentSkillToggle id="opponent-skill-pass" />
-                {" Ricezione"}
-              </label>
-              <label className="auto-rotate-toggle skill-freeball">
-                <OpponentSkillToggle id="opponent-skill-freeball" />
-                {" Freeball"}
-              </label>
-              <label className="auto-rotate-toggle skill-second">
-                <OpponentSkillToggle id="opponent-skill-second" />
-                {" Alzata"}
-              </label>
-              <label className="auto-rotate-toggle skill-attack">
-                <OpponentSkillToggle id="opponent-skill-attack" />
-                {" Attacco"}
-              </label>
-              <label className="auto-rotate-toggle skill-defense">
-                <OpponentSkillToggle id="opponent-skill-defense" />
-                {" Difesa"}
-              </label>
-              <label className="auto-rotate-toggle skill-block">
-                <OpponentSkillToggle id="opponent-skill-block" />
-                {" Muro"}
-              </label>
+              {SKILLS.map(skill => (
+                <label key={skill.id} className={"auto-rotate-toggle skill-" + skill.id}>
+                  <OpponentSkillToggle id={"opponent-skill-" + skill.id} />
+                  {" " + skill.label}
+                </label>
+              ))}
             </div>
           </div>
         </div>

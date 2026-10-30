@@ -11,10 +11,8 @@ import {
   buildAdvancedFilterOptions,
   renderFilterControls,
 } from "./filter-controls.js";
-import {
-  getSecondFilterElements,
-  renderAnalysisTeamFilter,
-} from "./analysis-filters.js";
+import { getFilterControlIds } from "../../domain/analysis-filter-schema.js";
+import { renderAnalysisTeamFilter } from "./shared-filter-view.js";
 import { toggleFilterVisibility } from "./filter-view.js";
 import {
   filterEventsByAnalysisTeam,
@@ -27,21 +25,20 @@ import {
 } from "./filter-view.js";
 
 import { session as liveScoreAndSetState } from "../state/live-live-score-and-set.js";
-import { renderDistributionGrid } from "./player-second-distribution.js";
+import { publishReactDistributionGrid } from "./setting-view.js";
 
-import { session as rosterLineupState } from "../state/roster-lineup.js";
+
 import { publishReactSecondTable } from "./setting-view.js";
-import { session as matchState } from "../../../js/globals.js";
+
 
 export function syncSecondFilterState() {
-  const els = getSecondFilterElements();
-  if (!els) return;
+  const controlIds = getFilterControlIds("secondFilterState");
   syncFilterSelections(
     analysisFiltersState.secondFilterState,
-    getFilterFields("secondFilterState", els),
+    getFilterFields("secondFilterState"),
   );
   analysisFiltersState.secondFilterState.prevSkill =
-    readReactFilterSelect(els.prev) || "any";
+    readReactFilterSelect(controlIds.prev) || "any";
 }
 
 export function handleSecondFilterChange() {
@@ -51,15 +48,12 @@ export function handleSecondFilterChange() {
 
 export function resetSecondFilters() {
   clearFilterSelections(analysisFiltersState.secondFilterState);
-  const els = getSecondFilterElements();
-  if (els && els.prev) els.prev.value = "any";
   renderSecondFilters();
   renderSecondTable();
 }
 
 export function renderSecondFilters() {
-  const els = getSecondFilterElements();
-  if (!els) return;
+  const controlIds = getFilterControlIds("secondFilterState");
   renderAnalysisTeamFilter();
   const events = filterEventsByAnalysisTeam();
   const attackEvents = events.filter((ev) => ev && ev.skillId === "attack");
@@ -85,7 +79,7 @@ export function renderSecondFilters() {
 
   const visibleFilters = renderFilterControls(
     analysisFiltersState.secondFilterState,
-    getFilterFields("secondFilterState", els),
+    getFilterFields("secondFilterState"),
     {
       setters: setterOpts,
       players: playersOpts,
@@ -100,27 +94,26 @@ export function renderSecondFilters() {
     },
     handleSecondFilterChange,
   );
-  toggleFilterVisibility(els.prev, attackEvents.length > 0);
-  toggleFilterVisibility(els.reset, visibleFilters.some(Boolean));
+  toggleFilterVisibility(controlIds.prev, attackEvents.length > 0);
+  toggleFilterVisibility(controlIds.reset, visibleFilters.some(Boolean));
   publishReactPreviousSkill(
-    els.prev,
+    controlIds.prev,
     analysisFiltersState.secondFilterState.prevSkill,
     handleSecondFilterChange,
   );
 }
 
 export function renderSecondTable() {
-  if (!rosterLineupState.elAggSecondBody) return;
 
-  renderSecondFilters();
+renderSecondFilters();
   publishReactSecondTable();
   renderSecondDistribution();
 }
 
 export function renderSecondDistribution() {
-  if (!matchState.elSecondDistribution) return;
-  renderDistributionGrid(
-    matchState.elSecondDistribution,
+
+  publishReactDistributionGrid(
+    "second-distribution",
     getFilteredAttacksForSecondDistribution(),
   );
 }

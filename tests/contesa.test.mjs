@@ -99,5 +99,5 @@ test("il tasto rosso Contesa precede Annulla ultimo sulla rete", () => {
   assert.equal(button.nextElementSibling.id, "btn-undo");
   dom.window.close();
   const bindings = readFileSync(new URL("../src/components/AppActions.jsx", import.meta.url), "utf8");
-  assert.match(bindings, /"btn-contesa": "undoContestedRally"/);
+  assert.match(bindings, /"btn-contesa": \["undoContestedRally", true\]/);
 });

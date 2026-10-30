@@ -1,8 +1,9 @@
-
+import { buildPlayersDbUsage } from "../players/database-model.js";
 import { session } from "../state/live-team-management.js";
 import { ensureMatchDefaults } from "../teams/match-details.js";
-import { PLAYER_PREFIX, STORAGE_KEY } from "../../../js/globals.js";
-import { renderEventsLog, updateVideoAnalysisOverlay } from "../video/video-events.js";
+import { PLAYER_PREFIX, STORAGE_KEY, session as matchState, logError } from "../../../js/globals.js";
+import { renderEventsLog } from "../video/video-events.js";
+import { publishReactVideoOverlay } from "../video/view.js";
 import { getSelectedRows } from "../events/selection-model.js";
 import { pushVideoUndoSnapshot } from "../video/video-sources.js";
 import { refreshAfterVideoEdit } from "../video/event-editor.js";
@@ -14,7 +15,6 @@ import { invalidateAnalysisCaches } from "../analysis/cache-model.js";
 import { recalcAllStatsAndUpdateUI } from "../analysis/stats-update.js";
 import { getTeamScopeFromEvent, getPlayersForScope } from "../teams/selectors.js";
 import { setGlobalModalState } from "../layout/modals.js";
-
 import { normalizeDataVolleyEventMeta, invalidateRosterIdMapsCache } from "../teams/player-identity.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { session as workspaceLayoutState } from "../state/live-workspace-layout.js";
@@ -22,21 +22,14 @@ import { relocateVideoScoutContainer } from "./workspace-layout.js";
 import { setAttackShortcutOpen, getAttackShortcutOpen, publishAttackSetterOptions } from "../scout/attack-shortcut-view.js";
 import { publishTeamsManagerView, setTeamsManagerOpen } from "../teams/manager-view.js";
 import { session as rosterLineupState } from "../state/roster-lineup.js";
-import { renderTeamsSelect } from "../teams/storage/match-repository.js";
 import { loadMatchesMapFromStorage, getMatchStorageKey } from "../storage/match-repository.js";
-
-
-import { session as matchState, logError } from "../../../js/globals.js";
 import { normalizeTeamPayload, listTeamsFromStorage, extractRosterFromTeam, saveTeamToStorage, syncTeamsFromStorage, loadTeamsMapFromStorage, savePlayersDbToStorage, loadPlayersDbFromStorage, buildPlayersDbEntry, compactTeamPayload, getTeamStorageKey } from "../teams/storage/team-repository.js";
-import { buildFullName } from "../../domain/player-names.js";
 import { publishPlayersDbView, setPlayersDbOpen } from "../players/database-view.js";
 import { debugStore } from "../../state/roster-import-store.mjs";
 import { syncCourtSideLayout, renderPlayers } from "./team-rendering.js";
 import { getCurrentMatchPayload } from "../teams/current-payload.js";
 import { renderPlayerAnalysis } from "../analysis/skill-tables.js";
 import { session as persistentStorageState } from "../state/storage-persistent-storage.js";
-
-
 
 const teamManagementState = session;
 
@@ -70,7 +63,7 @@ export function applyAttackFieldToEvents(events, updater, { shouldRecalc = true 
     refreshAfterVideoEdit(shouldRecalc);
     renderEventsLog({ suppressScroll: true });
     renderVideoAnalysis();
-    updateVideoAnalysisOverlay();
+    publishReactVideoOverlay();
   } else {
     saveState({ persistLocal: true });
     if (shouldRecalc) {
@@ -300,36 +293,6 @@ export function closeBlockNumberModal() {
   resetAttackShortcutModals();
 }
 
-export function buildPlayersDbUsage(teamsMap) {
-  const usage = {};
-  Object.entries(teamsMap || {}).forEach(([teamName, teamData]) => {
-    const normalized =
-      (normalizeTeamPayload(teamData, teamName));
-    const roster = normalized && Array.isArray(normalized.playersDetailed) ? normalized.playersDetailed : [];
-    roster.forEach(player => {
-      const id = player && (player.id || player.playerId);
-      if (!id) return;
-      if (!usage[id]) usage[id] = [];
-      usage[id].push(teamName);
-    });
-  });
-  Object.keys(usage).forEach(id => {
-    usage[id] = usage[id].filter(Boolean).sort((a, b) => a.localeCompare(b, "it", { sensitivity: "base" }));
-  });
-  return usage;
-}
-
-export function buildPlayersDbOptions(entries) {
-  return (entries || []).map(entry => {
-    const name =
-      entry.name ||
-      ((buildFullName(entry.lastName, entry.firstName))) ||
-      [entry.lastName, entry.firstName].filter(Boolean).join(" ");
-    const label = (name || "Giocatrice") + " · " + entry.id;
-    return { id: entry.id, label };
-  });
-}
-
 export function renderPlayersDbList() {
   if (!scoutUiState.elPlayersDbBody || !scoutUiState.elPlayersDbCount) return;
 
@@ -468,7 +431,7 @@ export function importTeamToStorageOnly(file) {
         return;
       }
       syncTeamsFromStorage();
-      renderTeamsSelect();
+      publishTeamsManagerView();
       scoutUiState.teamsManagerSelectedName = name;
       renderTeamsManagerList();
       alert("Squadra importata: " + name);
@@ -584,10 +547,6 @@ export function updatePlayerPhotoInDbAndTeams(playerId, photoDataUrl = "") {
   renderPlayerAnalysis();
   return true;
 }
-
-
-
-
 
 export function buildTeamMerge(primaryName, secondaryName, choices) {
   if (!primaryName || primaryName === secondaryName) throw new Error("Scegli due squadre diverse.");

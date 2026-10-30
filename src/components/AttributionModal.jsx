@@ -28,7 +28,6 @@ export function AttributionModal({ kind }) {
       onClose={close}
       variant="skill"
       backdropProps={{ ["data-close-" + kind]: "" }}
-      contentProps={{ className: "skill-modal__content" }}
       title={
         <div id={kind + "-modal-title"} className="skill-modal__title">
           {point ? "Assegna punto" : "Assegna errore/fallo"}
@@ -38,9 +37,6 @@ export function AttributionModal({ kind }) {
         disabled: disabled,
         id: kind + "-modal-close",
         className: "pill-remove skill-modal__close-abs",
-        "aria-label": "Chiudi",
-        type: "button",
-        onClick: close,
       }}
       bodyProps={{ id: kind + "-modal-body", className: "skill-modal__body" }}
     >

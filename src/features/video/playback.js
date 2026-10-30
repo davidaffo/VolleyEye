@@ -1,18 +1,16 @@
 import { getPlayByPlayStartTime, getPlayByPlayDurationSeconds } from "./playback-model.js";
-import { getVideoPlayByPlayRows, getPlayByPlayStartIndex, getVideoMobileCurrentRow } from "../events/selection-model.js";
+import { getVideoPlayByPlayRows, getPlayByPlayStartIndex, getVideoMobileCurrentRow, getSelectedRows } from "../events/selection-model.js";
 import { session } from "../state/video-playback.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { setModalOpenState } from "../layout/modals.js";
-import { ensureVideoAnalysisSortState } from "./sort-model.js";
+import { ensureVideoAnalysisSortState, sortVideoEvents } from "./sort-model.js";
 import { getTeamScopeFromEvent } from "../teams/selectors.js";
 import { computeEventVideoTime } from "./timing.js";
 import { updateVideoSyncLabel, buildYoutubeEmbedSrc, queueYoutubeSeek, clearYoutubeSource, persistLocalVideoReference, renderYoutubePlayer, renderYoutubePlayerScout, pushVideoUndoSnapshot } from "./video-sources.js";
 import { getVideoBaseTimeMs, getVideoSkillEvents } from "./event-model.js";
 import { resolvePlayerIdx } from "../events/player-links.js";
-import { updateSelectionStyles, setSelectionForContext, scrollRowIntoView, handleSeekForSelection, updateVideoAnalysisOverlay, updateVideoSelectionCount } from "./video-events.js";
-
-import { getSelectedRows } from "../events/selection-model.js";
-import { sortVideoEvents } from "./sort-model.js";
+import { updateSelectionStyles, setSelectionForContext, scrollRowIntoView, handleSeekForSelection, updateVideoSelectionCount } from "./video-events.js";
+import { publishReactVideoOverlay, publishReactVideoMobileReview } from "./view.js";
 import { getEventKey } from "../../domain/event-key.js";
 import { session as workspaceLayoutState } from "../state/live-workspace-layout.js";
 import { session as browserEffectsState } from "../../app/browser-effects.js";
@@ -21,26 +19,14 @@ import { getActiveVideoPlaybackSeconds, updateVideoPlaybackSnapshot, isYoutubePl
 import { countActiveVideoFilters, snapshotVideoFilters } from "../analysis/video-filter-model.js";
 import { matchesVideoFilters } from "../analysis/filter-model.js";
 import { session as analysisFiltersState } from "../state/analysis-analysis-filters.js";
-import { publishReactVideoMobileReview } from "./view.js";
 import { publishReactVideoView } from "./source-view.js";
 import { mobileVideoSourceStore } from "../../state/roster-import-store.mjs";
 import { renderVideoFilters } from "../analysis/video-filters.js";
 import { publishReactEventTable } from "../events/table-commands.js";
 import { getBaseZoneForPlayer } from "../teams/court-model.js";
-import { renderEventTableRows } from "./event-editor.js";
 import { saveState } from "../storage/save-state.js";
 
-
-
 const playbackState = session;
-
-
-
-
-
-
-
-
 
 export function stopPlayByPlay() {
   if (workspaceLayoutState.playByPlayTimer) {
@@ -164,10 +150,8 @@ export function handleVideoSelectionChange(_rows, _ctx, opts) {
     return;
   }
   handleSeekForSelection("video", { preservePlayback: true, userAction: true });
-  updateVideoAnalysisOverlay();
+  publishReactVideoOverlay();
 }
-
-
 
 export function renderVideoMobileReview() {
   scheduleVideoMobileSourcePrompt();
@@ -267,18 +251,10 @@ export function scheduleVideoMobileSourcePrompt() {
 }
 
 export function renderVideoAnalysis() {
-  if (!matchState.elVideoSkillsContainer) return;
   const videoSortState = ensureVideoAnalysisSortState();
   const skillEvents = getVideoSkillEvents();
   const baseMs = getVideoBaseTimeMs(skillEvents);
   updateVideoSyncLabel();
-  if (matchState.elVideoFileLabel) {
-    const label =
-      (matchState.state.video && matchState.state.video.youtubeId && matchState.state.video.youtubeUrl) ||
-      (matchState.state.video && matchState.state.video.fileName) ||
-      "Nessun file caricato";
-    matchState.elVideoFileLabel.textContent = label;
-  }
   if (!skillEvents.length) {
     if (matchState.state.videoPlayByPlay) stopPlayByPlay();
     try {
@@ -287,7 +263,7 @@ export function renderVideoAnalysis() {
       console.error("Video filters error", err);
     }
 
-      publishReactEventTable(matchState.elVideoSkillsContainer,[],{contextKey:"video",tableClass:"video-skills-table event-edit-table",empty:"Registra alcune skill per vederle qui."});updateVideoAnalysisOverlay();updateVideoSelectionCount();renderVideoMobileReview();return;
+      publishReactEventTable("video-skills-container",[],{contextKey:"video",tableClass:"video-skills-table event-edit-table",empty:"Registra alcune skill per vederle qui."});publishReactVideoOverlay();updateVideoSelectionCount();renderVideoMobileReview();return;
 
 }
   try {
@@ -310,11 +286,11 @@ export function renderVideoAnalysis() {
   if (!filteredEvents.length) {
     if (matchState.state.videoPlayByPlay) stopPlayByPlay();
 
-      publishReactEventTable(matchState.elVideoSkillsContainer,[],{contextKey:"video",tableClass:"video-skills-table event-edit-table",empty:"Nessuna skill con i filtri attivi."});updateVideoAnalysisOverlay();updateVideoSelectionCount();renderVideoMobileReview();return;
+      publishReactEventTable("video-skills-container",[],{contextKey:"video",tableClass:"video-skills-table event-edit-table",empty:"Nessuna skill con i filtri attivi."});publishReactVideoOverlay();updateVideoSelectionCount();renderVideoMobileReview();return;
 
 }
-  renderEventTableRows(
-    matchState.elVideoSkillsContainer,
+  publishReactEventTable(
+    "video-skills-container",
     sortedEvents,
     {
       showSeek: false,
@@ -344,7 +320,7 @@ export function renderVideoAnalysis() {
     }
   );
   updateVideoSelectionCount();
-  updateVideoAnalysisOverlay();
+  publishReactVideoOverlay();
   renderVideoMobileReview();
   syncPlayByPlayAfterRender();
   if (updatedZones) {

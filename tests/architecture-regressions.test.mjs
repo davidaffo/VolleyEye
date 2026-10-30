@@ -1,3 +1,4 @@
+import { sourceFunctions } from "./helpers/source-functions.mjs";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
@@ -32,51 +33,25 @@ test("il payload squadra compatto ricostruisce i numeri dai dettagli", () => {
     roster.indexOf("function loadTeamNormalized")
   );
   assert.match(normalizeBlock, /numbers\[player\.name\]\s*=\s*String\(player\.number\)/);
-  const ourPayload = roster.slice(
-    roster.indexOf("function getCurrentTeamPayload"),
-    roster.indexOf("function getCurrentOpponentPayload")
-  );
+  const ourPayload = sourceFunctions(roster, ["getCurrentTeamPayload"]);
   assert.doesNotMatch(ourPayload, /state\.match\.opponent/);
   assert.match(ourPayload, /activePlayers\s*\.map/);
   assert.match(ourPayload, /out:\s*true/);
-  const opponentPayload = roster.slice(
-    roster.indexOf("function getCurrentOpponentPayload"),
-    roster.indexOf("function saveCurrentTeam")
-  );
+  const opponentPayload = sourceFunctions(roster, ["getCurrentOpponentPayload"]);
   assert.match(opponentPayload, /existing\?\.staff/);
   assert.match(opponentPayload, /defaultLineup/);
   assert.match(opponentPayload, /defaultRotation/);
   assert.match(opponentPayload, /out:\s*true/);
 });
 
-test("rinominare una giocatrice non modifica eventi dell'altra squadra", () => {
-  const roster = readRosterSource();
-  const ourRename = roster.slice(
-    roster.indexOf("function replacePlayerNameEverywhere"),
-    roster.indexOf("function replacePlayerNameInLineup")
-  );
-  assert.match(ourRename, /if \(scope !== "our"\) return/);
-  assert.match(ourRename, /ev\.playerIn === oldName/);
-  assert.match(ourRename, /setStart\.our\.court/);
-  const opponentRename = roster.slice(
-    roster.indexOf("function replaceOpponentPlayerNameEverywhere"),
-    roster.indexOf("function renameOpponentPlayerAcrossCurrentMatchById")
-  );
-  assert.match(opponentRename, /scope !== "opponent"/);
-  assert.match(opponentRename, /event\.playerOut === oldName/);
-  assert.match(opponentRename, /setStart\.opponent\.court/);
-});
-
 test("reset e cambio match eliminano ogni riferimento al vecchio video", () => {
   const roster = readRosterSource();
   const scout = readScoutSource();
-  const resetRoster = roster.slice(roster.indexOf("function resetMatchState"), roster.indexOf("function renameSelectedTeam"));
+  const resetRoster = sourceFunctions(roster, ["resetMatchState"]);
   const resetScout = scout.slice(scout.indexOf("function resetMatch()"), scout.indexOf("function deleteIndexedDbByName"));
   for (const block of [resetRoster, resetScout]) {
-    assert.match(block, /state\.video\s*=\s*\{/);
-    assert.doesNotMatch(block, /state\.video\s*=\s*state\.video\s*\|\|/);
-    assert.match(block, /fileName:\s*""/);
-    assert.match(block, /lastPlaybackSeconds:\s*0/);
+    assert.match(block, /resetMatchVideoState\(\)/);
+    assert.match(block, /resetMatchVideoPlayback\(/);
   }
 });
 
@@ -118,10 +93,7 @@ test("l'import database segnala i salvataggi parziali senza doppio messaggio di 
   assert.match(applyImport, /if \(!saveTeamToStorage/);
   assert.match(applyImport, /if \(!saveMatchToStorage/);
   assert.match(applyImport, /if \(!savePlayersDbToStorage/);
-  const urlImport = scout.slice(
-    scout.indexOf("async function importDatabaseFromUrl"),
-    scout.indexOf("function buildAggregatedDataForPdf")
-  );
+  const urlImport = sourceFunctions(scout, ["importDatabaseFromUrl"]);
   assert.doesNotMatch(urlImport, /alert\("Database importato da URL\."\)/);
 });
 

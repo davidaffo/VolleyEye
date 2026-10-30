@@ -1,3 +1,4 @@
+import { sourceFunctions } from "./helpers/source-functions.mjs";
 import assert from "node:assert/strict";
 import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import test from "node:test";
@@ -159,10 +160,7 @@ test("l'avvio del set riallinea il flusso e cancella selezioni transitorie", () 
 
 test("il reset e il salvataggio conservano le premesse del flusso automatico", () => {
   const roster = readRosterSource();
-  const reset = roster.slice(
-    roster.indexOf("function resetMatchState"),
-    roster.indexOf("function renameSelectedTeam")
-  );
+  const reset = sourceFunctions(roster, ["resetMatchState"]);
   assert.match(reset, /state\.flowTeamScope = preservedServing \? "our" : "opponent"/);
   assert.match(reset, /state\.pendingServe = null/);
 

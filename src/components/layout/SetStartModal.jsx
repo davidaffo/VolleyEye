@@ -17,21 +17,16 @@ export function SetStartModal() {
   return (
     <ModalDialog
       id="set-start-modal"
-      className="skill-modal"
       aria-labelledby="set-start-modal-title"
       open={view.open}
       onClose={close}
       variant="skill"
       backdropProps={{}}
-      contentProps={{ className: "skill-modal__content" }}
       backdrop={false}
       title={<h3 id="set-start-modal-title">{view.title}</h3>}
       closeProps={{
         id: "set-start-modal-close",
         className: "pill-remove skill-modal__close-abs",
-        "aria-label": "Chiudi",
-        type: "button",
-        onClick: close,
       }}
       bodyProps={{ id: "set-start-modal-body", className: "skill-modal__body" }}
       footer={

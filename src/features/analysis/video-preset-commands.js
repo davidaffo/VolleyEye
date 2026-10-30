@@ -1,5 +1,5 @@
 import { snapshotVideoFilters } from "./video-filter-model.js";
-import { session as scoutUiState } from "../state/scout-ui.js";
+import { videoPresetsStore } from "../../state/roster-import-store.mjs";
 import { publishReactVideoPresets } from "./video-preset-view.js";
 
 import {
@@ -66,9 +66,7 @@ export function saveCurrentVideoFilterPreset(nameOverride) {
   const rawName =
     typeof nameOverride === "string"
       ? nameOverride.trim()
-      : scoutUiState.elVideoFilterPresetName
-        ? String(scoutUiState.elVideoFilterPresetName.value || "").trim()
-        : "";
+      : String(videoPresetsStore.getSnapshot().name || "").trim();
   const name = rawName || "Preset " + (presets.length + 1);
   const entry = {
     id:

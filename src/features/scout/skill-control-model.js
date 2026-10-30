@@ -1,3 +1,5 @@
+import { normalizeSetTypeValue } from "../../domain/skill-values.js";
+import { session as liveScoreAndSetState } from "../state/live-live-score-and-set.js";
 import {
   SKILLS,
   SKILL_COLORS,
@@ -192,4 +194,23 @@ export function buildPreparedScoutSkillView(prepared) {
     default:
       throw new Error("Unknown scout preparation: " + kind);
   }
+}
+
+export function formatSetTypeLabelWithShortcut(value, label) {
+  const key = normalizeSetTypeValue(value);
+  const shortcut = key
+    ? liveScoreAndSetState.SET_TYPE_SHORTCUTS[key.toLowerCase()]
+    : null;
+  const base = label || (key ? key.charAt(0).toUpperCase() + key.slice(1) : "");
+  return shortcut ? `${base} (${shortcut})` : base;
+}
+
+export function getScoutAttackTypeOptions(setter) {
+  const options = setter
+    ? [{ value: "Damp", label: "Damp" }]
+    : liveScoreAndSetState.DEFAULT_SET_TYPE_OPTIONS;
+  return options.map((option) => ({
+    value: option.value,
+    label: formatSetTypeLabelWithShortcut(option.value, option.label),
+  }));
 }

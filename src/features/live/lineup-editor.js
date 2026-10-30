@@ -1,5 +1,5 @@
 import { getLineupModalLiberos, formatLineupModalName, getSortedPlayerEntriesForScope, getSortedPlayerEntries } from "../teams/lineup-selectors.js";
-import { updateLineupModalControls } from "./skill-selection.js";
+import { publishLineupView, setLineupOpen } from "./lineup-view.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { isDesktopCourtModalLayout, setCourtAreaLocked, setModalOpenState } from "../layout/modals.js";
 import { updateCourtModalPlacement } from "../scout-ui.js";
@@ -8,7 +8,6 @@ import { getCourtShape, cloneCourt } from "../teams/court-model.js";
 import { getNextSetEntry, swapNextSetSlots, setNextSetPlayer, renderNextSetLineups, clearNextSetSlot } from "./next-set-lineups.js";
 import { lineup } from "../../domain/lineup.js";
 import { listenRuntime } from "../../app/browser-effects.js";
-import { publishLineupView, setLineupOpen } from "./lineup-view.js";
 import { publishSetStartView, setSetStartOpen } from "./set-start-view.js";
 import { buildSetStartInfoList, makePlayerNameKey, ensureSetStartSnapshot } from "../analysis/player-model.js";
 import { saveState } from "../storage/save-state.js";
@@ -296,7 +295,7 @@ export function openMobileLineupModal(scope = "our") {
   });
   scoutUiState.lineupModalCourt = cloneCourt(normalizedCourt);
   renderLineupModal();
-  updateLineupModalControls();
+  publishLineupView();
   if (scoutUiState.elLineupModal) {
     if (isDesktopCourtModalLayout()) {
       setCourtAreaLocked(true);

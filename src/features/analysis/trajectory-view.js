@@ -36,7 +36,7 @@ import { computeMetrics } from "./metrics.js";
 import { mirrorTrajectoryPoint } from "../../domain/trajectory-geometry.js";
 
 import { session as matchState } from "../../../js/globals.js";
-import { session as rosterLineupState } from "../state/roster-lineup.js";
+
 import {
   getFilteredPlayerTrajectoryEventsForPlayer,
   getFilteredPlayerServeTrajectoryEventsForPlayer,
@@ -53,23 +53,17 @@ import {
 } from "../teams/roster-data.js";
 import { sortPlayerIndexesByNumberForScope } from "../teams/lineup-selectors.js";
 
-export function publishReactAttackSummary(
-  target,
-  events,
-  compareEvents = null,
-) {
+export function publishReactAttackSummary(target, events, compareEvents = null) {
   if (!target) return;
 
-  const list = Array.isArray(events)
-    ? events.filter((ev) => ev && ev.skillId === "attack")
-    : [];
+  const list = Array.isArray(events) ? events.filter((ev) => ev && ev.skillId === "attack") : [];
   const compareList = Array.isArray(compareEvents)
     ? compareEvents.filter((ev) => ev && ev.skillId === "attack")
     : null;
   const rows = [];
   let footerRows = [];
   const publish = () =>
-    analysisTableStore.publish(target.id, {
+    analysisTableStore.publish(target, {
       rows,
       footerRows,
       emptyText: rows.length ? "" : "Nessun attacco per i filtri selezionati.",
@@ -78,120 +72,76 @@ export function publishReactAttackSummary(
     publish();
     return;
   }
-  const counts = emptyCounts();
-  const byType = {};
-  const compareCounts = emptyCounts();
-  const compareByType = {};
-  list.forEach((ev) => {
-    const code = normalizeEvalCode(ev.code || ev.evaluation);
-    if (code) counts[code] = (counts[code] || 0) + 1;
-    const key = buildAttackTypeLabel(ev.attackType);
-    if (!byType[key]) byType[key] = emptyCounts();
-    if (code) byType[key][code] = (byType[key][code] || 0) + 1;
-  });
-  if (compareList) {
-    compareList.forEach((ev) => {
-      const code = normalizeEvalCode(ev.code || ev.evaluation);
-      if (code) compareCounts[code] = (compareCounts[code] || 0) + 1;
-      const key = buildAttackTypeLabel(ev.attackType);
-      if (!compareByType[key]) compareByType[key] = emptyCounts();
-      if (code) compareByType[key][code] = (compareByType[key][code] || 0) + 1;
-    });
-  }
-  const total = totalFromCounts(counts);
-  const pointCount = countPointsForSkill(counts, "attack");
-  const metrics = computeMetrics(counts, "attack");
-  const compareTotal = totalFromCounts(compareCounts);
-  const comparePointCount = countPointsForSkill(compareCounts, "attack");
-  const compareMetrics = computeMetrics(compareCounts, "attack");
-  const buildAttackCompareClass = (value, otherValue, better = "higher") => {
-    if (
-      !compareList ||
-      value === null ||
-      otherValue === null ||
-      value === otherValue
-    )
-      return "";
-    const isBetter =
-      better === "lower" ? value < otherValue : value > otherValue;
-    return isBetter ? "is-better" : "is-worse";
+  const count = (events) => {
+    const counts = emptyCounts(),
+      byType = {};
+    for (const event of events) {
+      const code = normalizeEvalCode(event.code || event.evaluation);
+      if (code) counts[code] = (counts[code] || 0) + 1;
+      const type = buildAttackTypeLabel(event.attackType);
+      const bucket = (byType[type] ||= emptyCounts());
+      if (code) bucket[code] = (bucket[code] || 0) + 1;
+    }
+    return { counts, byType };
   };
-  Object.keys(byType)
-    .sort((a, b) => a.localeCompare(b, "it", { sensitivity: "base" }))
-    .forEach((type) => {
-      const rowCounts = normalizeCounts(byType[type]);
-      const rowTotal = totalFromCounts(rowCounts);
-      const rowPoints = countPointsForSkill(rowCounts, "attack");
-      const rowMetrics = computeMetrics(rowCounts, "attack");
-      const compareRowCounts = normalizeCounts(compareByType[type]);
-      const compareRowTotal = totalFromCounts(compareRowCounts);
-      const compareRowPoints = countPointsForSkill(compareRowCounts, "attack");
-      const compareRowMetrics = computeMetrics(compareRowCounts, "attack");
-      const cells = [
-        comparisonCell(type, null, "neutral"),
-        comparisonCell(rowTotal, compareRowTotal, "neutral"),
-        comparisonCell(
-          rowCounts["="] || 0,
-          compareRowCounts["="] || 0,
-          "lower",
-        ),
-        comparisonCell(
-          rowCounts["/"] || 0,
-          compareRowCounts["/"] || 0,
-          "lower",
-        ),
-        comparisonCell(rowPoints || 0, compareRowPoints || 0),
-        comparisonCell(
-          formatPercentValue(rowPoints || 0, rowTotal),
-          compareRowTotal ? (compareRowPoints || 0) / compareRowTotal : null,
-          "higher",
-          rowTotal ? (rowPoints || 0) / rowTotal : null,
-        ),
-        comparisonCell(
-          rowMetrics.eff === null ? "-" : formatPercent(rowMetrics.eff),
-          compareRowMetrics.eff,
-          "higher",
-          rowMetrics.eff,
-        ),
-      ].map((cell) => ({
+  const main = count(list),
+    other = count(compareList || []);
+  const buildCells = (label, counts, comparison) => {
+    const total = totalFromCounts(counts),
+      otherTotal = totalFromCounts(comparison);
+    const points = countPointsForSkill(counts, "attack"),
+      otherPoints = countPointsForSkill(comparison, "attack");
+    const metrics = computeMetrics(counts, "attack"),
+      otherMetrics = computeMetrics(comparison, "attack");
+    return [
+      comparisonCell(label, null, "neutral"),
+      comparisonCell(total, otherTotal, "neutral"),
+      comparisonCell(counts["="] || 0, comparison["="] || 0, "lower"),
+      comparisonCell(counts["/"] || 0, comparison["/"] || 0, "lower"),
+      comparisonCell(points || 0, otherPoints || 0),
+      comparisonCell(
+        formatPercentValue(points || 0, total),
+        otherTotal ? (otherPoints || 0) / otherTotal : null,
+        "higher",
+        total ? (points || 0) / total : null,
+      ),
+      comparisonCell(
+        metrics.eff === null ? "-" : formatPercent(metrics.eff),
+        otherMetrics.eff,
+        "higher",
+        metrics.eff,
+      ),
+    ].map((cell) => {
+      const value = Object.hasOwn(cell, "raw") ? cell.raw : cell.text;
+      const comparable =
+        compareList && value !== null && cell.compare !== null && value !== cell.compare;
+      return {
         ...cell,
-        className: buildAttackCompareClass(
-          Object.prototype.hasOwnProperty.call(cell, "raw")
-            ? cell.raw
-            : cell.text,
-          cell.compare,
-          cell.better,
-        ),
-      }));
-      rows.push({ cells });
+        className: comparable
+          ? (cell.better === "lower" ? value < cell.compare : value > cell.compare)
+            ? "is-better"
+            : "is-worse"
+          : "",
+      };
     });
-  const totalCells = [
-    comparisonCell("Totale", null, "neutral"),
-    comparisonCell(total, compareTotal, "neutral"),
-    comparisonCell(counts["="] || 0, compareCounts["="] || 0, "lower"),
-    comparisonCell(counts["/"] || 0, compareCounts["/"] || 0, "lower"),
-    comparisonCell(pointCount || 0, comparePointCount || 0),
-    comparisonCell(
-      formatPercentValue(pointCount || 0, total),
-      compareTotal ? (comparePointCount || 0) / compareTotal : null,
-      "higher",
-      total ? (pointCount || 0) / total : null,
-    ),
-    comparisonCell(
-      metrics.eff === null ? "-" : formatPercent(metrics.eff),
-      compareMetrics.eff,
-      "higher",
-      metrics.eff,
-    ),
-  ].map((cell) => ({
-    ...cell,
-    className: buildAttackCompareClass(
-      Object.prototype.hasOwnProperty.call(cell, "raw") ? cell.raw : cell.text,
-      cell.compare,
-      cell.better,
-    ),
-  }));
-  footerRows = [{ className: "attack-analysis-total-row", cells: totalCells }];
+  };
+  Object.keys(main.byType)
+    .sort((a, b) => a.localeCompare(b, "it", { sensitivity: "base" }))
+    .forEach((type) =>
+      rows.push({
+        cells: buildCells(
+          type,
+          normalizeCounts(main.byType[type]),
+          normalizeCounts(other.byType[type]),
+        ),
+      }),
+    );
+  footerRows = [
+    {
+      className: "attack-analysis-total-row",
+      cells: buildCells("Totale", main.counts, other.counts),
+    },
+  ];
   publish();
 }
 
@@ -263,7 +213,7 @@ export function publishReactAttackGrid(target, events, far) {
         null;
     if (zone) (grouped[zone] ??= []).push(ev);
   });
-  analysisTableStore.publish(target.id, {
+  analysisTableStore.publish(target, {
     far,
     legend: buildReactTrajectoryLegend("attack"),
     cards: [4, 3, 2, 5, 6, 1].map((zone) => {
@@ -282,7 +232,7 @@ export function publishReactAttackGrid(target, events, far) {
 
 export function publishReactGlobalAttackGrid() {
   publishReactAttackSummary(
-    matchState.elTrajectoryAttackSummary,
+    "trajectory-attack-summary",
     getFilteredAttackSummaryEvents(),
   );
   const scope = getAnalysisTeamScope(),
@@ -291,7 +241,7 @@ export function publishReactGlobalAttackGrid() {
         ensureCourtSideState("uiTrajectoryCourtSideByScope")[scope],
       ) === "far";
   publishReactAttackGrid(
-    rosterLineupState.elTrajectoryGrid,
+    "trajectory-grid",
     getFilteredTrajectoryEvents(),
     far,
   );
@@ -353,7 +303,7 @@ export function publishReactGlobalServeGrid() {
     if (typeof ev.playerIdx === "number")
       (grouped[ev.playerIdx] ??= []).push(ev);
   });
-  analysisTableStore.publish(rosterLineupState.elServeTrajectoryGrid.id, {
+  analysisTableStore.publish("serve-trajectory-grid", {
     legend: buildReactTrajectoryLegend("serve"),
     cards: indices.map((index) => {
       let list = grouped[index] || [];
@@ -375,7 +325,7 @@ export function publishReactPlayerServeGrid(target, index) {
       getAnalysisCourtSide(
         ensurePlayerAnalysisState().courtSideByScope[scope],
       ) === "far";
-  analysisTableStore.publish(target.id, {
+  analysisTableStore.publish(target, {
     legend: index === null ? [] : buildReactTrajectoryLegend("serve"),
     cards:
       index === null
@@ -438,7 +388,7 @@ export function publishReactLogServeTrajectories() {
         }),
     };
   });
-  analysisTableStore.publish(scoutUiState.elLogServeTrajectory.id, {
+  analysisTableStore.publish("log-serve-trajectory", {
     visible: !!serving,
     cards,
     legend: cards.some((card) => card.visible)

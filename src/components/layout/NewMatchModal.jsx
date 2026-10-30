@@ -55,7 +55,6 @@ export function NewMatchModal() {
   return (
     <ModalDialog
       id="new-match-modal"
-      className="settings-modal"
       data-mode={view.mode}
       aria-labelledby="new-match-title"
       open={view.open}
@@ -71,14 +70,7 @@ export function NewMatchModal() {
           <h3 id="new-match-title">{editing ? "Modifica dati partita" : "Crea partita"}</h3>
         </div>
       }
-      closeProps={{
-        id: "new-match-close",
-        onClick: () => run("closeMatchDialog"),
-        className: "pill-remove",
-        type: "button",
-        "aria-label": "Chiudi",
-      }}
-      bodyProps={{ className: "settings-modal__body" }}
+      closeProps={{ id: "new-match-close" }}
     >
       <p className="section-note">
         {

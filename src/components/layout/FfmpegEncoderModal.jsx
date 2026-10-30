@@ -13,22 +13,13 @@ export function FfmpegEncoderModal() {
   return (
     <ModalDialog
       id="ffmpeg-encoder-modal"
-      className="settings-modal"
       aria-labelledby="ffmpeg-encoder-title"
       open={view.open}
       onClose={() => choose(null)}
       variant="settings"
       backdropProps={{ "data-close-ffmpeg-encoder": "" }}
-      contentProps={{ className: "settings-modal__content" }}
       title={<h3 id="ffmpeg-encoder-title">Copia comando ffmpeg</h3>}
-      closeProps={{
-        id: "ffmpeg-encoder-close",
-        className: "pill-remove",
-        type: "button",
-        "aria-label": "Chiudi",
-        onClick: () => choose(null),
-      }}
-      bodyProps={{ className: "settings-modal__body" }}
+      closeProps={{ id: "ffmpeg-encoder-close" }}
     >
       <p className="section-note">
         Entrambi i comandi esportano i tagli senza audio, mantenendo overlay e compressione

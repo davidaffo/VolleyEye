@@ -1,21 +1,14 @@
-import { eventTableStore } from '../../state/event-table-store.mjs';
+import { eventTableStore, eventLogSummaryStore } from "../../state/event-table-store.mjs";
 import { getDefaultSkillDurationMs } from "./playback-model.js";
 import { pruneEventSelection, getRowsForContext, getSelectedRows, getActiveEventContextKey, getSelectedVideoRowForInsert } from "../events/selection-model.js";
-
 import { buildVideoOverlayLinesForEvent } from "./overlay-model.js";
 import { getEventKey } from "../../domain/event-key.js";
-
 import { session } from "../state/video-video-events.js";
-
-import { eventLogSummaryStore } from '../../state/event-table-store.mjs';
-import { SKILLS } from "../../../js/globals.js";
+import { SKILLS, session as matchState } from "../../../js/globals.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { getPlayerNumbersForScope, getTeamScopeFromEvent, getTeamNameForScope } from "../teams/selectors.js";
 import { setModalOpenState } from "../layout/modals.js";
-
-
 import { publishReactEventTable } from "../events/table-commands.js";
-import { session as matchState } from "../../../js/globals.js";
 import { videoViewStore } from "../../state/video-view-store.mjs";
 import { closeCurrentEdit } from "../live/game-flow.js";
 import { session as rosterLineupState } from "../state/roster-lineup.js";
@@ -23,8 +16,7 @@ import { seekVideoToTime, renderVideoAnalysis } from "./playback.js";
 import { pushVideoUndoSnapshot } from "./video-sources.js";
 import { getVideoBaseTimeMs, getVideoSkillEvents } from "./event-model.js";
 import { computeEventVideoTime } from "./timing.js";
-
-import { refreshAfterVideoEdit, renderEventTableRows } from "./event-editor.js";
+import { refreshAfterVideoEdit } from "./event-editor.js";
 import { saveState } from "../storage/save-state.js";
 import { formatNameWithNumberFor } from "../teams/roster-data.js";
 import { publishReactVideoOverlay } from "./view.js";
@@ -32,13 +24,13 @@ import { openReactVideoScore, closeReactVideoScore, chooseReactFfmpegEncoder } f
 import { publishRuntimeView } from "../core/runtime-view.js";
 import { openReactVideoEdit, closeReactVideoEdit, readVideoEditInputs } from "./edit-view.js";
 import { getPointDirectionForScope, getEventPointValue } from "../analysis/scores.js";
-
 import { getNextEventId } from "../live/live-entry.js";
 import { getActiveVideoFilterPresetName } from "../analysis/video-filter-model.js";
 import { matchesVideoFilters } from "../analysis/filter-model.js";
 import { session as analysisFiltersState } from "../state/analysis-analysis-filters.js";
 import { recalcAllStatsAndUpdateUI } from "../analysis/stats-update.js";
-import { renderTrajectoryAnalysis, renderServeTrajectoryAnalysis, renderLogServeTrajectories } from "../analysis/trajectory-rendering.js";
+import { renderTrajectoryAnalysis, renderServeTrajectoryAnalysis } from "../analysis/trajectory-rendering.js";
+import { publishReactLogServeTrajectories } from "../analysis/trajectory-view.js";
 import { updateLiveDvwMirror } from "../io/datavolley-live-entry.js";
 import { getErrorTypeLabel } from "../analysis/player-model.js";
 import { recordSetAction } from "../live/live-score-and-set.js";
@@ -46,13 +38,7 @@ import { renderPlayers } from "../live/team-rendering.js";
 import { renderLiberoChipsInline, updateRotationDisplay } from "../teams/court/court-ui-bootstrap.js";
 import { session as teamManagementState } from "../state/live-team-management.js";
 
-
-
 const videoEventsState = session;
-
-
-
-
 
 export function clearEventSelection({ clearContexts = true } = {}) {
   scoutUiState.selectedEventIds.clear();
@@ -76,14 +62,8 @@ export function updateVideoSelectionCount() {
   if (!matchState.elVideoSelectionCount) return;
   const ctx = scoutUiState.eventTableContexts.video;
   const count = ctx && ctx.rows ? ctx.rows.filter(r => scoutUiState.selectedEventIds.has(r.key)).length : 0;
-   videoViewStore.publish({ selectionCount: count }); return; 
+   videoViewStore.publish({ selectionCount: count }); return;
 
-}
-
-export function registerEventTableContext(key, ctx) {
-  if (!key) return;
-  scoutUiState.eventTableContexts[key] = ctx;
-  updateSelectionStyles();
 }
 
 export function removeEventTableContext(key) {
@@ -91,10 +71,6 @@ export function removeEventTableContext(key) {
   delete scoutUiState.eventTableContexts[key];
   updateSelectionStyles();
 }
-
-
-
-
 
 export function setSelectionForContext(contextKey, keysSet, anchorKey = null, opts = {}) {
   const ctx = contextKey ? scoutUiState.eventTableContexts[contextKey] : null;
@@ -109,7 +85,7 @@ export function setSelectionForContext(contextKey, keysSet, anchorKey = null, op
     ctx.onSelectionChange(getSelectedRows(contextKey), contextKey, opts);
   }
   if (contextKey === "video") {
-    updateVideoAnalysisOverlay();
+    publishReactVideoOverlay();
   }
 }
 
@@ -130,8 +106,6 @@ export function selectRangeForContext(contextKey, anchorKey, targetKey, opts = {
   const range = new Set(rows.slice(start, end + 1).map(r => r.key));
   setSelectionForContext(contextKey, range, anchorKey, opts);
 }
-
-
 
 export function isEditingField(target) {
   if (!target) return false;
@@ -288,15 +262,6 @@ export function buildSelectedSegments() {
   return segments;
 }
 
-
-
-
-
-export function updateVideoAnalysisOverlay() {
-
- publishReactVideoOverlay(); return;
-}
-
 export function escapeFfmpegText(text) {
   return String(text)
     .replace(/\\/g, "\\\\")
@@ -384,15 +349,9 @@ export function correctVideoScoresFromSelection(startHome, startAway) {
   saveState({ persistLocal: true });
   refreshAfterVideoEdit(false);
   renderEventsLog({ suppressScroll: true });
-  updateVideoAnalysisOverlay();
+  publishReactVideoOverlay();
   closeVideoScoreModal();
 }
-
-
-
-
-
-
 
 export function addEmptyVideoEventAfterSelection() {
   const insertRow = getSelectedVideoRowForInsert();
@@ -542,13 +501,11 @@ export async function copyFfmpegFromSelection() {
 }
 
 export function renderEventsLog(options = {}) {
-  const append = !!options.append;
   let summaryText = "Nessun evento";
   const suppressScroll = !!options.suppressScroll;
   if (!matchState.state.events || matchState.state.events.length === 0) {
-    publishReactEventTable(rosterLineupState.elEventsLog,[],{contextKey:"log",empty:"Nessun evento ancora registrato."});
+    publishReactEventTable("events-log",[],{contextKey:"log",empty:"Nessun evento ancora registrato."});
     eventLogSummaryStore.publish({ text: summaryText });
-    scoutUiState.lastLogRenderedKey = null;
     updateLiveDvwMirror();
     return;
   }
@@ -559,7 +516,6 @@ export function renderEventsLog(options = {}) {
     return (a.eventId || 0) - (b.eventId || 0);
   });
   const latest = recent[recent.length - 1];
-  const latestKey = getEventKey(latest, recent.length - 1);
   const getEventSkillLabel = ev => {
     if (ev.actionType === "timeout") return "Timeout";
     if (ev.actionType === "substitution") return "Cambio";
@@ -598,75 +554,23 @@ export function renderEventsLog(options = {}) {
   summaryText = latestFmt.leftText;
   const skillEvents = getVideoSkillEvents();
   const baseMs = getVideoBaseTimeMs(skillEvents);
-  let didAppend = false;
-
-   renderEventTableRows(rosterLineupState.elEventsLog,recent,{showSeek:false,showVideoTime:true,baseMs,enableSelection:true,contextKey:"log",onSelectionChange:(_rows,_ctx,opts)=>handleSeekForSelection("log",opts)});didAppend=true;
-
-  if (!didAppend && append && rosterLineupState.elEventsLog && scoutUiState.lastLogRenderedKey) {
-    const lastIdx = recent.findIndex(ev => getEventKey(ev) === scoutUiState.lastLogRenderedKey);
-    if (lastIdx !== -1) {
-      const toAppend = recent.slice(lastIdx + 1);
-      if (toAppend.length > 0) {
-        renderEventTableRows(rosterLineupState.elEventsLog, toAppend, {
-          showSeek: false,
-          showVideoTime: true,
-          baseMs,
-          enableSelection: true,
-          contextKey: "log",
-          onSelectionChange: (_rows, _ctx, opts) => handleSeekForSelection("log", opts),
-          append: true
-        });
-        const table = rosterLineupState.elEventsLog.querySelector("table");
-        const tbody = table ? table.querySelector("tbody") : null;
-        const ctxRef = scoutUiState.eventTableContexts.log;
-        if (tbody && ctxRef && ctxRef.rows) {
-          const overflow = tbody.rows.length - recent.length;
-          if (overflow > 0) {
-            for (let i = 0; i < overflow; i += 1) {
-              const first = tbody.rows[0];
-              if (first) first.remove();
-            }
-            ctxRef.rows.splice(0, overflow);
-            pruneEventSelection();
-          }
-        }
-        didAppend = true;
-      }
-    }
-  }
-  if (!didAppend) {
-    renderEventTableRows(rosterLineupState.elEventsLog, recent, {
-      showSeek: false,
-      showVideoTime: true,
-      baseMs,
-      enableSelection: true,
-      contextKey: "log",
-      onSelectionChange: (_rows, _ctx, opts) => handleSeekForSelection("log", opts)
-    });
-  }
-  scoutUiState.lastLogRenderedKey = latestKey;
+  publishReactEventTable("events-log", recent, {
+    showSeek: false,
+    showVideoTime: true,
+    baseMs,
+    enableSelection: true,
+    contextKey: "log",
+    onSelectionChange: (_rows, _ctx, opts) => handleSeekForSelection("log", opts),
+  });
   if (rosterLineupState.elEventsLog && !suppressScroll) {
     requestAnimationFrame(() => {
       rosterLineupState.elEventsLog.scrollTop = rosterLineupState.elEventsLog.scrollHeight;
     });
   }
   eventLogSummaryStore.publish({ text: summaryText });
-  updateTeamCounters();
-  renderLogServeTrajectories();
+  publishRuntimeView();
+  publishReactLogServeTrajectories();
   updateLiveDvwMirror();
-}
-
-
-
-
-
-
-
-export function updateTeamCounters() {
-
-    publishRuntimeView();
-    return;
-
 }
 
 export function recordTimeoutEvent() {
@@ -715,8 +619,6 @@ export function closeOffsetModal() {
 
 closeReactVideoEdit("offset");return;
 }
-
-
 
 export function openSkillDurationModal() {
 
@@ -893,4 +795,3 @@ export function applyOffsetsToSelectedSkills() {
   handleSeekForSelection(ctxKey, { userAction: true });
   closeOffsetModal();
 }
-

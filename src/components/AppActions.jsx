@@ -18,15 +18,15 @@ const actions = {
   "player-second-filter-reset": "resetPlayerSecondFilters",
   "video-filter-reset": "resetVideoFilters",
 
-  "btn-timeout": "recordTimeoutEvent",
-  "btn-timeout-opp": "recordOpponentTimeoutEvent",
-  "btn-score-team-point": "startReactPointPick",
-  "btn-score-team-error": "startReactErrorPick",
-  "btn-score-opp-point": "handleOpponentPoint",
-  "btn-score-opp-error": "handleOpponentErrorPoint",
-  "btn-score-opp-point-single": "handleOpponentPoint",
-  "btn-score-opp-error-single": "handleOpponentErrorPoint",
-  "btn-reset-scout-widgets": "resetReactScoutWidgets",
+  "btn-timeout": ["recordTimeoutEvent", true],
+  "btn-timeout-opp": ["recordOpponentTimeoutEvent", true],
+  "btn-score-team-point": ["startReactPointPick", true],
+  "btn-score-team-error": ["startReactErrorPick", true],
+  "btn-score-opp-point": ["handleOpponentPoint", true],
+  "btn-score-opp-error": ["handleOpponentErrorPoint", true],
+  "btn-score-opp-point-single": ["handleOpponentPoint", true],
+  "btn-score-opp-error-single": ["handleOpponentErrorPoint", true],
+  "btn-reset-scout-widgets": ["resetReactScoutWidgets", true],
 
   "btn-open-teams-manager": "openTeamsManagerModal",
   "btn-open-debug-modal": "openDebugModal",
@@ -35,61 +35,38 @@ const actions = {
   "btn-import-db-url": "importReactDatabaseUrl",
   "btn-delete-demo-data": "removeDefaultDemoData",
   "btn-reset-app": "resetAppData",
-  "btn-open-live-team-editor": "openReactLiveTeam",
-  "btn-open-live-opponent-team-editor": "openReactLiveOpponent",
-  "btn-open-lineup": "openMobileLineupModal",
-  "btn-open-lineup-opp": "openReactOpponentLineup",
-  "btn-attack-base": "toggleBaseModal",
-  "btn-attack-setter": "toggleAttackSetterModal",
-  "btn-attack-type": "toggleAttackTypeModal",
-  "btn-block-number": "toggleBlockNumberModal",
-  "btn-net-block-prompt": "triggerNetBlockPrompt",
+  "btn-open-live-team-editor": ["openReactLiveTeam", true],
+  "btn-open-live-opponent-team-editor": ["openReactLiveOpponent", true],
+  "btn-open-lineup": ["openMobileLineupModal", true],
+  "btn-open-lineup-opp": ["openReactOpponentLineup", true],
+  "btn-attack-base": ["toggleBaseModal", true],
+  "btn-attack-setter": ["toggleAttackSetterModal", true],
+  "btn-attack-type": ["toggleAttackTypeModal", true],
+  "btn-block-number": ["toggleBlockNumberModal", true],
+  "btn-net-block-prompt": ["triggerNetBlockPrompt", true],
 
   "btn-export-pdf": "exportAnalysisPdf",
   "btn-export-html": "exportAnalysisHtml",
   "btn-export-match": "exportMatchToFile",
   "btn-export-dvw": "exportDataVolleyToFile",
   "btn-reset-match": "resetMatch",
-  "btn-undo": "undoLastEvent",
-  "btn-contesa": "undoContestedRally",
+  "btn-undo": ["undoLastEvent", true],
+  "btn-contesa": ["undoContestedRally", true],
   "btn-reset-metrics": "resetMetricsToDefault",
   "btn-reset-codes": "resetAllActiveCodes",
   "btn-reset-points": "resetPointRulesToDefault",
 };
 export function AppActionButton({ id, children, ...props }) {
   const controls = useViewStore(runtimeStore);
+  const entry = actions[id];
+  const [command, scoutOnly] = Array.isArray(entry) ? entry : [entry, false];
   return (
     <CommandButton
       id={id}
       {...props}
-      disabled={
-        props.disabled ||
-        ([
-          "btn-open-lineup",
-          "btn-open-lineup-opp",
-          "btn-open-live-team-editor",
-          "btn-open-live-opponent-team-editor",
-          "btn-reset-scout-widgets",
-          "btn-timeout",
-          "btn-timeout-opp",
-          "btn-score-team-point",
-          "btn-score-team-error",
-          "btn-score-opp-point",
-          "btn-score-opp-error",
-          "btn-score-opp-point-single",
-          "btn-score-opp-error-single",
-          "btn-undo",
-          "btn-contesa",
-          "btn-attack-base",
-          "btn-attack-setter",
-          "btn-attack-type",
-          "btn-block-number",
-          "btn-net-block-prompt",
-        ].includes(id) &&
-          !!controls.scoutControlsDisabled)
-      }
+      disabled={props.disabled || (scoutOnly && !!controls.scoutControlsDisabled)}
       command="runReactAppAction"
-      args={[actions[id]]}
+      args={[command]}
       immediate
     >
       {children}

@@ -5,13 +5,13 @@ import { setAttackTrajectoryCourtSizing, updateCourtModalPlacement, restoreModal
 import { getTrajectoryImageForZone } from "../analysis/trajectory-assets.js";
 import { isDesktopCourtModalLayout, setCourtAreaLocked, setModalOpenState } from "../layout/modals.js";
 import { getTeamScopeFromEvent, isFarSideForScope } from "../teams/selectors.js";
-
 import { trajectoryModalStore } from "../../state/roster-import-store.mjs";
 import { publishReactTrajectoryImage, publishReactTrajectoryModal } from "../scout/trajectory-dialog.js";
 import { session as matchState } from "../../../js/globals.js";
 import { setServeTypeSelection, cancelPartialSkillFlowForScope } from "./skill-selection.js";
 import { unlistenRuntime, listenRuntime, session as browserEffectsState } from "../../app/browser-effects.js";
-import { renderLogServeTrajectories, renderServeTrajectoryAnalysis } from "../analysis/trajectory-rendering.js";
+import { publishReactLogServeTrajectories } from "../analysis/trajectory-view.js";
+import { renderServeTrajectoryAnalysis } from "../analysis/trajectory-rendering.js";
 import { suppressTransientClicks } from "./lineup-editor.js";
 import { saveState } from "../storage/save-state.js";
 import { renderEventsLog } from "../video/video-events.js";
@@ -19,8 +19,6 @@ import { renderVideoAnalysis } from "../video/playback.js";
 import { enforceAutoLiberoForState } from "../teams/court-state-model.js";
 import { renderPlayers } from "./team-rendering.js";
 import { updateNextSkillIndicator } from "./game-flow.js";
-
-
 
 const trajectoriesState = session;
 
@@ -132,14 +130,6 @@ export function normalizeTrajectoryPoint(pt) {
     y: clamp01(relY)
   };
 }
-
-
-
-
-
-
-
-
 
 export function getTrajectoryNetPoint(id) {
   if (!id) return null;
@@ -302,7 +292,7 @@ export function openAttackTrajectoryModal(prefill = null) {
     scoutUiState.elAttackTrajectoryModal.classList.remove("hidden");
     publishReactTrajectoryModal(true);
     setModalOpenState(true, forcePopup);
-    renderLogServeTrajectories();
+    publishReactLogServeTrajectories();
     const applyPrefill = () => {
       if (!scoutUiState.elAttackTrajectoryCanvas || scoutUiState.elAttackTrajectoryCanvas.width === 0 || scoutUiState.elAttackTrajectoryCanvas.height === 0) {
         return;
@@ -387,7 +377,7 @@ export function closeAttackTrajectoryModal(result = null) {
     scoutUiState.trajectoryResolver = null;
   }
   publishReactTrajectoryModal(false);
-  renderLogServeTrajectories();
+  publishReactLogServeTrajectories();
 }
 
 export async function captureServeTrajectory(event, { forcePopup = false } = {}) {

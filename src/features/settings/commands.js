@@ -6,7 +6,7 @@ import { saveState } from "../storage/save-state.js";
 import { updateVideoScoutModeLayout } from "../live/workspace-layout.js";
 import { applyForceMobileLayout } from "../core/bootstrap-state.js";
 import { renderPlayers } from "../live/team-rendering.js";
-import { renderLogServeTrajectories } from "../analysis/trajectory-rendering.js";
+import { publishReactLogServeTrajectories } from "../analysis/trajectory-view.js";
 import { publishReactSettings } from "./view.js";
 
 export function changeReactSetting(field, value) {
@@ -50,7 +50,7 @@ export function changeReactSetting(field, value) {
       field === "showServeTrajectoryLogOur" ||
       field === "showServeTrajectoryLogOpp"
     )
-      renderLogServeTrajectories();
+      publishReactLogServeTrajectories();
   } else return;
   publishReactSettings();
 

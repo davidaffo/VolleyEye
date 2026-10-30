@@ -1,20 +1,21 @@
+import { resetMatchVideoState } from "../../video/reset-model.js";
+import { resetMatchVideoPlayback } from "../../video/reset-commands.js";
 import { getCurrentTeamPayload } from "../current-payload.js";
 import { session } from "../../state/teams-storage-archive-actions.js";
 import { stripCourtReplacements, normalizePlayers, buildFullName, normalizePlayerNameCase } from "../../../domain/player-names.js";
 import { ensureMatchDefaults, getTodayIso } from "../match-details.js";
 import { session as matchState, downloadBlob } from "../../../../js/globals.js";
-import { listTeamsFromStorage, compactTeamPayload, saveTeamToStorage, deleteTeamFromStorage, syncTeamsFromStorage, loadTeamFromStorage, loadOpponentTeamFromStorage, getSelectedTeamDefaultSettings, getSelectedOpponentTeamDefaultSettings } from "./team-repository.js";
+import { compactTeamPayload, loadTeamFromStorage, loadOpponentTeamFromStorage, getSelectedTeamDefaultSettings, getSelectedOpponentTeamDefaultSettings } from "./team-repository.js";
 import { session as rosterLineupState } from "../../state/roster-lineup.js";
 
 import { applyDefaultLineup, applyOpponentDefaultLineup } from "../core/player-model.js";
 import { saveState } from "../../storage/save-state.js";
 import { cloneIsolationData } from "../../../domain/snapshots.js";
 
-import { renderTeamsSelect, renderOpponentTeamsSelect, renderMatchesSelect, renderMatchSummary } from "./match-repository.js";
+import { renderMatchesSelect, renderMatchSummary } from "./match-repository.js";
 import { getSelectedArchivedMatch, loadMatchFromStorage, saveMatchToStorage, deleteMatchFromStorage, syncMatchesFromStorage, loadMatchesMapFromStorage } from "../../storage/match-repository.js";
 
 import { enforceAutoLiberoForState, initStats } from "../court-state-model.js";
-import { refreshTeamManagerFromSelection } from "../editor/team-editor.js";
 
 import { persistCurrentMatch, generateMatchName } from "../../storage/match-persistence.js";
 import { applyImportedMatch } from "../../io/match-io.js";
@@ -25,55 +26,13 @@ import { pauseSkillClock, pauseVideoClock } from "../../live/live-entry.js";
 import { openReactMatchDialog, closeReactMatchDialog } from "../match-dialog-view.js";
 import { handleTeamSelectChange, handleOpponentTeamSelectChange } from "../imports/camp3-import.js";
 import { syncOpponentSettingsUI } from "../../live/team-management.js";
-import { resetSetTypeState } from "../../live/game-flow.js";
-import { clearEventSelection, renderEventsLog } from "../../video/video-events.js";
-import { clearCachedLocalVideo } from "../../video/video-sources.js";
-import { session as workspaceLayoutState } from "../../state/live-workspace-layout.js";
+import { resetSetTypeState } from "../../live/flow-model.js";
+import { renderEventsLog } from "../../video/video-events.js";
+
 import { recalcAllStatsAndUpdateUI } from "../../analysis/stats-update.js";
 import { renderPlayers } from "../../live/team-rendering.js";
 
-
-
 const archiveActionsState = session;
-
-
-
-
-
-export function saveCurrentTeam() {
-  if (!matchState.state.players || matchState.state.players.length === 0) {
-    alert("Aggiungi almeno una giocatrice prima di salvare.");
-    return;
-  }
-  let name = prompt(
-    "Nome della squadra da salvare:",
-    matchState.state.selectedTeam || (matchState.state.match && matchState.state.match.teamName) || ""
-  );
-  if (!name) return;
-  name = name.trim();
-  if (!name) return;
-  const names = listTeamsFromStorage();
-  const exists = names.includes(name);
-  if (exists) {
-    const ok = confirm("Esiste già una squadra con questo nome. Sovrascrivere?");
-    if (!ok) return;
-  }
-  const payload = getCurrentTeamPayload(name);
-  const compact = compactTeamPayload(payload, name);
-  if (!saveTeamToStorage(name, compact)) {
-    alert("Impossibile salvare la squadra. Controlla lo spazio disponibile nel browser.");
-    return;
-  }
-  matchState.state.savedTeams = matchState.state.savedTeams || {};
-  matchState.state.savedTeams[name] = compact;
-  matchState.state.selectedTeam = name;
-  saveState();
-  renderTeamsSelect();
-  renderOpponentTeamsSelect();
-  alert("Squadra salvata: " + name);
-}
-
-
 
 export function applyMatchPayload(payload, opts = {}) {
   if (!payload || !payload.state) return;
@@ -401,34 +360,9 @@ export function resetMatchState(options = {}) {
   matchState.state.preferredLibero = preservedPreferredLibero;
   matchState.state.courtViewMirrored = false;
   matchState.state.skillClock = { paused: true, pausedAtMs: null, pausedAccumMs: 0, lastEffectiveMs: 0 };
-  matchState.state.video = {
-    offsetSeconds: 0,
-    fileName: "",
-    youtubeId: "",
-    youtubeUrl: "",
-    lastPlaybackSeconds: 0
-  };
-  matchState.state.videoFilterPresets = [];
-  matchState.state.videoClock = {
-    paused: true,
-    pausedAtMs: null,
-    pausedAccumMs: 0,
-    startMs: Date.now(),
-    currentSeconds: 0
-  };
-  clearEventSelection({ clearContexts: true });
-  clearCachedLocalVideo();
-  if (typeof workspaceLayoutState.ytPlayer !== "undefined" && workspaceLayoutState.ytPlayer && workspaceLayoutState.ytPlayer.stopVideo) {
-    workspaceLayoutState.ytPlayer.stopVideo();
-  }
-  if (typeof matchState.elAnalysisVideo !== "undefined" && matchState.elAnalysisVideo) {
-    matchState.elAnalysisVideo.pause();
-    matchState.elAnalysisVideo.currentTime = 0;
-  }
-  if (typeof matchState.elYoutubeFrame !== "undefined" && matchState.elYoutubeFrame) {
-    matchState.elYoutubeFrame.src = "";
-    matchState.elYoutubeFrame.style.display = "none";
-  }
+  resetMatchVideoState();
+  resetMatchVideoPlayback({ includeScout: false });
+
   enforceAutoLiberoForState({ skipServerOnServe: true });
   initStats();
   saveState();
@@ -440,44 +374,6 @@ export function resetMatchState(options = {}) {
   if (!skipMatchesRender) {
     renderMatchesSelect();
   }
-}
-
-export function renameSelectedTeam() {
-  if (!matchState.elTeamsSelect) return;
-  const oldName = matchState.elTeamsSelect.value;
-  if (!oldName) {
-    alert("Seleziona una squadra da rinominare.");
-    return;
-  }
-  const currentData = loadTeamFromStorage(oldName);
-  if (!currentData) {
-    alert("Squadra non trovata o corrotta.");
-    return;
-  }
-  let newName = prompt("Nuovo nome per la squadra:", oldName) || "";
-  newName = newName.trim();
-  if (!newName) return;
-  if (newName === oldName) return;
-  const names = listTeamsFromStorage();
-  const exists = names.includes(newName);
-  if (exists) {
-    const overwrite = confirm(
-      "Esiste già una squadra con questo nome. Sovrascrivere con la squadra corrente?"
-    );
-    if (!overwrite) return;
-  }
-  if (!saveTeamToStorage(newName, currentData)) {
-    alert("Impossibile rinominare la squadra: la nuova copia non è stata salvata.");
-    return;
-  }
-  deleteTeamFromStorage(oldName);
-  renameTeamReferencesAcrossSavedMatches(oldName, newName, "our");
-  syncTeamsFromStorage();
-  matchState.state.selectedTeam = newName;
-  renderTeamsSelect();
-  renderOpponentTeamsSelect();
-  refreshTeamManagerFromSelection();
-  alert("Squadra rinominata in \"" + newName + "\".");
 }
 
 export function renameTeamReferencesInNode(node, oldName, newName, scope = "our") {

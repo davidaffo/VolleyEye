@@ -1,6 +1,16 @@
 import { readSourceFixture as readFileSync } from "./source-fixture.mjs";
 
 export const SCOUT_SOURCE_FILES = [
+  "src/features/video/reset-model.js",
+  "src/features/video/reset-commands.js",
+  "src/features/scout/serve-keyboard.js",
+  "src/features/scout/selection-state.js",
+  "src/features/scout/selection-commands.js",
+  "src/features/players/database-model.js",
+  "src/features/analysis/stats-model.js",
+  "src/features/analysis/shared-filter-view.js",
+  "src/domain/analysis-filter-schema.js",
+  "src/features/teams/player-reference-model.js",
   "src/features/analysis/cache-model.js",
   "src/features/analysis/reset-model.js",
   "src/features/scout/skill-control-model.js",

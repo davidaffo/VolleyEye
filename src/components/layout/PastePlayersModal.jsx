@@ -19,21 +19,13 @@ export function PastePlayersModal() {
   return (
     <ModalDialog
       id="paste-players-modal"
-      className="settings-modal"
       aria-labelledby="paste-players-title"
       open={view.open}
       onClose={close}
       variant="settings"
       backdropProps={{ "data-close-paste": "" }}
-      contentProps={{ className: "settings-modal__content" }}
       title={<h3 id="paste-players-title">Incolla elenco giocatrici</h3>}
-      closeProps={{
-        className: "pill-remove",
-        "aria-label": "Chiudi",
-        "data-close-paste": "",
-        onClick: close,
-      }}
-      bodyProps={{ className: "settings-modal__body" }}
+      closeProps={{ "data-close-paste": "" }}
     >
       <label htmlFor="players-input">
         Formato: Numero;Cognome;Nome;L (L opzionale per il libero). Sono accettati anche tab o spazi.

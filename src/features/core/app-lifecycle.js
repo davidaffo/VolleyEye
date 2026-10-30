@@ -1,6 +1,8 @@
+import { resetMatchVideoState } from "../video/reset-model.js";
+import { resetMatchVideoPlayback } from "../video/reset-commands.js";
 import { stripCourtReplacements } from "../../domain/player-names.js";
 import { STORAGE_KEY, session as matchState } from "../../../js/globals.js";
-import { resetSetTypeState } from "../live/game-flow.js";
+import { resetSetTypeState } from "../live/flow-model.js";
 import { getLastFlowEvent, computeTwoTeamFlowFromEvent } from "../live/flow-model.js";
 
 import { session as rosterLineupState } from "../state/roster-lineup.js";
@@ -12,8 +14,7 @@ import { enforceAutoLiberoForState, initStats } from "../teams/court-state-model
 import { isLiberoForScope } from "../teams/libero-model.js";
 import { clearEventSelection, renderEventsLog } from "../video/video-events.js";
 import { getEventKey } from "../../domain/event-key.js";
-import { syncYoutubeUrlInputs, clearCachedLocalVideo } from "../video/video-sources.js";
-import { session as workspaceLayoutState } from "../state/live-workspace-layout.js";
+
 import { saveState } from "../storage/save-state.js";
 import { buildMatchDisplayName } from "../teams/match-details.js";
 import { recalcAllStatsAndUpdateUI } from "../analysis/stats-update.js";
@@ -90,46 +91,8 @@ export function resetMatch() {
   matchState.state.preferredLibero = preservedPreferredLibero;
   enforceAutoLiberoForState({ skipServerOnServe: true });
   matchState.state.skillClock = { paused: true, pausedAtMs: null, pausedAccumMs: 0, lastEffectiveMs: 0 };
-  matchState.state.video = {
-    offsetSeconds: 0,
-    fileName: "",
-    youtubeId: "",
-    youtubeUrl: "",
-    lastPlaybackSeconds: 0
-  };
-  matchState.state.videoFilterPresets = [];
-  matchState.state.videoClock = {
-    paused: true,
-    pausedAtMs: null,
-    pausedAccumMs: 0,
-    startMs: Date.now(),
-    currentSeconds: 0
-  };
-  clearEventSelection({ clearContexts: true });
-  syncYoutubeUrlInputs("");
-  clearCachedLocalVideo();
-  if (workspaceLayoutState.ytPlayer && workspaceLayoutState.ytPlayer.stopVideo) {
-    workspaceLayoutState.ytPlayer.stopVideo();
-  }
-  if (workspaceLayoutState.ytPlayerScout && workspaceLayoutState.ytPlayerScout.stopVideo) {
-    workspaceLayoutState.ytPlayerScout.stopVideo();
-  }
-  if (matchState.elAnalysisVideo) {
-    matchState.elAnalysisVideo.pause();
-    matchState.elAnalysisVideo.currentTime = 0;
-  }
-  if (matchState.elAnalysisVideoScout) {
-    matchState.elAnalysisVideoScout.pause();
-    matchState.elAnalysisVideoScout.currentTime = 0;
-  }
-  if (matchState.elYoutubeFrame) {
-    matchState.elYoutubeFrame.src = "";
-    matchState.elYoutubeFrame.style.display = "none";
-  }
-  if (matchState.elYoutubeFrameScout) {
-    matchState.elYoutubeFrameScout.src = "";
-    matchState.elYoutubeFrameScout.style.display = "none";
-  }
+  resetMatchVideoState();
+  resetMatchVideoPlayback({ includeScout: true });
 
   initStats();
   saveState();
@@ -589,6 +552,37 @@ export function registerServiceWorker() {
   else listenRuntime(window, "load", register, { once: true });
 }
 
+function getAggTabRenderer(tab, { includeServe = false } = {}) {
+  switch (tab) {
+    case "trajectory":
+      return includeServe
+        ? () => {
+            renderTrajectoryAnalysis();
+            renderServeTrajectoryAnalysis();
+          }
+        : renderTrajectoryAnalysis;
+    case "serve":
+      return renderServeTrajectoryAnalysis;
+    case "player":
+      return renderPlayerAnalysis;
+    case "set-trend":
+      return renderSetTrendAnalysis;
+    case "play-by-play":
+      return renderPlayByPlayAnalysis;
+    case "skill-charts":
+      return renderAnalysisSkillChartsPanel;
+    case "match-sheet":
+      return renderMatchSheetAnalysis;
+    default:
+      return null;
+  }
+}
+
+function scheduleAggRefresh(refresh) {
+  requestAnimationFrame(refresh);
+  browserEffectsState.setTimeout(refresh, 0);
+}
+
 export function setActiveAggTab(target) {
   const desired = target || "summary";
   rosterLineupState.activeAggTab = desired;
@@ -597,56 +591,8 @@ export function setActiveAggTab(target) {
   if (document && document.body) {
     document.body.dataset.aggTab = desired;
   }
-  if (desired === "trajectory") {
-    const refresh = () => {
-      renderTrajectoryAnalysis();
-      renderServeTrajectoryAnalysis();
-    };
-    requestAnimationFrame(refresh);
-    browserEffectsState.setTimeout(refresh, 0);
-  }
-  if (desired === "serve") {
-    const refreshServe = () => {
-      renderServeTrajectoryAnalysis();
-    };
-    requestAnimationFrame(refreshServe);
-    browserEffectsState.setTimeout(refreshServe, 0);
-  }
-  if (desired === "player") {
-    const refreshPlayer = () => {
-      renderPlayerAnalysis();
-    };
-    requestAnimationFrame(refreshPlayer);
-    browserEffectsState.setTimeout(refreshPlayer, 0);
-  }
-  if (desired === "set-trend") {
-    const refreshSetTrend = () => {
-      renderSetTrendAnalysis();
-    };
-    requestAnimationFrame(refreshSetTrend);
-    browserEffectsState.setTimeout(refreshSetTrend, 0);
-  }
-  if (desired === "play-by-play") {
-    const refreshPlayByPlay = () => {
-      renderPlayByPlayAnalysis();
-    };
-    requestAnimationFrame(refreshPlayByPlay);
-    browserEffectsState.setTimeout(refreshPlayByPlay, 0);
-  }
-  if (desired === "skill-charts") {
-    const refreshCharts = () => {
-      renderAnalysisSkillChartsPanel();
-    };
-    requestAnimationFrame(refreshCharts);
-    browserEffectsState.setTimeout(refreshCharts, 0);
-  }
-  if (desired === "match-sheet") {
-    const refreshMatchSheet = () => {
-      renderMatchSheetAnalysis();
-    };
-    requestAnimationFrame(refreshMatchSheet);
-    browserEffectsState.setTimeout(refreshMatchSheet, 0);
-  }
+  const refresh = getAggTabRenderer(desired, { includeServe: true });
+  if (refresh) scheduleAggRefresh(refresh);
 }
 
 export function setActiveTab(target) {
@@ -686,41 +632,9 @@ export function setActiveTab(target) {
   }
   syncMatchSessionUI();
 
-  if (
-    target === "aggregated" &&
-    (rosterLineupState.activeAggTab === "trajectory" ||
-      rosterLineupState.activeAggTab === "serve" ||
-      rosterLineupState.activeAggTab === "player" ||
-      rosterLineupState.activeAggTab === "skill-charts" ||
-      rosterLineupState.activeAggTab === "play-by-play" ||
-      rosterLineupState.activeAggTab === "match-sheet" ||
-      rosterLineupState.activeAggTab === "set-trend")
-  ) {
-    const refresh = () => {
-      if (rosterLineupState.activeAggTab === "trajectory") {
-        renderTrajectoryAnalysis();
-      }
-      if (rosterLineupState.activeAggTab === "serve") {
-        renderServeTrajectoryAnalysis();
-      }
-      if (rosterLineupState.activeAggTab === "player") {
-        renderPlayerAnalysis();
-      }
-      if (rosterLineupState.activeAggTab === "set-trend") {
-        renderSetTrendAnalysis();
-      }
-      if (rosterLineupState.activeAggTab === "play-by-play") {
-        renderPlayByPlayAnalysis();
-      }
-      if (rosterLineupState.activeAggTab === "skill-charts") {
-        renderAnalysisSkillChartsPanel();
-      }
-      if (rosterLineupState.activeAggTab === "match-sheet") {
-        renderMatchSheetAnalysis();
-      }
-    };
-    requestAnimationFrame(refresh);
-    browserEffectsState.setTimeout(refresh, 0);
+  if (target === "aggregated" && getAggTabRenderer(rosterLineupState.activeAggTab)) {
+    // Navigation can change again before either deferred callback runs.
+    scheduleAggRefresh(() => getAggTabRenderer(rosterLineupState.activeAggTab)?.());
   }
   if (prevTab === "video" && target !== "video") {
     stopPlayByPlay();
@@ -830,7 +744,7 @@ export function setupFocusGuards() {
     }
     return el.getAttribute("role") === "button";
   };
-  listenRuntime(document, 
+  listenRuntime(document,
     "click",
     () => {
       browserEffectsState.setTimeout(() => {

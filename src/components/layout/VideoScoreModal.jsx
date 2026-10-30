@@ -17,21 +17,15 @@ export function VideoScoreModal() {
   return (
     <ModalDialog
       id="video-score-modal"
-      className="skill-modal"
       open={view.open}
       onClose={close}
       variant="skill"
       backdropProps={{ "data-close-video-score": "" }}
-      contentProps={{ className: "skill-modal__content" }}
       title={<div className="skill-modal__title">Correggi punteggio</div>}
       closeProps={{
         id: "video-score-close",
         className: "pill-remove skill-modal__close-abs",
-        "aria-label": "Chiudi",
-        type: "button",
-        onClick: close,
       }}
-      bodyProps={{ className: "skill-modal__body" }}
     >
       <div className="video-score-form">
         {["home", "away"].map((field) => (

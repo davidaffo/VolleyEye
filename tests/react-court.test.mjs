@@ -6,7 +6,7 @@ import test from "node:test";
 import { JSDOM } from "jsdom";
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
-const model = read("../src/features/scout/skill-control-model.js") + read("../src/features/scout/skill-actions.js") + read("../src/features/scout/skill-preparation.js");
+const model = read("../src/features/scout/skill-control-model.js") + read("../src/features/scout/selection-commands.js") + read("../src/features/scout/skill-actions.js") + read("../src/features/scout/skill-preparation.js");
 const globals = read("../js/globals.js").split("const PERSISTENT_DB_NAME")[0];
 function setup(options) {
   const dom = new JSDOM('<div id="target"></div>');
@@ -62,11 +62,11 @@ function setup(options) {
     normalizeSetTypeValue: (value) => value,
     isSetterPlayerForScope: () => !!options.setter,
     shouldPromptAttackSetType: () => !!options.promptAttack,
+    SET_TYPE_SHORTCUTS: {},
     DEFAULT_SET_TYPE_OPTIONS: [
       { value: "Fast", label: "Fast" },
       { value: "High", label: "Alta" },
     ],
-    formatSetTypeLabelWithShortcut: (_value, label) => label,
     getCodeTone: (_skill, code) => (code === "=" ? "negative" : "neutral"),
     renderPlayers: () => calls.push(["render"]),
     scheduleRenderPlayers: () => calls.push(["schedule"]),

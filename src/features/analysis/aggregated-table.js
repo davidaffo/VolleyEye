@@ -1,14 +1,15 @@
+import { renderPlayerAnalysis } from "./skill-tables.js";
 import { getSkillChartToneColors } from "./chart-theme.js";
 import { session as skillAnalysisState } from "../state/analysis-skill-analysis.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 
-import { session as rosterLineupState } from "../state/roster-lineup.js";
+
 import { aggregatedTableStore } from "../../state/roster-import-store.mjs";
 import { buildReactAggregatedTable } from "./summary-model.js";
 import {
   renderAnalysisTeamFilter,
   renderAnalysisSummarySetFilter,
-} from "./analysis-filters.js";
+} from "./shared-filter-view.js";
 import {
   isAggSubtabVisible,
   renderAnalysisSkillChartsPanel,
@@ -25,8 +26,8 @@ import {
   renderServeTrajectoryAnalysis,
 } from "./trajectory-rendering.js";
 
-export function renderAggregatedTable() {
-  if (!rosterLineupState.elAggTableBody) return;
+export function renderAggregatedTable({ related = true } = {}) {
+
   renderAnalysisTeamFilter();
   renderAnalysisSummarySetFilter();
   if (isAggSubtabVisible("set-trend")) renderSetTrendAnalysis();
@@ -46,7 +47,17 @@ export function renderAggregatedTable() {
   });
   aggregatedTableStore.publish(view);
   renderScoreAndRotations(summary, scope, { events });
-  renderSecondTable();
+  if (related) {
+    renderSecondTable();
+    renderTrajectoryAnalysis();
+    renderServeTrajectoryAnalysis();
+  }
+}
+
+export function renderAnalysisViews() {
+  renderAggregatedTable({ related: false });
   renderTrajectoryAnalysis();
   renderServeTrajectoryAnalysis();
+  renderSecondTable();
+  renderPlayerAnalysis();
 }

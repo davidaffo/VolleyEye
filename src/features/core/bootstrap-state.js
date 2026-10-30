@@ -11,14 +11,15 @@ import { initializePersistentStorage } from "../storage/persistent-storage.js";
 import { session as persistentStorageState } from "../state/storage-persistent-storage.js";
 import { applyStateSnapshot, loadStateFromIndexedDb, loadState, applyTheme } from "../teams/core/state-store.js";
 import { listMatchesFromStorage, syncMatchesFromStorage, saveMatchToStorage } from "../storage/match-repository.js";
-import { renderTeamsSelect, renderOpponentTeamsSelect, renderMatchesSelect } from "../teams/storage/match-repository.js";
+import { publishTeamsManagerView } from "../teams/manager-view.js";
+import { renderMatchesSelect } from "../teams/storage/match-repository.js";
 import { listTeamsFromStorage } from "../teams/storage/team-repository.js";
 import { readMatchLinkParam, maybeImportMatchFromUrl } from "../io/file-and-url-import.js";
 import { getDefaultDemoPreference, loadDefaultDemoMatch } from "../io/match-io.js";
 import { session as matchIoState } from "../state/io-match-io.js";
 import { getCurrentMatchPayload } from "../teams/current-payload.js";
 import { session as matchState } from "../../../js/globals.js";
-import { renderPlayersManagerList, renderOpponentPlayersList } from "../teams/court/court-engine.js";
+import { publishReactSettings } from "../settings/view.js";
 import { initStats } from "../teams/court-state-model.js";
 import { updateRotationDisplay, renderLiberoChipsInline, applyAutoRolePositioning } from "../teams/court/court-ui-bootstrap.js";
 import { renderOpponentLiberoTags, renderLiberoTags } from "../teams/imports/camp3-import.js";
@@ -27,7 +28,8 @@ import { renderLiveScore, updateMatchStatusUI, setScoutControlsDisabled } from "
 import { initLogServeTrajectoryControls } from "../analysis/trajectory-rendering.js";
 import { applyTemplateTeam } from "../teams/editor/team-editor.js";
 import { recalcAllStatsAndUpdateUI } from "../analysis/stats-update.js";
-import { renderEventsLog, updateTeamCounters } from "../video/video-events.js";
+import { renderEventsLog } from "../video/video-events.js";
+import { publishRuntimeView } from "./runtime-view.js";
 import { renderAggregatedTable } from "../analysis/aggregated-table.js";
 import { ensureSkillClock, ensureVideoClock } from "../live/live-entry.js";
 
@@ -177,15 +179,15 @@ export async function initializeApplicationState() {
   applyTopBarVisibility();
   ensureMatchDefaults();
   updateRotationDisplay();
-  renderPlayersManagerList();
+  publishReactSettings();
   renderOpponentLiberoTags();
-  renderOpponentPlayersList();
+  publishReactSettings();
   renderLiberoChipsInline();
 
   renderLiberoTags();
   renderMetricsConfig();
-  renderTeamsSelect();
-  renderOpponentTeamsSelect();
+  publishTeamsManagerView();
+
   renderMatchesSelect();
   renderLiveScore();
   renderPlayers();
@@ -207,7 +209,7 @@ export async function initializeApplicationState() {
 
     renderLiberoTags();
     renderMetricsConfig();
-    renderTeamsSelect();
+    publishTeamsManagerView();
   }
   if (matchState.state.autoRolePositioning) {
     applyAutoRolePositioning();
@@ -215,7 +217,7 @@ export async function initializeApplicationState() {
   ensureSkillClock();
   ensureVideoClock();
   updateMatchStatusUI();
-  updateTeamCounters();
+  publishRuntimeView();
   setScoutControlsDisabled(!!matchState.state.matchFinished);
 
   await persistentStorageState.archiveStorage.flush();

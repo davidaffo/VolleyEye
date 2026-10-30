@@ -134,22 +134,13 @@ test("i confini applicativi non reintroducono sincronizzazioni implicite", () =>
     scout.indexOf("function buildMatchExportPayload()"),
     scout.indexOf("function buildDatabaseBackupPayload()")
   );
-  const teamSelectRenderBody = roster.slice(
-    roster.indexOf("function renderTeamsSelect()"),
-    roster.indexOf("function renderOpponentTeamsSelect()")
-  );
-  const opponentSelectRenderBody = roster.slice(
-    roster.indexOf("function renderOpponentTeamsSelect()"),
-    roster.indexOf("function hasMatchDataForReset()")
-  );
+  const publisher = readFileSync(new URL('../src/features/teams/manager-view.js', import.meta.url), 'utf8');
   assert.doesNotMatch(renderPlayersBody, /syncRosterFromSelectedTeamIfNeeded\s*\(/);
   assert.doesNotMatch(matchPayloadBody, /savedTeams\s*:/);
-  assert.doesNotMatch(teamSelectRenderBody, /state\.selectedTeam\s*=/);
-  assert.doesNotMatch(teamSelectRenderBody, /state\.match\.teamName\s*=/);
-  assert.doesNotMatch(opponentSelectRenderBody, /state\.selectedOpponentTeam\s*=/);
-  assert.match(teamSelectRenderBody, /publishTeamsManagerView\s*\(/);
-  assert.match(opponentSelectRenderBody, /publishTeamsManagerView\s*\(/);
-  assert.doesNotMatch(opponentSelectRenderBody, /\.filter\s*\(.*state\.selectedTeam/);
+  assert.doesNotMatch(publisher, /state\.selected(?:Opponent)?Team\s*=/);
+  assert.doesNotMatch(publisher, /state\.match\.teamName\s*=/);
+  assert.match(publisher, /teamsManagerStore\.publish\s*\(/);
+  assert.doesNotMatch(publisher, /\.filter\s*\(.*state\.selectedTeam/);
   assert.match(roster, /teamManagerStorageOnly\s*=\s*true/);
   assert.match(roster, /players:\s*\[\],\s*\n\s*defaultLineup:\s*\[\]/);
   assert.match(roster, /applyLiveOpponentTeamManagerPayload/);

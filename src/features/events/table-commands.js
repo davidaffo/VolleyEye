@@ -11,27 +11,18 @@ import {
   selectRangeForContext,
 } from "../video/video-events.js";
 import { getSelectedRows, getRowsForContext } from "./selection-model.js";
-import {
-  openBulkEditModal,
-  refreshAfterVideoEdit,
-  renderEventTableRows,
-} from "../video/event-editor.js";
+import { openBulkEditModal, refreshAfterVideoEdit } from "../video/event-editor.js";
+
 import { eventTableStore } from "../../state/event-table-store.mjs";
 import { closeCurrentEdit } from "../live/game-flow.js";
 import { renderVideoAnalysis, seekVideoToTime } from "../video/playback.js";
 import { buildEventEditControl } from "./edit-model.js";
 import { pushVideoUndoSnapshot } from "../video/video-sources.js";
-import {
-  captureServeTrajectory,
-  openAttackTrajectoryModal,
-} from "../live/trajectories.js";
+import { captureServeTrajectory, openAttackTrajectoryModal } from "../live/trajectories.js";
 import { getTeamScopeFromEvent } from "../teams/selectors.js";
 import { mapBackRowZone } from "../../domain/trajectory-geometry.js";
 import { saveState } from "../storage/save-state.js";
-import {
-  renderTrajectoryAnalysis,
-  renderServeTrajectoryAnalysis,
-} from "../analysis/trajectory-rendering.js";
+import { renderTrajectoryAnalysis, renderServeTrajectoryAnalysis } from "../analysis/trajectory-rendering.js";
 import { deleteEventByKey } from "../core/app-lifecycle.js";
 
 export function buildEventTableRowCommands(
@@ -49,7 +40,7 @@ export function buildEventTableRowCommands(
         onDoubleClick: (event) => {
           event.stopPropagation();
           captureServeTrajectory(ev, { forcePopup: true }).then(() =>
-            renderEventTableRows(target, events, options),
+            publishReactEventTable(target, events, options),
           );
         },
       });
@@ -213,8 +204,7 @@ export function buildReactEventControl(ev, field, baseMs, videoTime) {
   };
 }
 
-export function publishReactEventTable(target, events, options = {}) {
-  const targetId = typeof target === "string" ? target : target?.id;
+export function publishReactEventTable(targetId, events, options = {}) {
   if (!targetId) return;
   const contextKey = options.contextKey || targetId || "events",
     enableSelection = options.enableSelection !== false,
@@ -234,7 +224,6 @@ export function publishReactEventTable(target, events, options = {}) {
       ev: row.ev,
       videoTime: row.videoTime,
       tr: oldRows.get(row.key)?.tr || null,
-      checkbox: null,
     };
     records.push(record);
     return buildEventTableRowCommands(row, record, {
@@ -242,7 +231,7 @@ export function publishReactEventTable(target, events, options = {}) {
       baseMs,
       showSeek,
       enableSelection,
-      target,
+      target: targetId,
       events,
       options,
     });
@@ -251,8 +240,7 @@ export function publishReactEventTable(target, events, options = {}) {
     rows: records,
     onSelectionChange: options.onSelectionChange || null,
     baseMs,
-    native: true,
-    targetId: targetId,
+    targetId,
   };
   if (enableSelection) scoutUiState.eventTableContexts[contextKey] = ctx;
   else removeEventTableContext(contextKey);
@@ -294,12 +282,8 @@ export function bindReactEventTable(id, root) {
       element,
     ]),
   );
-  ctx.table = root.querySelector("table");
-  ctx.bulkHeaders = [...root.querySelectorAll("th.bulk-editable")];
-  ctx.selectAllCheckbox = root.querySelector("thead input[type=checkbox]");
   ctx.rows.forEach((record) => {
     record.tr = elements.get(String(record.key)) || null;
-    record.checkbox = record.tr?.querySelector(".row-select input") || null;
   });
   updateSelectionStyles();
   handleSeekForSelection(view.contextKey);

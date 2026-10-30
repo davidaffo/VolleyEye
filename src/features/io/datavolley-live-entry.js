@@ -1,4 +1,4 @@
-import { DV_SKILLS_BY_CODE } from './datavolley-skills.js';
+import { DV_SKILLS_BY_CODE } from "./datavolley-skills.js";
 import { session as teamManagementState } from "../state/live-team-management.js";
 import { dvwEntryStore } from "../../state/roster-import-store.mjs";
 import { publishReactDvwEntry } from "../scout/code-entry.js";
@@ -15,8 +15,8 @@ import { renderTrajectoryAnalysis, renderServeTrajectoryAnalysis } from "../anal
 
 export function setDvwScoutStatus(message, tone = "") {
   if (!teamManagementState.elDvwScoutStatus) return;
-   dvwEntryStore.publish({ status: message || "", tone }); return; 
-  
+   dvwEntryStore.publish({ status: message || "", tone }); return;
+
 }
 
 export function getDvwScoutSkillLabel(letter) {
@@ -113,25 +113,11 @@ export function getDvwScoutEvalLabel(symbol) {
   return map[String(symbol || "")] || String(symbol || "");
 }
 
-export function escapeDvwScoutHtml(value) {
-  return String(value || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
 export function getDvwScoutChipSkillClass(parsed) {
   if (!parsed || parsed.kind !== "skill") return "";
   const skillMap = DV_SKILLS_BY_CODE;
   const skillId = skillMap[String(parsed.skillLetter || "").toUpperCase()] || "";
   return skillId ? `is-skill-${skillId}` : "";
-}
-
-export function renderDvwScoutPending() {
-
- publishReactDvwEntry(); return;
 }
 
 export function queueCurrentDvwScoutToken() {
@@ -143,7 +129,7 @@ export function queueCurrentDvwScoutToken() {
     : [normalizeDvwScoutToken(token)];
   if (entries.some(item => !item.parsed || item.parsed.kind === "unknown")) {
     setDvwScoutStatus(`Codice non riconosciuto: ${token}`, "error");
-    renderDvwScoutPending();
+    publishReactDvwEntry();
     return false;
   }
   const closedAtMs = Date.now();
@@ -158,7 +144,7 @@ export function queueCurrentDvwScoutToken() {
     });
   });
   dvwEntryStore.publish({ text: "" });
-  renderDvwScoutPending();
+  publishReactDvwEntry();
   if (expanded && expanded.length > 1) {
     setDvwScoutStatus(`Compound espanso: ${expanded.join(" · ")}`, "success");
   } else if (entries[0].corrected && entries[0].normalized) {
@@ -361,7 +347,7 @@ export async function applyDvwScoutInput() {
     applied += 1;
   }
   teamManagementState.dvwScoutPendingTokens = [];
-  renderDvwScoutPending();
+  publishReactDvwEntry();
   updateLiveDvwMirror();
   setDvwScoutStatus(`${applied} codice/i applicati correttamente.`, "success");
 }

@@ -1,0 +1,1131 @@
+[
+  {
+    "name": "empty",
+    "events": [
+      null,
+      {
+        "skillId": "serve",
+        "code": "#"
+      }
+    ],
+    "compare": null,
+    "state": {},
+    "expected": {
+      "rows": [],
+      "cards": [],
+      "legend": [],
+      "footerRows": [],
+      "emptyText": "Nessun attacco per i filtri selezionati."
+    }
+  },
+  {
+    "name": "codes and types",
+    "events": [
+      {
+        "skillId": "attack",
+        "code": "#",
+        "attackType": "1"
+      },
+      {
+        "skillId": "attack",
+        "code": "+",
+        "attackType": "2"
+      },
+      {
+        "skillId": "attack",
+        "code": "!",
+        "attackType": "1"
+      },
+      {
+        "skillId": "attack",
+        "code": "-",
+        "attackType": "2"
+      },
+      {
+        "skillId": "attack",
+        "code": "=",
+        "attackType": "1"
+      },
+      {
+        "skillId": "attack",
+        "code": "/",
+        "attackType": "2"
+      }
+    ],
+    "compare": null,
+    "state": {},
+    "expected": {
+      "rows": [
+        {
+          "cells": [
+            {
+              "text": "1",
+              "compare": null,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 3,
+              "compare": 0,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "higher",
+              "className": ""
+            },
+            {
+              "text": "33%",
+              "compare": null,
+              "better": "higher",
+              "raw": 0.3333333333333333,
+              "className": ""
+            },
+            {
+              "text": "0%",
+              "compare": null,
+              "better": "higher",
+              "raw": 0,
+              "className": ""
+            }
+          ]
+        },
+        {
+          "cells": [
+            {
+              "text": "2",
+              "compare": null,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 3,
+              "compare": 0,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "higher",
+              "className": ""
+            },
+            {
+              "text": "0%",
+              "compare": null,
+              "better": "higher",
+              "raw": 0,
+              "className": ""
+            },
+            {
+              "text": "-33%",
+              "compare": null,
+              "better": "higher",
+              "raw": -33.33333333333333,
+              "className": ""
+            }
+          ]
+        }
+      ],
+      "cards": [],
+      "legend": [],
+      "footerRows": [
+        {
+          "className": "attack-analysis-total-row",
+          "cells": [
+            {
+              "text": "Totale",
+              "compare": null,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 6,
+              "compare": 0,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "higher",
+              "className": ""
+            },
+            {
+              "text": "17%",
+              "compare": null,
+              "better": "higher",
+              "raw": 0.16666666666666666,
+              "className": ""
+            },
+            {
+              "text": "-17%",
+              "compare": null,
+              "better": "higher",
+              "raw": -16.666666666666664,
+              "className": ""
+            }
+          ]
+        }
+      ],
+      "emptyText": ""
+    }
+  },
+  {
+    "name": "comparison",
+    "events": [
+      {
+        "skillId": "attack",
+        "code": "#",
+        "attackType": "1"
+      },
+      {
+        "skillId": "attack",
+        "code": "+",
+        "attackType": "2"
+      },
+      {
+        "skillId": "attack",
+        "code": "!",
+        "attackType": "1"
+      },
+      {
+        "skillId": "attack",
+        "code": "-",
+        "attackType": "2"
+      },
+      {
+        "skillId": "attack",
+        "code": "=",
+        "attackType": "1"
+      },
+      {
+        "skillId": "attack",
+        "code": "/",
+        "attackType": "2"
+      }
+    ],
+    "compare": [
+      {
+        "skillId": "attack",
+        "code": "#",
+        "attackType": "2"
+      },
+      {
+        "skillId": "attack",
+        "code": "=",
+        "attackType": "1"
+      }
+    ],
+    "state": {},
+    "expected": {
+      "rows": [
+        {
+          "cells": [
+            {
+              "text": "1",
+              "compare": null,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 3,
+              "compare": 1,
+              "better": "neutral",
+              "className": "is-better"
+            },
+            {
+              "text": 1,
+              "compare": 1,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "higher",
+              "className": "is-better"
+            },
+            {
+              "text": "33%",
+              "compare": 0,
+              "better": "higher",
+              "raw": 0.3333333333333333,
+              "className": "is-better"
+            },
+            {
+              "text": "0%",
+              "compare": -100,
+              "better": "higher",
+              "raw": 0,
+              "className": "is-better"
+            }
+          ]
+        },
+        {
+          "cells": [
+            {
+              "text": "2",
+              "compare": null,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 3,
+              "compare": 1,
+              "better": "neutral",
+              "className": "is-better"
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "lower",
+              "className": "is-worse"
+            },
+            {
+              "text": 0,
+              "compare": 1,
+              "better": "higher",
+              "className": "is-worse"
+            },
+            {
+              "text": "0%",
+              "compare": 1,
+              "better": "higher",
+              "raw": 0,
+              "className": "is-worse"
+            },
+            {
+              "text": "-33%",
+              "compare": 100,
+              "better": "higher",
+              "raw": -33.33333333333333,
+              "className": "is-worse"
+            }
+          ]
+        }
+      ],
+      "cards": [],
+      "legend": [],
+      "footerRows": [
+        {
+          "className": "attack-analysis-total-row",
+          "cells": [
+            {
+              "text": "Totale",
+              "compare": null,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 6,
+              "compare": 2,
+              "better": "neutral",
+              "className": "is-better"
+            },
+            {
+              "text": 1,
+              "compare": 1,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "lower",
+              "className": "is-worse"
+            },
+            {
+              "text": 1,
+              "compare": 1,
+              "better": "higher",
+              "className": ""
+            },
+            {
+              "text": "17%",
+              "compare": 0.5,
+              "better": "higher",
+              "raw": 0.16666666666666666,
+              "className": "is-worse"
+            },
+            {
+              "text": "-17%",
+              "compare": 0,
+              "better": "higher",
+              "raw": -16.666666666666664,
+              "className": "is-worse"
+            }
+          ]
+        }
+      ],
+      "emptyText": ""
+    }
+  },
+  {
+    "name": "empty comparison",
+    "events": [
+      {
+        "skillId": "attack",
+        "code": "#",
+        "attackType": "1"
+      },
+      {
+        "skillId": "attack",
+        "code": "+",
+        "attackType": "2"
+      },
+      {
+        "skillId": "attack",
+        "code": "!",
+        "attackType": "1"
+      },
+      {
+        "skillId": "attack",
+        "code": "-",
+        "attackType": "2"
+      },
+      {
+        "skillId": "attack",
+        "code": "=",
+        "attackType": "1"
+      },
+      {
+        "skillId": "attack",
+        "code": "/",
+        "attackType": "2"
+      }
+    ],
+    "compare": [],
+    "state": {},
+    "expected": {
+      "rows": [
+        {
+          "cells": [
+            {
+              "text": "1",
+              "compare": null,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 3,
+              "compare": 0,
+              "better": "neutral",
+              "className": "is-better"
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "lower",
+              "className": "is-worse"
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "higher",
+              "className": "is-better"
+            },
+            {
+              "text": "33%",
+              "compare": null,
+              "better": "higher",
+              "raw": 0.3333333333333333,
+              "className": ""
+            },
+            {
+              "text": "0%",
+              "compare": null,
+              "better": "higher",
+              "raw": 0,
+              "className": ""
+            }
+          ]
+        },
+        {
+          "cells": [
+            {
+              "text": "2",
+              "compare": null,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 3,
+              "compare": 0,
+              "better": "neutral",
+              "className": "is-better"
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "lower",
+              "className": "is-worse"
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "higher",
+              "className": ""
+            },
+            {
+              "text": "0%",
+              "compare": null,
+              "better": "higher",
+              "raw": 0,
+              "className": ""
+            },
+            {
+              "text": "-33%",
+              "compare": null,
+              "better": "higher",
+              "raw": -33.33333333333333,
+              "className": ""
+            }
+          ]
+        }
+      ],
+      "cards": [],
+      "legend": [],
+      "footerRows": [
+        {
+          "className": "attack-analysis-total-row",
+          "cells": [
+            {
+              "text": "Totale",
+              "compare": null,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 6,
+              "compare": 0,
+              "better": "neutral",
+              "className": "is-better"
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "lower",
+              "className": "is-worse"
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "lower",
+              "className": "is-worse"
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "higher",
+              "className": "is-better"
+            },
+            {
+              "text": "17%",
+              "compare": null,
+              "better": "higher",
+              "raw": 0.16666666666666666,
+              "className": ""
+            },
+            {
+              "text": "-17%",
+              "compare": null,
+              "better": "higher",
+              "raw": -16.666666666666664,
+              "className": ""
+            }
+          ]
+        }
+      ],
+      "emptyText": ""
+    }
+  },
+  {
+    "name": "custom rules",
+    "events": [
+      {
+        "skillId": "attack",
+        "code": "#",
+        "attackType": "1"
+      },
+      {
+        "skillId": "attack",
+        "code": "+",
+        "attackType": "2"
+      },
+      {
+        "skillId": "attack",
+        "code": "!",
+        "attackType": "1"
+      },
+      {
+        "skillId": "attack",
+        "code": "-",
+        "attackType": "2"
+      },
+      {
+        "skillId": "attack",
+        "code": "=",
+        "attackType": "1"
+      },
+      {
+        "skillId": "attack",
+        "code": "/",
+        "attackType": "2"
+      }
+    ],
+    "compare": [
+      {
+        "skillId": "attack",
+        "code": "#",
+        "attackType": "1"
+      },
+      {
+        "skillId": "attack",
+        "code": "+",
+        "attackType": "2"
+      },
+      {
+        "skillId": "attack",
+        "code": "!",
+        "attackType": "1"
+      }
+    ],
+    "state": {
+      "pointRules": {
+        "attack": {
+          "for": [
+            "#",
+            "+"
+          ],
+          "against": [
+            "=",
+            "/"
+          ]
+        }
+      },
+      "metricsConfig": {
+        "attack": {
+          "positive": [
+            "#",
+            "+",
+            "!"
+          ],
+          "negative": [
+            "=",
+            "/"
+          ],
+          "activeCodes": [
+            "#",
+            "+",
+            "!",
+            "-",
+            "=",
+            "/"
+          ],
+          "enabled": true
+        }
+      }
+    },
+    "expected": {
+      "rows": [
+        {
+          "cells": [
+            {
+              "text": "1",
+              "compare": null,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 3,
+              "compare": 2,
+              "better": "neutral",
+              "className": "is-better"
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "lower",
+              "className": "is-worse"
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 1,
+              "compare": 1,
+              "better": "higher",
+              "className": ""
+            },
+            {
+              "text": "33%",
+              "compare": 0.5,
+              "better": "higher",
+              "raw": 0.3333333333333333,
+              "className": "is-worse"
+            },
+            {
+              "text": "33%",
+              "compare": 100,
+              "better": "higher",
+              "raw": 33.33333333333333,
+              "className": "is-worse"
+            }
+          ]
+        },
+        {
+          "cells": [
+            {
+              "text": "2",
+              "compare": null,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 3,
+              "compare": 1,
+              "better": "neutral",
+              "className": "is-better"
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "lower",
+              "className": "is-worse"
+            },
+            {
+              "text": 1,
+              "compare": 1,
+              "better": "higher",
+              "className": ""
+            },
+            {
+              "text": "33%",
+              "compare": 1,
+              "better": "higher",
+              "raw": 0.3333333333333333,
+              "className": "is-worse"
+            },
+            {
+              "text": "0%",
+              "compare": 100,
+              "better": "higher",
+              "raw": 0,
+              "className": "is-worse"
+            }
+          ]
+        }
+      ],
+      "cards": [],
+      "legend": [],
+      "footerRows": [
+        {
+          "className": "attack-analysis-total-row",
+          "cells": [
+            {
+              "text": "Totale",
+              "compare": null,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 6,
+              "compare": 3,
+              "better": "neutral",
+              "className": "is-better"
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "lower",
+              "className": "is-worse"
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "lower",
+              "className": "is-worse"
+            },
+            {
+              "text": 2,
+              "compare": 2,
+              "better": "higher",
+              "className": ""
+            },
+            {
+              "text": "33%",
+              "compare": 0.6666666666666666,
+              "better": "higher",
+              "raw": 0.3333333333333333,
+              "className": "is-worse"
+            },
+            {
+              "text": "17%",
+              "compare": 100,
+              "better": "higher",
+              "raw": 16.666666666666664,
+              "className": "is-worse"
+            }
+          ]
+        }
+      ],
+      "emptyText": ""
+    }
+  },
+  {
+    "name": "evaluation fallback and invalid codes",
+    "events": [
+      {
+        "skillId": "attack",
+        "evaluation": " # ",
+        "attackType": "unknown"
+      },
+      {
+        "skillId": "attack",
+        "code": "invalid",
+        "attackType": "2"
+      },
+      {
+        "skillId": "attack",
+        "code": " ",
+        "evaluation": "#",
+        "attackType": "1"
+      },
+      {
+        "skillId": "attack",
+        "code": "+",
+        "attackType": ""
+      }
+    ],
+    "compare": [
+      {
+        "skillId": "attack",
+        "code": "/",
+        "attackType": "unknown"
+      }
+    ],
+    "state": {},
+    "expected": {
+      "rows": [
+        {
+          "cells": [
+            {
+              "text": "1",
+              "compare": null,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "higher",
+              "className": ""
+            },
+            {
+              "text": "-",
+              "compare": null,
+              "better": "higher",
+              "raw": null,
+              "className": ""
+            },
+            {
+              "text": "-",
+              "compare": null,
+              "better": "higher",
+              "raw": null,
+              "className": ""
+            }
+          ]
+        },
+        {
+          "cells": [
+            {
+              "text": "2",
+              "compare": null,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "higher",
+              "className": ""
+            },
+            {
+              "text": "-",
+              "compare": null,
+              "better": "higher",
+              "raw": null,
+              "className": ""
+            },
+            {
+              "text": "-",
+              "compare": null,
+              "better": "higher",
+              "raw": null,
+              "className": ""
+            }
+          ]
+        },
+        {
+          "cells": [
+            {
+              "text": "Non specificato",
+              "compare": null,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "neutral",
+              "className": "is-better"
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "higher",
+              "className": ""
+            },
+            {
+              "text": "0%",
+              "compare": null,
+              "better": "higher",
+              "raw": 0,
+              "className": ""
+            },
+            {
+              "text": "0%",
+              "compare": null,
+              "better": "higher",
+              "raw": 0,
+              "className": ""
+            }
+          ]
+        },
+        {
+          "cells": [
+            {
+              "text": "unknown",
+              "compare": null,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 1,
+              "compare": 1,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 0,
+              "compare": 1,
+              "better": "lower",
+              "className": "is-better"
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "higher",
+              "className": "is-better"
+            },
+            {
+              "text": "100%",
+              "compare": 0,
+              "better": "higher",
+              "raw": 1,
+              "className": "is-better"
+            },
+            {
+              "text": "100%",
+              "compare": -100,
+              "better": "higher",
+              "raw": 100,
+              "className": "is-better"
+            }
+          ]
+        }
+      ],
+      "cards": [],
+      "legend": [],
+      "footerRows": [
+        {
+          "className": "attack-analysis-total-row",
+          "cells": [
+            {
+              "text": "Totale",
+              "compare": null,
+              "better": "neutral",
+              "className": ""
+            },
+            {
+              "text": 2,
+              "compare": 1,
+              "better": "neutral",
+              "className": "is-better"
+            },
+            {
+              "text": 0,
+              "compare": 0,
+              "better": "lower",
+              "className": ""
+            },
+            {
+              "text": 0,
+              "compare": 1,
+              "better": "lower",
+              "className": "is-better"
+            },
+            {
+              "text": 1,
+              "compare": 0,
+              "better": "higher",
+              "className": "is-better"
+            },
+            {
+              "text": "50%",
+              "compare": 0,
+              "better": "higher",
+              "raw": 0.5,
+              "className": "is-better"
+            },
+            {
+              "text": "50%",
+              "compare": -100,
+              "better": "higher",
+              "raw": 50,
+              "className": "is-better"
+            }
+          ]
+        }
+      ],
+      "emptyText": ""
+    }
+  }
+]

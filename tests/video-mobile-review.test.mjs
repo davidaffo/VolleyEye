@@ -6,7 +6,7 @@ import { readScoutSource } from "./helpers/scout-source.mjs";
 import { readStyleSource } from "./helpers/style-source.mjs";
 
 const html = readAppHtml();
-const source = readScoutSource() + readFileSync(new URL("../src/features/analysis/video-preset-commands.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/video/view-commands.js", import.meta.url), "utf8");
+const source = readFileSync(new URL("../src/features/analysis/video-preset-view.js", import.meta.url), "utf8") + readScoutSource() + readFileSync(new URL("../src/features/analysis/video-preset-commands.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/video/view-commands.js", import.meta.url), "utf8");
 const css = readStyleSource();
 
 test("la vista video mobile usa il player a tutta larghezza con navigazione sovrapposta", () => {
@@ -33,7 +33,7 @@ test("filtri completi e preset restano disponibili nel foglio mobile", () => {
     css,
     /body\.video-mobile-filters-open #video-panel \.video-filters-panel/,
   );
-  assert.match(source, /function renderVideoFilterPresets\(\)/);
+  assert.match(source, /function publishReactVideoPresets\(\)/);
   assert.match(source, /function saveCurrentVideoFilterPreset\([^)]*\)/);
   assert.match(
     source,

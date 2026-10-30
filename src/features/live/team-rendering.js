@@ -3,24 +3,16 @@ import { publishReactFloatingServeError } from "../archive/database-controls.js"
 import { session as matchState } from "../../../js/globals.js";
 import { getScoutCourtSkill, getMobileActiveScope } from "./flow-model.js";
 import { updateSetTypeVisibility, updateNetBlockPrompt } from "./game-flow.js";
-
 import { maybeScrollToActiveCourtOnMobile } from "../layout/modals.js";
-import { syncAutoLiberoSelects } from "../teams/court/court-engine.js";
+import { publishReactSettings } from "../settings/view.js";
 import { ensureMetricsConfigDefaults } from "../settings/rules.js";
 import { updateOpponentRotationDisplay } from "../teams/court/court-ui-bootstrap.js";
 import { recalcAllStatsAndUpdateUI } from "../analysis/stats-update.js";
-import { renderLogServeTrajectories } from "../analysis/trajectory-rendering.js";
+import { publishReactLogServeTrajectories } from "../analysis/trajectory-view.js";
 import { renderScoutCourt } from "../scout/court-commands.js";
 
-export function updateFloatingServeErrorButton(isCompactMobile) {
-
- publishReactFloatingServeError(isCompactMobile); return;
-}
-
-
-
 export function renderPlayers() {
-  syncAutoLiberoSelects();
+  publishReactSettings();
   syncCourtSideLayout();
   ensureMetricsConfigDefaults();
   const ourSkill = getScoutCourtSkill("our");
@@ -32,9 +24,9 @@ export function renderPlayers() {
   recalcAllStatsAndUpdateUI();
 
   updateNetBlockPrompt();
-  renderLogServeTrajectories();
+  publishReactLogServeTrajectories();
   const compact = !!matchState.state.forceMobileLayout || window.matchMedia("(max-width: 900px)").matches;
-  updateFloatingServeErrorButton(compact);
+  publishReactFloatingServeError(compact);
   maybeScrollToActiveCourtOnMobile();
 }
 
@@ -77,4 +69,3 @@ export function syncCourtSideLayout() {
     homePanel.classList.toggle("team-panel--near", !swapped);
   }
 }
-

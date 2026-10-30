@@ -1,10 +1,7 @@
 import { invalidateAnalysisCaches } from "./cache-model.js";
 import { getReactMultiscoutScope } from "./multiscout-view.js";
 
-import {
-  updateMultiscoutButton,
-  renderMultiscoutModal,
-} from "./analysis-filters.js";
+import { publishReactMultiscout, publishReactMultiscoutCount } from "./multiscout-view.js";
 
 import {
   getAnalysisExtraMatchState,
@@ -18,16 +15,10 @@ import { multiscoutStore } from "../../state/roster-import-store.mjs";
 
 import { saveState } from "../storage/save-state.js";
 
-import { renderAggregatedTable } from "./aggregated-table.js";
-import {
-  renderTrajectoryAnalysis,
-  renderServeTrajectoryAnalysis,
-} from "./trajectory-rendering.js";
-import { renderSecondTable } from "./second-distribution.js";
-import { renderPlayerAnalysis } from "./skill-tables.js";
+import { renderAnalysisViews } from "./aggregated-table.js";
 
 export function openReactMultiscout() {
-  renderMultiscoutModal();
+  publishReactMultiscout();
   multiscoutStore.publish({ open: true });
   setModalOpenState(true, true);
 }
@@ -40,7 +31,7 @@ export function closeReactMultiscout() {
 export function changeReactMultiscoutScope(value) {
   analysisFiltersState.multiscoutTeamScope =
     value === "opponent" ? "opponent" : "our";
-  renderMultiscoutModal();
+  publishReactMultiscout();
 }
 
 export function resetReactMultiscout() {
@@ -49,11 +40,7 @@ export function resetReactMultiscout() {
   saveAnalysisExtraMatchState(extra);
   saveState();
   invalidateAnalysisCaches();
-  updateMultiscoutButton();
-  renderMultiscoutModal();
-  renderAggregatedTable();
-  renderTrajectoryAnalysis();
-  renderServeTrajectoryAnalysis();
-  renderSecondTable();
-  renderPlayerAnalysis();
+  publishReactMultiscoutCount();
+  publishReactMultiscout();
+  renderAnalysisViews();
 }

@@ -369,7 +369,8 @@ test("salvare una squadra aggiorna subito anche il selettore avversario", () => 
   const saveManager = teamEditor.slice(teamEditor.indexOf("function saveTeamManagerPayload"));
   assert.ok(saveManager.length > 0);
   const ourTeamBranch = saveManager.slice(saveManager.indexOf("saveTeamToStorage(nextName"));
-  assert.match(ourTeamBranch, /renderTeamsSelect\(\);\s*renderOpponentTeamsSelect\(\);/);
+  assert.match(ourTeamBranch, /publishTeamsManagerView\(\)/);
+  assert.doesNotMatch(ourTeamBranch, /publishTeamsManagerView\(\);\s*publishTeamsManagerView\(\)/);
 });
 
 test("il libero automatico usa il centrale come default senza rendere impossibile Nessuno", () => {

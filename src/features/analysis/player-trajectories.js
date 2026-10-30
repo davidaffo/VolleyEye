@@ -1,7 +1,6 @@
+import { buildAttackTrajectoryFilterOptions } from "./filter-controls.js";
 import { getFilteredPlayerAttackSummaryEventsForPlayer } from "./player-trajectory-model.js";
-import { buildAttackTypeFilterOptions } from "./trajectory-model.js";
 import { buildEventFilterOptions } from "./filter-controls.js";
-import { getAttackStartZone } from "./values.js";
 
 import {
   getFilterFields,
@@ -13,15 +12,15 @@ import {
 import { session as analysisFiltersState } from "../state/analysis-analysis-filters.js";
 import { getAnalysisEvents, matchesTeamFilter } from "./filter-model.js";
 import { toggleFilterVisibility } from "./filter-view.js";
-import { session as rosterLineupState } from "../state/roster-lineup.js";
-import { session as matchState } from "../../../js/globals.js";
+
+
 import {
   readReactFilterSelect,
   publishReactPreviousSkill,
 } from "./filter-view.js";
 import { getPlayerAnalysisPlayerIdx } from "./player-model.js";
 
-import { renderAttackMetricsSummary } from "./trajectory-rendering.js";
+import { publishReactAttackSummary } from "./trajectory-view.js";
 import { getServeStartZone } from "./trajectory-model.js";
 
 import { session as liveScoreAndSetState } from "../state/live-live-score-and-set.js";
@@ -36,7 +35,7 @@ export function syncPlayerTrajectoryFilterState() {
     getFilterFields("playerTrajectoryFilterState"),
   );
   analysisFiltersState.playerTrajectoryFilterState.prevSkill =
-    readReactFilterSelect(rosterLineupState.elPlayerTrajFilterPrev) || "any";
+    readReactFilterSelect("player-traj-filter-prev") || "any";
 }
 
 export function handlePlayerTrajectoryFilterChange() {
@@ -51,7 +50,7 @@ export function resetPlayerTrajectoryFilters() {
 }
 
 export function renderPlayerTrajectoryFilters() {
-  if (!rosterLineupState.elPlayerTrajectoryGrid) return;
+
   const playerIdx = getPlayerAnalysisPlayerIdx();
   const allAttackEvents = getAnalysisEvents().filter((ev) => {
     if (!ev || ev.skillId !== "attack") return false;
@@ -68,14 +67,17 @@ export function renderPlayerTrajectoryFilters() {
     if (!dir || !dir.start || !dir.end) return false;
     return true;
   });
-  const { setsOpts, codesOpts, zonesOpts } = buildEventFilterOptions(
-    events,
-    getAttackStartZone,
-  );
-
-  const attackTypeOpts = buildAttackTypeFilterOptions(allAttackEvents);
-  const { setTypeOpts, baseOpts, phaseOpts, recvEvalOpts, recvZoneOpts } =
-    buildAdvancedFilterOptions(events);
+  const {
+    setsOpts,
+    codesOpts,
+    zonesOpts,
+    attackTypeOpts,
+    setTypeOpts,
+    baseOpts,
+    phaseOpts,
+    recvEvalOpts,
+    recvZoneOpts,
+  } = buildAttackTrajectoryFilterOptions(events, allAttackEvents);
 
   if (
     !liveScoreAndSetState.PREVIOUS_SKILL_OPTIONS.some(
@@ -103,35 +105,29 @@ export function renderPlayerTrajectoryFilters() {
     },
     handlePlayerTrajectoryFilterChange,
   );
-  toggleFilterVisibility(rosterLineupState.elPlayerTrajFilterPrev, true);
+  toggleFilterVisibility("player-traj-filter-prev", true);
   toggleFilterVisibility(
-    rosterLineupState.elPlayerTrajFilterReset,
+    "player-traj-filter-reset",
     visibleFilters.some(Boolean),
   );
   publishReactPreviousSkill(
-    rosterLineupState.elPlayerTrajFilterPrev,
+    "player-traj-filter-prev",
     analysisFiltersState.playerTrajectoryFilterState.prevSkill,
     handlePlayerTrajectoryFilterChange,
   );
 }
 
 export function renderPlayerTrajectoryAnalysis() {
-  if (!rosterLineupState.elPlayerTrajectoryGrid) return;
+
   renderPlayerTrajectoryFilters();
-  renderAttackMetricsSummary(
-    matchState.elPlayerAttackSummary,
+  publishReactAttackSummary(
+    "player-attack-summary",
     getFilteredPlayerAttackSummaryEventsForPlayer(getPlayerAnalysisPlayerIdx()),
   );
-  renderAttackTrajectoryGridForPlayer(
-    rosterLineupState.elPlayerTrajectoryGrid,
+  publishReactPlayerAttackGrid(
+    "player-trajectory-grid",
     getPlayerAnalysisPlayerIdx(),
   );
-}
-
-export function renderAttackTrajectoryGridForPlayer(targetGrid, playerIdx) {
-  if (!targetGrid) return;
-
-  return publishReactPlayerAttackGrid(targetGrid, playerIdx);
 }
 
 export function syncPlayerServeTrajectoryFilterState() {
@@ -153,7 +149,7 @@ export function resetPlayerServeTrajectoryFilters() {
 }
 
 export function renderPlayerServeTrajectoryFilters() {
-  if (!rosterLineupState.elPlayerServeTrajectoryGrid) return;
+
   const playerIdx = getPlayerAnalysisPlayerIdx();
   const events = getAnalysisEvents().filter((ev) => {
     if (!ev || ev.skillId !== "serve") return false;
@@ -189,22 +185,16 @@ export function renderPlayerServeTrajectoryFilters() {
     handlePlayerServeTrajectoryFilterChange,
   );
   toggleFilterVisibility(
-    rosterLineupState.elPlayerServeTrajFilterReset,
+    "player-serve-traj-filter-reset",
     visibleFilters.some(Boolean),
   );
 }
 
 export function renderPlayerServeTrajectoryAnalysis() {
-  if (!rosterLineupState.elPlayerServeTrajectoryGrid) return;
+
   renderPlayerServeTrajectoryFilters();
-  renderServeTrajectoryGridForPlayer(
-    rosterLineupState.elPlayerServeTrajectoryGrid,
+  publishReactPlayerServeGrid(
+    "player-serve-trajectory-grid",
     getPlayerAnalysisPlayerIdx(),
   );
-}
-
-export function renderServeTrajectoryGridForPlayer(targetGrid, playerIdx) {
-  if (!targetGrid) return;
-
-  return publishReactPlayerServeGrid(targetGrid, playerIdx);
 }

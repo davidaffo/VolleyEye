@@ -15,7 +15,6 @@ export function PlayerPhotoModal() {
   return (
     <ModalDialog
       id="player-photo-modal"
-      className="settings-modal"
       aria-labelledby="player-photo-title"
       open={view.open}
       onClose={close}
@@ -25,12 +24,7 @@ export function PlayerPhotoModal() {
         className: "settings-modal__content player-photo-modal__content",
       }}
       title={<h3 id="player-photo-title">Ritaglia foto giocatrice</h3>}
-      closeProps={{
-        id: "player-photo-close",
-        className: "pill-remove",
-        "aria-label": "Chiudi",
-        onClick: close,
-      }}
+      closeProps={{ id: "player-photo-close" }}
       bodyProps={{ className: "settings-modal__body player-photo-modal__body" }}
     >
       <p className="section-note">

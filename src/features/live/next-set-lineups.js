@@ -2,7 +2,6 @@
 import { getDefaultSetStartForScope, getMatchInitialSetStart, computeSetWinner, getDerivedServeForSetStart } from "../teams/set-start-model.js";
 import { getCourtShape, cloneCourt } from "../teams/court-model.js";
 import { computeSetWinScore } from "../analysis/set-results.js";
-
 import { removeLiberosAndRestoreForScope } from "../teams/libero-model.js";
 import { commitCourtChange, commitCourtChangeForScope, setIsServing } from "../teams/court/court-engine.js";
 import { enforceAutoLiberoForState, enforceAutoLiberoForScope } from "../teams/court-state-model.js";
@@ -13,25 +12,15 @@ import { updateCourtModalPlacement } from "../scout-ui.js";
 import { lineup } from "../../domain/lineup.js";
 import { publishNextSetView } from "./next-set-view.js";
 import { publishRuntimeView } from "../core/runtime-view.js";
-import { setLineupOpen } from "./lineup-view.js";
-
+import { setLineupOpen, publishLineupView } from "./lineup-view.js";
 import { session as matchState } from "../../../js/globals.js";
-
 import { renderLineupModal } from "./lineup-editor.js";
-import { updateLineupModalControls, cancelPartialSkillFlowForScope } from "./skill-selection.js";
+import { cancelPartialSkillFlowForScope } from "./skill-selection.js";
 import { setScoutControlsDisabled, applySetChange, renderLiveScore, updateMatchStatusUI } from "./live-score-and-set.js";
 import { syncCourtSideLayout, renderPlayers, renderOpponentPlayers } from "./team-rendering.js";
 import { setRotation, setOpponentRotation } from "../teams/court/court-ui-bootstrap.js";
 import { saveState } from "../storage/save-state.js";
 import { renderEventsLog } from "../video/video-events.js";
-
-
-
-
-
-
-
-
 
 export function cloneSetMap(map) {
   return JSON.parse(JSON.stringify(map || {}));
@@ -114,23 +103,13 @@ export function renderNextSetLineups() {
 
 }
 
-export function syncNextSetPreferredLiberoSelects() {
-
- publishNextSetView(); return;
-}
-
-export function updateNextSetRotationUI() {
-
- publishNextSetView(); return;
-}
-
 export function setNextSetRotation(scope, value) {
   if (!scoutUiState.nextSetDraft) return;
   const rotation = Math.min(6, Math.max(1, parseInt(value, 10) || 1));
   const entry = getNextSetEntry(scope);
   if (!entry) return;
   updateNextSetEntry(scope, Object.assign({}, entry, { rotation }));
-  updateNextSetRotationUI();
+  publishNextSetView();
 }
 
 export function rotateNextSetCourt(scope, direction) {
@@ -150,24 +129,12 @@ export function rotateNextSetCourt(scope, direction) {
   renderNextSetLineups();
 }
 
-
-
-
-
-
-
-
-
-
-
 export function updateSetScoreDisplays() {
   const score = computeSetWinScore();
   const label = score.for + " - " + score.against;
 
   publishRuntimeView();
 }
-
-
 
 export function buildNextSetDraft(setNum) {
   const nextSet = Math.min(5, Math.max(1, setNum || 1));
@@ -237,7 +204,7 @@ export function openNextSetLineupModal(scope = "our") {
   scoutUiState.lineupSelectedName = "";
   scoutUiState.lineupNumberMode = false;
   renderLineupModal();
-  updateLineupModalControls();
+  publishLineupView();
   if (scoutUiState.elLineupModal) {
     if (isDesktopCourtModalLayout()) {
       setCourtAreaLocked(true);
@@ -261,7 +228,7 @@ export function openNextSetModal(setNum) {
     courtArea.classList.add("court-area--next-set");
   }
   renderNextSetLineups();
-  syncNextSetPreferredLiberoSelects();
+  publishNextSetView();
 }
 
 export function closeNextSetModal({ force = false } = {}) {

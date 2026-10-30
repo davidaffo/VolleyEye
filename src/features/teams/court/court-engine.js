@@ -1,25 +1,16 @@
 import { getCourtPlacementError, cacheAutoRoleBaseCourt, restoreAutoRoleBaseCourt, cleanCourtPlayers, registerLiberoPairForScope, roleToAutoCategory, enforceAutoLiberoForState, enforceAutoLiberoForScope, getUsedNamesForScope, resetAutoRoleCache, updateAutoRoleBaseCourtCache, setTeamCourt } from "../court-state-model.js";
-
 import { isLiberoForScope } from "../libero-model.js";
 import { ensureCourtShapeFor, cloneCourtLineup } from "../court-model.js";
 import { AUTO_LIBERO_ROLE_DEFAULT_VERSION, session as matchState } from "../../../../js/globals.js";
-
 import { saveState } from "../../storage/save-state.js";
 import { renderPlayers, renderOpponentPlayers } from "../../live/team-rendering.js";
 import { renderLiberoChipsInline, updateRotationDisplay, applyAutoRolePositioning, syncAutoRoleP1AmericanToggle, renderOpponentLiberoChipsInline, updateOpponentRotationDisplay } from "./court-ui-bootstrap.js";
-
 import { getRoleLabelForRotation } from "../roles.js";
-
 import { setTeamAutoLiberoRole, setTeamAutoLiberoBackline, setTeamLiberoAutoMap, getTeamPreferredLibero, setTeamPreferredLibero, getTeamPlayers, getTeamLiberos, getTeamCourt, buildNumbersForNames, syncOpponentPlayerNumbers } from "../roster-data.js";
-import { replaceOpponentPlayerNameEverywhere } from "../core/player-model.js";
-
+import { replaceTeamPlayerNameReferences } from "../player-reference-model.js";
 import { normalizePlayers } from "../../../domain/player-names.js";
 import { session as rosterLineupState } from "../../state/roster-lineup.js";
-
-
-
 import { recordSubstitutionEvent } from "../../video/video-events.js";
-
 import { opponentRoster } from "../../../domain/opponent-roster.js";
 import { parseDelimitedTeamText } from "../storage/archive-actions.js";
 import { renderOpponentLiberoTags } from "../imports/camp3-import.js";
@@ -34,9 +25,9 @@ export const session = createDomainState({
       parseDelimitedTeamText: (...args) => parseDelimitedTeamText(...args),
       buildNumbersForNames,
       syncOpponentPlayerNumbers,
-      renderOpponentPlayersList,
+      renderOpponentPlayersList: publishReactSettings,
       renderOpponentLiberoTags: (...args) => renderOpponentLiberoTags(...args),
-      onRenameReferences: replaceOpponentPlayerNameEverywhere
+      onRenameReferences: (...args) => replaceTeamPlayerNameReferences("opponent", ...args)
     })),
 "updateOpponentPlayersList": () => (courtEngineState.opponentSettings["updateOpponentPlayersList"]),
 "addOpponentPlayer": () => (courtEngineState.opponentSettings["addOpponentPlayer"]),
@@ -95,10 +86,6 @@ export function setIsServing(flag) {
   saveState();
 }
 
-export function syncAutoLiberoSelects() {
-  publishReactSettings();
-}
-
 export function setAutoLiberoRole(role, scope = "our") {
   if (typeof role !== "string") return;
   const sanitized = rosterLineupState.AUTO_LIBERO_ROLE_OPTIONS.includes(role) ? role : "";
@@ -111,39 +98,11 @@ export function setAutoLiberoRole(role, scope = "our") {
   }
   enforceAutoLiberoForScope(scope, { skipServerOnServe: true });
   saveState();
-  syncAutoLiberoSelects();
+  publishReactSettings();
   renderPlayers();
   renderLiberoChipsInline();
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 export function swapPreferredLibero() {
   swapPreferredLiberoForScope("our");
@@ -192,37 +151,11 @@ export function restorePlayerFromLiberoForScope(posIdx, scope = "our") {
   renderOpponentPlayers();
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 export function canPlaceInSlotForScope(name, posIdx, showAlert = true, scope = 'our') {
  const error = getCourtPlacementError(name, posIdx, scope);
  if (error && showAlert) alert(error);
  return !error;
 }
-
-
-
-
-
-
-
-
-
-
 
 export function commitCourtChange(baseCourt, options = {}) {
   const { clean = true } = options;
@@ -331,11 +264,3 @@ export function setCourtPlayerForScope(
     });
   }
 }
-
-
-
-
-
-export function renderPlayersManagerList() { publishReactSettings(); }
-
-export function renderOpponentPlayersList() {publishReactSettings();}

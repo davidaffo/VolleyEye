@@ -1,26 +1,54 @@
+import { getFilterControlIds } from "../../domain/analysis-filter-schema.js";
+import { publishReactVideoPresets } from "./video-preset-view.js";
 import { buildUniqueOptions, normalizeSetNumber, normalizePhaseValue } from "./values.js";
-import { getFilterFields, buildAdvancedFilterOptions, pruneFilterControls, renderFilterControls } from './filter-controls.js';
+import {
+  getFilterFields,
+  buildAdvancedFilterOptions,
+  pruneFilterControls,
+  renderFilterControls,
+} from "./filter-controls.js";
 import { SKILLS } from "../../../js/globals.js";
-import { getVideoFilterElements, handleVideoTeamFilterChange, handleVideoFilterChange, renderVideoFilterPresets } from "./analysis-filters.js";
 import { renderDynamicFilter, toggleFilterVisibility } from "./filter-view.js";
-import { matchesTeamFilter, getAnalysisTeamScope, makeScopedIndexKey, getSetterFromEvent, filterNormalEvalOptions, getTeamFilterOptions } from "./filter-model.js";
+import {
+  matchesTeamFilter,
+  getAnalysisTeamScope,
+  makeScopedIndexKey,
+  getSetterFromEvent,
+  filterNormalEvalOptions,
+  getTeamFilterOptions,
+} from "./filter-model.js";
 import { session as analysisFiltersState } from "../state/analysis-analysis-filters.js";
 import { session as matchState } from "../../../js/globals.js";
-import { getTeamScopeFromEvent, getPlayersForScope, getPlayerNumbersForScope, getTeamNameForScope } from "../teams/selectors.js";
-import { formatNameWithNumberFor, formatNameWithNumber } from "../teams/roster-data.js";
+import {
+  getTeamScopeFromEvent,
+  getPlayersForScope,
+  getPlayerNumbersForScope,
+  getTeamNameForScope,
+} from "../teams/selectors.js";
+import {
+  formatNameWithNumberFor,
+  formatNameWithNumber,
+} from "../teams/roster-data.js";
 import { resolvePlayerIdx } from "../events/player-links.js";
 import { sortPlayerOptionsByNumberForScope } from "../teams/lineup-selectors.js";
 
 import { session as liveScoreAndSetState } from "../state/live-live-score-and-set.js";
 import { formatAttackPhaseLabel } from "./values.js";
 import { buildAttackTypeLabel } from "./values.js";
-import { publishReactSplitFilter, publishReactPreviousSkill } from "./filter-view.js";
+import {
+  publishReactSplitFilter,
+  publishReactPreviousSkill,
+} from "./filter-view.js";
+
+const videoFilterAction = Object.freeze({ command: "handleVideoFilterChange" });
+const videoTeamFilterAction = Object.freeze({
+  command: "handleVideoTeamFilterChange",
+});
 
 export function renderVideoFilters(events) {
-  const els = getVideoFilterElements();
-  if (!els) return;
+  const controlIds = getFilterControlIds("videoFilterState");
   const list = Array.isArray(events) ? events : [];
-  const getManualCodeLabel = val => {
+  const getManualCodeLabel = (val) => {
     const map = {
       for: "Punto",
       "opp-error": "Errore avv.",
@@ -29,18 +57,28 @@ export function renderVideoFilters(events) {
       "team-error": "Errore squadra",
       TO: "Timeout",
       TOA: "Timeout avv.",
-      SUB: "Cambio"
+      SUB: "Cambio",
     };
     return map[val] || val;
   };
   const filteredByTeam = analysisFiltersState.videoFilterState.teams.size
-    ? list.filter(ev => matchesTeamFilter(ev, analysisFiltersState.videoFilterState.teams))
+    ? list.filter((ev) =>
+        matchesTeamFilter(ev, analysisFiltersState.videoFilterState.teams),
+      )
     : list;
-  const showBothTeams = matchState.state.useOpponentTeam && analysisFiltersState.videoFilterState.teams.size !== 1;
-  const labelScope = filteredByTeam.length ? getTeamScopeFromEvent(filteredByTeam[0]) : getAnalysisTeamScope();
+  const showBothTeams =
+    matchState.state.useOpponentTeam &&
+    analysisFiltersState.videoFilterState.teams.size !== 1;
+  const labelScope = filteredByTeam.length
+    ? getTeamScopeFromEvent(filteredByTeam[0])
+    : getAnalysisTeamScope();
   const labelPlayers = getPlayersForScope(labelScope);
   const labelNumbers = getPlayerNumbersForScope(labelScope);
-  const getPlayerLabel = (scope, idx, { setter = false, includeTeam = true } = {}) => {
+  const getPlayerLabel = (
+    scope,
+    idx,
+    { setter = false, includeTeam = true } = {},
+  ) => {
     const players = getPlayersForScope(scope);
     const numbers = getPlayerNumbersForScope(scope);
     const name = players[idx];
@@ -57,7 +95,7 @@ export function renderVideoFilters(events) {
     return baseLabel;
   };
   const sortScopedOptionsForScope = (options, scope) => {
-    const scoped = options.map(opt => {
+    const scoped = options.map((opt) => {
       const key = String(opt.value);
       const idxRaw = key.includes(":") ? key.split(":")[1] : key;
       const idx = Number(idxRaw);
@@ -65,12 +103,15 @@ export function renderVideoFilters(events) {
       const numbers = getPlayerNumbersForScope(scope);
       const name = players[idx];
       const rawNum = numbers && name ? numbers[name] : null;
-      const parsedNum = rawNum !== null && rawNum !== undefined && rawNum !== "" ? parseInt(rawNum, 10) : null;
+      const parsedNum =
+        rawNum !== null && rawNum !== undefined && rawNum !== ""
+          ? parseInt(rawNum, 10)
+          : null;
       return {
         opt,
         idx,
         number: Number.isFinite(parsedNum) ? parsedNum : null,
-        name: name || ""
+        name: name || "",
       };
     });
     scoped.sort((a, b) => {
@@ -84,40 +125,52 @@ export function renderVideoFilters(events) {
       if (numA !== numB) return numA - numB;
       return a.name.localeCompare(b.name, "it", { sensitivity: "base" });
     });
-    return scoped.map(entry => entry.opt);
+    return scoped.map((entry) => entry.opt);
   };
   const buildPlayerKey = (scope, idx) =>
     showBothTeams ? makeScopedIndexKey(scope, idx) : String(idx);
   const buildPlayerOptionsForScope = (scope, { setter = false } = {}) => {
     const values = filteredByTeam
-      .filter(ev => getTeamScopeFromEvent(ev) === scope)
-      .map(ev => {
+      .filter((ev) => getTeamScopeFromEvent(ev) === scope)
+      .map((ev) => {
         const idx = setter ? getSetterFromEvent(ev) : resolvePlayerIdx(ev);
         if (idx === null || idx === -1) return null;
         return buildPlayerKey(scope, idx);
       });
     const raw = buildUniqueOptions(values, {
-      labelFn: key => {
+      labelFn: (key) => {
         if (!showBothTeams) {
           const idx = Number(String(key).split(":")[1] || key);
           const name = labelPlayers[idx];
-          if (!name) return setter ? "Alzatore " + (Number(idx) + 1) : "#" + (Number(idx) + 1);
+          if (!name)
+            return setter
+              ? "Alzatore " + (Number(idx) + 1)
+              : "#" + (Number(idx) + 1);
           return labelScope === "opponent"
             ? formatNameWithNumberFor(name, labelNumbers)
             : formatNameWithNumber(name);
         }
         const [keyScope, idxRaw] = String(key).split(":");
-        return getPlayerLabel(keyScope, Number(idxRaw), { setter, includeTeam: false });
-      }
+        return getPlayerLabel(keyScope, Number(idxRaw), {
+          setter,
+          includeTeam: false,
+        });
+      },
     });
     return showBothTeams
       ? sortScopedOptionsForScope(raw, scope)
       : sortPlayerOptionsByNumberForScope(raw, labelScope);
   };
   const playerOptsOur = showBothTeams ? buildPlayerOptionsForScope("our") : [];
-  const playerOptsOpp = showBothTeams ? buildPlayerOptionsForScope("opponent") : [];
-  const setterOptsOur = showBothTeams ? buildPlayerOptionsForScope("our", { setter: true }) : [];
-  const setterOptsOpp = showBothTeams ? buildPlayerOptionsForScope("opponent", { setter: true }) : [];
+  const playerOptsOpp = showBothTeams
+    ? buildPlayerOptionsForScope("opponent")
+    : [];
+  const setterOptsOur = showBothTeams
+    ? buildPlayerOptionsForScope("our", { setter: true })
+    : [];
+  const setterOptsOpp = showBothTeams
+    ? buildPlayerOptionsForScope("opponent", { setter: true })
+    : [];
   const playerOptsRaw = showBothTeams
     ? playerOptsOur.concat(playerOptsOpp)
     : buildPlayerOptionsForScope(labelScope);
@@ -126,107 +179,170 @@ export function renderVideoFilters(events) {
     : buildPlayerOptionsForScope(labelScope, { setter: true });
   const playerOpts = playerOptsRaw;
   const setterOpts = setterOptsRaw;
-  const skillOpts = buildUniqueOptions(filteredByTeam.map(ev => ev.skillId), {
-    labelFn: val => {
-      if (val === "manual") return "Manuale";
-      return (SKILLS.find(s => s.id === val) || {}).label || val;
-    }
-  });
+  const skillOpts = buildUniqueOptions(
+    filteredByTeam.map((ev) => ev.skillId),
+    {
+      labelFn: (val) => {
+        if (val === "manual") return "Manuale";
+        return (SKILLS.find((s) => s.id === val) || {}).label || val;
+      },
+    },
+  );
   const evalCodeOpts = filterNormalEvalOptions(
-    buildUniqueOptions(filteredByTeam.map(ev => ev.code), { labelFn: val => val })
+    buildUniqueOptions(
+      filteredByTeam.map((ev) => ev.code),
+      { labelFn: (val) => val },
+    ),
   );
   const manualCodeOpts = buildUniqueOptions(
-    filteredByTeam.filter(ev => ev && ev.skillId === "manual").map(ev => ev.code),
-    { labelFn: val => getManualCodeLabel(val) }
+    filteredByTeam
+      .filter((ev) => ev && ev.skillId === "manual")
+      .map((ev) => ev.code),
+    { labelFn: (val) => getManualCodeLabel(val) },
   );
   const codeOptMap = new Map();
-  [...evalCodeOpts, ...manualCodeOpts].forEach(opt => {
+  [...evalCodeOpts, ...manualCodeOpts].forEach((opt) => {
     if (!opt || !opt.value || codeOptMap.has(opt.value)) return;
     codeOptMap.set(opt.value, opt);
   });
   const codeOpts = Array.from(codeOptMap.values());
-  const setOpts = buildUniqueOptions(filteredByTeam.map(ev => normalizeSetNumber(ev.set)), {
-    asNumber: true,
-    labelFn: val => "Set " + val
-  });
-  const rotOpts = buildUniqueOptions(filteredByTeam.map(ev => ev.rotation), {
-    asNumber: true,
-    labelFn: val => "P" + val
-  });
-  const zoneOpts = buildUniqueOptions(filteredByTeam.map(ev => ev.zone || ev.playerPosition), {
-    asNumber: true,
-    labelFn: val => "Z" + val
-  });
-  const { setTypeOpts, baseOpts, phaseOpts, recvEvalOpts, recvZoneOpts } = buildAdvancedFilterOptions(filteredByTeam, {
-    baseLabel: val => val.toUpperCase(),
-    phaseValue: ev => {
-      let rawPhase = ev.attackBp;
-      if (rawPhase === undefined || rawPhase === null) {
-        rawPhase = ev.phase !== undefined ? ev.phase : ev.attackPhase !== undefined ? ev.attackPhase : null;
-      }
-      return normalizePhaseValue(rawPhase);
+  const setOpts = buildUniqueOptions(
+    filteredByTeam.map((ev) => normalizeSetNumber(ev.set)),
+    {
+      asNumber: true,
+      labelFn: (val) => "Set " + val,
     },
-    phaseLabel: formatAttackPhaseLabel,
-  });
-  const serveTypeOpts = buildUniqueOptions(filteredByTeam.map(ev => ev.serveType), { labelFn: val => val });
+  );
+  const rotOpts = buildUniqueOptions(
+    filteredByTeam.map((ev) => ev.rotation),
+    {
+      asNumber: true,
+      labelFn: (val) => "P" + val,
+    },
+  );
+  const zoneOpts = buildUniqueOptions(
+    filteredByTeam.map((ev) => ev.zone || ev.playerPosition),
+    {
+      asNumber: true,
+      labelFn: (val) => "Z" + val,
+    },
+  );
+  const { setTypeOpts, baseOpts, phaseOpts, recvEvalOpts, recvZoneOpts } =
+    buildAdvancedFilterOptions(filteredByTeam, {
+      baseLabel: (val) => val.toUpperCase(),
+      phaseValue: (ev) => {
+        let rawPhase = ev.attackBp;
+        if (rawPhase === undefined || rawPhase === null) {
+          rawPhase =
+            ev.phase !== undefined
+              ? ev.phase
+              : ev.attackPhase !== undefined
+                ? ev.attackPhase
+                : null;
+        }
+        return normalizePhaseValue(rawPhase);
+      },
+      phaseLabel: formatAttackPhaseLabel,
+    });
+  const serveTypeOpts = buildUniqueOptions(
+    filteredByTeam.map((ev) => ev.serveType),
+    { labelFn: (val) => val },
+  );
   const attackTypeOpts = buildUniqueOptions(
     filteredByTeam
-      .filter(ev => ev && ev.skillId === "attack")
-      .map(ev => buildAttackTypeLabel(ev.attackType)),
-    { labelFn: val => val }
+      .filter((ev) => ev && ev.skillId === "attack")
+      .map((ev) => buildAttackTypeLabel(ev.attackType)),
+    { labelFn: (val) => val },
   );
 
-  const fields = getFilterFields('videoFilterState', els);
+  const fields = getFilterFields("videoFilterState");
   const options = {
-    teams: getTeamFilterOptions(), players: playerOpts, setters: setterOpts,
-    skills: skillOpts, codes: codeOpts, sets: setOpts, rotations: rotOpts,
-    zones: zoneOpts, bases: baseOpts, setTypes: setTypeOpts, phases: phaseOpts,
-    receiveEvaluations: recvEvalOpts, receiveZones: recvZoneOpts,
-    serveTypes: serveTypeOpts, attackTypes: attackTypeOpts,
+    teams: getTeamFilterOptions(),
+    players: playerOpts,
+    setters: setterOpts,
+    skills: skillOpts,
+    codes: codeOpts,
+    sets: setOpts,
+    rotations: rotOpts,
+    zones: zoneOpts,
+    bases: baseOpts,
+    setTypes: setTypeOpts,
+    phases: phaseOpts,
+    receiveEvaluations: recvEvalOpts,
+    receiveZones: recvZoneOpts,
+    serveTypes: serveTypeOpts,
+    attackTypes: attackTypeOpts,
   };
   pruneFilterControls(analysisFiltersState.videoFilterState, fields, options);
-  if (!liveScoreAndSetState.PREVIOUS_SKILL_OPTIONS.some(opt => opt.value === analysisFiltersState.videoFilterState.prevSkill)) {
+  if (
+    !liveScoreAndSetState.PREVIOUS_SKILL_OPTIONS.some(
+      (opt) => opt.value === analysisFiltersState.videoFilterState.prevSkill,
+    )
+  ) {
     analysisFiltersState.videoFilterState.prevSkill = "any";
   }
 
-  renderDynamicFilter(els.teams, getTeamFilterOptions(), analysisFiltersState.videoFilterState.teams, {
-    onChange: handleVideoTeamFilterChange
-  });
+  renderDynamicFilter(
+    controlIds.teams,
+    getTeamFilterOptions(),
+    analysisFiltersState.videoFilterState.teams,
+    {
+      onChange: videoTeamFilterAction,
+    },
+  );
   if (showBothTeams) {
     publishReactSplitFilter(
-      els.players,
+      controlIds.players,
       [
         { scope: "our", options: playerOptsOur },
-        { scope: "opponent", options: playerOptsOpp }
+        { scope: "opponent", options: playerOptsOpp },
       ],
       analysisFiltersState.videoFilterState.players,
-      handleVideoFilterChange
+      videoFilterAction,
     );
     publishReactSplitFilter(
-      els.setters,
+      controlIds.setters,
       [
         { scope: "our", options: setterOptsOur },
-        { scope: "opponent", options: setterOptsOpp }
+        { scope: "opponent", options: setterOptsOpp },
       ],
       analysisFiltersState.videoFilterState.setters,
-      handleVideoFilterChange
+      videoFilterAction,
     );
-    toggleFilterVisibility(els.players, playerOpts.length > 0);
-    toggleFilterVisibility(els.setters, setterOpts.length > 0);
+    toggleFilterVisibility(controlIds.players, playerOpts.length > 0);
+    toggleFilterVisibility(controlIds.setters, setterOpts.length > 0);
   } else {
-    renderDynamicFilter(els.players, playerOpts, analysisFiltersState.videoFilterState.players, {
-      onChange: handleVideoFilterChange
-    });
-    renderDynamicFilter(els.setters, setterOpts, analysisFiltersState.videoFilterState.setters, {
-      onChange: handleVideoFilterChange
-    });
+    renderDynamicFilter(
+      controlIds.players,
+      playerOpts,
+      analysisFiltersState.videoFilterState.players,
+      {
+        onChange: videoFilterAction,
+      },
+    );
+    renderDynamicFilter(
+      controlIds.setters,
+      setterOpts,
+      analysisFiltersState.videoFilterState.setters,
+      {
+        onChange: videoFilterAction,
+      },
+    );
   }
-  renderFilterControls(analysisFiltersState.videoFilterState,
-    fields.filter(([key]) => !['teams', 'players', 'setters'].includes(key)),
-    options, handleVideoFilterChange, { prune: false });
+  renderFilterControls(
+    analysisFiltersState.videoFilterState,
+    fields.filter(([key]) => !["teams", "players", "setters"].includes(key)),
+    options,
+    videoFilterAction,
+    { prune: false },
+  );
 
-  toggleFilterVisibility(els.prev, true);
-  publishReactPreviousSkill(els.prev,analysisFiltersState.videoFilterState.prevSkill,handleVideoFilterChange);
+  toggleFilterVisibility(controlIds.prev, true);
+  publishReactPreviousSkill(
+    controlIds.prev,
+    analysisFiltersState.videoFilterState.prevSkill,
+    videoFilterAction,
+  );
 
   const visibleFilters = [
     playerOpts.length,
@@ -243,12 +359,10 @@ export function renderVideoFilters(events) {
     recvEvalOpts.length,
     recvZoneOpts.length,
     serveTypeOpts.length,
-    attackTypeOpts.length
+    attackTypeOpts.length,
   ];
-  if (els.wrap) {
-    els.wrap.style.display = visibleFilters.some(Boolean) ? "" : "none";
-  }
-  toggleFilterVisibility(els.reset, visibleFilters.some(Boolean));
+  toggleFilterVisibility("video-filters", visibleFilters.some(Boolean));
+  toggleFilterVisibility(controlIds.reset, visibleFilters.some(Boolean));
 
-  renderVideoFilterPresets();
+  publishReactVideoPresets();
 }

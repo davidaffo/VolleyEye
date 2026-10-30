@@ -29,7 +29,6 @@ export function TeamManagerModal() {
   return (
     <ModalDialog
       id="team-manager-modal"
-      className="team-modal"
       open={view.open}
       onClose={close}
       variant="team"
@@ -42,7 +41,6 @@ export function TeamManagerModal() {
       closeProps={{
         id: "team-manager-close",
         onClick: () => run("closeTeamManagerModal"),
-        "aria-label": "Chiudi",
         className: "icon-button",
       }}
       bodyProps={{ className: "team-modal__content" }}

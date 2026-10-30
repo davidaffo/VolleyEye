@@ -1,5 +1,4 @@
 import { ensureMatchDefaults } from "../match-details.js";
-
 import { readCamp3FileAsArrayBuffer } from "../storage/archive-actions.js";
 import { normalizePlayerNameCase, normalizePlayers, buildFullName, enforceSingleCaptainFlag } from "../../../domain/player-names.js";
 import { applyOpponentDefaultLineup } from "../core/player-model.js";
@@ -9,15 +8,13 @@ import { publishCamp3ConfirmView, setCamp3ConfirmOpen } from "../camp3-view.js";
 import { openTeamManagerModal, renderTeamManagerTable, refreshTeamManagerFromSelection } from "../editor/team-editor.js";
 import { session as matchState } from "../../../../js/globals.js";
 import { updateTeamButtonsState, updateOpponentTeamButtonsState } from "../settings/scouting-config.js";
-import { renderTeamsSelect, hasMatchDataForReset, renderOpponentTeamsSelect } from "../storage/match-repository.js";
+import { publishTeamsManagerView } from "../manager-view.js";
+import { hasMatchDataForReset } from "../storage/match-repository.js";
 import { updatePlayersList, renderLiberoChipsInline, renderOpponentLiberoChipsInline } from "../court/court-ui-bootstrap.js";
 import { saveState } from "../../storage/save-state.js";
 import { session as courtEngineState } from "../court/court-engine.js";
 import { renderOpponentPlayers } from "../../live/team-rendering.js";
 import { renderLiberoBench } from "../../scout/court-commands.js";
-
-
-
 
 export function readCamp3FileAsText(file) {
   return new Promise((resolve, reject) => {
@@ -343,11 +340,6 @@ export function formatCamp3ImportPreview(changes) {
   return lines.join("\n");
 }
 
-export function renderCamp3ConfirmSummary(draft) {
-
-publishCamp3ConfirmView(draft);return;
-}
-
 export function closeCamp3ConfirmModal(result = false) {
   if (!rosterLineupState.elCamp3ConfirmModal) return;
   const resolver = rosterLineupState.elCamp3ConfirmModal._camp3Resolve;
@@ -361,7 +353,7 @@ export function showCamp3ImportConfirm(draft) {
     const plan = buildCamp3ImportPlanFromDraft(draft);
     return Promise.resolve(confirm(formatCamp3ImportPreview(plan ? plan.changes : {})) ? draft : null);
   }
-  renderCamp3ConfirmSummary(draft);
+  publishCamp3ConfirmView(draft);
   setCamp3ConfirmOpen(true);
   return new Promise(resolve => {
     rosterLineupState.elCamp3ConfirmModal._camp3Resolve = result => resolve(result ? draft : null);
@@ -415,20 +407,20 @@ export function handleTeamSelectChange(selectedOverride = "") {
   }
   if (matchState.state.useOpponentTeam && selected === matchState.state.selectedOpponentTeam) {
     alert("Non puoi selezionare la stessa squadra come avversaria.");
-    renderTeamsSelect();
+    publishTeamsManagerView();
     return;
   }
   const hasData = hasMatchDataForReset();
   const isChanging = selected !== matchState.state.selectedTeam;
   if (isChanging && hasData) {
     alert("Non puoi cambiare squadra dopo l'inizio dello scout. Esegui prima il reset del match.");
-    renderTeamsSelect();
+    publishTeamsManagerView();
     return;
   }
   const team = loadTeamFromStorage(selected);
   if (!team) {
     alert("Squadra non trovata o corrotta.");
-    renderTeamsSelect();
+    publishTeamsManagerView();
     refreshTeamManagerFromSelection();
     return;
   }
@@ -455,7 +447,7 @@ export function handleTeamSelectChange(selectedOverride = "") {
   });
   if (applied === false) return;
   renderLiberoTags();
-  renderTeamsSelect();
+  publishTeamsManagerView();
   renderLiberoChipsInline();
   refreshTeamManagerFromSelection();
 }
@@ -466,14 +458,14 @@ export function handleOpponentTeamSelectChange(selectedOverride = "") {
   if (selected && selected === matchState.state.selectedTeam) {
     alert("Non puoi selezionare la stessa squadra come avversaria.");
     if (rosterLineupState.elOpponentTeamsSelect) rosterLineupState.elOpponentTeamsSelect.value = "";
-    renderOpponentTeamsSelect();
+    publishTeamsManagerView();
     return;
   }
   const hasData = hasMatchDataForReset();
   const isChanging = selected !== matchState.state.selectedOpponentTeam;
   if (isChanging && hasData) {
     alert("Non puoi cambiare la squadra avversaria dopo l'inizio dello scout. Esegui prima il reset del match.");
-    renderOpponentTeamsSelect();
+    publishTeamsManagerView();
     return;
   }
   if (!selected) {
@@ -485,7 +477,7 @@ export function handleOpponentTeamSelectChange(selectedOverride = "") {
   const team = loadOpponentTeamFromStorage(selected);
   if (!team) {
     alert("Squadra avversaria non trovata o corrotta.");
-    renderOpponentTeamsSelect();
+    publishTeamsManagerView();
     return;
   }
   matchState.state.selectedOpponentTeam = selected;
@@ -516,7 +508,7 @@ export function handleOpponentTeamSelectChange(selectedOverride = "") {
     matchState.state.match.opponent = selected;
     ensureMatchDefaults();
   }
-  renderOpponentTeamsSelect();
+  publishTeamsManagerView();
   saveState();
 }
 

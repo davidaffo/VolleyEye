@@ -10,7 +10,6 @@
   overflow: hidden;
 }
 .attack-trajectory-body {
-  flex: 1 1 auto;
   min-height: 520px;
 }
 @media (max-width: 900px) {
@@ -32,9 +31,6 @@
   padding: 0.1rem 0.1rem 0.2rem 4.2rem;
   min-height: 1.6rem;
   border-radius: 0.8rem;
-}
-.attack-trajectory-netpoints.hidden {
-  display: none;
 }
 .attack-trajectory-netpoints-label {
   flex: 0 0 auto;
@@ -104,9 +100,6 @@ body.desktop-court-modal .attack-trajectory-stage {
 }
 @media (max-width: 900px) {
   .attack-trajectory-content {
-    width: 100vw;
-    height: 100svh;
-    max-height: 100svh;
     border-radius: 0;
   }
   .attack-trajectory-body {
@@ -162,9 +155,6 @@ body.desktop-court-modal .attack-trajectory-stage {
   font-size: 0.92rem;
   color: #e2e8f0;
 }
-.attack-trajectory-instructions.hidden {
-  display: none;
-}
 .serve-type-buttons {
   display: flex;
   justify-content: center;
@@ -173,9 +163,6 @@ body.desktop-court-modal .attack-trajectory-stage {
   width: 100%;
   padding-top: 0.15rem;
   align-items: center;
-}
-.serve-type-buttons.hidden {
-  display: none;
 }
 .serve-type-buttons button {
   padding: 0.35rem 0.6rem;
@@ -192,12 +179,6 @@ body.desktop-court-modal .attack-trajectory-stage {
 }
 body[data-theme="light"] .attack-trajectory-netpoints {
   color: #0f172a;
-}
-.set-type-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(90px, 1fr));
-  gap: 0.5rem;
-  margin: 0.4rem 0 0.2rem;
 }
 .set-type-btn {
   display: flex;
@@ -225,11 +206,6 @@ body[data-theme="light"] .attack-trajectory-netpoints {
   background: #2563eb;
   border-color: #2563eb;
 }
-.set-type-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 0.3rem;
-}
 .set-type-shortcuts {
   margin-top: 12px;
   padding: 10px;
@@ -251,10 +227,6 @@ body[data-theme="light"] .set-type-shortcuts {
 }
 .set-type-shortcuts__label {
   font-weight: 700;
-}
-.set-type-shortcuts__hint {
-  opacity: 0.8;
-  font-size: 0.85rem;
 }
 .set-type-shortcuts__buttons {
   display: flex;
@@ -278,9 +250,6 @@ body[data-theme="light"] .set-type-shortcuts {
   gap: 12px;
   margin-bottom: 0;
 }
-.set-type-inline .set-type-shortcuts__hint {
-  white-space: nowrap;
-}
 .set-type-inline .set-type-shortcuts__buttons {
   flex-wrap: nowrap;
   gap: 6px;
@@ -292,20 +261,12 @@ body[data-theme="light"] .set-type-shortcuts {
 .set-type-wrapper {
   margin-bottom: 0.4rem;
 }
-.set-type-shortcuts__current strong {
-  font-weight: 800;
-}
 body[data-theme="light"] .skill-modal__content {
   background: #f8fafc;
   border-color: #d5dbe5;
 }
 body[data-theme="light"] .skill-modal__head {
   background: #f8fafc;
-}
-.skill-modal__body .error-row {
-  margin-top: 0.5rem;
-  padding-top: 0.4rem;
-  border-top: 1px solid #1f1f1f;
 }
 .skill-modal__title {
   font-weight: 700;
@@ -360,9 +321,6 @@ body[data-theme="light"] .error-choice-btn.danger {
   align-items: center;
   justify-content: center;
   z-index: 2000;
-}
-.team-modal.hidden {
-  display: none;
 }
 .team-modal__backdrop {
   position: absolute;
@@ -429,9 +387,6 @@ body[data-theme="light"] .error-choice-btn.danger {
 .team-modal__dialog.team-modal__dialog--live-edit .team-manager-roster-layout {
   display: block;
 }
-.team-manager-import summary {
-  cursor: pointer;
-}
 .team-meta-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -455,9 +410,6 @@ body[data-theme="light"] .error-choice-btn.danger {
   display: flex;
   gap: 0.5rem;
   align-items: center;
-}
-.team-manager-actions .hidden {
-  display: none;
 }
 .team-manager-tablewrap {
   max-height: 45vh;

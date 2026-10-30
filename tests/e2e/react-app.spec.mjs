@@ -1,6 +1,13 @@
 import { test, expect } from "@playwright/test";
 import { readFileSync } from "node:fs";
 
+const retiredSelectors = JSON.parse(readFileSync(new URL('../fixtures/retired-ui-selectors.json', import.meta.url), 'utf8'));
+
+test.afterEach(async ({ page }) => {
+  const matches = await page.evaluate(selectors => selectors.filter(selector => document.querySelector(selector)), retiredSelectors);
+  expect(matches, 'Retired styles must not match any mounted React interface').toEqual([]);
+});
+
 async function openApp(page) {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -2122,5 +2129,69 @@ test("dialogo fondamentali React: tipi di battuta e attacco riusano i comandi de
   expect(after.events[0]).toMatchObject({skillId: 'serve', serveType: 'F'});
   expect(after.events[1].skillId).toBe('attack');
   expect(after.events[1].setType).toBeTruthy();
+  expect(errors).toEqual([]);
+});
+
+test('filtri React: comandi di traiettorie, lato campo e selettori video', async ({ page }) => {
+  test.setTimeout(30000);
+  const errors = await openApp(page);
+  await page.locator('#btn-load-match').click();
+  await page.evaluate(() => window.VolleyEye.app.invoke('setActiveTab', 'aggregated'));
+  await page.locator('[data-agg-tab-target="trajectory"]').click();
+  const previous = page.locator('#traj-filter-prev');
+  await previous.selectOption('receive-positive');
+  const attackSide = page.locator('#traj-court-side');
+  const attackValue = await attackSide.locator('input:checked').getAttribute('value') === 'far' ? 'near' : 'far';
+  await attackSide.locator(`input[value="${attackValue}"]`).check();
+  await expect(previous).toHaveValue('receive-positive');
+  await page.locator('[data-agg-tab-target="serve"]').click();
+  const serveSide = page.locator('#serve-traj-court-side');
+  const serveValue = await serveSide.locator('input:checked').getAttribute('value') === 'far' ? 'near' : 'far';
+  await serveSide.locator(`input[value="${serveValue}"]`).check();
+  await page.locator('[data-agg-tab-target="trajectory"]').click();
+  await expect(attackSide.locator(`input[value="${attackValue}"]`)).toBeChecked();
+  await expect(previous).toHaveValue('receive-positive');
+  await page.locator('[data-agg-tab-target="serve"]').click();
+  await expect(serveSide.locator(`input[value="${serveValue}"]`)).toBeChecked();
+  await page.evaluate(() => window.VolleyEye.app.invoke('setActiveTab', 'video'));
+  await expect(page.locator('#video-filter-players .filter-scope-group')).toHaveCount(2);
+  const player = page.locator('#video-filter-players input').first();
+  await player.check();
+  await page.locator('#video-filter-prev').selectOption('receive-positive');
+  await page.locator('#video-filter-skills input[value="serve"]').check();
+  await expect(player).toBeChecked();
+  await expect(page.locator('#video-filter-prev')).toHaveValue('receive-positive');
+  await page.locator('#video-filter-reset').click();
+  await expect(player).not.toBeChecked();
+  await expect(page.locator('#video-filter-prev')).toHaveValue('any');
+  expect(errors).toEqual([]);
+});
+
+test('archivio giocatrici React: foto da gesto nativo, annullamento e rimozione', async ({ page }) => {
+  test.setTimeout(30000);
+  const errors = await openApp(page);
+  await page.evaluate(() => window.VolleyEye.app.invoke('openPlayersDbModal'));
+  const empty = page.locator('#players-db-body .players-db-photo-preview.empty').first();
+  const id = await empty.locator('xpath=ancestor::tr').getAttribute('data-player-id');
+  const preview = page.locator(`#players-db-body tr[data-player-id="${id}"] .players-db-photo-preview`);
+  for (const accept of [false, true]) {
+    const chooser = page.waitForEvent('filechooser');
+    await preview.click();
+    await (await chooser).setFiles(new URL('../../icons/icon-192.png', import.meta.url).pathname);
+    await expect(page.locator('#player-photo-modal')).toBeVisible();
+    await page.locator(accept ? '#player-photo-save' : '#player-photo-cancel').click();
+    await expect(page.locator('#player-photo-modal')).toBeHidden();
+    if (accept) await expect(preview).not.toHaveClass(/empty/);
+    else await expect(preview).toHaveClass(/empty/);
+  }
+  await preview.focus();
+  await preview.press('Enter');
+  await expect(page.locator('#player-photo-modal')).toBeVisible();
+  await page.locator('#player-photo-remove').click();
+  await expect(page.locator('#player-photo-modal')).toBeHidden();
+  await expect(preview).toHaveClass(/empty/);
+  await page.locator('#players-db-close').click();
+  await page.evaluate(() => window.VolleyEye.app.invoke('openPlayersDbModal'));
+  await expect(preview).toHaveClass(/empty/);
   expect(errors).toEqual([]);
 });

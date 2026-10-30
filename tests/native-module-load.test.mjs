@@ -317,7 +317,7 @@ test('lo schema filtri conserva indici numerici, chiavi video e ordine dei campi
   const keys = ['teams', 'players', 'setters', 'skills', 'codes', 'sets', 'rotations',
     'zones', 'bases', 'setTypes', 'phases', 'receiveEvals', 'receiveZones', 'serveTypes', 'attackTypes'];
   const elements = Object.fromEntries(keys.map(key => [key, { id: key, classList: makeClassList(), closest() { return null; } }]));
-  const video = context.getFilterFields('videoFilterState', elements);
+  const video = context.getFilterFields('videoFilterState');
   assert.deepEqual(Array.from(video, row => row[0]), keys.map(key => key === 'receiveEvals' ? 'receiveEvaluations' : key));
   for (const key of ['players', 'setters']) {
     const field = video.find(row => row[0] === key);
@@ -337,7 +337,7 @@ test('lo schema filtri conserva indici numerici, chiavi video e ordine dei campi
   context.syncFilterSelections(state, video);
   assert.deepEqual([...state.players], ['our:0', 'opponent:0']);
   assert.deepEqual([...state.sets], [1]);
-  const trajectory = context.getFilterFields('trajectoryFilterState', elements);
+  const trajectory = context.getFilterFields('trajectoryFilterState');
   assert.deepEqual(Array.from(trajectory, row => row[0]), ['setters', 'players', 'sets', 'setTypes',
     'bases', 'phases', 'receiveEvaluations', 'receiveZones', 'codes', 'attackTypes', 'zones']);
   assert.ok(trajectory.filter(row => ['setters', 'players', 'sets', 'zones', 'receiveZones'].includes(row[0]))

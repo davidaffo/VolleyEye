@@ -145,7 +145,7 @@ test("selezionare l'avversaria conserva tutte le riserve e salva la formazione f
     updateOpponentPlayersList: names => { c.state.opponentPlayers = names; return true; },
     saveState: () => { c.saved = plain(c.state); }
   };
-  for (const name of ["updateOpponentTeamButtonsState", "ensureMatchDefaults", "renderOpponentLiberoChipsInline", "renderOpponentPlayers", "renderOpponentTeamsSelect", "updateOpponentRotationDisplay"]) c[name] = () => {};
+  for (const name of ["updateOpponentTeamButtonsState", "ensureMatchDefaults", "renderOpponentLiberoChipsInline", "renderOpponentPlayers", "publishTeamsManagerView", "updateOpponentRotationDisplay"]) c[name] = () => {};
   load(c, roster, ["handleOpponentTeamSelectChange", "applyOpponentDefaultLineup"]);
   c.handleOpponentTeamSelectChange();
   assert.deepEqual(c.saved.opponentPlayers, players);
@@ -157,7 +157,7 @@ test("selezionare l'avversaria conserva tutte le riserve e salva la formazione f
 });
 test("una selezione avversaria non valida conserva la selezione precedente", () => {
   const c = load({ state: { selectedTeam: "Casa", selectedOpponentTeam: "Ospiti" },
-    elOpponentTeamsSelect: { value: "Casa" }, alert() {}, renderOpponentTeamsSelect() {}
+    elOpponentTeamsSelect: { value: "Casa" }, alert() {}, publishTeamsManagerView() {}
   }, roster, ["handleOpponentTeamSelectChange"]);
   c.handleOpponentTeamSelectChange();
   assert.equal(c.state.selectedOpponentTeam, "Ospiti");
@@ -199,7 +199,7 @@ function managerContext(storageOnly = false) {
     updateOpponentPlayersList: names => { c.state.opponentPlayers = names; return true; },
     saveState: () => { c.saved = plain(c.state); }
   };
-  for (const name of ["syncOpponentTeamsFromStorage", "renderTeamsSelect", "renderOpponentTeamsSelect", "ensureMatchDefaults",
+  for (const name of ["syncOpponentTeamsFromStorage", "publishTeamsManagerView", "publishTeamsManagerView", "ensureMatchDefaults",
     "renderOpponentLiberoChipsInline", "renderOpponentPlayers", "updateOpponentRotationDisplay", "invalidateRosterIdMapsCache"]) c[name] = () => {};
   return load(c, roster, ["saveTeamManagerPayload", "applyOpponentDefaultLineup"]);
 }

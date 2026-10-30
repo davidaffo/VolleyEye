@@ -1,15 +1,12 @@
 import { getAttackCodeFromBlockCode, getPredictedSkillIdForScope, getNetBlockPromptScope } from "./flow-model.js";
 import { SKILLS } from "../../../js/globals.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
-import { makePlayerKey, getTeamScopeFromEvent, getOppositeScope, getTeamNameForScope } from "../teams/selectors.js";
+import { getTeamScopeFromEvent, getOppositeScope, getTeamNameForScope } from "../teams/selectors.js";
 
 import { renderEventsLog } from "../video/video-events.js";
 import { renderVideoAnalysis } from "../video/playback.js";
 
 import { session as matchState } from "../../../js/globals.js";
-
-
-
 
 import { resolvePlayerIdx } from "../events/player-links.js";
 import { session as teamManagementState } from "../state/live-team-management.js";
@@ -34,76 +31,6 @@ export function closeCurrentEdit({ refresh = false } = {}) {
   }
 }
 
-export function setSelectedSkillForScope(scope, playerIdx, skillId) {
-  const key = makePlayerKey(scope, playerIdx);
-  if (skillId) {
-    scoutUiState.selectedSkillPerPlayer[key] = skillId;
-    if (skillId !== "serve") {
-      delete scoutUiState.serveMetaByPlayer[key];
-    }
-    if (skillId === "block") {
-      scoutUiState.blockConfirmByPlayer[key] = false;
-      scoutUiState.blockInlinePlayer = key;
-    } else {
-      delete scoutUiState.blockConfirmByPlayer[key];
-      if (scoutUiState.blockInlinePlayer === key) {
-        scoutUiState.blockInlinePlayer = null;
-      }
-    }
-  } else {
-    delete scoutUiState.selectedSkillPerPlayer[key];
-    delete scoutUiState.serveMetaByPlayer[key];
-    delete scoutUiState.blockConfirmByPlayer[key];
-    if (scoutUiState.blockInlinePlayer === key) {
-      scoutUiState.blockInlinePlayer = null;
-    }
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-export function resetSetTypeState() {
-  Object.keys(scoutUiState.selectedSkillPerPlayer).forEach(key => delete scoutUiState.selectedSkillPerPlayer[key]);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 export function updateSkillStatsForEvent(scope, playerIdx, skillId, prevCode, nextCode) {
   if (prevCode === nextCode) return;
   const bucket = scope === "our" ? matchState.state.stats : matchState.state.opponentStats;
@@ -116,10 +43,6 @@ export function updateSkillStatsForEvent(scope, playerIdx, skillId, prevCode, ne
     bucket[playerIdx][skillId][nextCode] = (bucket[playerIdx][skillId][nextCode] || 0) + 1;
   }
 }
-
-
-
-
 
 export function applyBlockInference(blockEvent, blockScope, blockCode) {
   if (!matchState.state.useOpponentTeam || !matchState.state.predictiveSkillFlow) return;
@@ -155,16 +78,6 @@ export function applyBlockInference(blockEvent, blockScope, blockCode) {
   updateSkillStatsForEvent(attackScope, attackIdx, "attack", prevCode, attackEvent.code);
   return attackEvent;
 }
-
-
-
-
-
-
-
-
-
-
 
 export function updateNetBlockPrompt() {
   if (!teamManagementState.elBtnNetBlockPrompt || !teamManagementState.elNetActionsDefault) return;

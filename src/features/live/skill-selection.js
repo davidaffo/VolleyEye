@@ -1,48 +1,28 @@
+import { resetSkillSelectionForPlayer, getServeBaseZoneForPlayer } from "../scout/selection-state.js";
+import { setServeTypeFocusPlayer, removeServeTypeInlineKeyListener, clearServeTypeInlineListener } from "../scout/serve-keyboard.js";
 import { getLineupModalPlayers, getLineupModalNumbers } from "../teams/lineup-selectors.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { getPlayersForScope, makePlayerKey, isPlayerKeyInScope, isFarSideForScope, getOppositeScope } from "../teams/selectors.js";
-import { getServeDisplayCourt } from "../teams/serve-court.js";
 import { session as matchState } from "../../../js/globals.js";
 import { setTeamPreferredLibero, setTeamLiberoAutoMap } from "../teams/roster-data.js";
 import { enforceAutoLiberoForScope, getCurrentZoneForPlayer } from "../teams/court-state-model.js";
-
 import { publishLineupView } from "./lineup-view.js";
 import { loadTeamFromStorage, extractRosterFromTeam } from "../teams/storage/team-repository.js";
 import { renderLineupModal, assignPlayerToLineup } from "./lineup-editor.js";
 import { trajectoryModalStore } from "../../state/roster-import-store.mjs";
-import { listenRuntime, unlistenRuntime } from "../../app/browser-effects.js";
-import { setSelectedSkillForScope } from "./game-flow.js";
-import { getServerPlayerForScope } from "./flow-model.js";
+import { setSelectedSkillForScope, getServerPlayerForScope } from "./flow-model.js";
 import { closeSkillModal, stopErrorPickMode, getActiveVideoPlaybackSeconds } from "./live-entry.js";
 import { isErrorPickModeForScope } from "../scout/pick-model.js";
-
 import { openAttackTrajectoryModal } from "./trajectories.js";
 import { saveState } from "../storage/save-state.js";
 import { renderOpponentPlayers, renderPlayers } from "./team-rendering.js";
 import { renderOpponentLiberoChipsInline, updateOpponentRotationDisplay, renderLiberoChipsInline, updateRotationDisplay } from "../teams/court/court-ui-bootstrap.js";
-
-
-
-
-
-
-
-
 
 export function setLineupModalPreferredLibero(name) {
   const next = name || "";
   setTeamPreferredLibero(scoutUiState.lineupModalScope, next);
   setTeamLiberoAutoMap(scoutUiState.lineupModalScope, {});
   enforceAutoLiberoForScope(scoutUiState.lineupModalScope, { skipServerOnServe: true });
-}
-
-
-
-
-
-export function updateLineupModalControls() {
-
- publishLineupView(); return;
 }
 
 export function applyDefaultLineupToModal() {
@@ -84,14 +64,6 @@ export function exitLineupNumberMode() {
   renderLineupModal();
 }
 
-
-
-
-
-
-
-
-
 export function setServeTypeSelection(type) {
   const t = (type || "").toUpperCase();
   const normalized = t === "F" || t === "S" ? t : "JF";
@@ -99,70 +71,6 @@ export function setServeTypeSelection(type) {
   if (!scoutUiState.elServeTypeButtons) return;
   trajectoryModalStore.publish({serveType:normalized});return;
 
-}
-
-export function bindServeTypeInlineListener(playerIdx, onSelect, scope = "our") {
-  const key = makePlayerKey(scope, playerIdx);
-  scoutUiState.serveTypeSelectHandlers[key] = onSelect;
-  if (scoutUiState.serveTypeInlineHandler) return;
-  scoutUiState.serveTypeInlineHandler = e => {
-    const key = (e.key || "").toUpperCase();
-    if (key !== "F" && key !== "J" && key !== "S") return;
-    const activePlayer =
-      scoutUiState.serveTypeInlinePlayer !== null ? scoutUiState.serveTypeInlinePlayer : scoutUiState.serveTypeFocusPlayer;
-    if (activePlayer === null || activePlayer === undefined) return;
-    const handler = scoutUiState.serveTypeSelectHandlers[activePlayer];
-    if (typeof handler === "function") {
-      handler(key === "J" ? "JF" : key);
-    }
-  };
-  listenRuntime(window, "keydown", scoutUiState.serveTypeInlineHandler);
-}
-
-export function setServeTypeFocusPlayer(playerIdx, scope = "our") {
-  scoutUiState.serveTypeFocusPlayer = makePlayerKey(scope, playerIdx);
-}
-
-export function removeServeTypeInlineKeyListener() {
-  if (scoutUiState.serveTypeInlineHandler) {
-    unlistenRuntime(window, "keydown", scoutUiState.serveTypeInlineHandler);
-    scoutUiState.serveTypeInlineHandler = null;
-  }
-}
-
-export function clearServeTypeInlineListener() {
-  removeServeTypeInlineKeyListener();
-  scoutUiState.serveTypeInlinePlayer = null;
-  scoutUiState.serveTypeFocusPlayer = null;
-  Object.keys(scoutUiState.serveTypeSelectHandlers).forEach(key => {
-    delete scoutUiState.serveTypeSelectHandlers[key];
-  });
-}
-
-export function clearAttackSelection(playerIdx = null, scope = "our") {
-  if (playerIdx === null || playerIdx === undefined) {
-    scoutUiState.attackInlinePlayer = null;
-    Object.keys(scoutUiState.attackMetaByPlayer).forEach(key => {
-      delete scoutUiState.attackMetaByPlayer[key];
-    });
-    return;
-  }
-  const key = makePlayerKey(scope, playerIdx);
-  delete scoutUiState.attackMetaByPlayer[key];
-  if (scoutUiState.attackInlinePlayer === key) {
-    scoutUiState.attackInlinePlayer = null;
-  }
-}
-
-export function resetSkillSelectionForPlayer(playerIdx, scope = "our") {
-  const key = makePlayerKey(scope, playerIdx);
-  delete scoutUiState.serveMetaByPlayer[key];
-  delete scoutUiState.blockConfirmByPlayer[key];
-  if (scoutUiState.serveTypeInlinePlayer === key || scoutUiState.serveTypeFocusPlayer === key) {
-    clearServeTypeInlineListener();
-  }
-  clearAttackSelection(playerIdx, scope);
-  setSelectedSkillForScope(scope, playerIdx, null);
 }
 
 export function cancelPartialSkillFlowForScope(scope = "our") {
@@ -192,29 +100,6 @@ export function cancelPartialSkillFlowForScope(scope = "our") {
   }
   if (isErrorPickModeForScope(targetScope)) {
     stopErrorPickMode({ render: false });
-  }
-}
-
-export function shouldPromptAttackSetType(scope = "our") {
-  const enabled =
-    scope === "opponent" ? matchState.state.opponentSetTypePromptEnabled : matchState.state.setTypePromptEnabled;
-  return !!enabled;
-}
-
-export function applyAttackTrajectoryToEvent(event, payload) {
-  if (!payload || !event) return;
-  event.attackStart = payload.start || event.attackStart || null;
-  event.attackEnd = payload.end || event.attackEnd || null;
-  event.attackStartZone = payload.startZone || event.attackStartZone || null;
-  event.attackEndZone = payload.endZone || event.attackEndZone || null;
-  event.attackDirection = payload;
-  event.attackTrajectory = payload;
-  if (!event.originZone) {
-    event.originZone = event.attackStartZone || event.originZone || null;
-  }
-  if (event.attackStartZone) {
-    event.zone = event.attackStartZone;
-    event.playerPosition = event.attackStartZone;
   }
 }
 
@@ -262,16 +147,6 @@ export async function startAttackSelection(playerIdx, setTypeChoice, onDone, sco
   if (typeof onDone === "function") {
     onDone();
   }
-}
-
-export function getServeBaseZoneForPlayer(playerIdx, scope = "our") {
-  const players = getPlayersForScope(scope);
-  if (typeof playerIdx !== "number" || !players || !players[playerIdx]) return null;
-  const name = players[playerIdx];
-  const baseCourt = getServeDisplayCourt(scope);
-  if (!baseCourt || !baseCourt.length) return null;
-  const slotIdx = baseCourt.findIndex(slot => slot && slot.main === name);
-  return slotIdx === -1 ? null : slotIdx + 1;
 }
 
 export async function startServeTypeSelection(playerIdx, type, onDone, scope = "our") {

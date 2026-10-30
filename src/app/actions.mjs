@@ -1,10 +1,11 @@
+import { runAnalysisFilterAction } from "../features/analysis/analysis-filters.js";
 import { runScoutSkillAction } from "../features/scout/skill-actions.js";
-import { openReactAggregatedSkill, openReactAggregatedPlayer, showAggregatedSummary, openAggregatedSetStart } from '../features/analysis/summary-commands.js';
-import { publishApplicationViews } from './view-publication.js';
+import { openReactAggregatedSkill, openReactAggregatedPlayer, showAggregatedSummary, openAggregatedSetStart } from "../features/analysis/summary-commands.js";
+import { publishApplicationViews } from "./view-publication.js";
 import { openPlayerPhotoEditor, closePlayerPhotoEditor, renderPlayerPhotoEditor, exportPlayerPhotoDataUrl, handlePlayerPhotoPointerDown, handlePlayerPhotoPointerMove, handlePlayerPhotoPointerUp } from "../features/players/photo-editor.js";
 import { session as photoState } from "../features/state/players-photo-editor.js";
-import { createCommands, createReadyEvents } from './commands.mjs';
-import { PLAYER_PHOTO_REMOVE_RESULT } from "../../js/globals.js";
+import { createCommands, createReadyEvents } from "./commands.mjs";
+import { PLAYER_PHOTO_REMOVE_RESULT, session as matchState, logError } from "../../js/globals.js";
 import { submitReactMatchDialog } from "../features/teams/match-dialog-commands.js";
 import { mergeManagedTeams } from "../features/teams/manager-commands.js";
 import { publishNextSetView } from "../features/live/next-set-view.js";
@@ -19,11 +20,11 @@ import { handleImportDatabaseFile, handleImportMatchFile } from "../features/io/
 import { applyDvwScoutInput, queueCurrentDvwScoutToken, openDvwScoutHelp } from "../features/io/datavolley-live-entry.js";
 import { clearReactDvwEntry, removeReactDvwToken, changeReactDvwText } from "../features/scout/code-entry.js";
 import { rotateCourt, rotateOpponentCourt, setRotation, setOpponentRotation, openSettingsModal, closeSettingsModal, setCurrentSet, handleCourtDragStart, handleBenchDragStart, handleBenchDragEnd, handleBenchPointerDown, handleBenchTouchStart, handleCourtDragEnd, handlePositionDragOver, handlePositionDragLeave, handlePositionDrop, animateFlip } from "../features/teams/court/court-ui-bootstrap.js";
-import { setAutoLiberoRole, swapPreferredLiberoForScope, swapPreferredLibero, syncAutoLiberoSelects } from "../features/teams/court/court-engine.js";
+import { setAutoLiberoRole, swapPreferredLiberoForScope, swapPreferredLibero } from "../features/teams/court/court-engine.js";
+import { publishReactSettings } from "../features/settings/view.js";
 import { forceNextSkill, openAttackTrajectoryModal, closeAttackTrajectoryModal, resizeTrajectoryCanvas } from "../features/live/trajectories.js";
 import { triggerFreeballFlow } from "../features/live/event-recording.js";
 import { handleOpponentFreeballSingle, handleManualScore, endMatch } from "../features/live/live-score-and-set.js";
-import { session as matchState, logError } from "../../js/globals.js";
 import { saveState } from "../features/storage/save-state.js";
 import { applyTheme } from "../features/teams/core/state-store.js";
 import { syncCourtSideLayout, renderPlayers } from "../features/live/team-rendering.js";
@@ -38,18 +39,16 @@ import { setServeTypeSelection, applyDefaultLineupToModal, changeLineupPreferred
 import { chooseReactTrajectoryNetPoint, handleReactTrajectoryPointer } from "../features/scout/trajectory-dialog.js";
 import { refreshReactCompareSections } from "../features/analysis/player-view.js";
 import { changeReactPlayerAnalysis } from "../features/analysis/player-commands.js";
-import { selectReactSetTrendPoint } from "../features/analysis/timeline-commands.js";
-import { changeReactPlayByPlaySet } from "../features/analysis/timeline-commands.js";
+import { selectReactSetTrendPoint, changeReactPlayByPlaySet } from "../features/analysis/timeline-commands.js";
 import { toggleMetricAssignment, togglePointRule, toggleActiveCode, toggleSkillEnabled } from "../features/teams/settings/metrics-editor.js";
 import { changeReactMatchSheetFilter, changeReactMatchSheetNote } from "../features/analysis/match-sheet-commands.js";
 import { openReactMultiscout, closeReactMultiscout, changeReactMultiscoutScope, resetReactMultiscout } from "../features/analysis/multiscout-commands.js";
-import { applyReactVideoPreset, renameReactVideoPreset, removeReactVideoPreset, reorderReactVideoPresets } from "../features/analysis/video-preset-commands.js";
-import { saveCurrentVideoFilterPreset } from "../features/analysis/video-preset-commands.js";
+import { applyReactVideoPreset, renameReactVideoPreset, removeReactVideoPreset, reorderReactVideoPresets, saveCurrentVideoFilterPreset } from "../features/analysis/video-preset-commands.js";
 import { openAggSkillModal, closeAggSkillModal } from "../features/analysis/skill-tables.js";
 import { changeReactChartMetric } from "../features/analysis/chart-commands.js";
 import { closeBulkEditModal, openBulkEditModal, applyBulkEditSession } from "../features/video/event-editor.js";
 import { showCamp3ImportConfirm, closeCamp3ConfirmModal, importCamp3IntoTeamManager } from "../features/teams/imports/camp3-import.js";
-import { mergeManagedPlayersDb } from "../features/players/database-view.js";
+import { mergeManagedPlayersDb, editPlayersDbPhoto } from "../features/players/database-commands.js";
 import { addManagedTeamPlayer, duplicateManagedTeamPlayers, generateManagedTeamTemplate, openManagedPlayersPaste, openSelectedManagedTeam, deleteSelectedManagedTeam, duplicateSelectedManagedTeam, exportSelectedManagedTeam, createManagedTeam } from "../features/core/bindings-roster.js";
 import { openTeamManagerModal, openNewTeamManager, closeTeamManagerModal, saveTeamManagerPayload, handleDefaultLineupTouchStart, finalizeDefaultLineupTouch } from "../features/teams/editor/team-editor.js";
 import { exportCurrentTeamToFile, deleteSelectedMatch, createNewMatchFromPrompt, openNewMatchModal, closeNewMatchModal, createNewMatchFromSetup, loadSelectedMatch } from "../features/teams/storage/archive-actions.js";
@@ -66,13 +65,10 @@ import { exportMatchToFile } from "../features/io/exports.js";
 import { exportDataVolleyToFile } from "../features/io/datavolley-export.js";
 import { exportAnalysisHtml } from "../features/analysis/reports.js";
 import { session as persistentStorageState } from "../features/state/storage-persistent-storage.js";
-
 import { bindReactEventTable, registerReactEventEdit } from "../features/events/table-commands.js";
 import { copySkillChartImageToClipboard } from "../features/analysis/skill-analysis.js";
 import { handleScoutWidgetPointerDown, moveScoutWidgetWithKeyboard } from "../features/live/workspace-layout.js";
-
 import { session as application } from "./lifecycle.js";
-
 
 export const actions = createCommands({
   openReactAggregatedSkill, openReactAggregatedPlayer, showAggregatedSummary, openAggregatedSetStart,
@@ -160,7 +156,7 @@ export const actions = createCommands({
   changeReactSetting,
   swapManagedSettingsLibero: () => {
     swapPreferredLibero();
-    syncAutoLiberoSelects();
+    publishReactSettings();
   },
   openOffsetModal,
   closeOffsetModal,
@@ -352,6 +348,8 @@ export const actions = createCommands({
   flushStorage: () => persistentStorageState.archiveStorage.flush(),
 }, publishApplicationViews);
 export const events = createReadyEvents({
+  editPlayersDbPhoto,
+  runAnalysisFilterAction,
   runScoutSkillAction,
   resizeReactPanel,
   changeReactDvwText,
@@ -388,4 +386,3 @@ export const events = createReadyEvents({
   handlePositionDrop,
   animateFlip,
 }, () => application.ready);
-

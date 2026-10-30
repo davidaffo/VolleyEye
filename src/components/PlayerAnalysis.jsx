@@ -1,12 +1,12 @@
-import { SKILL_COLUMNS } from '../domain/analysis-columns.js';
-import { HeaderCells } from './ui/HeaderCells.jsx';
-import { AnalysisCountTable } from './AnalysisCountTable.jsx';
+import { SKILL_COLUMNS } from "../domain/analysis-columns.js";
+import { HeaderCells } from "./ui/HeaderCells.jsx";
+import { AnalysisCountTable } from "./AnalysisCountTable.jsx";
 import { Fragment } from "react";
 import { TrajectoryGrid, AttackSummary } from "./TrajectoryGrid.jsx";
 import { DistributionGrid } from "./AnalysisTable.jsx";
 import { SkillChart } from "./SkillChart.jsx";
 import { useViewStore } from "../hooks/useViewStore.js";
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect } from "react";
 import { playerAnalysisStore } from "../state/roster-import-store.mjs";
 import { analysisTableStore } from "../state/analysis-table-store.mjs";
 import { actions as appActions, events as appEvents } from "../app/actions.mjs";
@@ -215,27 +215,21 @@ function CompareCharts({ id }) {
   );
 }
 function CompareCard({ snapshot, other, view, index }) {
-  const root = useRef(null),
-    prefix = `compare-${index}`,
+  const prefix = `compare-${index}`,
     prefs = view.preferences;
   useLayoutEffect(() => {
-    const get = (name) => root.current?.querySelector(`#${prefix}-${name}`);
-    appEvents.refreshReactCompareSections(snapshot.playerIdx,
-      other.playerIdx,
-      {
-        attackSummary: get("attack-summary"),
-        attackGrid: get("attack-grid"),
-        serveGrid: get("serve-grid"),
-        secondBody: get("second-body"),
-        attackBody: get("attack-body"),
-        distribution: get("distribution"),
-        charts: get("charts"),
-      },
-    );
+    appEvents.refreshReactCompareSections(snapshot.playerIdx, other.playerIdx, {
+      attackSummary: prefs.showAttack ? prefix + "-attack-summary" : null,
+      attackGrid: prefs.showAttack ? prefix + "-attack-grid" : null,
+      serveGrid: prefs.showServe ? prefix + "-serve-grid" : null,
+      secondBody: prefs.showSecond ? prefix + "-second-body" : null,
+      attackBody: prefs.showSecond ? prefix + "-attack-body" : null,
+      distribution: prefs.showSecond ? prefix + "-distribution" : null,
+      charts: prefix + "-charts",
+    });
   }, [view, snapshot.playerIdx, other.playerIdx, prefix]);
   return (
     <div
-      ref={root}
       className={
         "player-analysis-compare-card " + (index ? "is-compare" : "is-primary")
       }

@@ -73,9 +73,6 @@ export function LineupModal() {
       closeProps={{
         id: "lineup-modal-close",
         className: "pill-remove skill-modal__close-abs",
-        "aria-label": "Chiudi",
-        type: "button",
-        onClick: close,
       }}
       bodyProps={{ className: "lineup-modal__body" }}
       footer={

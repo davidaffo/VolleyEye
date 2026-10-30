@@ -44,21 +44,13 @@ export function VideoEditModal({ kind }) {
   return (
     <ModalDialog
       id={prefix + "-modal"}
-      className="settings-modal"
       aria-labelledby={titleId}
       open={view.open}
       onClose={close}
       variant="settings"
       backdropProps={{}}
-      contentProps={{ className: "settings-modal__content" }}
       title={<h3 id={titleId}>{config.title}</h3>}
-      closeProps={{
-        id: prefix + "-close",
-        className: "pill-remove",
-        "aria-label": "Chiudi",
-        onClick: close,
-      }}
-      bodyProps={{ className: "settings-modal__body" }}
+      closeProps={{ id: prefix + "-close" }}
     >
       {config.note && <p className="section-note">{config.note}</p>}
       <div id={config.grid} className={kind === "unify" ? "unify-times-grid" : "offset-skill-grid"}>

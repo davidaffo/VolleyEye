@@ -31,10 +31,7 @@ export function AggSkillModal() {
       closeProps={{
         id: "agg-skill-modal-close",
         className: "pill-remove skill-modal__close-abs",
-        "aria-label": "Chiudi",
-        type: "button",
         "data-close-agg-skill": "true",
-        onClick: close,
       }}
       bodyProps={{ id: "agg-skill-modal-body", className: "skill-modal__body" }}
     >

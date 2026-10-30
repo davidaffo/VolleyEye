@@ -343,9 +343,8 @@ export function buildReactAggregatedTable({ chartTones } = {}) {
     return { totalsBySkill, totalFor, totalAgainst, totalErrors };
   };
   const renderSummaryExtraTable = (scopes) => {
-    if (!scoutUiState.elAggSummaryExtraBody) return;
 
-    const buildRow = (cells, { isHeader = false } = {}) => {
+const buildRow = (cells, { isHeader = false } = {}) => {
       extraRows.push({
         cells: cells.map((cell) => ({ ...cell, tag: isHeader ? "th" : "td" })),
       });

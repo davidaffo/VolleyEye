@@ -33,8 +33,7 @@
 body[data-theme="light"] .filter-scope-group {
   border-color: rgba(15, 23, 42, 0.15);
 }
-.analysis-filter__options input,
-.trajectory-filter__options input {
+.analysis-filter__options input {
   accent-color: #2563eb;
 }
 .multiscout-list {
@@ -52,7 +51,6 @@ body[data-theme="light"] .filter-scope-group {
 .multiscout-controls select {
   min-width: 180px;
 }
-
 .export-splash {
   position: fixed;
   inset: 0;
@@ -65,12 +63,10 @@ body[data-theme="light"] .filter-scope-group {
   pointer-events: none;
   transition: opacity 0.2s ease;
 }
-
 .export-splash.is-visible {
   opacity: 1;
   pointer-events: all;
 }
-
 .export-splash__card {
   background: rgba(20, 26, 36, 0.95);
   color: #f4f6fb;
@@ -83,7 +79,6 @@ body[data-theme="light"] .filter-scope-group {
   font-size: 15px;
   font-weight: 600;
 }
-
 .export-splash__spinner {
   width: 26px;
   height: 26px;
@@ -92,7 +87,6 @@ body[data-theme="light"] .filter-scope-group {
   border-top-color: #4aa3ff;
   animation: export-spin 0.8s linear infinite;
 }
-
 @keyframes export-spin {
   from {
     transform: rotate(0deg);
@@ -115,16 +109,12 @@ body[data-theme="light"] .analysis-filter select {
   border-color: #d1d5db;
   color: var(--text-color, #0f172a);
 }
-.analysis-filter.filter-actions,
-.trajectory-filter--actions {
+.analysis-filter.filter-actions {
   align-self: end;
 }
 .player-analysis {
   display: grid;
   gap: 0.7rem;
-}
-.player-analysis-hero.hidden {
-  display: none;
 }
 .player-analysis-hero {
   margin-top: -0.1rem;
@@ -359,9 +349,6 @@ body[data-theme="light"] .analysis-filter select {
   color: #f8fafc;
   font-size: 0.8rem;
   box-shadow: 0 16px 32px rgba(2, 6, 23, 0.35);
-}
-.set-trend-card__tooltip.hidden {
-  display: none;
 }
 .set-trend-card__tooltip strong {
   display: block;
@@ -663,9 +650,6 @@ body[data-theme="light"] .analysis-filter select {
   border: 1px solid rgba(148, 163, 184, 0.32);
   pointer-events: none;
   box-shadow: 0 14px 28px rgba(15, 23, 42, 0.25);
-}
-.play-by-play-tooltip.hidden {
-  display: none;
 }
 .play-by-play-tooltip__title {
   display: flex;

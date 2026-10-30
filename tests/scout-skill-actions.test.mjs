@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import vm from "node:vm";
 import { readSourceFixture } from "./helpers/source-fixture.mjs";
-const source = readSourceFixture(
+const source = readSourceFixture(new URL("../src/features/scout/selection-commands.js", import.meta.url), "utf8") + readSourceFixture(
   new URL("../src/features/scout/skill-actions.js", import.meta.url),
   "utf8",
 );

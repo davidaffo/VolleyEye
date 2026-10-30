@@ -13,12 +13,10 @@ export function BulkEditModal() {
   return (
     <ModalDialog
       id="bulk-edit-modal"
-      className="skill-modal"
       open={view.open}
       onClose={close}
       variant="skill"
       backdropProps={{ "data-close-bulk": "" }}
-      contentProps={{ className: "skill-modal__content" }}
       title={
         <div id="bulk-edit-title" className="skill-modal__title">
           {view.title}
@@ -27,11 +25,7 @@ export function BulkEditModal() {
       closeProps={{
         id: "bulk-edit-close",
         className: "pill-remove skill-modal__close-abs",
-        "aria-label": "Chiudi",
-        type: "button",
-        onClick: close,
       }}
-      bodyProps={{ className: "skill-modal__body" }}
     >
       <p id="bulk-edit-hint" className="section-note">
         {view.hint}

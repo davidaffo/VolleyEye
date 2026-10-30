@@ -1,8 +1,8 @@
-import { ChartMetricFilter } from '../SkillChart.jsx';
-import { TrajectoryAnalysisPanel } from '../TrajectoryAnalysisPanel.jsx';
-import { ButtonList } from '../ui/ButtonList.jsx';
-import { AnalysisCountTable } from '../AnalysisCountTable.jsx';
-import { AnalysisFilterPanel } from '../AnalysisFilterPanel.jsx';
+import { ChartMetricFilter } from "../SkillChart.jsx";
+import { TrajectoryAnalysisPanel } from "../TrajectoryAnalysisPanel.jsx";
+import { ButtonList } from "../ui/ButtonList.jsx";
+import { AnalysisCountTable } from "../AnalysisCountTable.jsx";
+import { AnalysisFilterPanel } from "../AnalysisFilterPanel.jsx";
 
 import { TabPanel } from "../ui/TabPanel.jsx";
 import { FilterField } from "../ui/FilterField.jsx";
@@ -41,13 +41,13 @@ export function AggregatedPage() {
             ]} />
           </div>
           <div className="analysis-filters analysis-team-filter analysis-team-filter--summary">
-            <FilterField label="Squadra" row>
+            <FilterField filterId="analysis-filter-teams" label="Squadra" row>
                 <AnalysisFilter
                   id="analysis-filter-teams"
                   className="analysis-filter__options"
                 />
               </FilterField>
-            <FilterField label="Set" row>
+            <FilterField filterId="analysis-filter-sets" label="Set" row>
                 <AnalysisFilter
                   id="analysis-filter-sets"
                   className="analysis-filter__options"
@@ -167,7 +167,7 @@ export function AggregatedPage() {
               >
                 <PlayerAnalysisSelect compare />
               </PlayerAnalysisRegion>
-              <FilterField className="analysis-filter" label="Campo">
+              <FilterField filterId="player-analysis-court-side" className="analysis-filter" label="Campo">
                 <AnalysisFilter
                   id="player-analysis-court-side"
                   className="analysis-filter__options"

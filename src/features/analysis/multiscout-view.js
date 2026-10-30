@@ -8,7 +8,7 @@ import {
 } from "./filter-model.js";
 import { getTeamNameForScope } from "../teams/selectors.js";
 import { multiscoutStore } from "../../state/roster-import-store.mjs";
-import { session as scoutUiState } from "../state/scout-ui.js";
+
 import { publishReactFilter } from "./filter-view.js";
 export function getReactMultiscoutScope() {
   return matchState.state.useOpponentTeam &&
@@ -23,7 +23,7 @@ export function publishReactMultiscoutCount() {
   multiscoutStore.publish({ count: extra[scope]?.size || 0 });
 }
 
-export function publishReactMultiscout(onChange) {
+export function publishReactMultiscout() {
   const scope = getReactMultiscoutScope(),
     options = getAnalysisMatchOptions(scope),
     extra = getAnalysisExtraMatchState(),
@@ -54,8 +54,8 @@ export function publishReactMultiscout(onChange) {
     teams: Object.freeze(teams.map(Object.freeze)),
     subtitle: pieces.length ? pieces.join(" · ") : "Match corrente",
   });
-  publishReactFilter(scoutUiState.elMultiscoutList, options, filtered, {
-    onChange: () => onChange(scoutUiState.elMultiscoutList, scope),
+  publishReactFilter("multiscout-list", options, filtered, {
+    changeAction: Object.freeze({ command: "changeMultiscoutMatches", args: Object.freeze([scope]) }),
   });
   publishReactMultiscoutCount();
 }

@@ -16,8 +16,7 @@
   font-size: var(--sl-btn-fs);
   border-radius: var(--sl-btn-radius);
 }
-.scout-live .set-bottom-actions,
-.scout-live .score-actions-set {
+.scout-live .set-bottom-actions {
   gap: var(--sl-gap);
 }
 .scout-live .scout-col-left .rotation-toggles {
@@ -117,9 +116,6 @@
 }
 .scout-live #btn-undo {
   min-width: 8.6rem;
-}
-.scout-live .log-section .card-inline {
-  border-radius: 0.6rem;
 }
 .scout-live .court-layout {
   grid-template-columns: repeat(3, minmax(0, 1fr));

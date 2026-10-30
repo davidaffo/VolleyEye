@@ -11,21 +11,16 @@ export function DebugModal() {
   return (
     <ModalDialog
       id="debug-modal"
-      className="settings-modal"
       aria-labelledby="debug-modal-title"
       open={view.open}
       onClose={close}
       variant="settings"
       backdropProps={{ "data-close-debug-modal": "" }}
-      contentProps={{ className: "settings-modal__content" }}
       title={<h3 id="debug-modal-title">{"Debug dati match"}</h3>}
       closeProps={{
         id: "debug-modal-close",
         onClick: () => run("closeDebugModal"),
-        className: "pill-remove",
-        "aria-label": "Chiudi",
       }}
-      bodyProps={{ className: "settings-modal__body" }}
     >
       <p className="section-note">
         {"Forza il riallineamento dei dati di analisi usando il log come fonte."}

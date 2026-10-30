@@ -1,10 +1,20 @@
-import { createPreviousSkillOptions } from '../domain/previous-skill-options.js';
-import { analysisFilterFields } from './ui/analysis-filter-fields.js';
+import { events as appEvents } from "../app/actions.mjs";
+import { createPreviousSkillOptions } from "../domain/previous-skill-options.js";
+import { analysisFilterFields } from "./ui/analysis-filter-fields.js";
 import { FilterField } from "./ui/FilterField.jsx";
 
 import { useViewStore } from "../hooks/useViewStore.js";
 
 import { filterStore } from "../state/filter-store.mjs";
+
+function changeFilter(id, view, value, checked, event) {
+  if (view.changeAction) {
+    filterStore.change(id, value, checked);
+    return appEvents.runAnalysisFilterAction(view.changeAction, event);
+  }
+  return view.onChange?.(value, checked, event);
+}
+
 export function AnalysisFilter({ id, className }) {
   useViewStore(filterStore);
   const view = filterStore.getView(id);
@@ -20,7 +30,9 @@ export function AnalysisFilter({ id, className }) {
           }
           checked={view.selected.includes(String(option.value))}
           onChange={(event) =>
-            view.onChange?.(
+            changeFilter(
+              id,
+              view,
               String(option.value),
               event.target.checked,
               event.nativeEvent,
@@ -53,21 +65,22 @@ export function PreviousSkillSelect({ id }) {
       id={id}
       value={view.value}
       onChange={(event) =>
-        view.onChange?.(
+        changeFilter(
+          id,
+          view,
           event.target.value,
           event.target.checked,
           event.nativeEvent,
         )
       }
     >
-      {(view.options.length
-        ? view.options
-        : createPreviousSkillOptions()
-      ).map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
+      {(view.options.length ? view.options : createPreviousSkillOptions()).map(
+        (option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ),
+      )}
     </select>
   );
 }
@@ -75,7 +88,7 @@ export function PreviousSkillSelect({ id }) {
 export function AnalysisFilterFields({ fields, group, prefix, extra }) {
   fields ||= analysisFilterFields(group, prefix, extra);
   return fields.map(([id, label, type]) => (
-    <FilterField key={id} label={label}>
+    <FilterField key={id} filterId={id} label={label}>
       {type === "previous" ? (
         <PreviousSkillSelect id={id} />
       ) : (

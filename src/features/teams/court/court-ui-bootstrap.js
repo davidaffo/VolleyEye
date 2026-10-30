@@ -1,20 +1,17 @@
 import { rotateCourtState, prepareAutoRolePositioning, playersChanged, ensureCourtShape, cleanCourtPlayers, resetAutoRoleCache, getLockedMapForScope } from "../court-state-model.js";
-
-
-import { getRoleLabelForRotation } from "../roles.js";
 import { normalizePlayers } from "../../../domain/player-names.js";
 import { buildNumbersForNames, setTeamPreferredLibero, getTeamCourt, getTeamLiberos, formatNameWithNumberFor, formatNameWithNumber } from "../roster-data.js";
 import { applyDefaultLineup } from "../core/player-model.js";
-
-import { renderPlayersManagerList, canPlaceInSlotForScope, setCourtPlayerForScope, commitCourtChangeForScope } from "./court-engine.js";
-
+import { publishReactSettings, setReactSettingsOpen } from "../../settings/view.js";
+import { canPlaceInSlotForScope, setCourtPlayerForScope, commitCourtChangeForScope } from "./court-engine.js";
 import { isLiberoForScope } from "../libero-model.js";
 import { ensureCourtShapeFor } from "../court-model.js";
-import { hasMatchDataForReset, renderTeamsSelect } from "../storage/match-repository.js";
+import { hasMatchDataForReset } from "../storage/match-repository.js";
+import { publishTeamsManagerView } from "../manager-view.js";
 import { session as matchState } from "../../../../js/globals.js";
 import { sanitizeRosterIsolation } from "../core/state-store.js";
 import { saveState } from "../../storage/save-state.js";
-import { resetSetTypeState } from "../../live/game-flow.js";
+import { resetSetTypeState } from "../../live/flow-model.js";
 import { session as rosterLineupState } from "../../state/roster-lineup.js";
 import { ensureMetricsConfigDefaults } from "../../settings/rules.js";
 import { renderPlayers, renderOpponentPlayers } from "../../live/team-rendering.js";
@@ -24,7 +21,6 @@ import { renderEventsLog } from "../../video/video-events.js";
 import { renderAggregatedTable } from "../../analysis/aggregated-table.js";
 import { renderLiberoBench } from "../../scout/court-commands.js";
 import { renderLiveScore } from "../../live/live-score-and-set.js";
-import { setReactSettingsOpen } from "../../settings/view.js";
 import { setGlobalModalState } from "../../layout/modals.js";
 import { listenRuntime } from "../../../app/browser-effects.js";
 
@@ -78,7 +74,7 @@ export function updatePlayersList(newPlayers, options = {}) {
     }
     sanitizeRosterIsolation("our");
     saveState();
-    renderPlayersManagerList();
+    publishReactSettings();
   } else {
     if (!preserveFlowState) {
       resetSetTypeState();
@@ -106,7 +102,7 @@ export function updatePlayersList(newPlayers, options = {}) {
     matchState.state.savedTeams = matchState.state.savedTeams || {};
     sanitizeRosterIsolation("our");
     saveState();
-    renderPlayersManagerList();
+    publishReactSettings();
   }
 
   renderPlayers();
@@ -114,7 +110,7 @@ export function updatePlayersList(newPlayers, options = {}) {
 
   renderLiberoTags();
   renderMetricsConfig();
-  renderTeamsSelect();
+  publishTeamsManagerView();
   updateRotationDisplay();
   renderEventsLog();
   renderAggregatedTable();
@@ -364,16 +360,6 @@ export function handleBenchClickForScope(name, scope = "our") {
   setCourtPlayerForScope(targetPos, "main", name, scope);
 }
 
-
-
-
-
-
-
-
-
-
-
 export function renderLiberoChipsInline() {
   renderLiberoBench();
 }
@@ -381,10 +367,6 @@ export function renderLiberoChipsInline() {
 export function renderOpponentLiberoChipsInline() {
   renderLiberoBench();
 }
-
-
-
-
 
 export function updateRotationDisplay() {
   const rotationLabel = rot => "P" + String(parseInt(rot, 10) || 1);
@@ -400,12 +382,6 @@ export function updateRotationDisplay() {
     syncAttackTrajectoryToggle();
   }
 }
-
-export function getRoleLabel(index) {
-  return getRoleLabelForRotation(index, matchState.state.rotation || 1);
-}
-
-
 
 export function syncAutoRotateToggle() {
 

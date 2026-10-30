@@ -60,21 +60,13 @@ export function SettingsModal() {
   return (
     <ModalDialog
       id="settings-modal"
-      className="settings-modal"
       aria-labelledby="settings-modal-title"
       open={view.open}
       onClose={close}
       variant="settings"
       backdropProps={{ "data-close-settings": "" }}
-      contentProps={{ className: "settings-modal__content" }}
       title={<h3 id="settings-modal-title">Impostazioni automatismi</h3>}
-      closeProps={{
-        id: "settings-close",
-        className: "pill-remove",
-        "aria-label": "Chiudi",
-        onClick: close,
-      }}
-      bodyProps={{ className: "settings-modal__body" }}
+      closeProps={{ id: "settings-close" }}
     >
       {fields.slice(0, 2).map(toggle)}
       <label className="auto-rotate-toggle auto-libero-row">

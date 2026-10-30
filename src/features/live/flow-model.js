@@ -1,11 +1,11 @@
-import { SKILLS, session as matchState } from '../../../js/globals.js';
-import { session as scoutUiState } from '../state/scout-ui.js';
-import { session as rosterLineupState } from '../state/roster-lineup.js';
-import { isServingForScope, isPlayerKeyInScope, getPlayersForScope, isSkillEnabledForScope, getTeamScopeFromEvent, getEnabledSkills, isSkillEnabled, getOppositeScope, getEnabledSkillsForScope, makePlayerKey } from '../teams/selectors.js';
-import { getRoleLabelForRotation } from '../teams/roles.js';
-import { ensureCourtShapeFor, getCourtShape } from '../teams/court-model.js';
-import { getPointDirection } from '../analysis/scores.js';
-import { getServeDisplayCourt } from '../teams/serve-court.js';
+import { SKILLS, session as matchState } from "../../../js/globals.js";
+import { session as scoutUiState } from "../state/scout-ui.js";
+import { session as rosterLineupState } from "../state/roster-lineup.js";
+import { isServingForScope, isPlayerKeyInScope, getPlayersForScope, isSkillEnabledForScope, getTeamScopeFromEvent, getEnabledSkills, isSkillEnabled, getOppositeScope, getEnabledSkillsForScope, makePlayerKey } from "../teams/selectors.js";
+import { getRoleLabelForRotation } from "../teams/roles.js";
+import { ensureCourtShapeFor, getCourtShape } from "../teams/court-model.js";
+import { getPointDirection } from "../analysis/scores.js";
+import { getServeDisplayCourt } from "../teams/serve-court.js";
 
 export function getSelectedSkillForScope(scope, playerIdx) {
   const key = makePlayerKey(scope, playerIdx);
@@ -56,10 +56,6 @@ export function getSetterFromCourtForScope(scope) {
     return { idx: idx >= 0 ? idx : null, name };
   }
   return { idx: null, name: null };
-}
-
-export function getSetterFromCourt() {
-  return getSetterFromCourtForScope("our");
 }
 
 export function getSetterFromLastSetEventForScope(scope) {
@@ -558,4 +554,33 @@ export function getActiveAttackKeyForScope(scope) {
     return keys[i];
   }
   return null;
+}
+
+export function setSelectedSkillForScope(scope, playerIdx, skillId) {
+  const key = makePlayerKey(scope, playerIdx);
+  if (skillId) {
+    scoutUiState.selectedSkillPerPlayer[key] = skillId;
+    if (skillId !== "serve") {
+      delete scoutUiState.serveMetaByPlayer[key];
+    }
+    if (skillId === "block") {
+      scoutUiState.blockConfirmByPlayer[key] = false;
+      scoutUiState.blockInlinePlayer = key;
+    } else {
+      delete scoutUiState.blockConfirmByPlayer[key];
+      if (scoutUiState.blockInlinePlayer === key) {
+        scoutUiState.blockInlinePlayer = null;
+      }
+    }
+  } else {
+    delete scoutUiState.selectedSkillPerPlayer[key];
+    delete scoutUiState.serveMetaByPlayer[key];
+    delete scoutUiState.blockConfirmByPlayer[key];
+    if (scoutUiState.blockInlinePlayer === key) {
+      scoutUiState.blockInlinePlayer = null;
+    }
+  }
+}
+export function resetSetTypeState() {
+  Object.keys(scoutUiState.selectedSkillPerPlayer).forEach(key => delete scoutUiState.selectedSkillPerPlayer[key]);
 }

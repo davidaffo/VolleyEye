@@ -1,15 +1,17 @@
-import { VIDEO_FILTER_FIELDS } from './video-filter-model.js';
+import { buildAttackTypeFilterOptions } from "./trajectory-model.js";
+import { getAttackStartZone } from "./values.js";
+export { getFilterFields } from "../../domain/analysis-filter-schema.js";
 
-import { buildSetFilterOptions } from './values.js';
+import { buildSetFilterOptions } from "./values.js";
 import { filterNormalEvalOptions } from "./filter-model.js";
 import { buildUniqueOptions, getOptionLabel, normalizeBaseValue, getEventPhaseValue, normalizeEvalCode, normalizeReceiveZone } from "./values.js";
 import { getPlayersForScope, getPlayerNumbersForScope } from "../teams/selectors.js";
 import { formatNameWithNumberFor, formatNameWithNumber } from "../teams/roster-data.js";
 import { sortPlayerOptionsByNumberForScope } from "../teams/lineup-selectors.js";
 export { clearFilterSelections } from '../../domain/filter-selections.js';
-import { pruneFilterSelections } from '../../domain/filter-selections.js';
-import { session as rosterLineupState } from "../state/roster-lineup.js";
-import { session as matchState } from '../../../js/globals.js';
+import { pruneFilterSelections } from "../../domain/filter-selections.js";
+
+
 import { renderDynamicFilter, getCheckedValues } from "./filter-view.js";
 import { getSetterFromEvent } from "./filter-model.js";
 import { normalizeSetTypeValue } from "../../domain/skill-values.js";
@@ -48,48 +50,6 @@ export function renderFilterControls(state, fields, options, onChange, { prune =
     renderDynamicFilter(container, options[key], state[key], { asNumber, onChange }));
 }
 
-const filterFields = {
-  setters: ['Setters', true],
-  players: ['Players', true],
-  sets: ['Sets', true],
-  setTypes: ['SetTypes', false],
-  bases: ['Bases', false],
-  phases: ['Phases', false],
-  receiveEvaluations: ['ReceiveEvals', false],
-  receiveZones: ['ReceiveZones', true],
-  codes: ['Codes', false],
-  attackTypes: ['AttackTypes', false],
-  zones: ['Zones', true],
-  teams: ['Teams', false],
-  skills: ['Skills', false],
-  rotations: ['Rotations', true],
-  serveTypes: ['ServeTypes', false],
-};
-
-const filterGroups = {
-  videoFilterState: [null, Object.keys(VIDEO_FILTER_FIELDS).filter(key => key !== 'prevSkill')],
-  trajectoryFilterState: ["elTrajFilter", ["setters","players","sets","setTypes","bases","phases","receiveEvaluations","receiveZones","codes","attackTypes","zones"]],
-  serveTrajectoryFilterState: ["elServeTrajFilter", ["players","sets","setTypes","bases","phases","receiveEvaluations","receiveZones","codes","zones"]],
-  playerTrajectoryFilterState: ["elPlayerTrajFilter", ["sets","setTypes","bases","phases","receiveEvaluations","receiveZones","codes","attackTypes","zones"]],
-  playerServeTrajectoryFilterState: ["elPlayerServeTrajFilter", ["sets","setTypes","bases","phases","receiveEvaluations","receiveZones","codes","zones"]],
-  secondFilterState: [null, ["setters","players","sets","setTypes","bases","phases","receiveEvaluations","receiveZones","codes","zones"]],
-  playerSecondFilterState: ["elPlayerSecondFilter", ["setTypes","bases","phases","receiveEvaluations","receiveZones","sets"]],
-};
-
-// Resolve elements after mount: feature state exposes lazy DOM references.
-export function getFilterFields(group, elements) {
-  const [prefix, keys] = filterGroups[group];
-  return keys.map(key => {
-    const [suffix, numeric] = filterFields[key];
-    const video = group === 'videoFilterState';
-    const asNumber = numeric && !(video && (key === 'players' || key === 'setters'));
-    const container = elements
-      ? elements[suffix[0].toLowerCase() + suffix.slice(1)]
-      : (key === 'attackTypes' ? matchState : rosterLineupState)[prefix + suffix];
-    return [key, container, asNumber, video ? false : asNumber];
-  });
-}
-
 export function buildPlayerFilterOptions(events, scope) {
   const players = getPlayersForScope(scope);
   const numbers = getPlayerNumbersForScope(scope);
@@ -120,5 +80,13 @@ export function buildEventFilterOptions(events, zoneFor) {
     setsOpts: buildSetFilterOptions(events),
     codesOpts: filterNormalEvalOptions(buildUniqueOptions(events.map(event => event.code), { labelFn: value => value })),
     zonesOpts: buildUniqueOptions(events.map(zoneFor), { asNumber: true, labelFn: value => 'Z' + value }),
+  };
+}
+
+export function buildAttackTrajectoryFilterOptions(trajectoryEvents, attackEvents) {
+  return {
+    ...buildEventFilterOptions(trajectoryEvents, getAttackStartZone),
+    attackTypeOpts: buildAttackTypeFilterOptions(attackEvents),
+    ...buildAdvancedFilterOptions(trajectoryEvents),
   };
 }

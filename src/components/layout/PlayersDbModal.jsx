@@ -4,7 +4,7 @@ import { HeaderCells } from "../ui/HeaderCells.jsx";
 import { useViewStore } from "../../hooks/useViewStore.js";
 import { useState } from "react";
 import { playersDbStore } from "../../state/players-db-store.mjs";
-import { actions as appActions } from "../../app/actions.mjs";
+import { actions as appActions, events as appEvents } from "../../app/actions.mjs";
 function report(error) {
   console.error("Operazione archivio giocatrici non riuscita", error);
   window.alert(error.message);
@@ -18,7 +18,6 @@ export function PlayersDbModal() {
   return (
     <ModalDialog
       id="players-db-modal"
-      className="settings-modal"
       aria-labelledby="players-db-title"
       open={view.open}
       onClose={close}
@@ -28,12 +27,7 @@ export function PlayersDbModal() {
         className: "settings-modal__content players-db__content",
       }}
       title={<h3 id="players-db-title">Archivio giocatrici</h3>}
-      closeProps={{
-        id: "players-db-close",
-        className: "pill-remove",
-        "aria-label": "Chiudi",
-        onClick: close,
-      }}
+      closeProps={{ id: "players-db-close" }}
       bodyProps={{ className: "settings-modal__body players-db__body" }}
     >
       <div className="players-db__summary">
@@ -120,11 +114,11 @@ export function PlayersDbModal() {
                         tabIndex={0}
                         title={entry.photo ? "Modifica foto" : "Aggiungi foto"}
                         aria-label={entry.photo ? "Modifica foto" : "Aggiungi foto"}
-                        onClick={() => Promise.resolve(entry.onPhoto()).catch(report)}
+                        onClick={() => Promise.resolve(appEvents.editPlayersDbPhoto(entry)).catch(report)}
                         onKeyDown={(event) => {
                           if (event.key === "Enter" || event.key === " ") {
                             event.preventDefault();
-                            Promise.resolve(entry.onPhoto()).catch(report);
+                            Promise.resolve(appEvents.editPlayersDbPhoto(entry)).catch(report);
                           }
                         }}
                       />

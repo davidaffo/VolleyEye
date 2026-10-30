@@ -1,4 +1,4 @@
-import { ModalCloseButton } from '../ui/Modal.jsx';
+import { ModalCloseButton } from "../ui/Modal.jsx";
 import { ModalDialog } from "../ui/Modal.jsx";
 
 import { useViewStore } from "../../hooks/useViewStore.js";
@@ -23,12 +23,7 @@ export function Camp3ConfirmModal() {
         className: "settings-modal__content camp3-confirm-modal__content",
       }}
       title={<h3 id="camp3-confirm-title">Conferma import CAMP3</h3>}
-      closeProps={{
-        id: "camp3-confirm-close",
-        className: "pill-remove",
-        "aria-label": "Chiudi",
-        onClick: () => close(),
-      }}
+      closeProps={{ id: "camp3-confirm-close" }}
       bodyProps={{ className: "settings-modal__body camp3-confirm-modal__body" }}
     >
       <div id="camp3-confirm-summary" className="camp3-confirm-summary">

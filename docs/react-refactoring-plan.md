@@ -317,9 +317,124 @@ Il componente ciclico principale resta di **57 moduli**: la costruzione delle vi
 
 Verifiche del quattordicesimo lotto: **427 test unitari/integrati e 36 test browser superati**, build Vite con percorso GitHub Pages ed export autonomo, verifica delle chiamate e degli import, confini aciclici, scansione delle duplicazioni e `git diff --check`. La suite browser ha usato la stessa build stabile per tutta la durata e verifica sia il campo sia il dialogo dei fondamentali, inclusi tipi di battuta e attacco, scorciatoie, registrazione e chiusura.
 
-### Interventi strutturali ancora aperti
+### Quindicesimo lotto: riferimenti delle giocatrici e riconciliazione dei roster
 
-1. Ridurre gli accoppiamenti tra i controller della preparazione sincrona e delle azioni dello scout, mantenendo i confini verificati fra transizioni, descrizioni dei controlli e costruzione delle viste.
-2. Ridurre il coordinamento incrociato ancora presente nei controller dei filtri e nelle operazioni di caricamento/reset; mantenere i confini aciclici già verificati.
+- Rinomina e confronto dei roster sono in `teams/player-reference-model.js`, senza importare renderer, editor o controller. Il motore del campo aggiorna i riferimenti senza passare da `core/player-model.js`; l’editor legge le rimozioni dal modello. Il controller conserva avvisi, applicazione del roster, salvataggio e aggiornamento delle viste.
+- Squadra e avversaria condividono la rinomina in campo, liberi, capitani, mappa del libero, eventi e formazioni iniziali. Rinomina per ID e aggiornamento di numeri e cache sono un’unica operazione con ambito esplicito. Eliminate le precedenti varianti pubbliche dedicate alle singole squadre, aggiornando tutti i chiamanti.
+- Conservate le differenze esistenti: corrispondenza aggiuntiva per ID negli eventi avversari, battuta pendente aggiornata solo per la squadra, mappa del libero assente preservata per la squadra e inizializzata per l’avversaria, valori numerici falsy e isolamento delle omonime. La riconciliazione conserva gli indici del roster corrente, usa gli ID quando presenti e mantiene il precedente fallback per posizione.
+- Otto test sui moduli reali coprono isolamento delle squadre, ID/indice/nome degli eventi, sostituzioni, formazioni iniziali, cache separate, battuta pendente, numeri zero, input senza modifiche valide, mappa del libero assente, eventi senza squadra esplicita, riconciliazione con e senza ID e normalizzazione delle formazioni. Sostituito il precedente controllo testuale sulla rinomina con queste verifiche del comportamento.
 
-Le misure di righe e byte restano dati di confronto. La chiusura di questo lavoro dipende da responsabilità, riuso, comportamento verificato e rimozione degli accoppiamenti, non dalla cancellazione di righe vuote.
+Il nuovo modello è incluso nella verifica dei confini aciclici; il componente ciclico principale tra controller resta di **57 moduli**. Nessun import relativo mancante e nessun candidato alla scansione delle duplicazioni alle soglie documentate.
+
+Verifiche del quindicesimo lotto: **434 test unitari/integrati e 36 test browser superati**, build Vite con percorso GitHub Pages ed export autonomo, controllo delle chiamate e degli import, confini aciclici, scansione delle duplicazioni e `git diff --check`. Conservata anche la scansione degli eventi che salta eventuali posizioni vuote: dopo questa sistemazione sono stati ripetuti tutti i 434 test, build e audit, più i due casi browser di editor squadra e archivio giocatrici sulla build finale. Ogni esecuzione browser ha usato una build stabile per tutta la durata.
+
+### Sedicesimo lotto: publisher dei filtri condivisi e dispatch React
+
+- Filtri di squadra, match e set sono pubblicati da `shared-filter-view.js`, senza dipendere dal controller delle analisi. Tabellino, analisi giocatrici, distribuzione e traiettorie importano direttamente il publisher; il recupero dei controlli video e distribuzione è separato in `filter-elements.js`.
+- Le viste dei filtri condivisi e del multiscout contengono descrittori `changeAction` clonabili, senza callback dei controller. React aggiorna lo store della selezione e invia subito il gesto nativo al registro dei comandi tramite gli eventi pronti. I controlli con interazioni specifiche continuano a usare i loro callback. Il publisher inoltra il descrittore anche per elenchi non vuoti, oltre che quando azzera le opzioni.
+- Il registro dei filtri accetta solo comandi propri. Le modifiche di squadra/set mantengono selezione, invalidazione e ordine di aggiornamento dei pannelli; il comando del multiscout conserva l’ambito della squadra pubblicato, anche se cambia la squadra attiva prima del gesto.
+- Rimossi i wrapper `renderMultiscoutModal`, `updateMultiscoutButton` e `renderVideoFilterPresets`: i chiamanti usano direttamente i publisher esistenti. Nessun export di compatibilità è mantenuto nel controller.
+- Cinque nuovi test verificano pubblicazione e clonabilità, potatura delle selezioni, visibilità quando le opzioni sono vuote, aggiornamento del conteggio senza contenitore, ambito del multiscout, ordine selezione → invalidazione → viste, rifiuto dei nomi del prototipo e passaggio reale React con selezione aggiornata prima del comando e gesto nativo conservato. I confini aciclici includono il nuovo publisher e i lettori dei controlli.
+
+Il componente ciclico principale scende da **57 a 56 moduli**. Nessun import relativo mancante e nessun candidato alla scansione delle duplicazioni alle soglie documentate. Restano richiami incrociati nei controller specifici di traiettorie e video e nel coordinamento degli aggiornamenti delle analisi.
+
+Verifiche del sedicesimo lotto: **439 test unitari/integrati e 36 test browser superati**, build Vite con percorso GitHub Pages ed export autonomo, controllo delle chiamate e degli import, confini aciclici, scansione delle duplicazioni e `git diff --check`. Ripetuti i 17 test mirati dopo aver incluso i lettori dei controlli nei confini verificati. La suite browser ha usato la stessa build stabile e copre filtri/preset, reset, multiscout, statistiche, analisi giocatrici, distribuzioni e selezioni video, oltre ai casi dello scout e dell’archivio.
+
+### Diciassettesimo lotto: publisher aciclici delle traiettorie e dei filtri video
+
+- `trajectory-filters.js` e `video-filters.js` non importano più gli handler dei filtri o i controller dei pannelli. Le pubblicazioni, compresa la potatura delle selezioni e la visibilità dei controlli, sono verificate come acicliche.
+- Caselle, filtri divisi per squadra, selettori del fondamentale precedente e radio del lato campo condividono `filterInteraction`. I descrittori di comando non creano callback dei controller a ogni pubblicazione. Restano supportati i callback delle viste con interazioni specifiche. Anche `PreviousSkillSelect` aggiorna lo store prima di inviare il gesto nativo al registro degli eventi pronti.
+- Cambio dei filtri video, cambio squadra video e modifiche ai filtri di attacco/battuta sono risolti dal registro dei comandi. La scelta del lato campo usa un handler condiviso con tipo esplicito: legge la squadra corrente al momento del gesto, aggiorna la relativa preferenza, salva e aggiorna soltanto l’analisi interessata.
+- `buildAttackTrajectoryFilterOptions` unifica una duplicazione rilevata dalla scansione fra filtri delle traiettorie generali e della giocatrice. Conservati origine e ordine dei dati: set/codici/zone e filtri avanzati derivano dagli eventi con traiettoria; i tipi d’attacco dall’elenco completo degli attacchi.
+- Sette nuovi test coprono descrittori clonabili per filtri divisi, fondamentale precedente e lato campo; ordine di cancellazione preset/sincronizzazione/rendering/focus; scelta del lato per entrambe le analisi con salvataggio prima dell’aggiornamento; reset video; selettore React reale con gesto nativo e valore aggiornato prima del dispatch; distinzione delle sorgenti dei dati dei filtri d’attacco.
+
+Il componente ciclico principale scende da **56 a 50 moduli**. Nessun import relativo mancante e nessun candidato alla scansione delle duplicazioni alle soglie documentate. Restano accoppiamenti nei comandi dello scout e nelle operazioni applicative di coordinamento delle viste.
+
+Verifiche del diciassettesimo lotto: **446 test unitari/integrati e 37 casi browser superati** (suite esistente di 36 casi e nuovo caso mirato sulla stessa build), build Vite con percorso GitHub Pages ed export autonomo, controllo delle chiamate e degli import, confini aciclici, scansione delle duplicazioni e `git diff --check`. Il nuovo caso browser cambia il lato campo di attacco e battuta, torna sui pannelli e verifica la selezione conservata; verifica anche fondamentale precedente, selezione video divisa per squadra e reset. Nessuna build è stata sostituita durante le esecuzioni browser.
+
+### Diciottesimo lotto: ricalcolo delle statistiche e aggiornamento completo delle analisi
+
+- `stats-model.js` separa il ricalcolo delle statistiche dai controller UI ed è verificato come aciclico. Conservati invalidazione degli eventi/grafici, esclusione di avversarie, eventi manuali, timeout e cambi, validazione dell’indice e conteggio di fondamentali/codici personalizzati. `emptyCounts` è condiviso fra inizializzazione e nuovi fondamentali, senza condividere gli oggetti dei conteggi.
+- `renderAnalysisViews` coordina un aggiornamento completo dei pannelli. Il tabellino può omettere gli aggiornamenti annidati quando il chiamante li coordina già: traiettorie di attacco e battuta, distribuzione e analisi giocatrice vengono aggiornati una sola volta. I chiamanti diretti del tabellino mantengono il percorso precedente e l’ordine dei pannelli correlati.
+- Cambio squadra delle analisi, selezione dei match aggiuntivi e reset multiscout usano lo stesso coordinamento. Conservati ordine di selezione/persistenza/invalidazione prima delle viste e aggiornamento dei pannelli anche quando manca il contenitore del tabellino.
+- L’editor video usa direttamente il ricalcolo dei dati e poi aggiorna punteggio, log, analisi complete e video. Eliminati il primo rendering completo dentro `recalcAllStatsAndUpdateUI` e il successivo aggiornamento ripetuto dei pannelli. Il percorso ordinario delle altre operazioni conserva `recalcAllStatsAndUpdateUI`.
+- Conservati sospensione durante la modifica multipla, scelta della persistenza locale, sincronizzazione dei collegamenti, invalidazioni, scorrimento del log e momenti di salvataggio: prima del refresh per la modifica ordinaria, dopo le viste per la sincronizzazione forzata.
+- Sette nuovi test coprono conteggi e cronologia, codici personalizzati e indici, posizioni vuote degli array, conteggi indipendenti, aggiornamento diretto del tabellino, pannelli aggiornati una sola volta e fallback senza tabellino, modifica video con/senza ricalcolo o sospesa, ordine della sincronizzazione e del salvataggio.
+
+Il componente ciclico principale resta di **50 moduli**. Il ricalcolo dei dati è aciclico e i percorsi completi eliminano richiami ripetuti alle viste; i controller applicativi restano collegati. Nessun import relativo mancante e nessun candidato alla scansione delle duplicazioni alle soglie documentate.
+
+Verifiche del diciottesimo lotto: **453 test unitari/integrati e 37 test browser superati**, build Vite con percorso GitHub Pages ed export autonomo, controllo delle chiamate e degli import, confini aciclici, scansione delle duplicazioni e `git diff --check`. La suite browser ha usato una sola build stabile e copre modifica singola/multipla, sincronizzazione video, punteggio e undo, filtri/preset/multiscout, statistiche, distribuzioni, confronto giocatrici e selezioni conservate fra i pannelli.
+
+### Diciannovesimo lotto: opzioni d’attacco e spostamento video condivisi
+
+- Formattazione del tipo d’alzata con scorciatoia e catalogo delle opzioni d’attacco sono nel modello dei controlli dello scout. Campo e dialogo usano lo stesso catalogo, mantenendo opzioni dedicate alla palleggiatrice, scelte accodate e avvio automatico distinti. Anche il selettore delle scorciatoie importa direttamente il modello; rimosso l’export dal controller della tastiera senza adattatori.
+- Frecce della tastiera, combinazioni Shift e avanzamento per fotogramma condividono `seekPlaybackBy`. Conservate precedenza YouTube, tempo minimo zero, limite del video locale, durata ignota, ripresa solo se la riproduzione era attiva e gestione dei tempi YouTube non validi.
+- Il gesto da tastiera passa alla funzione condivisa la durata locale acquisita prima di `preventDefault`; il comando per fotogramma legge la durata soltanto se usa il video locale. Restano invariati blocchi per campi di testo, contenuti modificabili, modificatori e gesti già gestiti.
+- Sette nuovi test coprono limiti e pausa del video locale, equivalenza fra Shift e fotogramma a 30 fps, durata acquisita all’inizio del gesto, precedenza e ripresa YouTube, tempi non validi e letture evitate del video locale, gesti ignorati e catalogo delle opzioni con etichette normalizzate e dati indipendenti. I 28 scenari di confronto del campo continuano a usare le funzioni reali del modello.
+
+Il componente ciclico principale resta di **50 moduli**. La preparazione delle etichette non attraversa più il controller delle scorciatoie, e lo spostamento video non mantiene implementazioni parallele. Nessun import relativo mancante e nessun candidato alla scansione delle duplicazioni alle soglie documentate.
+
+Verifiche del diciannovesimo lotto: **460 test unitari/integrati e 37 test browser superati**, build Vite con percorso GitHub Pages ed export autonomo, controllo delle chiamate e degli import, confini aciclici, scansione delle duplicazioni e `git diff --check`. Dopo la rimozione dello stub superfluo della formattazione sono stati ripetuti i 38 test mirati di campo e scorciatoie. La suite browser ha usato una sola build stabile e copre attacco con scorciatoie, campo/dialogo, video locale e avanzamento per fotogramma, sorgenti YouTube, sincronizzazione e navigazione mobile.
+
+### Ventesimo lotto: modello, publisher e comandi dell’archivio giocatrici
+
+- `players/database-model.js` prepara associazioni alle squadre, ordinamento, etichette, opzioni e righe clonabili. Il calcolo delle associazioni è riusato dalla pulizia delle giocatrici senza squadra nel controller. Conservate inclusione delle giocatrici fuori rosa nelle associazioni, esclusione del template dalla vista, priorità dei nomi, confronto locale italiano, conteggi e selezioni predefinite dell’unione.
+- `database-view.js` pubblica il modello e lo stato di apertura nello store, senza importare il controller dello scout. `database-commands.js` contiene i comandi per unione ID e foto; l’applicazione importa i comandi dal modulo specifico, senza export di compatibilità nel publisher.
+- Le righe non contengono callback. Clic e tastiera React inviano direttamente la riga al comando foto tramite gli eventi pronti. Il file picker viene avviato durante il gesto originale; annullamento, ritaglio e rimozione conservano la precedente semantica. Nessuna pubblicazione aggiuntiva è introdotta intorno al gesto foto.
+- Nove nuovi test coprono ordinamento, ripieghi delle etichette, template e conteggi, associazioni delle giocatrici fuori rosa, dati immutabili e indipendenti, fusione valida/rifiutata/fallita, foto accettata/rimossa/annullata, errori di preparazione, avvio immediato del selettore file e clic/tastiera del componente React reale. Modello e publisher sono inclusi nei confini aciclici.
+- Un nuovo caso browser esegue il selettore file nativo dall’archivio, annulla una foto, ne conferma un’altra, riapre l’editor da tastiera, rimuove la foto e riapre l’archivio verificando il risultato conservato.
+
+Il componente ciclico principale scende da **50 a 49 moduli**. Modello e publisher dell’archivio sono aciclici; foto e fusione restano nei comandi. Nessun import relativo mancante e nessun candidato alla scansione delle duplicazioni alle soglie documentate.
+
+Verifiche del ventesimo lotto: **469 test unitari/integrati e 38 test browser superati**, build Vite con percorso GitHub Pages ed export autonomo, controllo delle chiamate e degli import, confini aciclici, scansione delle duplicazioni e `git diff --check`. Il nuovo caso foto è passato anche separatamente prima della suite completa. La suite completa ha usato una sola build stabile e copre unione ID/roster, foto con file picker reale e tastiera, annullamento/rimozione, riapertura dell’archivio, scout, analisi e video.
+
+### Revisione conclusiva: selezioni, reset e configurazione dei dialoghi
+
+- Stato delle selezioni e gestione della tastiera di battuta sono separati in `scout/selection-state.js` e `scout/serve-keyboard.js`, senza importare controller UI. La pulizia dei metadati, il calcolo delle zone e i controlli sul tipo d’attacco hanno un’implementazione condivisa fra campo, dialogo e registrazione. `setSelectedSkillForScope` e `resetSetTypeState` appartengono al modello del flusso.
+- `selection-commands.js` raccoglie avvio di battuta/attacco e consumo dell’alzata accodata. La preparazione dei controlli non importa più il dispatcher della registrazione. Restano distinti i tempi dei callback per campo, dialogo e Damp automatico: la separazione non rinvia le transizioni agli effetti React.
+- Reset partita e reset dall’archivio riusano `video/reset-model.js` per i dati e `video/reset-commands.js` per selezione, cache e player. Conservati ordine delle operazioni, cancellazione della cache non attesa e reset dei player scout solo nel percorso che già li gestiva. La pulizia delle sostituzioni del libero è nel modello del campo e non passa dall’editor video.
+- Eliminati il vecchio costruttore PDF aggregato, i renderer DOM delle tabelle senza chiamanti, i vecchi comandi di modifica squadra/giocatrice e gli helper di rendering, selezione e video non più utilizzati. Rimossi i relativi import. Le API ancora verificate per compatibilità o invarianti dei dati non sono state cancellate per il solo conteggio statico dei chiamanti.
+- Diciannove dialoghi riusano i valori predefiniti di `ModalDialog`, `ModalFrame`, `ModalBody` e `ModalCloseButton` per contenitori, corpo, pulsante di chiusura e callback. Eliminate le configurazioni ripetute; mantenuti classi specifiche, attributi di chiusura, titoli, ID e differenze della modale squadra.
+- Navigazione principale e navigazione delle analisi condividono scelta del renderer e pianificazione. La sottoscheda traiettorie mantiene il refresh attacco più battuta; l’ingresso dall’esterno mantiene il solo attacco. I callback dell’ingresso rileggono la scheda corrente al momento dell’esecuzione; quelli della sottoscheda conservano la scelta iniziale.
+- Undici nuovi test coprono selezioni per ambito, pulizia e identità delle mappe, precedenza della giocatrice attiva sulla tastiera, listener unico e cleanup, prompt/zone/traiettorie, reset dei dati e ordine dei player con risorse mancanti. Tre test aggiuntivi verificano navigazione, callback differiti, pannelli sconosciuti e salvataggio durante il caricamento.
+
+### Completamento della conversione dei filtri e delle tabelle
+
+- `domain/analysis-filter-schema.js` sostituisce le definizioni separate dei campi nella UI e nei controller. Ordine, ID, indici numerici e chiavi video per squadra derivano dallo stesso schema. Eliminato `filter-elements.js`.
+- I filtri leggono e pubblicano per ID, senza ricevere elementi HTML. Visibilità di campi, reset e gruppi video appartiene allo store ed è applicata da `FilterField` e `FilterVisibility`. I test dei publisher condivisi ora rifiutano ogni accesso a `document`; i controlli mantengono selezioni, comandi clonabili e gesto nativo.
+- Tabelle, distribuzioni, riepiloghi e traiettorie pubblicano per chiave dello store. Il confronto fra giocatrici passa gli ID dei pannelli visibili e il contesto di confronto esplicito: eliminati ricerca dei pannelli nel DOM e riconoscimento del confronto tramite `closest`.
+- Eliminati 18 ulteriori metodi che inoltravano soltanto chiamate ai publisher, aggiornando gli import effettivi. Le pubblicazioni identiche consecutive sono eseguite una volta sola. Comando e blocco dei pulsanti scout sono nello stesso registro, senza un secondo elenco degli ID. Le impostazioni dei fondamentali riusano `SKILLS`.
+- Il riepilogo attacco condivide conteggio e costruzione delle celle fra righe e totale. Sei riferimenti di comportamento acquisiti prima della sostituzione verificano codici, tipi, confronto vuoto/non vuoto, regole personalizzate, fallback della valutazione e input non modificati. La pubblicazione funziona senza DOM e conserva le viste estranee.
+- Il publisher della tabella eventi usa solo ID; il log non mantiene più il ramo di append DOM irraggiungibile dopo la pubblicazione completa. Eliminati anche i dati DOM di checkbox/intestazioni e i riferimenti di stato non più letti. Restano i riferimenti alle righe necessari per scorrimento e focus.
+- Rimossi stili dei vecchi editor, tabelle, manuale incorporato e dialoghi senza utilizzatori. Conservate le classi generate dinamicamente da scope e varianti dei componenti. I 207 selettori dismessi sono registrati nella fixture browser: dopo ciascuno scenario devono avere zero corrispondenze nel DOM. Ventuno regole `display: none` per elementi `.hidden` sono coperte dalla regola condivisa `!important`; eliminate anche 17 dichiarazioni identiche già coperte da regole successive nello stesso contesto.
+- Eliminata `js/vendor/qrcode-generator.js`: nessun riferimento applicativo, nemmeno in `main`, e nessuna inclusione nella build o nel precache. Rimossi gli stili QR residui. Questa pulizia del repository è conteggiata separatamente: la libreria era già assente dal bundle distribuito.
+
+### Misure conclusive e stato dei criteri
+
+Perimetro identico a quello iniziale, inclusi i nuovi moduli e i vendor rimasti, esclusi test, documentazione, strumenti e build.
+
+| Misura | main iniziale `de8c850` | Prima del refactoring | Finale | Differenza da main iniziale |
+| --- | ---: | ---: | ---: | ---: |
+| Righe fisiche | 56.191 | 61.979 | 55.825 | −366 |
+| Righe non vuote | 55.441 | 59.428 | 53.523 | −1.918 |
+| Byte sorgente | 2.077.680 | 2.231.620 | 1.958.478 | −119.202 |
+
+Dall’avvio del piano: **−6.154 righe fisiche, −5.905 non vuote e −273.142 byte**. La rimozione del vendor QR incide per 2.297 righe fisiche, 1.798 non vuote e 56.694 byte. Escludendo questa rimozione, il refactoring applicativo elimina **4.107 righe non vuote e 216.448 byte** rispetto all’avvio.
+
+| Confronto con main attuale `ffbe065` | main | Finale | Differenza |
+| --- | ---: | ---: | ---: |
+| Righe fisiche | 56.712 | 55.825 | −887 |
+| Righe non vuote | 55.959 | 53.523 | −2.436 |
+| Byte sorgente | 2.807.602 | 1.958.478 | −849.124 |
+
+Anche senza contare il vendor eliminato, il codice applicativo ha **638 righe non vuote in meno del main attuale e 120 in meno del riferimento iniziale**. Le righe fisiche del solo codice applicativo restano superiori: il totale complessivo scende sotto main anche grazie alla rimozione della libreria inutilizzata. Il confronto con `main` attuale usa un riferimento diverso da quello iniziale; il maggior risparmio di byte non è attribuito interamente a questo piano.
+
+I criteri quantitativi sul totale dei sorgenti sono soddisfatti con entrambi i riferimenti: righe fisiche, non vuote e byte inferiori a main. Le responsabilità consolidate hanno utilizzatori reali; non è introdotto un runtime alternativo o un adattatore HTML. La scansione di duplicazioni non rileva candidati alle soglie documentate di almeno 8 righe e 250 caratteri, né regole CSS adiacenti con dichiarazioni identiche. Il dato non equivale a una prova di ottimizzazione assoluta.
+
+I modelli e i publisher protetti dai test hanno dipendenze acicliche e non risultano import relativi mancanti. **Resta un componente ciclico di 50 moduli fra controller applicativi**: non è stato eliminato ogni ciclo del progetto. Questo limite resta dichiarato e non viene nascosto cambiando il perimetro dell’audit.
+
+Build applicativa JS: **983,22 kB**, gzip **283,76 kB**, rispetto a 1.074,58 kB e 292,44 kB all’avvio del piano. CSS: **188,06 kB**, gzip **33,25 kB**. La libreria QR non contribuiva a questi bundle; il loro calo deriva dagli interventi applicativi. GitHub Pages e l’export autonomo usano la stessa implementazione React.
+
+Comandi riproducibili: `npm test`, `npm run build`, `npm run test:e2e`, `npm run audit:duplicates`, `node scripts/audit-source.mjs main`, `node scripts/audit-source.mjs de8c85075c6ef296cb7310c89ece9f0c4ae00c7a`, `git diff --check`.
+
+Verifica conclusiva sulla stessa build applicativa: **490 test unitari/integrati e 38 scenari browser superati**, inclusi i controlli sui 207 selettori dismessi dopo ogni scenario. Verificati limiti superabili, import/export e migrazioni, archivi e foto con selettore file nativo, filtri/preset e confronto giocatrici, video locale/YouTube, drag/touch/tastiera, GitHub Pages, PWA offline ed export HTML autonomo senza rete. Audit degli import e delle duplicazioni e `git diff --check` superati. I riferimenti AST a `document` scendono da 480 a 335 rispetto alla revisione precedente; restano necessari quelli per risorse del browser, focus, geometria e stampa. La sola aggiunta di questo resoconto è stata ricostruita verificando che JS, CSS ed entry dell’export siano identici agli asset della suite browser.

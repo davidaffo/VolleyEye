@@ -1,5 +1,15 @@
+import { useViewStore } from '../../hooks/useViewStore.js';
+import { filterStore } from '../../state/filter-store.mjs';
 
-// Filter labels and layout are shared by summary, trajectories, player and video views.
+// Filter visibility belongs to the same React snapshot as its choices and selection.
+export function FilterVisibility({ filterId, style, ...props }) {
+  useViewStore(filterStore);
+  const { visible } = filterStore.getView(filterId);
+  return <div {...props} style={visible === undefined ? style : {
+    ...style, display: visible ? '' : 'none',
+  }} />;
+}
+
 export function FilterField({
   label,
   className = "analysis-filter",
@@ -8,9 +18,9 @@ export function FilterField({
   ...props
 }) {
   return (
-    <div {...props} className={className}>
+    <FilterVisibility {...props} className={className}>
       <div className="analysis-filter__label">{label}</div>
       {row ? <div className="analysis-filter__row">{children}</div> : children}
-    </div>
+    </FilterVisibility>
   );
 }

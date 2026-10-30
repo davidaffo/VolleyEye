@@ -1,22 +1,23 @@
+import { getRemovedLiveTeamPlayers } from "../player-reference-model.js";
 import { ensureMatchDefaults } from "../match-details.js";
-import { TEMPLATE_TEAM } from "../../../../js/globals.js";
-import { session as matchState } from "../../../../js/globals.js";
+import { TEMPLATE_TEAM, session as matchState } from "../../../../js/globals.js";
 import { normalizePlayers, buildFullName, enforceSingleCaptainFlag } from "../../../domain/player-names.js";
-import { applyOpponentDefaultLineup, syncTeamManagerModeUI, getRemovedLiveTeamPlayers, applyLiveOpponentTeamManagerPayload, applyLiveTeamManagerPayload } from "../core/player-model.js";
+import { applyOpponentDefaultLineup, applyLiveOpponentTeamManagerPayload, applyLiveTeamManagerPayload } from "../core/player-model.js";
+import { publishTeamEditorMode, publishTeamEditorView, openReactTeamEditor, closeReactTeamEditor, getReactTeamEditorMetadata } from "../editor-view.js";
 import { formatStructuredPlayerName } from "../roster-data.js";
 import { updatePlayersList, renderOpponentLiberoChipsInline } from "../court/court-ui-bootstrap.js";
 import { session as courtEngineState } from "../court/court-engine.js";
 import { renderOpponentPlayers } from "../../live/team-rendering.js";
 import { normalizeTeamPayload, findPlayersDbMatchByFullName, isValidPlayerId, generatePlayerId, isTemplatePlayerName, buildPlayersDbEntry, savePlayersDbToStorage, loadTeamFromStorage, loadOpponentTeamFromStorage, compactTeamPayload, saveOpponentTeamToStorage, deleteOpponentTeamFromStorage, syncOpponentTeamsFromStorage, saveTeamToStorage, deleteTeamFromStorage, syncTeamsFromStorage, extractRosterFromTeam } from "../storage/team-repository.js";
 import { session as rosterLineupState } from "../../state/roster-lineup.js";
-import { publishTeamEditorView, openReactTeamEditor, closeReactTeamEditor, getReactTeamEditorMetadata } from "../editor-view.js";
 import { listenRuntime } from "../../../app/browser-effects.js";
 import { getCurrentOpponentPayload, getCurrentTeamPayload } from "../current-payload.js";
 import { renameTeamReferencesAcrossSavedMatches } from "../storage/archive-actions.js";
 import { setGlobalModalState } from "../../layout/modals.js";
 import { invalidateRosterIdMapsCache } from "../player-identity.js";
 import { session as scoutUiState } from "../../state/scout-ui.js";
-import { hasMatchDataForReset, renderTeamsSelect, renderOpponentTeamsSelect } from "../storage/match-repository.js";
+import { hasMatchDataForReset } from "../storage/match-repository.js";
+import { publishTeamsManagerView } from "../manager-view.js";
 import { cloneIsolationData } from "../../../domain/snapshots.js";
 import { saveState } from "../../storage/save-state.js";
 import { renderTeamsManagerList } from "../../live/team-management.js";
@@ -508,7 +509,7 @@ export function closeTeamManagerModal() {
   }
   rosterLineupState.teamManagerLiveEditMode = false;
   rosterLineupState.teamManagerStorageOnly = false;
-  syncTeamManagerModeUI();
+  publishTeamEditorMode();
   setGlobalModalState(false);
 }
 
@@ -645,8 +646,8 @@ export function saveTeamManagerPayload(options = {}) {
           ensureMatchDefaults();
         }
       }
-      renderTeamsSelect();
-      renderOpponentTeamsSelect();
+      publishTeamsManagerView();
+
     } else {
       const compact = compactTeamPayload(payload, payload.name);
       if (!saveTeamToStorage(nextName, compact)) {
@@ -661,8 +662,8 @@ export function saveTeamManagerPayload(options = {}) {
       if (!storageOnly) {
         matchState.state.selectedTeam = nextName;
       }
-      renderTeamsSelect();
-      renderOpponentTeamsSelect();
+      publishTeamsManagerView();
+
       scoutUiState.teamsManagerSelectedName = nextName;
       renderTeamsManagerList();
     }

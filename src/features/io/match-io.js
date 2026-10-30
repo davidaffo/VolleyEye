@@ -1,14 +1,12 @@
 import { session } from "../state/io-match-io.js";
 import { ensureMatchDefaults, buildMatchDisplayName } from "../teams/match-details.js";
 import { AUTO_LIBERO_ROLE_DEFAULT_VERSION, logError, session as matchState } from "../../../js/globals.js";
-
 import { cloneIsolationData } from "../../domain/snapshots.js";
 import { getStoredThemePreference, sanitizeRosterIsolation, applyTheme } from "../teams/core/state-store.js";
 import { saveState } from "../storage/save-state.js";
 import { normalizeThemePreference, normalizeVideoFilterPresets } from "../storage/ui-preferences.js";
 import { normalizeAutoLiberoRolePreference } from "../teams/preferences.js";
-
-import { resetSetTypeState } from "../live/game-flow.js";
+import { resetSetTypeState } from "../live/flow-model.js";
 import { normalizePlayers, normalizeNumbersMap } from "../../domain/player-names.js";
 import { buildNumbersForNames, syncOpponentPlayerNumbers, cleanOpponentLiberos } from "../teams/roster-data.js";
 import { normalizeScoreOverrides } from "../settings/rules.js";
@@ -16,18 +14,17 @@ import { persistCurrentMatch } from "../storage/match-persistence.js";
 import { updateMatchButtonsState } from "../teams/settings/scouting-config.js";
 import { buildDvwScoreOverrides } from "./datavolley-match-import.js";
 import { resetAnalysisForMatch } from "../analysis/reset-model.js";
-import { renderPlayersManagerList, renderOpponentPlayersList } from "../teams/court/court-engine.js";
-import { cleanCourtPlayers, enforceAutoLiberoForState, initStats, updateAutoRoleBaseCourtCache, cleanLiberoAutoMap } from "../teams/court-state-model.js";
+import { publishReactSettings } from "../settings/view.js";
+import { cleanCourtPlayers, enforceAutoLiberoForState, initStats, updateAutoRoleBaseCourtCache, cleanLiberoAutoMap, cleanCourtLiberoReplacementsForScope } from "../teams/court-state-model.js";
 import { renderLiberoChipsInline, updateRotationDisplay } from "../teams/court/court-ui-bootstrap.js";
-
-import { cleanCourtLiberoReplacementsForScope } from "../video/event-editor.js";
 import { syncTeamsFromStorage, syncOpponentTeamsFromStorage, loadTeamFromStorage, loadPlayersDbFromStorage, savePlayersDbToStorage, loadTeamsMapFromStorage, deleteTeamFromStorage, saveTeamToStorage } from "../teams/storage/team-repository.js";
 import { renderOpponentLiberoTags, renderLiberoTags } from "../teams/imports/camp3-import.js";
 import { renderPlayers } from "../live/team-rendering.js";
 import { renderMetricsConfig } from "../teams/settings/metrics-editor.js";
 import { recalcAllStatsAndUpdateUI } from "../analysis/stats-update.js";
 import { renderEventsLog } from "../video/video-events.js";
-import { renderTeamsSelect, renderOpponentTeamsSelect, renderMatchesSelect, renderMatchesList } from "../teams/storage/match-repository.js";
+import { publishTeamsManagerView } from "../teams/manager-view.js";
+import { renderMatchesSelect, renderMatchesList } from "../teams/storage/match-repository.js";
 import { loadMatchFromStorage, deleteMatchFromStorage, syncMatchesFromStorage, saveMatchToStorage } from "../storage/match-repository.js";
 import { resetMatchState } from "../teams/storage/archive-actions.js";
 import { getCurrentMatchPayload } from "../teams/current-payload.js";
@@ -35,8 +32,6 @@ import { session as rosterLineupState } from "../state/roster-lineup.js";
 import { demoActionStore, demoWelcomeStore } from "../../state/roster-import-store.mjs";
 import { setGlobalModalState } from "../layout/modals.js";
 import { session as persistentStorageState } from "../state/storage-persistent-storage.js";
-
-
 
 const matchIoState = session;
 
@@ -178,9 +173,9 @@ export function applyImportedMatch(nextState, options = {}) {
   saveState();
   applyTheme(preservedTheme);
   ensureMatchDefaults();
-  renderPlayersManagerList();
+  publishReactSettings();
   renderOpponentLiberoTags();
-  renderOpponentPlayersList();
+  publishReactSettings();
   renderPlayers();
   renderLiberoChipsInline();
 
@@ -191,8 +186,8 @@ export function applyImportedMatch(nextState, options = {}) {
   initStats();
   recalcAllStatsAndUpdateUI();
   renderEventsLog();
-  renderTeamsSelect();
-  renderOpponentTeamsSelect();
+  publishTeamsManagerView();
+
   if (typeof window !== "undefined" && window.trackVolleyEyeEventOnce) {
     window.trackVolleyEyeEventOnce("match_imported");
   }
@@ -262,7 +257,7 @@ export function hasDefaultDemoData() {
 export function updateDefaultDemoDeleteButtonVisibility() {
   if (!rosterLineupState.elBtnDeleteDemoData) return;
   const visible = getDefaultDemoPreference() !== "removed" && hasDefaultDemoData();
-   demoActionStore.publish({ visible }); return; 
+   demoActionStore.publish({ visible }); return;
 
 }
 
@@ -313,8 +308,8 @@ export function removeDefaultDemoData({ askConfirmation = true, showResult = tru
   syncOpponentTeamsFromStorage();
   syncMatchesFromStorage();
   saveState({ persistLocal: true, skipMatchPersist: true });
-  renderTeamsSelect();
-  renderOpponentTeamsSelect();
+  publishTeamsManagerView();
+
   renderMatchesSelect();
   updateDefaultDemoDeleteButtonVisibility();
   if (clearedActiveDemo) {
@@ -408,7 +403,7 @@ export async function applyImportedDatabase(nextState) {
   }
   syncOpponentTeamsFromStorage();
   matchState.state.selectedOpponentTeam = imported.selectedOpponentTeam || "";
-  renderOpponentTeamsSelect();
+  publishTeamsManagerView();
   saveState({ persistLocal: true, skipMatchPersist: true });
   try {
     await persistentStorageState.archiveStorage.flush();

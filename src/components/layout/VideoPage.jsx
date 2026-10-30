@@ -1,4 +1,5 @@
-import { YouTubeFrame } from '../VideoControls.jsx';
+import { FilterVisibility } from "../ui/FilterField.jsx";
+import { YouTubeFrame } from "../VideoControls.jsx";
 import { AnalysisFilterFields } from "../AnalysisFilter.jsx";
 import { ButtonList } from "../ui/ButtonList.jsx";
 import { TabPanel } from "../ui/TabPanel.jsx";
@@ -151,9 +152,9 @@ export function VideoPage() {
             <div className="video-filters-layout">
               <div className="video-filters-main">
                 <div className="video-filters-header">{"Filtri"}</div>
-                <div className="analysis-filters" id="video-filters">
+                <FilterVisibility filterId="video-filters" className="analysis-filters" id="video-filters">
                   <AnalysisFilterFields group="video" prefix="video-filter-" />
-                  <div className="analysis-filter filter-actions">
+                  <FilterVisibility filterId="video-filter-reset" className="analysis-filter filter-actions">
                     <AppActionButton
                       id="video-filter-reset"
                       className="secondary small"
@@ -161,8 +162,8 @@ export function VideoPage() {
                     >
                       {"Reset filtri"}
                     </AppActionButton>
-                  </div>
-                </div>
+                  </FilterVisibility>
+                </FilterVisibility>
               </div>
               <aside
                 className="video-filter-presets-panel"

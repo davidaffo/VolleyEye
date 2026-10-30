@@ -7,8 +7,9 @@ import {
   closeVideoMobileFilters,
 } from "./playback.js";
 import { publishReactVideoView } from "./source-view.js";
-import { updateVideoAnalysisOverlay } from "./video-events.js";
+import { publishReactVideoOverlay } from "./view.js";
 import { openLocalVideoPicker } from "./video-sources.js";
+
 export function changeReactVideoPlayByPlay(enabled) {
   matchState.state.videoPlayByPlay = !!enabled;
   saveState();
@@ -17,7 +18,7 @@ export function changeReactVideoPlayByPlay(enabled) {
       startPlayByPlayFromSelection({ preservePlayback: true });
   } else stopPlayByPlay();
   publishReactVideoView();
-  updateVideoAnalysisOverlay();
+  publishReactVideoOverlay();
 }
 
 export function applyReactVideoMobileFilters() {

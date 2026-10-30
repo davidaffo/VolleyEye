@@ -52,7 +52,10 @@ test("il cambio tema aggiorna anche controlli nativi e colore della finestra", (
 
 test("il tema predefinito è scuro e i selettori offrono solo chiaro e scuro", () => {
   assert.match(globals, /theme: "dark"/);
-  assert.match(globals, /querySelectorAll\("\[data-theme-choice\]"\)/);
+  const picker = readFileSync("src/components/ThemePicker.jsx", "utf8");
+  assert.match(picker, /data-theme-choice=\{theme\}/);
+  assert.match(picker, /\[\x27dark\x27, \x27scuro\x27/);
+  assert.match(picker, /\[\x27light\x27, \x27chiaro\x27/);
   assert.doesNotMatch(index, /data-theme-choice="auto"/);
   assert.doesNotMatch(stateStore + themeBindings, /prefers-color-scheme|syncAutomaticTheme/);
   const normalize = new Function(`${stateStore.match(/function normalizeThemePreference\(theme\) \{[^}]+\}/)[0]}; return normalizeThemePreference;`)();

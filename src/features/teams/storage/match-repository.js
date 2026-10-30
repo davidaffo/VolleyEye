@@ -1,37 +1,10 @@
 import { syncMatchesFromStorage, getSelectedArchivedMatch } from "../../storage/match-repository.js";
-
-
-
 import { session as matchState } from "../../../../js/globals.js";
-
-
 import { buildMatchDisplayName } from "../match-details.js";
-
 import { publishTeamsManagerView } from "../manager-view.js";
 import { publishRuntimeView } from "../../core/runtime-view.js";
-
 import { updateMatchButtonsState, applyMatchRequirementLock } from "../settings/scouting-config.js";
 import { session as rosterLineupState } from "../../state/roster-lineup.js";
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 export function buildArchivedTeamOptions(names, unavailableName = "") {
   return names.map(name => ({
@@ -41,15 +14,9 @@ export function buildArchivedTeamOptions(names, unavailableName = "") {
   }));
 }
 
-export function renderTeamsSelect(){ publishTeamsManagerView(); }
-
-export function renderOpponentTeamsSelect(){ publishTeamsManagerView(); }
-
 export function hasMatchDataForReset() {
   return Array.isArray(matchState.state.events) && matchState.state.events.length > 0;
 }
-
-
 
 export function selectArchivedMatch(name) {
   if (name && !Object.hasOwn(matchState.state.savedMatches || {}, name)) return;

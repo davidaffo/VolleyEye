@@ -34,35 +34,30 @@
     color: #0f172a !important;
     box-shadow: none !important;
   }
-  .score-card,
-  .score-card.wide {
+  .score-card {
     background: #ffffff !important;
     border-color: #dfe3eb !important;
     color: #0f172a !important;
     box-shadow: none !important;
   }
-  .agg-table,
-  .rotation-table {
+  .agg-table {
     table-layout: fixed;
     width: 100%;
   }
   .agg-table th,
-  .agg-table td,
-  .rotation-table th,
-  .rotation-table td {
+.agg-table td {
     word-break: break-word;
     white-space: normal;
     padding: 3px 4px !important;
     font-size: 10px;
   }
   .table-wrapper,
-  .rotation-wrapper,
-  .score-summary,
+.score-summary,
 .agg-subpanel.active,
 .trajectory-layout,
-  .serve-trajectory-layout,
-  .trajectory-grid,
-  .serve-trajectory-grid {
+.serve-trajectory-layout,
+.trajectory-grid,
+.serve-trajectory-grid {
     break-inside: avoid;
     page-break-inside: avoid;
   }
