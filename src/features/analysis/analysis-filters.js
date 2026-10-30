@@ -1,3 +1,4 @@
+
 import { toggleFilterVisibility, renderDynamicFilter, getCheckedValues } from "./filter-view.js";
 import { getAnalysisExtraMatchState, saveAnalysisExtraMatchState, getAnalysisMatchOptions, getTeamFilterOptions, ensureAnalysisTeamFilterDefault, getAnalysisTeamScope, filterEventsByAnalysisTeam } from "./filter-model.js";
 import { session } from "../state/analysis-analysis-filters.js";
@@ -5,8 +6,9 @@ import { normalizeSetNumber, buildUniqueOptions } from "./values.js";
 
 import { getFilterFields, syncFilterSelections, clearFilterSelections } from './filter-controls.js';
 
-import { session as matchState } from "../../../js/globals.js";
-import { publishReactMultiscoutCount, publishReactMultiscout, publishReactVideoPresets } from "./filters.js";
+
+import { publishReactMultiscoutCount, publishReactMultiscout } from "./multiscout-view.js";
+import { publishReactVideoPresets } from "./video-preset-view.js";
 import { readReactFilterSelect } from "./filter-view.js";
 
 import { saveState } from "../storage/save-state.js";
@@ -15,7 +17,7 @@ import { saveState } from "../storage/save-state.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 
 
-import { invalidateSkillChartCaches } from "./skill-chart-model.js";
+import { invalidateAnalysisCaches, invalidateSkillChartCaches } from "./cache-model.js";
 import { renderAggregatedTable } from "./aggregated-table.js";
 import { renderTrajectoryAnalysis, renderServeTrajectoryAnalysis } from "./trajectory-rendering.js";
 
@@ -79,29 +81,6 @@ const analysisFiltersState = session;
 
 
 
-
-export function resetAnalysisForMatch() {
-  // Filters contain roster indices and set numbers belonging to the old match.
-  [analysisFiltersState.analysisTeamFilterState, analysisFiltersState.analysisSummaryFilterState, analysisFiltersState.trajectoryFilterState,
-    analysisFiltersState.serveTrajectoryFilterState, analysisFiltersState.playerTrajectoryFilterState, analysisFiltersState.playerServeTrajectoryFilterState,
-    analysisFiltersState.secondFilterState, analysisFiltersState.playerSecondFilterState, analysisFiltersState.videoFilterState].forEach(filters => {
-    Object.values(filters).forEach(value => { if (value instanceof Set) value.clear(); });
-    if ("prevSkill" in filters) filters.prevSkill = "any";
-  });
-  analysisFiltersState.activeVideoFilterPresetId = null;
-  scoutUiState.aggTableView = { mode: "summary", skillId: null, playerIdx: null };
-  ensureAnalysisTeamFilterDefault();
-  invalidateAnalysisCaches();
-}
-
-export function invalidateAnalysisCaches() {
-  scoutUiState.analysisStatsCache = null;
-  scoutUiState.analysisStatsScope = null;
-  scoutUiState.analysisEventsCache = null;
-  scoutUiState.analysisEventsCacheKey = "";
-  scoutUiState.analysisEventsCacheRevision += 1;
-  invalidateSkillChartCaches();
-}
 
 export function handleAnalysisMatchFilterChange() {
   if (!scoutUiState.elAnalysisFilterMatches) return;
@@ -198,7 +177,7 @@ export function updateAnalysisExtraMatchesFromContainer(container, scopeOverride
 
 export function renderMultiscoutModal() {
 
-publishReactMultiscout();return;
+publishReactMultiscout(updateAnalysisExtraMatchesFromContainer);return;
 }
 
 export function renderAnalysisSummarySetFilter() {
@@ -326,113 +305,24 @@ export function getVideoFilterElements() {
   };
 }
 
-export function ensureVideoFilterPresetsState() {
-  if (!Array.isArray(matchState.state.videoFilterPresets)) {
-    matchState.state.videoFilterPresets = [];
-  }
-  return matchState.state.videoFilterPresets;
-}
 
-export function getActiveVideoFilterPresetName() {
-  if (!analysisFiltersState.activeVideoFilterPresetId) return "";
-  const activePreset = ensureVideoFilterPresetsState().find(entry => entry.id === analysisFiltersState.activeVideoFilterPresetId);
-  return activePreset ? String(activePreset.name || "").trim() : "";
-}
 
-export function listFromSet(setObj, { asNumber = false } = {}) {
-  const arr = Array.from(setObj || []);
-  return asNumber ? arr.map(v => Number(v)).filter(Number.isFinite) : arr.map(v => String(v));
-}
 
-export function snapshotVideoFilters() {
-  return {
-    teams: listFromSet(analysisFiltersState.videoFilterState.teams),
-    players: listFromSet(analysisFiltersState.videoFilterState.players),
-    setters: listFromSet(analysisFiltersState.videoFilterState.setters),
-    skills: listFromSet(analysisFiltersState.videoFilterState.skills),
-    codes: listFromSet(analysisFiltersState.videoFilterState.codes),
-    prevSkill: analysisFiltersState.videoFilterState.prevSkill || "any",
-    sets: listFromSet(analysisFiltersState.videoFilterState.sets, { asNumber: true }),
-    rotations: listFromSet(analysisFiltersState.videoFilterState.rotations, { asNumber: true }),
-    zones: listFromSet(analysisFiltersState.videoFilterState.zones, { asNumber: true }),
-    bases: listFromSet(analysisFiltersState.videoFilterState.bases),
-    setTypes: listFromSet(analysisFiltersState.videoFilterState.setTypes),
-    phases: listFromSet(analysisFiltersState.videoFilterState.phases),
-    receiveEvaluations: listFromSet(analysisFiltersState.videoFilterState.receiveEvaluations),
-    receiveZones: listFromSet(analysisFiltersState.videoFilterState.receiveZones, { asNumber: true }),
-    serveTypes: listFromSet(analysisFiltersState.videoFilterState.serveTypes),
-    attackTypes: listFromSet(analysisFiltersState.videoFilterState.attackTypes)
-  };
-}
 
-export function countActiveVideoFilters(snapshot) {
-  if (!snapshot || typeof snapshot !== "object") return 0;
-  let count = 0;
-  [
-    "teams",
-    "players",
-    "setters",
-    "skills",
-    "codes",
-    "sets",
-    "rotations",
-    "zones",
-    "bases",
-    "setTypes",
-    "phases",
-    "receiveEvaluations",
-    "receiveZones",
-    "serveTypes",
-    "attackTypes"
-  ].forEach(key => {
-    const val = snapshot[key];
-    if (Array.isArray(val) && val.length > 0) count += 1;
-  });
-  if (snapshot.prevSkill && snapshot.prevSkill !== "any") count += 1;
-  return count;
-}
 
-export function applyVideoFilterSnapshot(snapshot) {
-  const src = snapshot && typeof snapshot === "object" ? snapshot : {};
-  const toNumSet = list => new Set((Array.isArray(list) ? list : []).map(v => Number(v)).filter(Number.isFinite));
-  const toStrSet = list => new Set((Array.isArray(list) ? list : []).map(v => String(v)));
-  analysisFiltersState.videoFilterState.teams = toStrSet(src.teams);
-  analysisFiltersState.videoFilterState.players = toStrSet(src.players);
-  analysisFiltersState.videoFilterState.setters = toStrSet(src.setters);
-  analysisFiltersState.videoFilterState.skills = toStrSet(src.skills);
-  analysisFiltersState.videoFilterState.codes = toStrSet(src.codes);
-  analysisFiltersState.videoFilterState.prevSkill = src.prevSkill || "any";
-  analysisFiltersState.videoFilterState.sets = toNumSet(src.sets);
-  analysisFiltersState.videoFilterState.rotations = toNumSet(src.rotations);
-  analysisFiltersState.videoFilterState.zones = toNumSet(src.zones);
-  analysisFiltersState.videoFilterState.bases = toStrSet(src.bases);
-  analysisFiltersState.videoFilterState.setTypes = toStrSet(src.setTypes);
-  analysisFiltersState.videoFilterState.phases = toStrSet(src.phases);
-  analysisFiltersState.videoFilterState.receiveEvaluations = toStrSet(src.receiveEvaluations);
-  analysisFiltersState.videoFilterState.receiveZones = toNumSet(src.receiveZones);
-  analysisFiltersState.videoFilterState.serveTypes = toStrSet(src.serveTypes);
-  analysisFiltersState.videoFilterState.attackTypes = toStrSet(src.attackTypes);
-}
+
+
+
+
+
+
 
 export function renderVideoFilterPresets() {
 
 publishReactVideoPresets();return;
 }
 
-export function saveCurrentVideoFilterPreset(nameOverride) {
-  const presets = ensureVideoFilterPresetsState();
-  const rawName = typeof nameOverride === "string" ? nameOverride.trim() : scoutUiState.elVideoFilterPresetName ? String(scoutUiState.elVideoFilterPresetName.value || "").trim() : "";
-  const name = rawName || ("Preset " + (presets.length + 1));
-  const entry = {
-    id: "vf_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 7),
-    name,
-    filters: snapshotVideoFilters()
-  };
-  presets.push(entry);
 
-  saveState({ persistLocal: true });
-  renderVideoFilterPresets();
-}
 
 export function getSecondFilterElements() {
   const setters = document.getElementById("second-filter-setters");

@@ -39,6 +39,25 @@ export function PlayerAnalysisHeader() {
 function useView() {
   return useViewStore(playerAnalysisStore);
 }
+
+export function PlayerAnalysisRegion({
+  as: Component = "div",
+  region = "single",
+  preference,
+  className = "",
+  ...props
+}) {
+  const view = useView();
+  const visible = preference
+    ? view.preferences[preference] !== false
+    : region === "compareFilter"
+      ? !!view.preferences.compareEnabled && view.entries.length >= 2
+      : !view.compare;
+  return (
+    <Component {...props} className={className + (visible ? "" : " hidden")} />
+  );
+}
+
 const change = (field, value) =>
   appActions.changeReactPlayerAnalysis(field, value).catch(console.error);
 export function PlayerAnalysisSelect({ compare = false }) {

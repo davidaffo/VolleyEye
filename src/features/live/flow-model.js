@@ -1,7 +1,7 @@
 import { SKILLS, session as matchState } from '../../../js/globals.js';
 import { session as scoutUiState } from '../state/scout-ui.js';
 import { session as rosterLineupState } from '../state/roster-lineup.js';
-import { getPlayersForScope, isSkillEnabledForScope, getTeamScopeFromEvent, getEnabledSkills, isSkillEnabled, getOppositeScope, getEnabledSkillsForScope, makePlayerKey } from '../teams/selectors.js';
+import { isServingForScope, isPlayerKeyInScope, getPlayersForScope, isSkillEnabledForScope, getTeamScopeFromEvent, getEnabledSkills, isSkillEnabled, getOppositeScope, getEnabledSkillsForScope, makePlayerKey } from '../teams/selectors.js';
 import { getRoleLabelForRotation } from '../teams/roles.js';
 import { ensureCourtShapeFor, getCourtShape } from '../teams/court-model.js';
 import { getPointDirection } from '../analysis/scores.js';
@@ -513,5 +513,49 @@ export function getNetBlockPromptScope() {
   }
   if (our) return "our";
   if (opponent) return "opponent";
+  return null;
+}
+
+export function getScoutCourtSkill(scope) {
+  if (scope === "opponent" && !matchState.state.useOpponentTeam) return null;
+  const predicted = scope === "our" && !matchState.state.useOpponentTeam
+    ? getPredictedSkillId()
+    : getPredictedSkillIdForScope(scope);
+  if (predicted || !matchState.state.predictiveSkillFlow) return predicted;
+  if (!matchState.state.useOpponentTeam) {
+    const ownEvents = (matchState.state.events || []).filter(event => event && event.team !== "opponent");
+    if (getLastFlowEvent(ownEvents)) return null;
+  }
+  const fallback = isServingForScope(scope) ? "serve" : "pass";
+  if (isSkillEnabledForScope(fallback, scope)) return fallback;
+  const enabled = getEnabledSkillsForScope(scope);
+  return enabled.length ? enabled[0].id : null;
+}
+
+export function getAttackMetaForPlayer(scope, playerIdx) {
+  const scopedKey = scope + ":" + playerIdx;
+  if (scoutUiState.attackMetaByPlayer[scopedKey]) return scoutUiState.attackMetaByPlayer[scopedKey];
+  const fallbackKey = makePlayerKey(scope, playerIdx);
+  const direct = scoutUiState.attackMetaByPlayer[fallbackKey];
+  if (direct && direct.playerIdx === playerIdx && direct.scope === scope) return direct;
+  const keys = Object.keys(scoutUiState.attackMetaByPlayer);
+  for (let i = 0; i < keys.length; i += 1) {
+    const meta = scoutUiState.attackMetaByPlayer[keys[i]];
+    if (meta && meta.playerIdx === playerIdx && meta.scope === scope) return meta;
+  }
+  return null;
+}
+
+export function getActiveAttackKeyForScope(scope) {
+  if (scoutUiState.attackInlinePlayer && isPlayerKeyInScope(scoutUiState.attackInlinePlayer, scope)) {
+    return scoutUiState.attackInlinePlayer;
+  }
+  const keys = Object.keys(scoutUiState.attackMetaByPlayer);
+  for (let i = 0; i < keys.length; i += 1) {
+    const meta = scoutUiState.attackMetaByPlayer[keys[i]];
+    if (!meta || meta.scope !== scope) continue;
+    if (typeof meta.playerIdx !== "number") continue;
+    return keys[i];
+  }
   return null;
 }

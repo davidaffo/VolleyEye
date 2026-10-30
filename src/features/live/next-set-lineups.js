@@ -4,7 +4,8 @@ import { getCourtShape, cloneCourt } from "../teams/court-model.js";
 import { computeSetWinScore } from "../analysis/set-results.js";
 
 import { removeLiberosAndRestoreForScope } from "../teams/libero-model.js";
-import { commitCourtChange, commitCourtChangeForScope, setIsServing, enforceAutoLiberoForState, enforceAutoLiberoForScope } from "../teams/court/court-engine.js";
+import { commitCourtChange, commitCourtChangeForScope, setIsServing } from "../teams/court/court-engine.js";
+import { enforceAutoLiberoForState, enforceAutoLiberoForScope } from "../teams/court-state-model.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { getLiberosForScope } from "../teams/selectors.js";
 import { isDesktopCourtModalLayout, setCourtAreaLocked, setModalOpenState } from "../layout/modals.js";
@@ -20,7 +21,7 @@ import { renderLineupModal } from "./lineup-editor.js";
 import { updateLineupModalControls, cancelPartialSkillFlowForScope } from "./skill-selection.js";
 import { setScoutControlsDisabled, applySetChange, renderLiveScore, updateMatchStatusUI } from "./live-score-and-set.js";
 import { syncCourtSideLayout, renderPlayers, renderOpponentPlayers } from "./team-rendering.js";
-import { setRotation, setOpponentRotation, renderLineupChips } from "../teams/court/court-ui-bootstrap.js";
+import { setRotation, setOpponentRotation } from "../teams/court/court-ui-bootstrap.js";
 import { saveState } from "../storage/save-state.js";
 import { renderEventsLog } from "../video/video-events.js";
 
@@ -347,7 +348,7 @@ export function applyNextSetDraft() {
     updateMatchStatusUI();
   }
   renderPlayers();
-  renderLineupChips();
+
   renderOpponentPlayers();
   updateSetScoreDisplays();
   closeNextSetModal({ force: true });

@@ -119,7 +119,7 @@ test("la pulizia del match demo non lascia riferimenti a squadre eliminate", () 
     DEFAULT_DEMO_MATCH_NAME: "Match demo - Aurora Volley - Riviera Volley",
     Array,
     String,
-    updateOpponentAutoRoleBaseCourtCache: () => {},
+    updateAutoRoleBaseCourtCache: () => {},
     resetMatchState: () => {
       context.state.match = {
         teamName: context.state.selectedTeam || context.state.match.teamName || "",

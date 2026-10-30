@@ -12,7 +12,7 @@ import { resolvePlayerIdx } from "../events/player-links.js";
 import { sortPlayerOptionsByNumberForScope } from "../teams/lineup-selectors.js";
 
 import { session as liveScoreAndSetState } from "../state/live-live-score-and-set.js";
-import { formatAttackPhaseLabel } from "../live/live-entry.js";
+import { formatAttackPhaseLabel } from "./values.js";
 import { buildAttackTypeLabel } from "./values.js";
 import { publishReactSplitFilter, publishReactPreviousSkill } from "./filter-view.js";
 

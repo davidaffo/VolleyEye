@@ -340,12 +340,6 @@ export function collectSkillChartEventsBySkill(
   return bySkill;
 }
 
-export function invalidateSkillChartCaches() {
-  skillAnalysisState.skillChartCacheRevision += 1;
-  skillAnalysisState.skillChartSeriesCache.clear();
-  skillAnalysisState.skillChartRenderToken += 1;
-}
-
 export function deferSkillChartRenderWhilePaused() {
   if (!skillAnalysisState.skillChartRenderPaused) return false;
   skillAnalysisState.skillChartRenderRefreshPending = true;

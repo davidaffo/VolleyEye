@@ -227,10 +227,99 @@ Il componente ciclico principale scende da **67 a 61 moduli**. Nessun import rel
 
 Verifiche del settimo lotto: **380 test unitari/integrati e 35 test browser superati**, build Vite con export autonomo e percorso GitHub Pages, controllo dei confini aciclici, scansione delle duplicazioni e `git diff --check`. La suite browser è stata eseguita su asset stabili, senza ricostruzioni durante i test.
 
+### Ottavo lotto: scheda giocatrice, preset, metriche e overlay
+
+- La costruzione degli snapshot statistici e delle foto della giocatrice è separata dal publisher; i cambi delle preferenze sono comandi. Il controller prepara i filtri e coordina i pannelli dopo la pubblicazione.
+- `PlayerAnalysisRegion` riusa lo stato della scheda per visibilità di selettore confronto, tabella, colonne, grafici e sezioni attacco/battuta/alzata. Rimossi i cambi di classe imperativi dai controller; il test DOM verifica aggiornamenti e identità dei pannelli montati.
+- Snapshot, ripristino, conteggio e registro dei controlli video derivano dallo stesso schema dei filtri. Conservati ordine dei campi, identità delle giocatrici come stringhe, campi numerici e semantica del filtro del fondamentale precedente. I test coprono valori normalizzati, array indipendenti e chiavi sconosciute.
+- I publisher di preset, multiscout e metriche sono separati dai relativi comandi. Il publisher multiscout riceve il callback di selezione dal controller; non importa quel controller. La sincronizzazione dei pulsanti dello scout dopo le metriche resta nel controller.
+- Selezione e testo dell’overlay video sono un modello indipendente da playback/editor; azioni dei controlli video e pubblicazione della vista sono moduli distinti.
+- I test dei confini verificano separatamente modelli senza dipendenze dai publisher e composizione aciclica dei publisher senza importare controller o comandi UI.
+
+Il componente ciclico principale scende da **61 a 58 moduli**. Nessun import relativo mancante e nessun candidato alla scansione delle duplicazioni secondo le soglie documentate. Restano accoppiamenti tra i controller delle operazioni applicative: il lavoro strutturale complessivo resta aperto.
+
+Verifiche dell’ottavo lotto: **383 test unitari/integrati e 35 test browser superati**, build Vite con export autonomo e percorso GitHub Pages, audit degli import e dei confini aciclici, scansione delle duplicazioni e `git diff --check`. Verificati anche visibilità React senza sostituzione dei pannelli, tipi degli snapshot video e selezione/testo degli overlay.
+
+### Nono lotto: selezione, ordinamento ed editor delle tabelle video
+
+- La selezione condivisa è separata da playback, editor e aggiornamenti delle viste. Conservate deduplicazione tra contesti, potatura delle chiavi, ancoraggio e priorità specifiche di overlay, inserimento, mobile e play by play. Overlay e inserimento riusano la stessa lettura.
+- Accesso agli eventi, sincronizzazione dei collegamenti alle giocatrici, tempo base, ordinamento e tempi del play by play hanno moduli indipendenti dai controller. L’ordinamento conserva la sequenza originale e lo spareggio crescente per ID anche nell’ordine discendente.
+- La tabella eventi usa un unico schema per intestazioni, valori, campi modificabili e azioni delle colonne. Le etichette di squadra e fondamentale sono condivise con l’ordinamento. La formattazione della fase appartiene al modello dei valori, senza dipendere dal controller dello scout live.
+- `table-commands.js` coordina interazioni, pubblicazione e aggiornamenti; `table-model.js` produce dati senza callback UI e `edit-model.js` descrive controlli e modifiche senza importare i controller. Rimossa la precedente tabella monolitica, senza mantenerne esportazioni di compatibilità.
+- Il riuso dei riferimenti alle righe usa un indice invece di cercare nuovamente ogni riga nell’elenco precedente. Conservata la prima corrispondenza in caso di chiavi duplicate.
+- La zona mancante degli eventi video usa direttamente il selettore del campo, senza attraversare gli aggiornamenti statistici. Conservati momenti di salvataggio e aggiornamento.
+- Le nuove verifiche coprono i confini aciclici, le priorità delle selezioni, ordinamento senza modifica della cronologia, allineamento intestazioni/celle e undo acquisito una sola volta prima delle modifiche.
+
+Il componente ciclico principale scende da **58 a 57 moduli**. Nessun import relativo mancante; nessun candidato alla scansione delle duplicazioni alle soglie documentate. I controller di playback, editing e aggiornamento delle viste rimangono coordinati; i modelli estratti non dipendono da essi.
+
+Verifiche del nono lotto: **387 test unitari/integrati e 35 test browser superati**, build Vite con percorso GitHub Pages ed export autonomo, audit degli import e dei confini aciclici, scansione delle duplicazioni e `git diff --check`. Verificati selezione/modifica singola e multipla, undo, correzione del punteggio, video locale/YouTube, navigazione mobile, sincronizzazione, filtri e limiti superabili. La suite browser è stata eseguita sulla stessa build stabile per tutta la durata.
+
+### Decimo lotto: stato del campo, rotazioni e libero
+
+- Formazione base, cache, fase, disposizione per ruolo e zona della giocatrice sono separate da salvataggi, playback e aggiornamenti delle viste. Le dipendenze del nuovo `court-state-model.js` sono acicliche e non includono controller UI.
+- Cache e ripristino usano funzioni condivise con ambito esplicito. Aggiornati i chiamanti di caricamento, reset, modifica squadra e posizionamento; eliminate le vecchie varianti dedicate all’avversaria.
+- Le due rotazioni riusano lo spostamento degli slot e il ripristino della titolare sostituita dal libero quando entra in prima linea. Conservati direzione predefinita, comportamento dei contatori, cache e isolamento delle squadre.
+- Preparazione della disposizione automatica e validazione sono operazioni sullo stato; salvataggio, pubblicazione, avvisi e animazioni restano nei controller, nell’ordine precedente.
+- Rimossi `renderLineupChips`, già vuota, e `syncCurrentSetUI`, che leggeva un nodo senza aggiornarlo, insieme ai relativi richiami. La panchina del libero non viene più ricostruita e pubblicata due volte per uno stesso aggiornamento.
+- Otto nuovi test coprono rotazioni, cache indipendenti, rientro del libero, validazione, eccezione del giocatore al servizio, preferenze separate e riuso della disposizione per fase/rotazione. Le verifiche dei confini coprono anche il nuovo modello; le interazioni della panchina verificano una sola pubblicazione.
+
+Il componente ciclico principale resta di **57 moduli**: sono state rimosse dipendenze dai controller per le operazioni sullo stato, ma i controller delle viste restano collegati tra loro. Nessun import relativo mancante e nessun candidato alla scansione delle duplicazioni alle soglie documentate.
+
+Verifiche del decimo lotto: **395 test unitari/integrati e 35 test browser superati**, build Vite con percorso GitHub Pages ed export autonomo, confini aciclici dei modelli, import, scansione delle duplicazioni e `git diff --check`. La suite browser copre anche rotazione, libero, impostazioni indipendenti delle squadre, sostituzioni, annullamento e persistenza; eseguita su una build stabile per tutta la durata.
+
+### Undicesimo lotto: dati delle schede del campo e coordinamento dei controlli
+
+- Schede e panchina hanno un modello indipendente dai comandi UI. Nomi, numeri, capitani, ruoli, foto, indici del campo e rientri conservano l’ambito della squadra; i dati delle schede sono clonabili e non contengono callback.
+- Lettura delle modalità punto/errore ed elenco delle riserve sono in `pick-model.js`. Previsione del fondamentale e selettori dei metadati dell’attacco sono in `flow-model.js`; non attraversano i controller di layout o rendering.
+- Il publisher del campo e della panchina si limita agli store. `court-commands.js` coordina animazione, dati, azioni e controlli; la preparazione dei controlli dei fondamentali è in `skill-controls.js`, senza mantenere il vecchio modulo dal nome di modello.
+- Conservata la sequenza cattura delle posizioni → preparazione dei dati → singola scheda e relativi controlli → panchina → pubblicazione. Una transizione sincrona del controllo precedente resta visibile durante la costruzione della scheda successiva. Il campo nascosto pubblica lo stato senza avviare la preparazione.
+- I test verificano dati senza callback, giocatrici omonime nelle due squadre, numeri/capitani, libero e rientro, riserve della modalità errore, ordine delle transizioni e orientamento letto dopo la preparazione dei controlli. I confini aciclici includono i nuovi modelli e il publisher.
+- Aggiunto un controllo conservativo delle chiamate alle funzioni esportate del progetto: devono avere un import o una dichiarazione locale. Copre gli import dimenticati durante gli spostamenti, che i contesti globali delle fixture possono nascondere; la suite browser resta la verifica del grafo reale.
+- Aggiornati i test che isolavano codice mediante delimitatori di funzioni spostate: l’estrazione AST conserva le stesse verifiche di layout e ResizeObserver senza dipendere dall’ordine dei file.
+
+Il componente ciclico principale resta di **57 moduli**. I modelli delle schede e delle selezioni e il publisher sono aciclici e non importano i controller delle operazioni dello scout. Nessun import relativo mancante e nessun candidato alla scansione delle duplicazioni alle soglie documentate.
+
+Verifiche dell’undicesimo lotto: **399 test unitari/integrati e 35 test browser superati**, build Vite con percorso GitHub Pages ed export autonomo, controllo delle chiamate alle funzioni esportate, confini aciclici, audit degli import, scansione delle duplicazioni e `git diff --check`. Verificati anche punti/errori, fondamentali sulle due squadre, rientri del libero, animazioni e trascinamenti. La suite browser è stata eseguita sulla stessa build stabile per tutta la durata.
+
+### Dodicesimo lotto: descrittori e comandi dei fondamentali
+
+- Campo e dialogo dei fondamentali condividono gruppi, pulsanti, tipi di battuta e ordine dei codici, costruiti da un modello indipendente dai controller. Le viste dei controlli contengono descrittori `command`/`args` clonabili, senza callback o nodi DOM; il contesto immutabile della giocatrice è condiviso tra i pulsanti.
+- `skill-actions.js` centralizza valutazioni, selezioni, annullamento, muro e attacco. React invoca il registro dei comandi tramite gli eventi pronti, conservando esecuzione immediata, target del gesto e gestione degli errori.
+- Registrazione normale, dialogo ed errore di battuta limitato condividono la gestione del risultato, mantenendo diverse le pulizie dei metadati e la conclusione dell’azione: aggiornamento della selezione sul campo o chiusura del dialogo. Una registrazione fallita o rifiutata conserva la selezione in corso.
+- Tastiera e pulsanti del servizio usano lo stesso comando. Scelta esplicita del tipo, attacco senza tipo e attacco accodato riusano l’avvio dell’attacco. Il Damp automatico resta distinto perché consuma il tipo prima dell’apertura e marca i metadati prima del callback di rendering; l’attacco accodato esplicito esegue questi aggiornamenti dopo l’attesa.
+- La preparazione sincrona delle selezioni resta in `skill-controls.js`, nella sequenza già verificata per ciascuna scheda. Nessun salvataggio, renderer o registrazione eventi è importato dal nuovo modello dei controlli.
+- Gli scenari esistenti verificano anche la clonabilità dell’intera vista. Sedici nuovi test coprono completamento asincrono, successo/rifiuto/eccezione, target DOM, metadati letti al clic, pulizia specifica del fondamentale, battuta limitata, avvio accodato, Damp, conferma del muro per squadra, dispatch immediato, chiusura del dialogo e aggiornamento dei suoi codici. Un nuovo caso browser esegue nel dialogo scelta del tipo e registrazione sia della battuta sia dell’attacco.
+
+Il nuovo modello dei controlli è aciclico e privo di dipendenze dai controller UI. Rimane un componente ciclico di **58 moduli** tra i controller, che include il nuovo modulo delle azioni; la separazione dei dati non chiude ancora il lavoro sui relativi accoppiamenti. Nessun import relativo mancante e nessun candidato alla scansione delle duplicazioni alle soglie documentate.
+
+Verifiche del dodicesimo lotto: **415 test unitari/integrati e 36 test browser superati**, build Vite con export autonomo e percorso GitHub Pages, controllo delle chiamate e degli import, confini aciclici dei modelli, scansione delle duplicazioni e `git diff --check`. La suite browser verifica anche i due utilizzatori del componente condiviso, campo e dialogo, compresi tipo di battuta, tipo d’attacco, registrazione e chiusura. La build è rimasta stabile durante l’intera esecuzione.
+
+### Tredicesimo lotto: reset delle analisi e invalidazione delle cache
+
+- Reset del match e invalidazione non appartengono più al controller dei filtri. Caricamento delle partite, gestione squadre ed editor eventi importano direttamente moduli aciclici senza renderer, DOM o persistenza; rimossi i vecchi export senza introdurre adattatori.
+- Cache dei grafici, cache degli eventi e invalidazione completa hanno operazioni condivise con responsabilità distinte. Il ricalcolo delle statistiche riusa la stessa invalidazione degli eventi, mantenendo invariati i riferimenti della cache statistica e del relativo ambito. Ogni operazione avanza una sola volta le revisioni e il token che rende obsolete le elaborazioni dei grafici in corso.
+- Il reset del match riusa `clearFilterSelections`, già usato dai reset individuali. Conservati identità dei Set, reset del fondamentale precedente, preset video e vista aggregata, ordine di ripristino della squadra predefinita e invalidazione. Nessuna modifica agli eventi o alle partite aggiuntive selezionate.
+- Sei nuovi test sui moduli reali coprono invalidazione selettiva, token e pausa dei grafici, tutte le famiglie di filtri, riferimenti conservati e squadra predefinita con due squadre, una squadra o sola rosa ospite. I nuovi moduli sono inclusi nella verifica dei confini aciclici.
+
+Il componente ciclico principale scende da **58 a 57 moduli**. Nessun import relativo mancante e nessun candidato alla scansione delle duplicazioni alle soglie documentate. Il coordinamento fra i controller dei filtri e delle viste resta aperto.
+
+Verifiche del tredicesimo lotto: **421 test unitari/integrati e 36 test browser superati**, build Vite con percorso GitHub Pages ed export autonomo, import, confini aciclici, scansione delle duplicazioni e `git diff --check`. Dopo la sistemazione finale del reset sono passati nuovamente i 18 test mirati di reset e struttura. La suite browser ha usato la stessa build stabile e copre caricamento, annullamento/modifica eventi, filtri, preset, multiscout, statistiche e limiti superabili.
+
+### Quattordicesimo lotto: preparazione sincrona e presentazione condivisa dello scout
+
+- `skill-preparation.js` coordina selezioni e transizioni e restituisce una descrizione clonabile del controllo da mostrare. Non costruisce gruppi, classi CSS, pulsanti o descrittori dei gesti; questi appartengono al modello di presentazione.
+- `buildPreparedScoutSkillView` costruisce i controlli dalla descrizione senza leggere lo stato del match, il DOM o avviare operazioni. Ricostruire la vista non registra nuovi listener, non consuma tipi accodati e non avanza il flusso. Il coordinatore del campo esegue preparazione e costruzione consecutivamente per ogni scheda, mantenendo le transizioni visibili alla scheda successiva. Rimosso il precedente modulo `skill-controls.js`, senza conservare un wrapper.
+- Il dialogo dei fondamentali usa lo stesso costruttore del campo per tipi di battuta, tipi d’attacco e codici di valutazione. Eliminate le costruzioni duplicate dei pulsanti; mantenute classi dei gruppi, intestazioni, contesto del dialogo, callback tastiera e momento delle pubblicazioni. Il nome usato come dato visivo resta distinto dal nome passato alla registrazione quando manca il nome esplicito.
+- Conservate le uscite anticipate, pulizia delle selezioni incompatibili, trasferimento dei metadati alla battuta pendente, conferma del muro e avvio Damp automatico. La presentazione non rinvia queste operazioni agli effetti React.
+- Sei nuovi test verificano tutte le varianti di presentazione sul campo e nel dialogo con uno stato del match che rifiuta ogni lettura, input congelati, ripetibilità e clonabilità; verificano inoltre battuta pendente prima della pianificazione, listener registrato una sola volta, consumo del Damp prima dell’avvio e differenza tra nome visivo e nome di registrazione. Rimangono i 28 scenari di confronto del campo e le verifiche dell’ordine tra schede.
+
+Il componente ciclico principale resta di **57 moduli**: la costruzione delle viste è indipendente dalle transizioni, mentre i controller della preparazione e delle azioni restano collegati. Nessun import relativo mancante e nessun candidato alla scansione delle duplicazioni alle soglie documentate.
+
+Verifiche del quattordicesimo lotto: **427 test unitari/integrati e 36 test browser superati**, build Vite con percorso GitHub Pages ed export autonomo, verifica delle chiamate e degli import, confini aciclici, scansione delle duplicazioni e `git diff --check`. La suite browser ha usato la stessa build stabile per tutta la durata e verifica sia il campo sia il dialogo dei fondamentali, inclusi tipi di battuta e attacco, scorciatoie, registrazione e chiusura.
+
 ### Interventi strutturali ancora aperti
 
-1. Separare i comandi e il coordinamento residui della scheda giocatrice, dei preset e delle impostazioni dalle relative pubblicazioni.
-2. Separare gli aggiornamenti di campo e video dai rispettivi modelli di dati, preservando l’ordine delle operazioni sincrone dello scout.
-3. Proseguire la scansione delle duplicazioni e la verifica dei confini del dominio dopo ogni modifica. La scansione a soglie documentate non dimostra l’assenza di qualsiasi duplicazione semantica.
+1. Ridurre gli accoppiamenti tra i controller della preparazione sincrona e delle azioni dello scout, mantenendo i confini verificati fra transizioni, descrizioni dei controlli e costruzione delle viste.
+2. Ridurre il coordinamento incrociato ancora presente nei controller dei filtri e nelle operazioni di caricamento/reset; mantenere i confini aciclici già verificati.
 
 Le misure di righe e byte restano dati di confronto. La chiusura di questo lavoro dipende da responsabilità, riuso, comportamento verificato e rimozione degli accoppiamenti, non dalla cancellazione di righe vuote.

@@ -1,9 +1,10 @@
 
 
+
 import { isDesktopCourtModalLayout } from "./layout/modals.js";
 
 import { normalizePlayerKey } from "./teams/player-identity.js";
-import { getTeamScopeFromEvent, makePlayerKey, isPlayerKeyInScope } from "./teams/selectors.js";
+import { getTeamScopeFromEvent } from "./teams/selectors.js";
 import { session } from "./state/scout-ui.js";
 import { renderPlayerPhotoEditor } from "./players/photo-editor.js";
 
@@ -324,15 +325,7 @@ export function ensureVideoLayoutState() {
   return matchState.state.uiVideoLayout;
 }
 
-export function ensureVideoAnalysisSortState() {
-  const current =
-    matchState.state.uiVideoAnalysisSort && typeof matchState.state.uiVideoAnalysisSort === "object" ? matchState.state.uiVideoAnalysisSort : {};
-  matchState.state.uiVideoAnalysisSort = {
-    key: typeof current.key === "string" ? current.key : "",
-    dir: current.dir === "asc" || current.dir === "desc" ? current.dir : ""
-  };
-  return matchState.state.uiVideoAnalysisSort;
-}
+
 
 export function clampVideoLayoutSize(kind, size) {
   const limits = scoutUiState.VIDEO_LAYOUT_LIMITS[kind] || scoutUiState.VIDEO_LAYOUT_LIMITS.analysisHeight;
@@ -543,33 +536,9 @@ export function bindScoutColumnResize() {
   bindViewportResizeUpdates();
 }
 
-export function getAttackMetaForPlayer(scope, playerIdx) {
-  const scopedKey = scope + ":" + playerIdx;
-  if (scoutUiState.attackMetaByPlayer[scopedKey]) return scoutUiState.attackMetaByPlayer[scopedKey];
-  const fallbackKey = makePlayerKey(scope, playerIdx);
-  const direct = scoutUiState.attackMetaByPlayer[fallbackKey];
-  if (direct && direct.playerIdx === playerIdx && direct.scope === scope) return direct;
-  const keys = Object.keys(scoutUiState.attackMetaByPlayer);
-  for (let i = 0; i < keys.length; i += 1) {
-    const meta = scoutUiState.attackMetaByPlayer[keys[i]];
-    if (meta && meta.playerIdx === playerIdx && meta.scope === scope) return meta;
-  }
-  return null;
-}
 
-export function getActiveAttackKeyForScope(scope) {
-  if (scoutUiState.attackInlinePlayer && isPlayerKeyInScope(scoutUiState.attackInlinePlayer, scope)) {
-    return scoutUiState.attackInlinePlayer;
-  }
-  const keys = Object.keys(scoutUiState.attackMetaByPlayer);
-  for (let i = 0; i < keys.length; i += 1) {
-    const meta = scoutUiState.attackMetaByPlayer[keys[i]];
-    if (!meta || meta.scope !== scope) continue;
-    if (typeof meta.playerIdx !== "number") continue;
-    return keys[i];
-  }
-  return null;
-}
+
+
 
 
 

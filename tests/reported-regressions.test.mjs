@@ -240,11 +240,11 @@ test("il dialogo ffmpeg permette di copiare il comando CPU o GPU", () => {
 
 test("il nome output ffmpeg usa il preset video attivo", () => {
   const events = readFileSync(new URL("../src/features/video/video-events.js", import.meta.url), "utf8");
-  const filters = readFileSync(new URL("../src/features/analysis/analysis-filters.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/video/view.js", import.meta.url), "utf8");
+  const filters = readFileSync(new URL("../src/features/analysis/video-filter-model.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/video/view-commands.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/analysis/analysis-filters.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/video/view.js", import.meta.url), "utf8");
   const copy = extract(events, "async function copyFfmpegFromSelection", "function renderEventsLog");
   assert.match(copy, /getActiveVideoFilterPresetName\(\)/);
   assert.match(copy, /sanitizeVideoOutputBase\(presetName\)/);
-  assert.match(readFileSync(new URL("../src/features/analysis/filters.js", import.meta.url), "utf8"), /activeVideoFilterPresetId = id/);
+  assert.match(readFileSync(new URL("../src/features/analysis/video-preset-commands.js", import.meta.url), "utf8"), /activeVideoFilterPresetId = id/);
   assert.match(filters, /function getActiveVideoFilterPresetName\(\)/);
 });
 
@@ -258,7 +258,7 @@ test("una partita in pausa o conclusa non blocca più la modifica squadra", () =
 
 test("tutti i dati esposti nella tabella eventi sono modificabili", () => {
   const editor = readFileSync(new URL("../src/features/events/point-direction.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/video/event-editor.js", import.meta.url), "utf8");
-  const view = readFileSync(new URL("../src/features/events/table-view.js", import.meta.url), "utf8");
+  const view = readFileSync(new URL("../src/features/events/table-model.js", import.meta.url), "utf8");
   [
     "eventId",
     "homeScore",
@@ -357,7 +357,7 @@ test("campi squadra, foto e ruoli hanno gli stili richiesti", () => {
 });
 
 test("il renderer del campo risolve il roster nello scope prima di calcolare l'alzatrice", () => {
-  const rendering = readFileSync(new URL("../src/features/scout/court-view.js", import.meta.url), "utf8");
+  const rendering = readFileSync(new URL("../src/features/scout/court-model.js", import.meta.url), "utf8");
   const cards = rendering;
   const rosterDeclaration = cards.indexOf("const players = getPlayersForScope(scope)");
   const setterLookup = cards.indexOf("players.indexOf(name)");
@@ -406,7 +406,7 @@ test("le formazioni usano i numeri del proprio roster e sezioni blu e rossa", ()
 test("l'avatar precede il nome e viene riutilizzato nel confronto giocatrici", () => {
   const analysis = readFileSync(new URL("../src/components/PlayerAnalysis.jsx", import.meta.url), "utf8");
   assert.ok(analysis.indexOf('className="player-analysis-identity__avatar"') < analysis.indexOf('className="player-analysis-identity__text"'));
-  assert.match(readFileSync(new URL("../src/features/analysis/player-view.js", import.meta.url), "utf8"), /photo:\s*getPlayerPhotoForScope\(analysisScope, name\)/);
+  assert.match(readFileSync(new URL("../src/features/analysis/player-snapshot-model.js", import.meta.url), "utf8"), /photo:\s*getPlayerPhotoForScope\(analysisScope, name\)/);
   assert.match(analysis, /<Identity snapshot=\{snapshot\} compact/);
   assert.match(css, /\.player-analysis-identity\s*\{[\s\S]*?display:\s*flex/);
   assert.match(css, /\.player-analysis-identity\.is-compact \.player-analysis-identity__avatar/);

@@ -1,3 +1,4 @@
+
 import { cleanOpponentLiberos } from "../roster-data.js";
 import { normalizePlayers } from "../../../domain/player-names.js";
 
@@ -5,11 +6,12 @@ import { session } from "../../state/teams-core-player-model.js";
 import { session as rosterLineupState } from "../../state/roster-lineup.js";
 import { session as matchState } from "../../../../js/globals.js";
 import { loadOpponentTeamFromStorage, extractRosterFromTeam } from "../storage/team-repository.js";
-import { ensureCourtShape, session as courtEngineState, renderPlayersManagerList, updateOpponentAutoRoleBaseCourtCache, resetAutoRoleCache } from "../court/court-engine.js";
+import { session as courtEngineState, renderPlayersManagerList } from "../court/court-engine.js";
+import {ensureCourtShape,updateAutoRoleBaseCourtCache,resetAutoRoleCache} from "../court-state-model.js";
 import { ensureCourtShapeFor } from "../court-model.js";
 import { getTeamScopeFromEvent } from "../selectors.js";
 import { getCurrentTeamPayload, getCurrentOpponentPayload } from "../current-payload.js";
-import { updatePlayersList, renderLiberoChipsInline, renderLineupChips, updateOpponentRotationDisplay } from "../court/court-ui-bootstrap.js";
+import { updatePlayersList, renderLiberoChipsInline, updateOpponentRotationDisplay } from "../court/court-ui-bootstrap.js";
 import { renderPlayers } from "../../live/team-rendering.js";
 import { publishTeamEditorMode } from "../editor-view.js";
 import { saveState } from "../../storage/save-state.js";
@@ -274,7 +276,7 @@ export function renamePlayerAtIndex(idx, nextNameRaw) {
   renderPlayersManagerList();
   renderPlayers();
   renderLiberoChipsInline();
-  renderLineupChips();
+
   renderLiberoTags();
   renderAggregatedTable();
   renderEventsLog();
@@ -290,16 +292,7 @@ export function renamePlayerAtIndex(idx, nextNameRaw) {
 
 
 
-export function setTeamCourt(scope = "our", court = []) {
-  if (scope === "opponent") {
-    matchState.state.opponentCourt = court;
-    if (matchState.state.autoRolePositioning) {
-      updateOpponentAutoRoleBaseCourtCache(court);
-    }
-  } else {
-    matchState.state.court = court;
-  }
-}
+
 
 
 
@@ -376,6 +369,6 @@ export function applyOpponentDefaultLineup(names = [], rotation = 1) {
   matchState.state.opponentRotation = Math.min(6, Math.max(1, rot));
   updateOpponentRotationDisplay();
   if (matchState.state.autoRolePositioning) {
-    updateOpponentAutoRoleBaseCourtCache(matchState.state.opponentCourt);
+    updateAutoRoleBaseCourtCache(matchState.state.opponentCourt, "opponent");
   }
 }

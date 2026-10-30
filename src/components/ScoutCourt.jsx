@@ -12,6 +12,10 @@ function act(callback, event) {
     report(error);
   }
 }
+function actSkill(action, event) {
+  if (!action) return;
+  act(() => appEvents.runScoutSkillAction(action, event), event);
+}
 function report(error) {
   console.error("Scout non registrato", error);
   window.alert(error.message);
@@ -28,7 +32,7 @@ export function ScoutSkillControls({ view, disabled }) {
           disabled={disabled}
           onClick={(event) => {
             event.stopPropagation();
-            act(view.cancel, event);
+            actSkill(view.cancel, event);
           }}
         >
           ✕
@@ -59,7 +63,7 @@ export function ScoutSkillControls({ view, disabled }) {
                 data-player-name={button.data?.playerName}
                 data-skill-id={button.data?.skillId}
                 data-code={button.data?.code}
-                onClick={(event) => act(button.onClick, event)}
+                onClick={(event) => actSkill(button.action, event)}
               >
                 {button.text}
               </button>
@@ -70,7 +74,7 @@ export function ScoutSkillControls({ view, disabled }) {
           <div
             key={index}
             className={group.className}
-            onPointerDown={(event) => act(group.onPointerDown, event)}
+            onPointerDown={(event) => actSkill(group.pointerAction, event)}
           >
             {content}
           </div>

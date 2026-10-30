@@ -9,7 +9,7 @@ import { FilterField } from "../ui/FilterField.jsx";
 import { AppActionButton } from "../AppActions.jsx";
 import { AggregatedTotalScore, AggregatedSetCards } from "../AggregatedScore.jsx";
 import { AggTabButton } from "../RuntimeControls.jsx";
-import { PlayerAnalysisHeader, PlayerAnalysisSelect, PlayerAnalysisToggle, PlayerAnalysisHero, PlayerAnalysisBody, PlayerComparison } from "../PlayerAnalysis.jsx";
+import { PlayerAnalysisRegion, PlayerAnalysisHeader, PlayerAnalysisSelect, PlayerAnalysisToggle, PlayerAnalysisHero, PlayerAnalysisBody, PlayerComparison } from "../PlayerAnalysis.jsx";
 
 import { DistributionGrid } from "../AnalysisTable.jsx";
 import { AggregatedTable, AggregatedExtraTable } from "../AggregatedTable.jsx";
@@ -160,13 +160,13 @@ export function AggregatedPage() {
                   {"\n                  Confronta\n                "}
                 </label>
               </div>
-              <FilterField
+              <PlayerAnalysisRegion as={FilterField} region="compareFilter"
                 id="player-analysis-compare-filter"
-                className="analysis-filter hidden"
+                className="analysis-filter"
                 label="Confronta con"
               >
                 <PlayerAnalysisSelect compare />
-              </FilterField>
+              </PlayerAnalysisRegion>
               <FilterField className="analysis-filter" label="Campo">
                 <AnalysisFilter
                   id="player-analysis-court-side"
@@ -198,21 +198,21 @@ export function AggregatedPage() {
               </div>
             </div>
             <PlayerAnalysisHero />
-            <div id="player-analysis-table-wrap" className="table-wrapper">
+            <PlayerAnalysisRegion id="player-analysis-table-wrap" className="table-wrapper">
               <table className="agg-table player-analysis-table">
                 <PlayerAnalysisHeader />
                 <PlayerAnalysisBody />
               </table>
-            </div>
+            </PlayerAnalysisRegion>
             <PlayerComparison />
-            <div className="player-analysis-columns">
+            <PlayerAnalysisRegion className="player-analysis-columns">
               {['attack', 'serve'].map(variant => (
-                <div key={variant} id={'player-analysis-' + variant} className="player-analysis-section">
+                <PlayerAnalysisRegion key={variant} preference={variant === 'attack' ? 'showAttack' : 'showServe'} id={'player-analysis-' + variant} className="player-analysis-section">
                   <div className="player-analysis-column"><TrajectoryAnalysisPanel variant={variant} individual /></div>
-                </div>
+                </PlayerAnalysisRegion>
               ))}
 
-              <div
+              <PlayerAnalysisRegion preference="showSecond"
                 id="player-analysis-second"
                 className="player-analysis-section"
               >
@@ -227,15 +227,15 @@ export function AggregatedPage() {
             />
                   </div>
                 </div>
-              </div>
-            </div>
-            <div className="analysis-skill-charts-panel player-skill-charts-panel">
+              </PlayerAnalysisRegion>
+            </PlayerAnalysisRegion>
+            <PlayerAnalysisRegion className="analysis-skill-charts-panel player-skill-charts-panel">
               <ChartMetricFilter kind="player" />
               <SkillChartGrid
                 kind="player"
                 id="player-analysis-skill-chart-grid"
               />
-            </div>
+            </PlayerAnalysisRegion>
           </div>
         </TabPanel>
         <div className="controls-row agg-actions">

@@ -1,7 +1,7 @@
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { getTeamScopeFromEvent, getOppositeScope, getPlayersForScope, isSkillEnabledForScope, isFarSideForScope } from "../teams/selectors.js";
 import { getPlayerIdForScope } from "../teams/player-identity.js";
-import { getAttackMetaForPlayer } from "../scout-ui.js";
+import { getAttackMetaForPlayer } from "./flow-model.js";
 import { session as teamManagementState } from "../state/live-team-management.js";
 import { session as browserEffectsState } from "../../app/browser-effects.js";
 import { cancelPartialSkillFlowForScope, getServeBaseZoneForPlayer, clearServeTypeInlineListener, applyAttackTrajectoryToEvent, clearAttackSelection } from "./skill-selection.js";

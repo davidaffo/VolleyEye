@@ -1,6 +1,8 @@
 import { readSourceFixture as readFileSync } from "./source-fixture.mjs";
 
 export const ROSTER_SOURCE_FILES = [
+  "src/features/scout/court-model.js",
+  "src/features/teams/court-state-model.js",
   "src/features/teams/set-start-model.js",
   "src/features/analysis/player-model.js",
   "src/domain/events.js",

@@ -1,11 +1,11 @@
-import { mirrorTrajectoryPoint, getAttackZone } from "../../domain/trajectory-geometry.js";
+import { mirrorTrajectoryPoint, getAttackZone, clamp01 } from "../../domain/trajectory-geometry.js";
 import { session } from "../state/live-trajectories.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { setAttackTrajectoryCourtSizing, updateCourtModalPlacement, restoreModalToPopup } from "../scout-ui.js";
 import { getTrajectoryImageForZone } from "../analysis/trajectory-assets.js";
 import { isDesktopCourtModalLayout, setCourtAreaLocked, setModalOpenState } from "../layout/modals.js";
 import { getTeamScopeFromEvent, isFarSideForScope } from "../teams/selectors.js";
-import { clamp01 } from "../../domain/trajectory-geometry.js";
+
 import { trajectoryModalStore } from "../../state/roster-import-store.mjs";
 import { publishReactTrajectoryImage, publishReactTrajectoryModal } from "../scout/trajectory-dialog.js";
 import { session as matchState } from "../../../js/globals.js";
@@ -16,7 +16,7 @@ import { suppressTransientClicks } from "./lineup-editor.js";
 import { saveState } from "../storage/save-state.js";
 import { renderEventsLog } from "../video/video-events.js";
 import { renderVideoAnalysis } from "../video/playback.js";
-import { enforceAutoLiberoForState } from "../teams/court/court-engine.js";
+import { enforceAutoLiberoForState } from "../teams/court-state-model.js";
 import { renderPlayers } from "./team-rendering.js";
 import { updateNextSkillIndicator } from "./game-flow.js";
 
@@ -175,7 +175,7 @@ export function setTrajectoryNetPointId(id) {
   scoutUiState.trajectoryNetPointId = id;
   if (!scoutUiState.elAttackTrajectoryNetpoints) return;
   trajectoryModalStore.publish({netPoint:id});return;
-  
+
 }
 
 export function updateTrajectoryImageFromStart() {

@@ -12,7 +12,8 @@ I file sono raggruppati per dominio in `src/features/`:
   battuta-ricezione-alzata-attacco-muro-difesa partire da `live/game-flow.js`.
 - `analysis/`: metriche, grafici, tabelle, filtri, viste giocatrice, traiettorie,
   match sheet, distribuzioni e report.
-- `video/`: selezione degli eventi, sorgenti video, editor e playback.
+- `events/`: selezione condivisa, schema delle tabelle, modelli degli editor e comandi di modifica.
+- `video/`: eventi e ordinamento video, sorgenti, tempi, editor e playback.
 - `io/`: import ed export di match, database e demo; codec, inserimento live,
   import ed export DataVolley sono moduli separati.
 - `core/`: lifecycle, caricamento dello stato, binding dei controlli e bootstrap.
@@ -23,6 +24,8 @@ Lo stato locale dei controller è in `src/features/state/`; i controller importa
 `src/app/application.js` coordina avvio e API esterna. `actions.mjs` compone i comandi; `view-publication.js` coordina le pubblicazioni e osserva gli eventi di dominio. I moduli delle feature non importano questi registri. `browser-effects.js` registra listener e timer; `dispose.js` li rimuove e libera player, observer e trascinamenti. Un nuovo avvio ripristina gli effetti; il completamento di un avvio precedente smontato non rende pronta la nuova sessione.
 
 ## Modelli e comandi delle analisi
+
+`analysis/cache-model.js` centralizza l’invalidazione senza importare controller: grafici (cache e token di rendering), eventi (anche revisione e chiave) e analisi completa (anche statistiche e ambito). Il ricalcolo delle statistiche invalida eventi e grafici conservando la precedente semantica della cache statistica. `analysis/reset-model.js` azzera le selezioni del match usando la stessa operazione di dominio dei reset individuali, conserva l’identità dei Set e ripristina la squadra predefinita prima di invalidare le cache. Caricamento, modifica eventi e gestione squadre importano direttamente queste operazioni; non attraversano il controller dei filtri. Persistenza e aggiornamento delle viste restano nei chiamanti.
 
 `analysis/summary-model.js` costruisce il tabellino e restituisce dati, riepilogo e ambito. `analysis/aggregated-table.js` prepara i filtri, pubblica la vista e coordina gli altri pannelli. Il modello non richiama i controller.
 
@@ -36,7 +39,39 @@ Distribuzioni e filtri dei relativi eventi sono in `setting-model.js` e `player-
 
 `trajectory-canvas.js` gestisce disegno e caricamento delle immagini, senza importare i controller. I componenti React passano il callback di ridisegno, che smette di agire dopo lo smontaggio. La cache riusa anche le immagini ancora in caricamento e notifica una sola volta ciascun callback registrato, evitando nuove immagini a ogni ridisegno.
 
-I test verificano che il grafo dei modelli e dei publisher separati sia aciclico e che non importi comandi o controller UI; il controllo degli import mancanti copre anche i nuovi moduli.
+La scheda giocatrice separa statistiche e foto in `player-snapshot-model.js`, modifiche delle preferenze in `player-commands.js` e coordinamento dei pannelli in `skill-tables.js`. `player-view.js` pubblica i dati e compone le viste di confronto. `PlayerAnalysisRegion` usa lo store per visibilità di confronto, tabella, grafici e sezioni: conserva i pannelli montati e non richiede modifiche imperative delle classi.
+
+`video-filter-model.js` definisce un unico schema per campi, tipi, snapshot, ripristino e conteggio dei filtri attivi. Anche il registro dei controlli usa quello schema. Preset e multiscout hanno publisher e comandi separati; il publisher multiscout riceve esplicitamente il callback di selezione. La pubblicazione delle metriche è in `settings/metrics-view.js`; la sincronizzazione dei pulsanti dello scout resta nel controller.
+
+`video/overlay-model.js` seleziona l’evento e costruisce il testo dell’overlay senza dipendere da playback o editor. Il publisher video e i comandi dei controlli video sono moduli distinti.
+
+`events/table-model.js` definisce ogni colonna una sola volta: intestazione, testo, ordinamento, modifica multipla e campo dell’editor. Produce dati senza callback UI; `table-commands.js` aggiunge i comandi e coordina contesti, selezione, undo, pubblicazione e traiettorie. `edit-model.js` descrive i controlli e le modifiche ai dati senza importare playback o aggiornamenti delle viste. Il collegamento alle righe DOM indicizza le righe precedenti una sola volta, conservando i riferimenti necessari allo scorrimento.
+
+`events/selection-model.js` condivide lettura e potatura delle selezioni tra log, tabella video, overlay, inserimento, mobile e play by play. Le diverse priorità restano esplicite: l’overlay segue l’ordine della tabella, il play by play usa la prima chiave selezionata, il mobile può mostrare la prima riga senza selezionarla. `video/event-model.js` accede agli eventi e ne sincronizza i collegamenti alle giocatrici; `sort-model.js` ordina una copia, conservando la cronologia originale e lo spareggio crescente per ID. I tempi del play by play sono in `playback-model.js`; etichette di squadra e fondamentale sono condivise con la tabella in `events/display-model.js`.
+
+I test verificano che il grafo dei modelli e dei publisher separati sia aciclico e che non importi comandi o controller UI; il controllo degli import mancanti copre anche i nuovi moduli. Un controllo aggiuntivo segnala chiamate a funzioni esportate del progetto prive di import o dichiarazione locale, per evitare che i globali delle fixture nascondano import mancanti. La suite browser esegue l’app effettiva sul percorso GitHub Pages.
+
+## Stato del campo e operazioni dello scout
+
+`teams/court-state-model.js` gestisce formazione base, cache dei ruoli, fase di gioco, disposizione visualizzata, zone, validazione dei posizionamenti e sostituzioni automatiche del libero. Non importa controller, publisher o salvataggi. Le operazioni possono modificare lo stato del match e le cache del campo; non leggono né aggiornano il DOM.
+
+Cache e ripristino usano lo stesso codice con ambito `our`/`opponent`, senza esportazioni parallele per l’avversaria. Le rotazioni condividono spostamento degli slot e ripristino della titolare quando il libero entra in prima linea. Conservano la direzione predefinita dei due controlli, la rotazione della squadra interessata e le regole del libero al servizio.
+
+`court-engine.js` mantiene i comandi che registrano cambi, salvano e aggiornano le viste. `court-ui-bootstrap.js` mantiene i gesti, le animazioni e il coordinamento dei controlli. `prepareAutoRolePositioning` restituisce se la disposizione è stata aggiornata: il controller salva e pubblica soltanto in quel caso, mantenendo l’ordine delle operazioni. La validazione restituisce un messaggio; il comando decide se mostrarlo.
+
+Eliminati i precedenti richiami privi di effetti a `renderLineupChips` e `syncCurrentSetUI`. La panchina del libero pubblica entrambe le squadre una volta per aggiornamento; il test delle interazioni verifica anche il numero di pubblicazioni.
+
+`scout/court-model.js` prepara i dati delle schede e della panchina: rosa della squadra, nomi, numeri, capitani, foto, ruoli, ordine sul campo e posizione del rientro. I dati delle singole schede sono clonabili e non contengono callback. La preparazione normalizza il campo come prima, senza leggere il DOM. `pick-model.js` legge ambito delle modalità punto/errore ed elenco ordinato delle riserve; previsione del fondamentale e selettori dell’attacco sono in `live/flow-model.js`, senza dipendere dai controller di layout.
+
+`scout/court-commands.js` coordina cattura delle posizioni per l’animazione, dati, controlli dei fondamentali e pubblicazione. Costruisce ogni scheda insieme ai propri controlli: la preparazione di un attacco può cambiare il flusso sincrono prima della scheda successiva. La panchina viene preparata dopo le schede e l’orientamento finale viene letto al momento della pubblicazione. Il campo nascosto non esegue queste operazioni.
+
+`scout/court-view.js` pubblica soltanto negli store React. `skill-preparation.js` contiene la preparazione sincrona dei controlli dei fondamentali e le relative transizioni; sostituisce il precedente `live/court-view-model.js`, che importava registrazione eventi, modali, salvataggi e renderer. I due campi continuano a riusare gli stessi componenti React e le stesse funzioni di composizione con ambito esplicito.
+
+`scout/skill-control-model.js` costruisce gruppi, pulsanti, intestazioni, colori e ordine dei codici. `buildPreparedScoutSkillView` trasforma la descrizione preparata in controlli, senza leggere lo stato del match o avviare operazioni: campo e dialogo riusano lo stesso costruttore per battuta, attacco e valutazione, conservando classi e intestazioni specifiche. Le azioni sono descrittori clonabili `command`/`args`, con un contesto immutabile della giocatrice condiviso dai pulsanti. La vista dei controlli non contiene callback né riferimenti DOM.
+
+`skill-preparation.js` sceglie il tipo di controllo e restituisce dati clonabili dopo aver coordinato le transizioni che devono avvenire durante la preparazione: battuta pendente, conferma del muro, ascolto della tastiera e Damp automatico. `court-commands.js` esegue preparazione e costruzione della vista consecutivamente per ciascuna scheda; non esiste più un modulo intermedio `skill-controls.js`. `skill-actions.js` gestisce registrazione, pulizia dopo il successo, selezione, annullamento, muro e avvio dell’attacco. La registrazione normale e l’errore di battuta limitato mantengono le loro diverse pulizie; annullare una selezione parziale resta diverso dal tornare alla scelta del fondamentale.
+
+`ScoutSkillControls` invia i descrittori al registro degli eventi pronti, che esegue il comando immediatamente e conserva il gesto originale. Il target DOM e i metadati vengono letti al clic, prima dell’attesa della registrazione. Campo e dialogo condividono tipi di battuta, ordine dei codici, costruzione dei gruppi e comandi; il contesto specifica quando aggiornare il campo e quando tornare ai codici o chiudere il dialogo. Tastiera e pulsanti riusano la selezione del tipo di battuta; i diversi avvii dell’attacco riusano lo stesso comando, mantenendo distinto il Damp automatico, che consuma il tipo prima dell’apertura e marca i metadati prima del ridisegno.
 
 ## Squadre, rose e match
 

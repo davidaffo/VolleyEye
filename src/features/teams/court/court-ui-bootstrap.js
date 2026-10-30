@@ -1,10 +1,15 @@
+import { rotateCourtState, prepareAutoRolePositioning, playersChanged, ensureCourtShape, cleanCourtPlayers, resetAutoRoleCache, getLockedMapForScope } from "../court-state-model.js";
+
+
 import { getRoleLabelForRotation } from "../roles.js";
 import { normalizePlayers } from "../../../domain/player-names.js";
-import { buildNumbersForNames, setTeamPreferredLibero, getTeamCourt, getTeamLiberos, sortNamesByNumber, getTeamPreferredLibero, getTeamPlayers, getTeamLiberoAutoMap, setTeamLiberoAutoMap, formatNameWithNumberFor, formatNameWithNumber } from "../roster-data.js";
-import { applyDefaultLineup, setTeamCourt } from "../core/player-model.js";
-import { playersChanged, renderPlayersManagerList, ensureCourtShape, cleanCourtPlayers, resetAutoRoleCache, canPlaceInSlotForScope, setCourtPlayerForScope, commitCourtChangeForScope, getLockedMapForScope, syncCurrentSetUI, applyAutoLiberoSubstitutionToCourtForScope, sanitizeAutoRoleBaseCourtForScope, enforceAutoLiberoForState, getCurrentPhase, updateAutoRoleBaseCourtCache, applyAutoLiberoSubstitutionToCourt } from "./court-engine.js";
+import { buildNumbersForNames, setTeamPreferredLibero, getTeamCourt, getTeamLiberos, formatNameWithNumberFor, formatNameWithNumber } from "../roster-data.js";
+import { applyDefaultLineup } from "../core/player-model.js";
+
+import { renderPlayersManagerList, canPlaceInSlotForScope, setCourtPlayerForScope, commitCourtChangeForScope } from "./court-engine.js";
+
 import { isLiberoForScope } from "../libero-model.js";
-import { ensureCourtShapeFor, cloneCourtLineup } from "../court-model.js";
+import { ensureCourtShapeFor } from "../court-model.js";
 import { hasMatchDataForReset, renderTeamsSelect } from "../storage/match-repository.js";
 import { session as matchState } from "../../../../js/globals.js";
 import { sanitizeRosterIsolation } from "../core/state-store.js";
@@ -17,7 +22,7 @@ import { renderLiberoTags } from "../imports/camp3-import.js";
 import { renderMetricsConfig } from "../settings/metrics-editor.js";
 import { renderEventsLog } from "../../video/video-events.js";
 import { renderAggregatedTable } from "../../analysis/aggregated-table.js";
-import { publishLiberoBench } from "../../scout/court-view.js";
+import { renderLiberoBench } from "../../scout/court-commands.js";
 import { renderLiveScore } from "../../live/live-score-and-set.js";
 import { setReactSettingsOpen } from "../../settings/view.js";
 import { setGlobalModalState } from "../../layout/modals.js";
@@ -106,7 +111,7 @@ export function updatePlayersList(newPlayers, options = {}) {
 
   renderPlayers();
   renderLiberoChipsInline();
-  renderLineupChips();
+
   renderLiberoTags();
   renderMetricsConfig();
   renderTeamsSelect();
@@ -359,64 +364,27 @@ export function handleBenchClickForScope(name, scope = "our") {
   setCourtPlayerForScope(targetPos, "main", name, scope);
 }
 
-export function orderLiberosByPreference(names, scope = "our", numbersMap = {}) {
-  const list = (sortNamesByNumber(names, numbersMap));
-  const preferred = getTeamPreferredLibero(scope);
-  if (preferred && list.includes(preferred)) {
-    return [preferred].concat(list.filter(n => n !== preferred));
-  }
-  return list;
-}
 
-export function cleanLiberos() {
-  const valid = new Set(matchState.state.players || []);
-  matchState.state.liberos = (matchState.state.liberos || []).filter(n => valid.has(n));
-  cleanLiberoAutoMap();
-}
 
-export function cleanLiberoAutoMap() {
-  cleanLiberoAutoMapForScope("our");
-}
 
-export function cleanLiberoAutoMapForScope(scope = "our") {
-  const validPlayers = new Set(getTeamPlayers(scope));
-  const libSet = new Set(getTeamLiberos(scope));
-  const map = getTeamLiberoAutoMap(scope) || {};
-  const cleaned = {};
-  Object.entries(map).forEach(([replaced, libero]) => {
-    if (validPlayers.has(replaced) && libSet.has(libero)) {
-      cleaned[replaced] = libero;
-    }
-  });
-  setTeamLiberoAutoMap(scope, cleaned);
-}
 
-export function releaseReplaced(name, keepIdx, court = matchState.state.court) {
-  const updated = rosterLineupState.lineupCore.releaseReplacedFromCourt(
-    court,
-    name,
-    keepIdx,
-  );
-  if (court === matchState.state.court) {
-    matchState.state.court = updated;
-  } else {
-    updated.forEach((slot, idx) => (court[idx] = slot));
-  }
-  return;
-}
+
+
+
+
+
 
 export function renderLiberoChipsInline() {
-  renderTeamLiberoChipsInline("our");
-  renderTeamLiberoChipsInline("opponent");
+  renderLiberoBench();
 }
 
 export function renderOpponentLiberoChipsInline() {
-  renderTeamLiberoChipsInline("opponent");
+  renderLiberoBench();
 }
 
-export function renderTeamLiberoChipsInline(scope) {publishLiberoBench();}
 
-export function renderLineupChips() {}
+
+
 
 export function updateRotationDisplay() {
   const rotationLabel = rot => "P" + String(parseInt(rot, 10) || 1);
@@ -485,7 +453,7 @@ export function syncAutoRoleP1AmericanToggle() {
 export function setCurrentSet(value, options = {}) {
   const setNum = Math.min(5, Math.max(1, parseInt(value, 10) || 1));
   matchState.state.currentSet = setNum;
-  syncCurrentSetUI(setNum);
+
   if (options.save !== false) {
     saveState();
   }
@@ -498,7 +466,7 @@ export function setRotation(value) {
   saveState();
   updateRotationDisplay();
   renderPlayers();
-  renderLineupChips();
+
   if (matchState.state.autoRolePositioning && typeof applyAutoRolePositioning === "function") {
     applyAutoRolePositioning();
   }
@@ -519,30 +487,7 @@ export function setOpponentRotation(value) {
 }
 
 export function rotateOpponentCourt(direction = "cw") {
-  const baseCourt =
-    matchState.state.autoRolePositioning && rosterLineupState.opponentAutoRoleBaseCourt
-      ? ensureCourtShapeFor(rosterLineupState.opponentAutoRoleBaseCourt)
-      : ensureCourtShapeFor(matchState.state.opponentCourt);
-  let rotated = [];
-  const rot = matchState.state.opponentRotation || 1;
-  if (direction === "ccw") {
-    rotated = [baseCourt[1], baseCourt[2], baseCourt[3], baseCourt[4], baseCourt[5], baseCourt[0]];
-    matchState.state.opponentRotation = rot === 1 ? 6 : rot - 1;
-  } else {
-    rotated = [baseCourt[5], baseCourt[0], baseCourt[1], baseCourt[2], baseCourt[3], baseCourt[4]];
-    matchState.state.opponentRotation = ((rot % 6) || 0) + 1;
-  }
-  const rotatedClean = rotated.map(slot => Object.assign({}, slot));
-  const rotatedBase = rotatedClean.map((slot, idx) => {
-    if (isLiberoForScope(slot.main, "opponent") && rosterLineupState.FRONT_ROW_INDEXES.has(idx)) {
-      return { main: slot.replaced || "", replaced: "" };
-    }
-    return slot;
-  });
-  const withLibero = applyAutoLiberoSubstitutionToCourtForScope(rotatedBase, "opponent", {
-    skipServerOnServe: true
-  });
-  setTeamCourt("opponent", withLibero);
+  rotateCourtState(direction, "opponent");
   saveState();
   updateOpponentRotationDisplay();
   renderOpponentPlayers({ animate: true });
@@ -581,40 +526,12 @@ export function animateFlip(prevRects, selector, keyBuilder) {
 }
 
 export function applyAutoRolePositioning() {
-  if (!matchState.state.autoRolePositioning) return;
-  ensureCourtShape();
-  sanitizeAutoRoleBaseCourtForScope("our");
-  enforceAutoLiberoForState({ skipServerOnServe: true });
-  const phase = getCurrentPhase("our");
-  const rot = matchState.state.rotation || 1;
-  if (rosterLineupState.autoRolePhaseApplied === phase && rosterLineupState.autoRoleRotationApplied === rot) return;
-  if (!rosterLineupState.autoRoleBaseCourt) {
-    if (matchState.state.autoRoleBaseCourt && matchState.state.autoRoleBaseCourt.length === 6) {
-      rosterLineupState.autoRoleBaseCourt = cloneCourtLineup(matchState.state.autoRoleBaseCourt);
-    } else {
-      updateAutoRoleBaseCourtCache(matchState.state.court);
-    }
-  }
-  const baseLineup =
-    rosterLineupState.autoRoleBaseCourt && rosterLineupState.autoRoleBaseCourt.length === 6
-      ? cloneCourtLineup(rosterLineupState.autoRoleBaseCourt)
-      : ensureCourtShapeFor(matchState.state.court);
-  const permuted = rosterLineupState.applyPhasePermutation({
-    lineup: baseLineup,
-    rotation: rot,
-    phase,
-    isServing: matchState.state.isServing,
-    liberos: matchState.state.liberos || [],
-    autoRoleP1American: !!matchState.state.autoRoleP1American
-  });
-  rosterLineupState.autoRoleRenderedCourt = permuted; // overlay per la vista, non alteriamo il base
-  rosterLineupState.autoRolePhaseApplied = phase;
-  rosterLineupState.autoRoleRotationApplied = rot;
-  saveState();
-  renderPlayers();
-  renderLiberoChipsInline();
-  renderLineupChips();
-  updateRotationDisplay();
+ if (!prepareAutoRolePositioning()) return;
+ saveState();
+ renderPlayers();
+ renderLiberoChipsInline();
+
+ updateRotationDisplay();
 }
 
 export function rotateCourt(direction) {
@@ -628,40 +545,10 @@ export function rotateCourt(direction) {
     const pos = el.dataset.slotIndex || "";
     return name || "mini-" + pos;
   });
-  ensureCourtShape();
-  const court =
-    matchState.state.autoRolePositioning && rosterLineupState.autoRoleBaseCourt
-      ? ensureCourtShapeFor(rosterLineupState.autoRoleBaseCourt)
-      : ensureCourtShapeFor(matchState.state.court);
-  let rotated = [];
-  if (direction === "cw") {
-    rotated = [court[5], court[0], court[1], court[2], court[3], court[4]];
-    matchState.state.rotation = ((matchState.state.rotation || 1) % 6) + 1;
-  } else {
-    rotated = [court[1], court[2], court[3], court[4], court[5], court[0]];
-    matchState.state.rotation = matchState.state.rotation === 1 ? 6 : matchState.state.rotation - 1;
-  }
-  const rotatedClean = rotated.map(slot => Object.assign({}, slot));
-  const rotatedBase = rotatedClean.map((slot, idx) => {
-    if ((matchState.state.liberos || []).includes(slot.main) && rosterLineupState.FRONT_ROW_INDEXES.has(idx)) {
-      return { main: slot.replaced || "" , replaced: "" };
-    }
-    return slot;
-  });
-  const withLibero = applyAutoLiberoSubstitutionToCourt(rotatedBase, { skipServerOnServe: true });
-  // Aggiorna sempre il lineup base ruotato
-  matchState.state.court = withLibero;
-  if (matchState.state.autoRolePositioning) {
-    updateAutoRoleBaseCourtCache(withLibero);
-    resetAutoRoleCache();
-    applyAutoRolePositioning();
-  } else {
-    matchState.state.court = withLibero;
-    resetAutoRoleCache();
-  }
+  if (rotateCourtState(direction)) applyAutoRolePositioning();
   saveState();
   renderPlayers();
-  renderLineupChips();
+
   updateRotationDisplay();
   animateFlip(prevCourtRects, ".court-card", el => {
     const name = el.dataset.playerName || "";

@@ -7,15 +7,16 @@ import { readScoutSource } from "./helpers/scout-source.mjs";
 import { readStyleSource } from "./helpers/style-source.mjs";
 import { readRosterSource } from "./helpers/roster-source.mjs";
 
+import { sourceFunctions } from "./helpers/source-functions.mjs";
+
 const scoutSource = readScoutSource();
 const html = readAppHtml();
 const css = readStyleSource();
 const rosterSource = readRosterSource();
 
 function loadColumnLayout(gridWidth = 1200) {
-  const start = scoutSource.indexOf("function ensureScoutColumnState");
-  const end = scoutSource.indexOf("function getAttackMetaForPlayer", start);
-  assert.ok(start >= 0 && end > start, "funzioni layout colonne non trovate");
+  const layout = sourceFunctions(scoutSource, ['ensureScoutColumnState', 'getScoutColumnAvailableWidth', 'resolveScoutColumnWidths', 'applyScoutColumnLayout', 'setScoutColumnWidth', 'stopScoutColumnResize', 'startScoutColumnResize', 'bindScoutColumnResizeHandle', 'bindScoutColumnResize']);
+  assert.ok(layout.includes('function ensureScoutColumnState'), 'funzioni layout colonne non trovate');
   const properties = new Map();
   const makeHandle = () => ({
     offsetWidth: 10,
@@ -48,7 +49,7 @@ function loadColumnLayout(gridWidth = 1200) {
     Math
   };
   vm.createContext(context);
-  vm.runInContext(scoutSource.slice(start, end), context);
+  vm.runInContext(layout, context);
   return { context, properties };
 }
 

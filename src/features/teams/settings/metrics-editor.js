@@ -1,3 +1,4 @@
+import { syncSkillFlowButtons } from '../court/court-ui-bootstrap.js';
 import { SKILLS, METRIC_DEFAULTS, RESULT_CODES, POINT_RULE_DEFAULTS } from "../../../../js/globals.js";
 import { ensureMetricsConfigDefaults, ensurePointRulesDefaults, normalizeMetricConfig, normalizePointRule } from "../../settings/rules.js";
 import { session as matchState } from "../../../../js/globals.js";
@@ -5,7 +6,7 @@ import { saveState } from "../../storage/save-state.js";
 import { recalcAllStatsAndUpdateUI } from "../../analysis/stats-update.js";
 import { renderPlayers } from "../../live/team-rendering.js";
 import { session as rosterLineupState } from "../../state/roster-lineup.js";
-import { publishReactMetrics } from "../../analysis/filters.js";
+import { publishReactMetrics } from "../../settings/metrics-view.js";
 
 export function toggleMetricAssignment(skillId, category, code) {
   ensureMetricsConfigDefaults();
@@ -172,5 +173,10 @@ export function resetPointRulesToDefault() {
 export function renderMetricsConfig() {
   if (!rosterLineupState.elMetricsConfig) return;
 
-return publishReactMetrics();
+  publishReactMetrics();
+  try {
+    syncSkillFlowButtons();
+  } catch (error) {
+    console.error("Skill flow buttons sync failed", error);
+  }
 }

@@ -1,12 +1,11 @@
-import { getBaseZoneForPlayer } from '../teams/court-model.js';
+
 
 
 import { session as matchState } from "../../../js/globals.js";
-import { getPlayersForScope } from "../teams/selectors.js";
-import { session as scoutUiState } from "../state/scout-ui.js";
-import { getAutoRoleDisplayCourt } from "../live/team-management.js";
-import { invalidateSkillChartCaches } from "./skill-chart-model.js";
-import { initStats } from "../teams/court/court-engine.js";
+
+
+import { invalidateAnalysisEventCaches } from "./cache-model.js";
+import { initStats } from "../teams/court-state-model.js";
 import { renderLiveScore } from "../live/live-score-and-set.js";
 import { renderAggregatedTable } from "./aggregated-table.js";
 import { session as rosterLineupState } from "../state/roster-lineup.js";
@@ -19,19 +18,7 @@ import { renderVideoAnalysis } from "../video/playback.js";
 
 
 
-export function getCurrentZoneForPlayer(playerIdx, forSkillId = null, scope = "our") {
-  const players = getPlayersForScope(scope);
-  if (typeof playerIdx !== "number" || !players || !players[playerIdx]) return null;
-  const name = players[playerIdx];
-  if (matchState.state.autoRolePositioning && forSkillId) {
-    const displayCourt = getAutoRoleDisplayCourt(forSkillId, scope);
-    const displayIdx = displayCourt.findIndex(
-      item => item && item.slot && (item.slot.main === name || item.slot.replaced === name)
-    );
-    if (displayIdx !== -1) return displayIdx + 1;
-  }
-  return getBaseZoneForPlayer(playerIdx, scope);
-}
+
 
 
 
@@ -40,10 +27,7 @@ export function getCurrentZoneForPlayer(playerIdx, forSkillId = null, scope = "o
 
 
 export function recalcAllStatsAndUpdateUI() {
-  scoutUiState.analysisEventsCache = null;
-  scoutUiState.analysisEventsCacheKey = "";
-  scoutUiState.analysisEventsCacheRevision += 1;
-  invalidateSkillChartCaches();
+  invalidateAnalysisEventCaches();
   initStats();
   matchState.state.events.forEach(ev => {
     const idx = ev.playerIdx;

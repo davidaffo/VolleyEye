@@ -1,6 +1,17 @@
+import { renderAnalysisTeamFilter } from "./analysis-filters.js";
+import { getAnalysisTeamScope, getAnalysisCourtSide } from "./filter-model.js";
+import {
+  renderAnalysisCourtSideRadios,
+  getCheckedRadioValue,
+} from "./filter-view.js";
+import { saveState } from "../storage/save-state.js";
+import { renderPlayerAnalysisSkillCharts } from "./skill-analysis.js";
+import {
+  renderPlayerTrajectoryAnalysis,
+  renderPlayerServeTrajectoryAnalysis,
+} from "./player-trajectories.js";
+import { renderPlayerSecondTable } from "./player-second-distribution.js";
 import { ensurePlayerAnalysisState } from "./player-model.js";
-
-
 
 import { session as matchState } from "../../../js/globals.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
@@ -9,44 +20,38 @@ import { setModalOpenState } from "../layout/modals.js";
 
 import { session as rosterLineupState } from "../state/roster-lineup.js";
 
-
-
-
-
-
-
 import { publishReactPlayerAnalysis } from "./player-view.js";
-import { publishReactAggSkillModal, setReactAggSkillOpen } from "./charts-view.js";
-
-
-
-
-
-
+import {
+  publishReactAggSkillModal,
+  setReactAggSkillOpen,
+} from "./charts-view.js";
 
 export function setSelectedErrorType(typeId, container) {
   scoutUiState.selectedErrorType = typeId || "Generic";
   if (!container) return;
   const buttons = container.querySelectorAll("[data-error-type]");
-  buttons.forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.errorType === scoutUiState.selectedErrorType);
+  buttons.forEach((btn) => {
+    btn.classList.toggle(
+      "active",
+      btn.dataset.errorType === scoutUiState.selectedErrorType,
+    );
   });
 }
 
-
-
-
-
-
-
 export function getAggTableElements() {
-  const table = rosterLineupState.elAggTableBody ? rosterLineupState.elAggTableBody.closest("table") : null;
+  const table = rosterLineupState.elAggTableBody
+    ? rosterLineupState.elAggTableBody.closest("table")
+    : null;
   const thead = table ? table.querySelector("thead") : null;
   return { table, thead };
 }
 
 export function resetAggTableView() {
-  scoutUiState.aggTableView = { mode: "summary", skillId: null, playerIdx: null };
+  scoutUiState.aggTableView = {
+    mode: "summary",
+    skillId: null,
+    playerIdx: null,
+  };
 }
 
 export function getSkillIdFromHeader(th) {
@@ -60,16 +65,6 @@ export function getSkillIdFromHeader(th) {
   return null;
 }
 
-
-
-
-
-
-
-
-
-
-
 export function applySkillClassToCells(cells, skillId, startIndex = 0) {
   if (!skillId) return;
   cells.forEach((td, idx) => {
@@ -78,44 +73,47 @@ export function applySkillClassToCells(cells, skillId, startIndex = 0) {
   });
 }
 
-
-
-
-
-export function updatePlayerAnalysisVisibility() {
-  const prefs = ensurePlayerAnalysisState();
-  if (rosterLineupState.elPlayerAnalysisAttack) {
-    rosterLineupState.elPlayerAnalysisAttack.classList.toggle("hidden", !prefs.showAttack);
-  }
-  if (rosterLineupState.elPlayerAnalysisServe) {
-    rosterLineupState.elPlayerAnalysisServe.classList.toggle("hidden", !prefs.showServe);
-  }
-  if (rosterLineupState.elPlayerAnalysisSecond) {
-    rosterLineupState.elPlayerAnalysisSecond.classList.toggle("hidden", !prefs.showSecond);
-  }
-}
-
 export function renderPlayerAnalysis() {
   if (!rosterLineupState.elPlayerAnalysisBody) return;
+  renderAnalysisTeamFilter();
+  const prefs = ensurePlayerAnalysisState();
+  const scope = getAnalysisTeamScope();
+  if (rosterLineupState.elPlayerAnalysisCourtSide)
+    renderAnalysisCourtSideRadios(
+      rosterLineupState.elPlayerAnalysisCourtSide,
+      getAnalysisCourtSide(prefs.courtSideByScope[scope]),
+      () => {
+        prefs.courtSideByScope[getAnalysisTeamScope()] = getAnalysisCourtSide(
+          getCheckedRadioValue(rosterLineupState.elPlayerAnalysisCourtSide),
+        );
+        saveState();
+        renderPlayerAnalysis();
+      },
+      "analysis-player-court-side",
+    );
 
-return publishReactPlayerAnalysis();
+  const { compare } = publishReactPlayerAnalysis();
+  if (compare) return;
+  renderPlayerAnalysisSkillCharts();
+  if (prefs.showAttack) renderPlayerTrajectoryAnalysis();
+  if (prefs.showServe) renderPlayerServeTrajectoryAnalysis();
+  if (prefs.showSecond) renderPlayerSecondTable();
 }
 
 export function renderAggSkillModal(skillId, playerIdx) {
-
-publishReactAggSkillModal(skillId,playerIdx);return;
+  publishReactAggSkillModal(skillId, playerIdx);
+  return;
 }
 
 export function openAggSkillModal(skillId, playerIdx) {
   if (!matchState.elAggSkillModal || !matchState.elAggSkillModalBody) return;
   renderAggSkillModal(skillId, playerIdx);
-setReactAggSkillOpen(true);
+  setReactAggSkillOpen(true);
   setModalOpenState(true);
 }
 
 export function closeAggSkillModal() {
   if (!matchState.elAggSkillModal) return;
-setReactAggSkillOpen(false);
+  setReactAggSkillOpen(false);
   setModalOpenState(false);
 }
-

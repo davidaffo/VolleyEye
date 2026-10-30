@@ -12,7 +12,7 @@ import { getPlayerIdForScope } from "../teams/player-identity.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { ensurePointRulesDefaults } from "../settings/rules.js";
 import { rotateCourt, rotateOpponentCourt, applyAutoRolePositioning, setCurrentSet } from "../teams/court/court-ui-bootstrap.js";
-import { enforceAutoLiberoForScope, enforceAutoLiberoForState } from "../teams/court/court-engine.js";
+import { enforceAutoLiberoForScope, enforceAutoLiberoForState } from "../teams/court-state-model.js";
 import { saveState } from "../storage/save-state.js";
 import { getLastFlowEvent, computeTwoTeamFlowFromEvent, getPredictedSkillId } from "./flow-model.js";
 import { updateNextSkillIndicator } from "./game-flow.js";
@@ -35,7 +35,7 @@ const liveScoreAndSetState = session;
 export function renderLiveScore() {
   const summary = computePointsSummary(matchState.state.currentSet || 1);
   const totalLabel = summary.totalFor + " - " + summary.totalAgainst;
-  
+
   updateSetScoreDisplays();
   updateMatchStatusUI();
   publishRuntimeView();

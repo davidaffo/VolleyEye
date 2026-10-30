@@ -1,5 +1,5 @@
 import { SKILLS, session as matchState } from "../../../js/globals.js";
-import { getDefaultSkillDurationMs } from "./video-events.js";
+import { getDefaultSkillDurationMs } from "./playback-model.js";
 import { session as videoEventsState } from "../state/video-video-events.js";
 import { videoEditStore } from "../../state/video-edit-store.mjs";
 import { setGlobalModalState } from "../layout/modals.js";

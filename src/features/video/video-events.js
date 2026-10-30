@@ -1,22 +1,29 @@
+import { eventTableStore } from '../../state/event-table-store.mjs';
+import { getDefaultSkillDurationMs } from "./playback-model.js";
+import { pruneEventSelection, getRowsForContext, getSelectedRows, getActiveEventContextKey, getSelectedVideoRowForInsert } from "../events/selection-model.js";
+
+import { buildVideoOverlayLinesForEvent } from "./overlay-model.js";
 import { getEventKey } from "../../domain/event-key.js";
 
 import { session } from "../state/video-video-events.js";
-import { normalizePhaseValue } from "../analysis/values.js";
+
 import { eventLogSummaryStore } from '../../state/event-table-store.mjs';
 import { SKILLS } from "../../../js/globals.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
-import { getPlayerNumbersForScope, getTeamScopeFromEvent, getPlayersForScope, getTeamNameForScope } from "../teams/selectors.js";
+import { getPlayerNumbersForScope, getTeamScopeFromEvent, getTeamNameForScope } from "../teams/selectors.js";
 import { setModalOpenState } from "../layout/modals.js";
-import { ensureVideoAnalysisSortState } from "../scout-ui.js";
-import { publishReactEventSelection, publishReactEventTable } from "../events/table-view.js";
+
+
+import { publishReactEventTable } from "../events/table-commands.js";
 import { session as matchState } from "../../../js/globals.js";
 import { videoViewStore } from "../../state/video-view-store.mjs";
 import { closeCurrentEdit } from "../live/game-flow.js";
 import { session as rosterLineupState } from "../state/roster-lineup.js";
 import { seekVideoToTime, renderVideoAnalysis } from "./playback.js";
-import { pushVideoUndoSnapshot, getVideoBaseTimeMs, getVideoSkillEvents } from "./video-sources.js";
+import { pushVideoUndoSnapshot } from "./video-sources.js";
+import { getVideoBaseTimeMs, getVideoSkillEvents } from "./event-model.js";
 import { computeEventVideoTime } from "./timing.js";
-import { resolvePlayerIdx } from "../events/player-links.js";
+
 import { refreshAfterVideoEdit, renderEventTableRows } from "./event-editor.js";
 import { saveState } from "../storage/save-state.js";
 import { formatNameWithNumberFor } from "../teams/roster-data.js";
@@ -25,9 +32,9 @@ import { openReactVideoScore, closeReactVideoScore, chooseReactFfmpegEncoder } f
 import { publishRuntimeView } from "../core/runtime-view.js";
 import { openReactVideoEdit, closeReactVideoEdit, readVideoEditInputs } from "./edit-view.js";
 import { getPointDirectionForScope, getEventPointValue } from "../analysis/scores.js";
-import { valueToString } from "../../domain/value-string.js";
+
 import { getNextEventId } from "../live/live-entry.js";
-import { getActiveVideoFilterPresetName } from "../analysis/analysis-filters.js";
+import { getActiveVideoFilterPresetName } from "../analysis/video-filter-model.js";
 import { matchesVideoFilters } from "../analysis/filter-model.js";
 import { session as analysisFiltersState } from "../state/analysis-analysis-filters.js";
 import { recalcAllStatsAndUpdateUI } from "../analysis/stats-update.js";
@@ -36,7 +43,7 @@ import { updateLiveDvwMirror } from "../io/datavolley-live-entry.js";
 import { getErrorTypeLabel } from "../analysis/player-model.js";
 import { recordSetAction } from "../live/live-score-and-set.js";
 import { renderPlayers } from "../live/team-rendering.js";
-import { renderLiberoChipsInline, renderLineupChips, updateRotationDisplay } from "../teams/court/court-ui-bootstrap.js";
+import { renderLiberoChipsInline, updateRotationDisplay } from "../teams/court/court-ui-bootstrap.js";
 import { session as teamManagementState } from "../state/live-team-management.js";
 
 
@@ -45,18 +52,7 @@ const videoEventsState = session;
 
 
 
-export function pruneEventSelection() {
-  const allKeys = new Set();
-  Object.values(scoutUiState.eventTableContexts).forEach(ctx => {
-    ctx.rows.forEach(r => allKeys.add(r.key));
-  });
-  Array.from(scoutUiState.selectedEventIds).forEach(key => {
-    if (!allKeys.has(key)) scoutUiState.selectedEventIds.delete(key);
-  });
-  if (scoutUiState.lastSelectedEventId && !allKeys.has(scoutUiState.lastSelectedEventId)) {
-    scoutUiState.lastSelectedEventId = null;
-  }
-}
+
 
 export function clearEventSelection({ clearContexts = true } = {}) {
   scoutUiState.selectedEventIds.clear();
@@ -72,7 +68,7 @@ export function clearEventSelection({ clearContexts = true } = {}) {
 
 export function updateSelectionStyles() {
   pruneEventSelection();
-  publishReactEventSelection();
+  eventTableStore.select([...scoutUiState.selectedEventIds]);
   updateVideoSelectionCount();
 }
 
@@ -81,7 +77,7 @@ export function updateVideoSelectionCount() {
   const ctx = scoutUiState.eventTableContexts.video;
   const count = ctx && ctx.rows ? ctx.rows.filter(r => scoutUiState.selectedEventIds.has(r.key)).length : 0;
    videoViewStore.publish({ selectionCount: count }); return; 
-  
+
 }
 
 export function registerEventTableContext(key, ctx) {
@@ -96,30 +92,9 @@ export function removeEventTableContext(key) {
   updateSelectionStyles();
 }
 
-export function getRowsForContext(contextKey) {
-  const ctx = scoutUiState.eventTableContexts[contextKey];
-  return ctx ? ctx.rows : [];
-}
 
-export function getSelectedRows(contextKey = null) {
-  if (contextKey && scoutUiState.eventTableContexts[contextKey]) {
-    return scoutUiState.eventTableContexts[contextKey].rows.filter(r => scoutUiState.selectedEventIds.has(r.key));
-  }
-  const seen = new Set();
-  const rows = [];
-  const ctxOrder = ["video", "log", ...Object.keys(scoutUiState.eventTableContexts)];
-  ctxOrder.forEach(key => {
-    const ctx = scoutUiState.eventTableContexts[key];
-    if (!ctx) return;
-    ctx.rows.forEach(r => {
-      if (scoutUiState.selectedEventIds.has(r.key) && !seen.has(r.key)) {
-        seen.add(r.key);
-        rows.push(r);
-      }
-    });
-  });
-  return rows;
-}
+
+
 
 export function setSelectionForContext(contextKey, keysSet, anchorKey = null, opts = {}) {
   const ctx = contextKey ? scoutUiState.eventTableContexts[contextKey] : null;
@@ -156,13 +131,7 @@ export function selectRangeForContext(contextKey, anchorKey, targetKey, opts = {
   setSelectionForContext(contextKey, range, anchorKey, opts);
 }
 
-export function getActiveEventContextKey() {
-  if (scoutUiState.lastEventContextKey && scoutUiState.eventTableContexts[scoutUiState.lastEventContextKey]) return scoutUiState.lastEventContextKey;
-  if (rosterLineupState.activeTab === "video" && scoutUiState.eventTableContexts.video) return "video";
-  if (scoutUiState.eventTableContexts.log) return "log";
-  const keys = Object.keys(scoutUiState.eventTableContexts);
-  return keys[0] || null;
-}
+
 
 export function isEditingField(target) {
   if (!target) return false;
@@ -319,37 +288,9 @@ export function buildSelectedSegments() {
   return segments;
 }
 
-export function getVideoOverlayEvent() {
-  const ctx = scoutUiState.eventTableContexts.video;
-  if (!ctx || !ctx.rows || !ctx.rows.length) return null;
-  let key = scoutUiState.lastSelectedEventId && scoutUiState.selectedEventIds.has(scoutUiState.lastSelectedEventId) ? scoutUiState.lastSelectedEventId : null;
-  if (!key) {
-    const match = ctx.rows.find(r => scoutUiState.selectedEventIds.has(r.key));
-    key = match ? match.key : null;
-  }
-  if (!key) return null;
-  const row = ctx.rows.find(r => r.key === key);
-  return row ? row.ev : null;
-}
 
-export function buildVideoOverlayLinesForEvent(ev) {
-  if (!ev) return [];
-  const setNum = ev.set || matchState.state.currentSet || 1;
-  const homeScore = ev.homeScore !== undefined && ev.homeScore !== null && ev.homeScore !== "" ? ev.homeScore : "-";
-  const visitorScore =
-    ev.visitorScore !== undefined && ev.visitorScore !== null && ev.visitorScore !== "" ? ev.visitorScore : "-";
-  const setLine = `Set ${setNum} · ${homeScore} - ${visitorScore}`;
-  const scope = getTeamScopeFromEvent(ev);
-  const numbers = getPlayerNumbersForScope(scope);
-  const rawName = ev.playerName || "";
-  const fullName = rawName || "—";
-  const numValue = rawName && numbers ? numbers[rawName] : "";
-  const playerLine = numValue ? `${numValue} - ${fullName}` : fullName;
-  const skillLabel = (SKILLS.find(s => s.id === ev.skillId) || {}).label || ev.skillId || "";
-  const skillLine = [skillLabel, ev.code || ""].filter(Boolean).join(" ") || "—";
-  const rotationLine = ev.rotation ? `P${ev.rotation}` : "P-";
-  return [[setLine, playerLine, skillLine, rotationLine].filter(Boolean).join(" · ")];
-}
+
+
 
 export function updateVideoAnalysisOverlay() {
 
@@ -447,111 +388,11 @@ export function correctVideoScoresFromSelection(startHome, startAway) {
   closeVideoScoreModal();
 }
 
-export function getVideoSortDisplayValue(ev, key, baseMs = null) {
-  if (!ev || !key) return "";
-  const scope = getTeamScopeFromEvent(ev);
-  const players = getPlayersForScope(scope);
-  const numbers = getPlayerNumbersForScope(scope);
-  switch (key) {
-    case "eventId":
-      return Number.isFinite(ev.eventId) ? ev.eventId : -1;
-    case "videoTime": {
-      const videoTime =
-        typeof ev.videoTime === "number" ? ev.videoTime : computeEventVideoTime(ev, baseMs || getVideoBaseTimeMs(getVideoSkillEvents()));
-      return Number.isFinite(videoTime) ? videoTime : -1;
-    }
-    case "set":
-      return parseInt(ev.set, 10) || 0;
-    case "homeScore":
-      return parseInt(ev.homeScore, 10) || 0;
-    case "visitorScore":
-      return parseInt(ev.visitorScore, 10) || 0;
-    case "team":
-      if (ev.team === "opponent") return matchState.state.selectedOpponentTeam || "Avversaria";
-      if (ev.team && ev.team !== "opponent") return ev.teamName || matchState.state.selectedTeam || "Squadra";
-      if (ev.code === "opp-error" || ev.code === "opp-point" || ev.playerName === "Avversari") {
-        return matchState.state.selectedOpponentTeam || "Avversaria";
-      }
-      return matchState.state.selectedTeam || "Squadra";
-    case "player": {
-      const name = ev.playerName || players[resolvePlayerIdx(ev)] || "";
-      return name ? formatNameWithNumberFor(name, numbers) || name : "";
-    }
-    case "setter": {
-      const setterName = ev.setterName || (typeof ev.setterIdx === "number" ? players[ev.setterIdx] : "");
-      return setterName ? formatNameWithNumberFor(setterName, numbers) || setterName : "";
-    }
-    case "skill":
-      return ev.actionType === "timeout"
-        ? "Timeout"
-        : ev.actionType === "substitution"
-          ? "Cambio"
-          : (SKILLS.find(s => s.id === ev.skillId) || {}).label || ev.skillId || "";
-    case "code":
-      return ev.code || "";
-    case "zone":
-      return parseInt(ev.zone || ev.playerPosition, 10) || 0;
-    case "setterPosition":
-      return parseInt(ev.setterPosition || ev.rotation, 10) || 0;
-    case "opponentSetterPosition":
-      return parseInt(ev.opponentSetterPosition, 10) || 0;
-    case "receivePosition":
-      return parseInt(ev.receivePosition, 10) || 0;
-    case "base":
-      return valueToString(ev.base);
-    case "setType":
-      return valueToString(ev.setType);
-    case "combination":
-      return valueToString(ev.combination);
-    case "serveType":
-      return valueToString(ev.serveType);
-    case "receiveEvaluation":
-      return valueToString(ev.receiveEvaluation);
-    case "attackEvaluation":
-      return valueToString(ev.attackEvaluation);
-    case "attackBp":
-      return normalizePhaseValue(ev.attackBp) || "";
-    case "attackType":
-      return valueToString(ev.attackType);
-    case "blockNumber":
-      return parseInt(ev.blockNumber, 10) || 0;
-    case "durationMs":
-      return parseInt(ev.durationMs, 10) || 0;
-    default:
-      return valueToString(ev[key]);
-  }
-}
 
-export function sortVideoEvents(events, baseMs = null) {
-  const sortState = ensureVideoAnalysisSortState();
-  if (!sortState.key || !sortState.dir) return events;
-  const dirFactor = sortState.dir === "desc" ? -1 : 1;
-  return [...events].sort((a, b) => {
-    const av = getVideoSortDisplayValue(a, sortState.key, baseMs);
-    const bv = getVideoSortDisplayValue(b, sortState.key, baseMs);
-    if (typeof av === "number" && typeof bv === "number") {
-      if (av !== bv) return (av - bv) * dirFactor;
-    } else {
-      const cmp = String(av || "").localeCompare(String(bv || ""), "it", { sensitivity: "base", numeric: true });
-      if (cmp !== 0) return cmp * dirFactor;
-    }
-    const aId = Number.isFinite(a.eventId) ? a.eventId : 0;
-    const bId = Number.isFinite(b.eventId) ? b.eventId : 0;
-    return aId - bId;
-  });
-}
 
-export function getSelectedVideoRowForInsert() {
-  const ctx = scoutUiState.eventTableContexts.video;
-  if (!ctx || !ctx.rows || !ctx.rows.length) return null;
-  let key = scoutUiState.lastSelectedEventId && scoutUiState.selectedEventIds.has(scoutUiState.lastSelectedEventId) ? scoutUiState.lastSelectedEventId : null;
-  if (!key) {
-    const first = ctx.rows.find(r => scoutUiState.selectedEventIds.has(r.key));
-    key = first ? first.key : null;
-  }
-  if (!key) return null;
-  return ctx.rows.find(r => r.key === key) || null;
-}
+
+
+
 
 export function addEmptyVideoEventAfterSelection() {
   const insertRow = getSelectedVideoRowForInsert();
@@ -834,7 +675,7 @@ export function recordTimeoutEvent() {
   renderEventsLog();
   renderPlayers();
   renderLiberoChipsInline();
-  renderLineupChips();
+
   updateRotationDisplay();
 }
 
@@ -844,7 +685,7 @@ export function recordOpponentTimeoutEvent() {
   renderEventsLog();
   renderPlayers();
   renderLiberoChipsInline();
-  renderLineupChips();
+
   updateRotationDisplay();
 }
 
@@ -861,7 +702,7 @@ export function recordSubstitutionEvent({ playerIn, playerOut, teamScope = "our"
   renderEventsLog();
   renderPlayers();
   renderLiberoChipsInline();
-  renderLineupChips();
+
   updateRotationDisplay();
 }
 
@@ -875,9 +716,7 @@ export function closeOffsetModal() {
 closeReactVideoEdit("offset");return;
 }
 
-export function getDefaultSkillDurationMs() {
-  return 5000;
-}
+
 
 export function openSkillDurationModal() {
 
@@ -948,9 +787,9 @@ export function applyUnifyTimes() {
   if (!teamManagementState.elUnifyTimesGrid) return;
   const enabledTypes = new Set();
   const preferredSources = {};
-  
+
     readVideoEditInputs("unify").forEach(input=>{if(input.checked)enabledTypes.add(input.dataset.linkType);preferredSources[input.dataset.linkType]=input.value;});
-  
+
   if (!enabledTypes.size) {
     alert("Seleziona almeno un collegamento da unificare.");
     return;

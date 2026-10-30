@@ -1,13 +1,14 @@
 import { stripCourtReplacements } from "../../domain/player-names.js";
-import { STORAGE_KEY } from "../../../js/globals.js";
+import { STORAGE_KEY, session as matchState } from "../../../js/globals.js";
 import { resetSetTypeState } from "../live/game-flow.js";
 import { getLastFlowEvent, computeTwoTeamFlowFromEvent } from "../live/flow-model.js";
-import { session as matchState } from "../../../js/globals.js";
+
 import { session as rosterLineupState } from "../state/roster-lineup.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { broadcastResetSignal, navigateToResetBootstrap, applyScoutColumnLayout } from "../scout-ui.js";
 import { getTeamScopeFromEvent, getPlayerNumbersForScope } from "../teams/selectors.js";
-import { enforceAutoLiberoForState, syncCurrentSetUI, initStats, commitCourtChangeForScope, commitCourtChange } from "../teams/court/court-engine.js";
+import { commitCourtChangeForScope, commitCourtChange } from "../teams/court/court-engine.js";
+import { enforceAutoLiberoForState, initStats } from "../teams/court-state-model.js";
 import { isLiberoForScope } from "../teams/libero-model.js";
 import { clearEventSelection, renderEventsLog } from "../video/video-events.js";
 import { getEventKey } from "../../domain/event-key.js";
@@ -17,7 +18,7 @@ import { saveState } from "../storage/save-state.js";
 import { buildMatchDisplayName } from "../teams/match-details.js";
 import { recalcAllStatsAndUpdateUI } from "../analysis/stats-update.js";
 import { renderPlayers } from "../live/team-rendering.js";
-import { updateRotationDisplay, renderLiberoChipsInline, renderLineupChips, setCurrentSet, rotateOpponentCourt, rotateCourt } from "../teams/court/court-ui-bootstrap.js";
+import { updateRotationDisplay, renderLiberoChipsInline, setCurrentSet, rotateOpponentCourt, rotateCourt } from "../teams/court/court-ui-bootstrap.js";
 import { session as stateDbState } from "../state/storage-state-db.js";
 import { getStateDb } from "../storage/state-db.js";
 import { hasUsableMatch } from "../teams/settings/scouting-config.js";
@@ -129,7 +130,7 @@ export function resetMatch() {
     matchState.elYoutubeFrameScout.src = "";
     matchState.elYoutubeFrameScout.style.display = "none";
   }
-  syncCurrentSetUI(1);
+
   initStats();
   saveState();
   recalcAllStatsAndUpdateUI();
@@ -273,7 +274,7 @@ export function restoreScoutActionSnapshot(snapshot) {
   renderEventsLog();
   renderPlayers();
   renderLiberoChipsInline();
-  renderLineupChips();
+
   updateRotationDisplay();
   renderLiveScore();
   updateSetScoreDisplays();
@@ -296,7 +297,7 @@ export function undoLastEvent() {
     renderEventsLog();
     renderPlayers();
     renderLiberoChipsInline();
-    renderLineupChips();
+
     updateRotationDisplay();
     return;
   }
@@ -320,7 +321,7 @@ export function undoLastEvent() {
     renderEventsLog();
     renderPlayers();
     renderLiberoChipsInline();
-    renderLineupChips();
+
     updateRotationDisplay();
     updateSetScoreDisplays();
     return;
@@ -366,7 +367,7 @@ export function undoLastEvent() {
   renderEventsLog();
   renderPlayers();
   renderLiberoChipsInline();
-  renderLineupChips();
+
   updateRotationDisplay();
 }
 
@@ -436,7 +437,7 @@ export function deleteEventByKey(eventKey) {
   renderEventsLog();
   renderPlayers();
   renderLiberoChipsInline();
-  renderLineupChips();
+
   updateRotationDisplay();
   renderTrajectoryAnalysis();
   renderServeTrajectoryAnalysis();
@@ -504,7 +505,7 @@ export function registerServiceWorker() {
   const showBanner = () => {
     if (!banner) return;
     updateBannerStore.publish({visible:true});return;
-    
+
   };
   const hideBanner = () => {
     if (!banner) return;

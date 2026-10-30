@@ -108,3 +108,10 @@ export function buildAttackTypeLabel(value) {
   const normalized = valueToString(value).trim();
   return normalized || "Non specificato";
 }
+
+export function formatAttackPhaseLabel(val) {
+  const phase = normalizePhaseValue(val);
+  if (phase === "bp") return "BP";
+  if (phase === "so") return "SO";
+  return "";
+}

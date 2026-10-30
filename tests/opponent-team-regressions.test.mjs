@@ -108,8 +108,10 @@ test("il clic sul libero avversario usa il cambio e non rimuove il ruolo", () =>
     handleBenchClickForScope: (name, scope) => { c.clicked = [name, scope]; }
   };
   for (const name of ["handleBenchDragStart", "handleBenchDragEnd", "handleBenchTouchMove", "handleBenchTouchEnd", "handleBenchTouchCancel"]) c[name] = () => {};
+  load(c, readFileSync(new URL("../src/features/scout/court-model.js", import.meta.url), "utf8"), ["buildLiberoBenchModel"]);
   load(c, readFileSync(new URL("../src/features/scout/court-view.js", import.meta.url), "utf8"), ["publishLiberoBench"]);
-  c.publishLiberoBench();
+  load(c, readFileSync(new URL("../src/features/scout/court-commands.js", import.meta.url), "utf8"), ["renderLiberoBench"]);
+  c.renderLiberoBench();
   view.opponent[0].onClick();
   assert.deepEqual(c.clicked, ["Libero", "opponent"]);
   assert.deepEqual(c.state.opponentLiberos, ["Libero"]);

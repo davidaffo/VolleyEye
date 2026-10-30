@@ -18,8 +18,9 @@ import { getDefaultDemoPreference, loadDefaultDemoMatch } from "../io/match-io.j
 import { session as matchIoState } from "../state/io-match-io.js";
 import { getCurrentMatchPayload } from "../teams/current-payload.js";
 import { session as matchState } from "../../../js/globals.js";
-import { renderPlayersManagerList, renderOpponentPlayersList, initStats } from "../teams/court/court-engine.js";
-import { updateRotationDisplay, renderLiberoChipsInline, renderLineupChips, applyAutoRolePositioning } from "../teams/court/court-ui-bootstrap.js";
+import { renderPlayersManagerList, renderOpponentPlayersList } from "../teams/court/court-engine.js";
+import { initStats } from "../teams/court-state-model.js";
+import { updateRotationDisplay, renderLiberoChipsInline, applyAutoRolePositioning } from "../teams/court/court-ui-bootstrap.js";
 import { renderOpponentLiberoTags, renderLiberoTags } from "../teams/imports/camp3-import.js";
 import { renderMetricsConfig } from "../teams/settings/metrics-editor.js";
 import { renderLiveScore, updateMatchStatusUI, setScoutControlsDisabled } from "../live/live-score-and-set.js";
@@ -180,7 +181,7 @@ export async function initializeApplicationState() {
   renderOpponentLiberoTags();
   renderOpponentPlayersList();
   renderLiberoChipsInline();
-  renderLineupChips();
+
   renderLiberoTags();
   renderMetricsConfig();
   renderTeamsSelect();
@@ -203,7 +204,7 @@ export async function initializeApplicationState() {
     renderEventsLog();
     renderAggregatedTable();
     renderLiberoChipsInline();
-    renderLineupChips();
+
     renderLiberoTags();
     renderMetricsConfig();
     renderTeamsSelect();

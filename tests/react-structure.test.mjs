@@ -78,25 +78,27 @@ test('domain and feature modules respect the application composition boundary', 
   }
 });
 
-test('analysis models have acyclic dependencies and do not import UI commands or publishers', async () => {
+test('analysis models and publishers have acyclic dependencies without UI controllers', async () => {
   const { readFileSync } = await import('node:fs');
   const { resolve, dirname } = await import('node:path');
   const { parsers } = await import('prettier/plugins/babel');
-  const roots = ['summary-model', 'chart-model', 'skill-chart-model', 'score-model', 'timeline-model', 'trajectory-model', 'player-trajectory-model', 'setting-model', 'player-setting-model', 'match-sheet-model', 'setting-view', 'trajectory-view', 'match-sheet-view', 'filter-view'];
+  const roots = ['cache-model', 'reset-model', '../scout/skill-control-model', '../scout/court-model', '../scout/pick-model', '../teams/court-state-model', '../events/edit-model', '../events/table-model', '../events/display-model', '../events/selection-model', '../video/event-model', '../video/sort-model', '../video/playback-model', 'player-snapshot-model', 'video-filter-model', '../video/overlay-model', 'summary-model', 'chart-model', 'skill-chart-model', 'score-model', 'timeline-model', 'trajectory-model', 'player-trajectory-model', 'setting-model', 'player-setting-model', 'match-sheet-model', 'setting-view', 'trajectory-view', 'match-sheet-view', 'filter-view'];
   const visited = new Set(), active = new Set();
-  function visit(file) {
+  function visit(file, allowPublish = false) {
+    const key = `${allowPublish}:${file}`;
     assert.ok(!active.has(file), `Cyclic analysis dependency: ${file}`);
-    if (visited.has(file)) return;
+    if (visited.has(key)) return;
     active.add(file);
     const ast = parsers.babel.parse(readFileSync(file, 'utf8')).program;
     for (const node of ast.body.filter(node => node.type === 'ImportDeclaration')) {
-      for (const specifier of node.specifiers) assert.ok(!/^(render|publish|openReact|changeReact|setActive)/.test(specifier.imported?.name || ''), `${file}: imports UI action ${specifier.imported?.name}`);
-      if (node.source.value.startsWith('.')) visit(resolve(dirname(file), node.source.value));
+      for (const specifier of node.specifiers) assert.ok(!(allowPublish ? /^(render|openReact|changeReact|setActive)/ : /^(render|publish|openReact|changeReact|setActive)/).test(specifier.imported?.name || ''), `${file}: imports UI action ${specifier.imported?.name}`);
+      if (node.source.value.startsWith('.')) visit(resolve(dirname(file), node.source.value), allowPublish);
     }
     active.delete(file);
-    visited.add(file);
+    visited.add(key);
   }
   for (const name of roots) visit(resolve(`src/features/analysis/${name}.js`));
+  for (const name of ['../scout/court-view', 'player-view', 'video-preset-view', 'multiscout-view', '../settings/metrics-view', '../video/view']) visit(resolve(`src/features/analysis/${name}.js`), true);
 });
 
 test('aggregated headers describe cloneable commands instead of closing over controllers', async () => {
@@ -177,4 +179,92 @@ test('shared filters preserve string selections and route changes through their 
     assert.deepEqual(readReactFilterValues({ id }), ['our:1', 'opponent:1']);
     assert.deepEqual(calls, [['single', event], ['split', event]]);
   } finally { filterStore.replace(previous); }
+});
+
+test('video filter snapshots preserve field types, detached values and previous-skill counting', async () => {
+  const { session } = await import('../src/features/state/analysis-analysis-filters.js');
+  const { applyVideoFilterSnapshot, snapshotVideoFilters, countActiveVideoFilters } = await import('../src/features/analysis/video-filter-model.js');
+  const previous = session.videoFilterState;
+  session.videoFilterState = {};
+  try {
+    applyVideoFilterSnapshot({ teams: [1, 'opponent'], players: ['our:1', 2], sets: ['2', 'bad', null], rotations: ['6'], zones: ['4'], receiveZones: ['5'], attackTypes: ['tip'], prevSkill: 'serve', ignored: ['x'] });
+    const snapshot = snapshotVideoFilters();
+    assert.deepEqual(snapshot.teams, ['1', 'opponent']);
+    assert.deepEqual(snapshot.players, ['our:1', '2']);
+    assert.deepEqual(snapshot.sets, [2, 0]);
+    assert.deepEqual(snapshot.rotations, [6]);
+    assert.deepEqual(snapshot.receiveZones, [5]);
+    assert.equal(countActiveVideoFilters(snapshot), 8);
+    assert.equal(Object.hasOwn(snapshot, 'ignored'), false);
+    snapshot.players.push('detached');
+    assert.equal(session.videoFilterState.players.has('detached'), false);
+    applyVideoFilterSnapshot(null);
+    assert.equal(snapshotVideoFilters().prevSkill, 'any');
+    assert.equal(countActiveVideoFilters(snapshotVideoFilters()), 0);
+    assert.equal(countActiveVideoFilters({ sets: [null], prevSkill: 'any', ignored: [1] }), 1);
+  } finally { session.videoFilterState = previous; }
+});
+
+test('video overlays resolve selected events without depending on playback controllers', async () => {
+  const { session } = await import('../src/features/state/scout-ui.js');
+  const { getVideoOverlayEvent, buildVideoOverlayLinesForEvent } = await import('../src/features/video/overlay-model.js');
+  const previous = [session.eventTableContexts, session.selectedEventIds, session.lastSelectedEventId, match.state];
+  const first = { set: 2, homeScore: 0, visitorScore: 3, team: 'opponent', playerName: 'Ada', skillId: 'serve', code: '#', rotation: 4 };
+  const second = { ...first, set: 3 };
+  session.eventTableContexts = { video: { rows: [{ key: 'first', ev: first }, { key: 'second', ev: second }] } };
+  session.selectedEventIds = new Set(['first', 'second']);
+  session.lastSelectedEventId = 'second';
+  match.state = { opponentPlayerNumbers: { Ada: 8 } };
+  try {
+    assert.equal(getVideoOverlayEvent(), second);
+    assert.match(buildVideoOverlayLinesForEvent(first)[0], /^Set 2 · 0 - 3 · 8 - Ada · .* # · P4$/);
+    session.lastSelectedEventId = 'missing';
+    assert.equal(getVideoOverlayEvent(), first);
+    session.selectedEventIds.clear();
+    assert.equal(getVideoOverlayEvent(), null);
+    assert.deepEqual(buildVideoOverlayLinesForEvent(null), []);
+  } finally { [session.eventTableContexts, session.selectedEventIds, session.lastSelectedEventId, match.state] = previous; }
+});
+
+test('calls to exported project functions have an explicit import or local binding', async () => {
+  const {readFileSync, readdirSync} = await import('node:fs');
+  const {parsers} = await import('prettier/plugins/babel');
+  const files = directory => readdirSync(directory, {withFileTypes:true}).flatMap(entry => entry.isDirectory() ? files(`${directory}/${entry.name}`) : [`${directory}/${entry.name}`]);
+  const modules = files('src').filter(path => /\.(js|jsx|mjs)$/.test(path)).map(path => ({path, ast:parsers.babel.parse(readFileSync(path,'utf8')).program}));
+  const exported = new Set(modules.flatMap(({ast}) => ast.body.filter(node => node.type === 'ExportNamedDeclaration' && node.declaration?.type === 'FunctionDeclaration').map(node => node.declaration.id.name)));
+  function visit(node, fn) {
+    if (!node || typeof node !== 'object') return;
+    if (node.type) fn(node);
+    for (const [key,value] of Object.entries(node)) {
+      if (['loc','tokens','comments','extra'].includes(key)) continue;
+      if (Array.isArray(value)) value.forEach(child => visit(child,fn));
+      else if (value && typeof value === 'object') visit(value,fn);
+    }
+  }
+  function bind(pattern, names) {
+    if (!pattern) return;
+    if (pattern.type === 'Identifier') names.add(pattern.name);
+    else if (pattern.type === 'RestElement') bind(pattern.argument,names);
+    else if (pattern.type === 'AssignmentPattern') bind(pattern.left,names);
+    else if (pattern.type === 'ObjectPattern') pattern.properties.forEach(property => bind(property.value || property.argument,names));
+    else if (pattern.type === 'ArrayPattern') pattern.elements.forEach(element => bind(element,names));
+  }
+  const missing = [];
+  for (const {path,ast} of modules) {
+    // Conservative scan: local declarations anywhere in the module may account for a call.
+    // This catches omitted imports after moves, without treating browser APIs as project functions.
+    const bindings = new Set();
+    visit(ast,node => {
+      if (node.type === 'ImportDeclaration') node.specifiers.forEach(specifier => bindings.add(specifier.local.name));
+      if (node.type === 'VariableDeclarator') bind(node.id,bindings);
+      if (/Function|Method/.test(node.type)) {
+        if (node.id) bind(node.id,bindings);
+        node.params?.forEach(parameter => bind(parameter,bindings));
+      }
+    });
+    visit(ast,node => {
+      if (node.type === 'CallExpression' && node.callee?.type === 'Identifier' && exported.has(node.callee.name) && !bindings.has(node.callee.name)) missing.push(`${path}:${node.loc.start.line} ${node.callee.name}`);
+    });
+  }
+  assert.deepEqual(missing,[], 'Project functions must not rely on globals supplied by test fixtures');
 });

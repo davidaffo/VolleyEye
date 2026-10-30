@@ -6,7 +6,7 @@ import test from "node:test";
 import { JSDOM } from "jsdom";
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
-const model = read("../src/features/live/court-view-model.js");
+const model = read("../src/features/scout/skill-control-model.js") + read("../src/features/scout/skill-actions.js") + read("../src/features/scout/skill-preparation.js");
 const globals = read("../js/globals.js").split("const PERSISTENT_DB_NAME")[0];
 function setup(options) {
   const dom = new JSDOM('<div id="target"></div>');
@@ -74,6 +74,7 @@ function setup(options) {
     clearAttackSelection: () => calls.push(["clear-attack"]),
     bindServeTypeInlineListener: () => calls.push(["bind-serve"]),
     startAttackSelection: () => calls.push(["start-attack"]),
+    setServeTypeFocusPlayer: () => calls.push(["focus-serve"]),
     setNextSetType: (value) => calls.push(["set-type", value]),
   });
   vm.runInContext(globals + model, context);
@@ -162,10 +163,11 @@ const scenarios = [
 for (const [name, options] of scenarios)
   test("React court preserves legacy actions: " + name, () => {
     const next = setup(options);
-    const view = next.context.buildScoutSkillView(0, "A", {
+    const view = next.context.buildPreparedScoutSkillView(next.context.prepareScoutSkillControls(0, "A", {
       scope: "our",
       nextSkillId: options.next || null,
-    });
+    }));
+    assert.deepEqual(JSON.parse(JSON.stringify(view)), JSON.parse(JSON.stringify(structuredClone(view))));
     const buttons = [];
     if (view.cancel) {
       const button = next.dom.window.document.createElement("button");
@@ -201,3 +203,51 @@ for (const [name, options] of scenarios)
     assert.equal(next.context.selected, reference("react-court:7816"));
     next.dom.window.close();
   });
+
+test('serve preparation binds once and presentation can repeat without touching the live flow', () => {
+  const { context, calls, dom } = setup({ next: 'serve' });
+  try {
+    const prepared = context.prepareScoutSkillControls(0, 'A', { nextSkillId: 'serve' });
+    assert.equal(prepared.kind, 'serve-types');
+    assert.deepEqual(calls, [['bind-serve']]);
+    const before = JSON.stringify(prepared);
+    const first = context.buildPreparedScoutSkillView(structuredClone(prepared));
+    const second = context.buildPreparedScoutSkillView(structuredClone(prepared));
+    assert.equal(JSON.stringify(first), JSON.stringify(second));
+    assert.equal(JSON.stringify(prepared), before);
+    assert.deepEqual(calls, [['bind-serve']]);
+  } finally { dom.window.close(); }
+});
+
+test('queued setter preparation consumes the choice before starting the automatic attack', () => {
+  const { context, calls, dom } = setup({ queued: 'Damp', setter: true, promptAttack: true });
+  try {
+    const prepared = context.prepareScoutSkillControls(0, 'A', { nextSkillId: 'attack' });
+    assert.equal(prepared.kind, 'empty');
+    assert.equal(context.queuedSetTypeChoice, null);
+    assert.deepEqual(calls, [['set-type', ''], ['start-attack']]);
+    context.buildPreparedScoutSkillView(structuredClone(prepared));
+    context.buildPreparedScoutSkillView(structuredClone(prepared));
+    assert.deepEqual(calls, [['set-type', ''], ['start-attack']]);
+  } finally { dom.window.close(); }
+});
+
+test('predictive serve preparation transfers metadata and clears the selection before scheduling', () => {
+  const { context, calls, dom } = setup({ double: true, predictive: true, selected: 'serve' });
+  try {
+    const meta = { serveType: 'F' };
+    context.serveMetaByPlayer['our:0'] = meta;
+    context.scheduleRenderPlayers = () => {
+      assert.equal(context.state.pendingServe.meta, meta);
+      assert.equal(context.selected, null);
+      assert.equal(context.serveMetaByPlayer['our:0'], undefined);
+      calls.push(['schedule']);
+    };
+    const prepared = context.prepareScoutSkillControls(0, 'A');
+    assert.equal(prepared.kind, 'empty');
+    assert.equal(prepared.hasSelection, true);
+    assert.deepEqual(calls, [['select', 'our', 0, null], ['schedule']]);
+    context.buildPreparedScoutSkillView(structuredClone(prepared));
+    assert.deepEqual(calls, [['select', 'our', 0, null], ['schedule']]);
+  } finally { dom.window.close(); }
+});

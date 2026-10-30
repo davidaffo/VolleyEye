@@ -1,13 +1,13 @@
 import { session } from "../state/io-match-io.js";
-import { ensureMatchDefaults } from "../teams/match-details.js";
-import { AUTO_LIBERO_ROLE_DEFAULT_VERSION } from "../../../js/globals.js";
-import { logError, session as matchState } from "../../../js/globals.js";
+import { ensureMatchDefaults, buildMatchDisplayName } from "../teams/match-details.js";
+import { AUTO_LIBERO_ROLE_DEFAULT_VERSION, logError, session as matchState } from "../../../js/globals.js";
+
 import { cloneIsolationData } from "../../domain/snapshots.js";
 import { getStoredThemePreference, sanitizeRosterIsolation, applyTheme } from "../teams/core/state-store.js";
 import { saveState } from "../storage/save-state.js";
 import { normalizeThemePreference, normalizeVideoFilterPresets } from "../storage/ui-preferences.js";
 import { normalizeAutoLiberoRolePreference } from "../teams/preferences.js";
-import { buildMatchDisplayName } from "../teams/match-details.js";
+
 import { resetSetTypeState } from "../live/game-flow.js";
 import { normalizePlayers, normalizeNumbersMap } from "../../domain/player-names.js";
 import { buildNumbersForNames, syncOpponentPlayerNumbers, cleanOpponentLiberos } from "../teams/roster-data.js";
@@ -15,9 +15,11 @@ import { normalizeScoreOverrides } from "../settings/rules.js";
 import { persistCurrentMatch } from "../storage/match-persistence.js";
 import { updateMatchButtonsState } from "../teams/settings/scouting-config.js";
 import { buildDvwScoreOverrides } from "./datavolley-match-import.js";
-import { resetAnalysisForMatch } from "../analysis/analysis-filters.js";
-import { cleanCourtPlayers, enforceAutoLiberoForState, renderPlayersManagerList, renderOpponentPlayersList, syncCurrentSetUI, initStats, updateOpponentAutoRoleBaseCourtCache } from "../teams/court/court-engine.js";
-import { cleanLiberoAutoMap, renderLiberoChipsInline, renderLineupChips, updateRotationDisplay } from "../teams/court/court-ui-bootstrap.js";
+import { resetAnalysisForMatch } from "../analysis/reset-model.js";
+import { renderPlayersManagerList, renderOpponentPlayersList } from "../teams/court/court-engine.js";
+import { cleanCourtPlayers, enforceAutoLiberoForState, initStats, updateAutoRoleBaseCourtCache, cleanLiberoAutoMap } from "../teams/court-state-model.js";
+import { renderLiberoChipsInline, updateRotationDisplay } from "../teams/court/court-ui-bootstrap.js";
+
 import { cleanCourtLiberoReplacementsForScope } from "../video/event-editor.js";
 import { syncTeamsFromStorage, syncOpponentTeamsFromStorage, loadTeamFromStorage, loadPlayersDbFromStorage, savePlayersDbToStorage, loadTeamsMapFromStorage, deleteTeamFromStorage, saveTeamToStorage } from "../teams/storage/team-repository.js";
 import { renderOpponentLiberoTags, renderLiberoTags } from "../teams/imports/camp3-import.js";
@@ -181,11 +183,11 @@ export function applyImportedMatch(nextState, options = {}) {
   renderOpponentPlayersList();
   renderPlayers();
   renderLiberoChipsInline();
-  renderLineupChips();
+
   renderLiberoTags();
   renderMetricsConfig();
   updateRotationDisplay();
-  syncCurrentSetUI(matchState.state.currentSet || 1);
+
   initStats();
   recalcAllStatsAndUpdateUI();
   renderEventsLog();
@@ -243,7 +245,7 @@ export function clearActiveDefaultDemoMatch() {
   matchState.state.opponentLiberoAutoMap = {};
   matchState.state.opponentPreferredLibero = "";
   matchState.state.match = {};
-  updateOpponentAutoRoleBaseCourtCache(matchState.state.opponentCourt);
+  updateAutoRoleBaseCourtCache(matchState.state.opponentCourt, "opponent");
   resetMatchState({ skipMatchesRender: true });
   return true;
 }
@@ -261,7 +263,7 @@ export function updateDefaultDemoDeleteButtonVisibility() {
   if (!rosterLineupState.elBtnDeleteDemoData) return;
   const visible = getDefaultDemoPreference() !== "removed" && hasDefaultDemoData();
    demoActionStore.publish({ visible }); return; 
-  
+
 }
 
 export function removeDefaultDemoPlayersFromDatabase(demoTeams) {
@@ -317,7 +319,7 @@ export function removeDefaultDemoData({ askConfirmation = true, showResult = tru
   updateDefaultDemoDeleteButtonVisibility();
   if (clearedActiveDemo) {
     renderPlayers();
-    renderLineupChips();
+
   }
   if (showResult) alert("Dati demo eliminati.");
   return true;

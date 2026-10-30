@@ -1,26 +1,32 @@
+import { getPlayByPlayStartTime, getPlayByPlayDurationSeconds } from "./playback-model.js";
+import { getVideoPlayByPlayRows, getPlayByPlayStartIndex, getVideoMobileCurrentRow } from "../events/selection-model.js";
 import { session } from "../state/video-playback.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { setModalOpenState } from "../layout/modals.js";
-import { ensureVideoAnalysisSortState } from "../scout-ui.js";
+import { ensureVideoAnalysisSortState } from "./sort-model.js";
 import { getTeamScopeFromEvent } from "../teams/selectors.js";
 import { computeEventVideoTime } from "./timing.js";
-import { getVideoBaseTimeMs, getVideoSkillEvents, updateVideoSyncLabel, buildYoutubeEmbedSrc, queueYoutubeSeek, clearYoutubeSource, persistLocalVideoReference, renderYoutubePlayer, renderYoutubePlayerScout, pushVideoUndoSnapshot } from "./video-sources.js";
+import { updateVideoSyncLabel, buildYoutubeEmbedSrc, queueYoutubeSeek, clearYoutubeSource, persistLocalVideoReference, renderYoutubePlayer, renderYoutubePlayerScout, pushVideoUndoSnapshot } from "./video-sources.js";
+import { getVideoBaseTimeMs, getVideoSkillEvents } from "./event-model.js";
 import { resolvePlayerIdx } from "../events/player-links.js";
-import { getDefaultSkillDurationMs, updateSelectionStyles, setSelectionForContext, scrollRowIntoView, handleSeekForSelection, updateVideoAnalysisOverlay, updateVideoSelectionCount, sortVideoEvents, getSelectedRows } from "./video-events.js";
+import { updateSelectionStyles, setSelectionForContext, scrollRowIntoView, handleSeekForSelection, updateVideoAnalysisOverlay, updateVideoSelectionCount } from "./video-events.js";
+
+import { getSelectedRows } from "../events/selection-model.js";
+import { sortVideoEvents } from "./sort-model.js";
 import { getEventKey } from "../../domain/event-key.js";
 import { session as workspaceLayoutState } from "../state/live-workspace-layout.js";
 import { session as browserEffectsState } from "../../app/browser-effects.js";
 import { session as matchState } from "../../../js/globals.js";
 import { getActiveVideoPlaybackSeconds, updateVideoPlaybackSnapshot, isYoutubePlayerPlaying, isVideoElementPlaying } from "../live/live-entry.js";
-import { countActiveVideoFilters, snapshotVideoFilters } from "../analysis/analysis-filters.js";
+import { countActiveVideoFilters, snapshotVideoFilters } from "../analysis/video-filter-model.js";
 import { matchesVideoFilters } from "../analysis/filter-model.js";
 import { session as analysisFiltersState } from "../state/analysis-analysis-filters.js";
 import { publishReactVideoMobileReview } from "./view.js";
 import { publishReactVideoView } from "./source-view.js";
 import { mobileVideoSourceStore } from "../../state/roster-import-store.mjs";
 import { renderVideoFilters } from "../analysis/video-filters.js";
-import { publishReactEventTable } from "../events/table-view.js";
-import { getCurrentZoneForPlayer } from "../analysis/stats-update.js";
+import { publishReactEventTable } from "../events/table-commands.js";
+import { getBaseZoneForPlayer } from "../teams/court-model.js";
 import { renderEventTableRows } from "./event-editor.js";
 import { saveState } from "../storage/save-state.js";
 
@@ -28,39 +34,13 @@ import { saveState } from "../storage/save-state.js";
 
 const playbackState = session;
 
-export function getVideoPlayByPlayRows() {
-  const ctx = scoutUiState.eventTableContexts.video;
-  return ctx && Array.isArray(ctx.rows) ? ctx.rows : [];
-}
 
-export function getPlayByPlayStartIndex(rows) {
-  if (!rows.length) return -1;
-  const preferredKey =
-    scoutUiState.lastSelectedEventId && scoutUiState.selectedEventIds.has(scoutUiState.lastSelectedEventId)
-      ? scoutUiState.lastSelectedEventId
-      : scoutUiState.selectedEventIds.values().next().value;
-  if (preferredKey) {
-    const idx = rows.findIndex(r => r.key === preferredKey);
-    if (idx !== -1) return idx;
-  }
-  return 0;
-}
 
-export function getPlayByPlayStartTime(row, baseMs) {
-  if (!row) return null;
-  if (typeof row.videoTime === "number" && isFinite(row.videoTime)) return row.videoTime;
-  const ev = row.ev || {};
-  if (typeof ev.videoTime === "number" && isFinite(ev.videoTime)) return ev.videoTime;
-  return computeEventVideoTime(ev, baseMs);
-}
 
-export function getPlayByPlayDurationSeconds(ev) {
-  const baseMs = ev && typeof ev.durationMs === "number" && isFinite(ev.durationMs)
-    ? ev.durationMs
-    : getDefaultSkillDurationMs();
-  const seconds = baseMs != null ? baseMs / 1000 : 5;
-  return Math.max(0.1, seconds);
-}
+
+
+
+
 
 export function stopPlayByPlay() {
   if (workspaceLayoutState.playByPlayTimer) {
@@ -187,15 +167,7 @@ export function handleVideoSelectionChange(_rows, _ctx, opts) {
   updateVideoAnalysisOverlay();
 }
 
-export function getVideoMobileCurrentRow() {
-  const ctx = scoutUiState.eventTableContexts.video;
-  const rows = ctx && Array.isArray(ctx.rows) ? ctx.rows : [];
-  if (!rows.length) return { rows, row: null, index: -1 };
-  let index = rows.findIndex(row => row.key === scoutUiState.lastSelectedEventId && scoutUiState.selectedEventIds.has(row.key));
-  if (index < 0) index = rows.findIndex(row => scoutUiState.selectedEventIds.has(row.key));
-  if (index < 0) index = 0;
-  return { rows, row: rows[index], index };
-}
+
 
 export function renderVideoMobileReview() {
   scheduleVideoMobileSourcePrompt();
@@ -268,7 +240,7 @@ export function openVideoMobileSourceModal(options = {}) {
   if (!matchState.elVideoMobileSourceModal || !isVideoMobileViewport()) return;
   if (options.automatic && playbackState.videoMobileSourcePromptDismissed) return;
   mobileVideoSourceStore.publish({open:true,url:matchState.state.video?.youtubeUrl||""});setModalOpenState(true,true);return;
-  
+
 }
 
 export function closeVideoMobileSourceModal(options = {}) {
@@ -325,7 +297,7 @@ export function renderVideoAnalysis() {
   }
   let updatedZones = false;
   skillEvents.forEach(({ ev }) => {
-    const fallbackZone = getCurrentZoneForPlayer(resolvePlayerIdx(ev), null, getTeamScopeFromEvent(ev));
+    const fallbackZone = getBaseZoneForPlayer(resolvePlayerIdx(ev), getTeamScopeFromEvent(ev));
     if ((ev.zone === undefined || ev.zone === null || ev.zone === "") && fallbackZone) {
       ev.zone = fallbackZone;
       updatedZones = true;

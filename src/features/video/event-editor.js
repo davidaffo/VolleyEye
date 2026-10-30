@@ -5,9 +5,10 @@ import { session as workspaceLayoutState } from "../state/live-workspace-layout.
 import { saveState } from "../storage/save-state.js";
 import { shouldTrackVideoUndo, pushVideoUndoSnapshot } from "./video-sources.js";
 import { syncEventPlayerLinks } from "../events/player-links.js";
-import { invalidateAnalysisCaches } from "../analysis/analysis-filters.js";
+import { invalidateAnalysisCaches } from "../analysis/cache-model.js";
 import { recalcAllStatsAndUpdateUI } from "../analysis/stats-update.js";
-import { renderEventsLog, getSelectedRows } from "./video-events.js";
+import { renderEventsLog } from "./video-events.js";
+import { getSelectedRows } from "../events/selection-model.js";
 import { renderAggregatedTable } from "../analysis/aggregated-table.js";
 import { renderTrajectoryAnalysis, renderServeTrajectoryAnalysis } from "../analysis/trajectory-rendering.js";
 import { renderSecondTable } from "../analysis/second-distribution.js";
@@ -16,7 +17,7 @@ import { renderVideoAnalysis } from "./playback.js";
 
 import { setModalOpenState } from "../layout/modals.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
-import { publishReactEventTable } from "../events/table-view.js";
+import { publishReactEventTable } from "../events/table-commands.js";
 import { closeReactBulkEditor, openReactBulkEditor } from "../events/dialog-view.js";
 import { session as teamManagementState } from "../state/live-team-management.js";
 

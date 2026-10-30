@@ -14,7 +14,7 @@ import { updatePlayersList, renderLiberoChipsInline, renderOpponentLiberoChipsIn
 import { saveState } from "../../storage/save-state.js";
 import { session as courtEngineState } from "../court/court-engine.js";
 import { renderOpponentPlayers } from "../../live/team-rendering.js";
-import { publishLiberoBench } from "../../scout/court-view.js";
+import { renderLiberoBench } from "../../scout/court-commands.js";
 
 
 
@@ -520,6 +520,6 @@ export function handleOpponentTeamSelectChange(selectedOverride = "") {
   saveState();
 }
 
-export function renderLiberoTags() {publishLiberoBench();}
+export function renderLiberoTags() {renderLiberoBench();}
 
-export function renderOpponentLiberoTags() {publishLiberoBench();}
+export function renderOpponentLiberoTags() {renderLiberoBench();}

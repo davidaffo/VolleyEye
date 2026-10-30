@@ -1,3 +1,5 @@
+import { VIDEO_FILTER_FIELDS } from './video-filter-model.js';
+
 import { buildSetFilterOptions } from './values.js';
 import { filterNormalEvalOptions } from "./filter-model.js";
 import { buildUniqueOptions, getOptionLabel, normalizeBaseValue, getEventPhaseValue, normalizeEvalCode, normalizeReceiveZone } from "./values.js";
@@ -65,7 +67,7 @@ const filterFields = {
 };
 
 const filterGroups = {
-  videoFilterState: [null, ['teams', 'players', 'setters', 'skills', 'codes', 'sets', 'rotations', 'zones', 'bases', 'setTypes', 'phases', 'receiveEvaluations', 'receiveZones', 'serveTypes', 'attackTypes']],
+  videoFilterState: [null, Object.keys(VIDEO_FILTER_FIELDS).filter(key => key !== 'prevSkill')],
   trajectoryFilterState: ["elTrajFilter", ["setters","players","sets","setTypes","bases","phases","receiveEvaluations","receiveZones","codes","attackTypes","zones"]],
   serveTrajectoryFilterState: ["elServeTrajFilter", ["players","sets","setTypes","bases","phases","receiveEvaluations","receiveZones","codes","zones"]],
   playerTrajectoryFilterState: ["elPlayerTrajFilter", ["sets","setTypes","bases","phases","receiveEvaluations","receiveZones","codes","attackTypes","zones"]],

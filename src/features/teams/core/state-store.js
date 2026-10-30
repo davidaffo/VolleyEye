@@ -6,22 +6,22 @@ import { cloneIsolationData } from "../../../domain/snapshots.js";
 import { normalizeAutoLiberoRolePreference } from "../preferences.js";
 
 import { session } from "../../state/teams-core-state-store.js";
-import { THEME_TEXT, AUTO_LIBERO_ROLE_DEFAULT_VERSION, STORAGE_KEY } from "../../../../js/globals.js";
-import { session as matchState, logError } from "../../../../js/globals.js";
+import { THEME_TEXT, AUTO_LIBERO_ROLE_DEFAULT_VERSION, STORAGE_KEY, session as matchState, logError } from "../../../../js/globals.js";
+
 import { publishRuntimeView } from "../../core/runtime-view.js";
 import { isolation } from "../../../domain/isolation.js";
 import { session as rosterLineupState } from "../../state/roster-lineup.js";
 import { normalizePlayers, normalizeNumbersMap } from "../../../domain/player-names.js";
 import { buildNumbersForNames, syncPlayerNumbers, syncOpponentPlayerNumbers, cleanOpponentLiberos } from "../roster-data.js";
-import { ensureCourtShape, cleanCourtPlayers, sanitizeAutoRoleBaseCourtForScope, enforceAutoLiberoForState } from "../court/court-engine.js";
+import { ensureCourtShape, cleanCourtPlayers, sanitizeAutoRoleBaseCourtForScope, enforceAutoLiberoForState, cleanLiberos } from "../court-state-model.js";
 import { ensureCourtShapeFor, cloneCourtLineup } from "../court-model.js";
 import { loadPlayersDbFromStorage, rebuildPlayersDbFromTeams, savePlayersDbToStorage, extractRosterFromTeam, migrateTeamsToPersistent, migrateOpponentTeamsToPersistent, syncTeamsFromStorage, syncOpponentTeamsFromStorage } from "../storage/team-repository.js";
 import { normalizeScoreOverrides, ensureMetricsConfigDefaults, ensurePointRulesDefaults, ensureOpponentSkillConfigDefaults } from "../../settings/rules.js";
 import { readStateFromIndexedDb } from "../../storage/state-db.js";
 
-import { cleanLiberos } from "../court/court-ui-bootstrap.js";
+
 import { syncMatchesFromStorage } from "../../storage/match-repository.js";
-import { resetAnalysisForMatch } from "../../analysis/analysis-filters.js";
+import { resetAnalysisForMatch } from "../../analysis/reset-model.js";
 
 
 

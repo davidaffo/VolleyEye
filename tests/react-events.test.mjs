@@ -6,7 +6,7 @@ import test from "node:test";
 import { JSDOM } from "jsdom";
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const old = read("../src/features/events/point-direction.js") + read("../src/features/video/event-editor.js"),
-  model = read("../src/features/events/table-view.js"),
+  model = read("../src/features/events/display-model.js") + read("../src/features/events/table-model.js") + read("../src/features/events/edit-model.js") + read("../src/features/events/table-commands.js"),
   live = read("../src/domain/value-string.js") + read("../src/features/live/live-entry.js"),
   adapter = read("../src/features/events/editor-controls.js");
 function setup() {
@@ -220,3 +220,22 @@ for (const field of [
       reference("react-events:8096"),
     );
   });
+
+test('editing an event captures one undo snapshot before changes and refreshes views after completion', () => {
+  const {context, view} = setup(), calls = [];
+  const ev = {eventId: 11, homeScore: 0, skillId: 'serve', team: 'our'};
+  context.pushVideoUndoSnapshot = () => calls.push(['undo', ev.homeScore]);
+  context.refreshAfterVideoEdit = full => calls.push(['refresh', full, ev.homeScore]);
+  context.setSelectionForContext = (_key, ids) => {context.selectedEventIds = ids; calls.push(['select']);};
+  context.closeCurrentEdit = () => calls.push(['close']);
+  context.renderVideoAnalysis = () => calls.push(['video']);
+  context.renderEventsLog = () => calls.push(['log']);
+  context.publishReactEventTable('target', [ev], {contextKey: 'video'});
+  const cell = view().rows[0].cells.find(cell => cell.field === 'homeScore');
+  const control = cell.onEdit();
+  control.onChange('2');
+  control.onChange('3');
+  cell.onDone();
+  assert.equal(ev.homeScore, 3);
+  assert.deepEqual(calls, [['select'], ['close'], ['undo', 0], ['refresh', true, 2], ['refresh', true, 3], ['video'], ['log']]);
+});

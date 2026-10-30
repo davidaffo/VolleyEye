@@ -1,18 +1,19 @@
 import { getCurrentTeamPayload } from "../current-payload.js";
 import { session } from "../../state/teams-storage-archive-actions.js";
-import { stripCourtReplacements } from "../../../domain/player-names.js";
-import { ensureMatchDefaults } from "../match-details.js";
+import { stripCourtReplacements, normalizePlayers, buildFullName, normalizePlayerNameCase } from "../../../domain/player-names.js";
+import { ensureMatchDefaults, getTodayIso } from "../match-details.js";
 import { session as matchState, downloadBlob } from "../../../../js/globals.js";
 import { listTeamsFromStorage, compactTeamPayload, saveTeamToStorage, deleteTeamFromStorage, syncTeamsFromStorage, loadTeamFromStorage, loadOpponentTeamFromStorage, getSelectedTeamDefaultSettings, getSelectedOpponentTeamDefaultSettings } from "./team-repository.js";
 import { session as rosterLineupState } from "../../state/roster-lineup.js";
-import { normalizePlayers, buildFullName, normalizePlayerNameCase } from "../../../domain/player-names.js";
+
 import { applyDefaultLineup, applyOpponentDefaultLineup } from "../core/player-model.js";
 import { saveState } from "../../storage/save-state.js";
 import { cloneIsolationData } from "../../../domain/snapshots.js";
-import { getTodayIso } from "../match-details.js";
+
 import { renderTeamsSelect, renderOpponentTeamsSelect, renderMatchesSelect, renderMatchSummary } from "./match-repository.js";
 import { getSelectedArchivedMatch, loadMatchFromStorage, saveMatchToStorage, deleteMatchFromStorage, syncMatchesFromStorage, loadMatchesMapFromStorage } from "../../storage/match-repository.js";
-import { syncCurrentSetUI, enforceAutoLiberoForState, initStats } from "../court/court-engine.js";
+
+import { enforceAutoLiberoForState, initStats } from "../court-state-model.js";
 import { refreshTeamManagerFromSelection } from "../editor/team-editor.js";
 
 import { persistCurrentMatch, generateMatchName } from "../../storage/match-persistence.js";
@@ -382,7 +383,7 @@ export function resetMatchState(options = {}) {
   matchState.state.setResults = {};
   matchState.state.setStarts = {};
   matchState.state.matchFinished = false;
-  syncCurrentSetUI(1);
+
   matchState.state.scoreOverrides = {};
   matchState.state.autoRotatePending = false;
   matchState.state.opponentAutoRotatePending = false;

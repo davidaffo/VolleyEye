@@ -1,3 +1,4 @@
+import { runScoutSkillAction } from "../features/scout/skill-actions.js";
 import { openReactAggregatedSkill, openReactAggregatedPlayer, showAggregatedSummary, openAggregatedSetStart } from '../features/analysis/summary-commands.js';
 import { publishApplicationViews } from './view-publication.js';
 import { openPlayerPhotoEditor, closePlayerPhotoEditor, renderPlayerPhotoEditor, exportPlayerPhotoDataUrl, handlePlayerPhotoPointerDown, handlePlayerPhotoPointerMove, handlePlayerPhotoPointerUp } from "../features/players/photo-editor.js";
@@ -30,18 +31,20 @@ import { handleVideoFileChange, syncFirstSkillToVideo, openVideoMobileFilters, c
 import { handleYoutubeUrlLoad, clearLoadedVideo, undoLastVideoEdit } from "../features/video/video-sources.js";
 import { copyFfmpegFromSelection, addEmptyVideoEventAfterSelection, chooseFfmpegEncoder, openVideoScoreModal, closeVideoScoreModal, correctVideoScoresFromSelection, openOffsetModal, closeOffsetModal, applyOffsetsToSelectedSkills, openSkillDurationModal, closeSkillDurationModal, applySkillDurationDefaults, openUnifyTimesModal, closeUnifyTimesModal, applyUnifyTimes, recordTimeoutEvent, recordOpponentTimeoutEvent, recordSubstitutionEvent } from "../features/video/video-events.js";
 import { stepActiveVideoByFrame } from "../features/live/scout-shortcuts.js";
-import { applyReactVideoMobileFilters, changeReactVideoPlayByPlay, openReactVideoPicker } from "../features/video/view.js";
+import { applyReactVideoMobileFilters, changeReactVideoPlayByPlay, openReactVideoPicker } from "../features/video/view-commands.js";
 import { openDebugModal, closeDebugModal, closePlayersDbModal, removeOrphanPlayersFromDb, openBaseModal, openAttackSetterModal, openAttackTypeModal, openBlockNumberModal, resetAttackShortcutModals, applyBaseToTarget, applySetterToTarget, applyAttackTypeToTarget, applyBlockNumberToTarget, openTeamsManagerModal, closeTeamsManagerModal, openPlayersDbModal, importTeamToStorageOnly, renderTeamsManagerList } from "../features/live/team-management.js";
 import { forceRefreshAppAssets, setActiveTab, navigateToTab, setActiveAggTab, undoLastEvent, enterSelectedMatch, exitCurrentMatch } from "../features/core/app-lifecycle.js";
 import { setServeTypeSelection, applyDefaultLineupToModal, changeLineupPreferredLibero, applyNumberToLineupSlot, exitLineupNumberMode } from "../features/live/skill-selection.js";
 import { chooseReactTrajectoryNetPoint, handleReactTrajectoryPointer } from "../features/scout/trajectory-dialog.js";
-import { changeReactPlayerAnalysis, refreshReactCompareSections } from "../features/analysis/player-view.js";
+import { refreshReactCompareSections } from "../features/analysis/player-view.js";
+import { changeReactPlayerAnalysis } from "../features/analysis/player-commands.js";
 import { selectReactSetTrendPoint } from "../features/analysis/timeline-commands.js";
 import { changeReactPlayByPlaySet } from "../features/analysis/timeline-commands.js";
 import { toggleMetricAssignment, togglePointRule, toggleActiveCode, toggleSkillEnabled } from "../features/teams/settings/metrics-editor.js";
 import { changeReactMatchSheetFilter, changeReactMatchSheetNote } from "../features/analysis/match-sheet-commands.js";
-import { openReactMultiscout, closeReactMultiscout, changeReactMultiscoutScope, resetReactMultiscout, applyReactVideoPreset, renameReactVideoPreset, removeReactVideoPreset, reorderReactVideoPresets } from "../features/analysis/filters.js";
-import { saveCurrentVideoFilterPreset } from "../features/analysis/analysis-filters.js";
+import { openReactMultiscout, closeReactMultiscout, changeReactMultiscoutScope, resetReactMultiscout } from "../features/analysis/multiscout-commands.js";
+import { applyReactVideoPreset, renameReactVideoPreset, removeReactVideoPreset, reorderReactVideoPresets } from "../features/analysis/video-preset-commands.js";
+import { saveCurrentVideoFilterPreset } from "../features/analysis/video-preset-commands.js";
 import { openAggSkillModal, closeAggSkillModal } from "../features/analysis/skill-tables.js";
 import { changeReactChartMetric } from "../features/analysis/chart-commands.js";
 import { closeBulkEditModal, openBulkEditModal, applyBulkEditSession } from "../features/video/event-editor.js";
@@ -64,7 +67,7 @@ import { exportDataVolleyToFile } from "../features/io/datavolley-export.js";
 import { exportAnalysisHtml } from "../features/analysis/reports.js";
 import { session as persistentStorageState } from "../features/state/storage-persistent-storage.js";
 
-import { bindReactEventTable, registerReactEventEdit } from "../features/events/table-view.js";
+import { bindReactEventTable, registerReactEventEdit } from "../features/events/table-commands.js";
 import { copySkillChartImageToClipboard } from "../features/analysis/skill-analysis.js";
 import { handleScoutWidgetPointerDown, moveScoutWidgetWithKeyboard } from "../features/live/workspace-layout.js";
 
@@ -349,6 +352,7 @@ export const actions = createCommands({
   flushStorage: () => persistentStorageState.archiveStorage.flush(),
 }, publishApplicationViews);
 export const events = createReadyEvents({
+  runScoutSkillAction,
   resizeReactPanel,
   changeReactDvwText,
   queueCurrentDvwScoutToken,

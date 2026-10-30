@@ -2085,3 +2085,42 @@ test('widget React: trascinamento annullato e confermato conserva i pannelli', a
   expect(await page.evaluate(() => window.__draggedWidget === document.querySelector('[data-scout-widget="dvw"]'))).toBe(true);
   expect(errors).toEqual([]);
 });
+
+test("dialogo fondamentali React: tipi di battuta e attacco riusano i comandi del campo", async ({page}) => {
+  test.setTimeout(30000);
+  const errors = await openApp(page);
+  const demo = JSON.parse(readFileSync('match_demo.json', 'utf8'));
+  const match = demo.state || demo;
+  Object.assign(match, {
+    events: [], currentSet: 1, setResults: {}, scoreOverrides: {}, matchFinished: false,
+    matchEndSetSnapshot: null, matchEndSetRecorded: null, predictiveSkillFlow: false,
+    autoRotate: false, autoRolePositioning: false, isServing: true, useOpponentTeam: false,
+    skillFlowOverride: null, opponentSkillFlowOverride: null, pendingServe: null,
+    serveTrajectoryEnabled: false, attackTrajectoryEnabled: false, setTypePromptEnabled: true,
+  });
+  const player = await page.evaluate(async snapshot => {
+    const app = window.VolleyEye.app;
+    await app.invoke('applyImportedMatch', snapshot, {silent: true});
+    await app.invoke('saveState', {persistLocal: true});
+    await app.invoke('enterSelectedMatch');
+    const state = app.getMatchSnapshot();
+    const name = state.court[0].main;
+    return {name, index: state.players.indexOf(name)};
+  }, match);
+  expect(player.index).toBeGreaterThanOrEqual(0);
+  const modal = page.locator('#skill-modal');
+  await page.evaluate(info => window.VolleyEye.app.invoke('openSkillCodesModal', info.index, info.name, 'serve', 'our'), player);
+  await modal.getByRole('button', {name: 'Float (F)', exact: true}).click();
+  await modal.locator('.event-btn[data-skill-id="serve"][data-code="="]').click();
+  await expect(modal).toBeHidden();
+  await page.evaluate(info => window.VolleyEye.app.invoke('openSkillCodesModal', info.index, info.name, 'attack', 'our'), player);
+  await modal.locator('.modal-skill-codes .event-btn').first().click();
+  await modal.locator('.event-btn[data-skill-id="attack"][data-code="+"]').click();
+  await expect(modal).toBeHidden();
+  const after = await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot());
+  expect(after.events).toHaveLength(2);
+  expect(after.events[0]).toMatchObject({skillId: 'serve', serveType: 'F'});
+  expect(after.events[1].skillId).toBe('attack');
+  expect(after.events[1].setType).toBeTruthy();
+  expect(errors).toEqual([]);
+});

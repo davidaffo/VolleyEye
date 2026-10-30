@@ -3,6 +3,8 @@ import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs'
 import test from "node:test";
 import { readScoutSource } from "./helpers/scout-source.mjs";
 
+import { sourceFunctions } from "./helpers/source-functions.mjs";
+
 const scout = readScoutSource();
 const globals = readFileSync(new URL("../js/globals.js", import.meta.url), "utf8");
 
@@ -27,10 +29,7 @@ test("il campo viene ricostruito soltanto al cambio desktop mobile", () => {
 });
 
 test("ResizeObserver condivide la stessa coda e non forza layout paralleli", () => {
-  const bind = scout.slice(
-    scout.indexOf("function bindScoutColumnResize()"),
-    scout.indexOf("function getAttackMetaForPlayer")
-  );
+  const bind = sourceFunctions(scout, ['bindScoutColumnResize']);
   assert.match(bind, /new ResizeObserver\(\(\) => scheduleViewportLayoutUpdate\(\)\)/);
   assert.doesNotMatch(bind, /addEventListener\(["']resize["']/);
 });

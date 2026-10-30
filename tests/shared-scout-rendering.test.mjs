@@ -45,7 +45,8 @@ function setup() {
     ensureCourtShapeFor: court => court.map(slot => ({ ...slot })),
     getAutoRoleDisplayCourt: (skill, scope) => context.getTeamCourt(scope).map((slot, idx) => ({ slot, idx })),
     isAnySelectedSkillForScope: () => false, getPlayerPhotoForScope: () => "", isSetterPlayerForScope: () => false,
-    buildScoutSkillView: () => null, publishReactFloatingServeError: () => {},
+    buildPreparedScoutSkillView: value => value,
+    prepareScoutSkillControls: () => null, publishReactFloatingServeError: () => {},
     invokeEvent: () => {},
     formatStructuredPlayerName: name => name, getRoleLabelForRotation: () => "C",
     isErrorPickModeForScope: scope => context.errorScope === scope, isPointPickModeForScope: () => false,
@@ -65,7 +66,7 @@ function setup() {
   ]) context[name] = () => {};
   load(context, scout, ["getPlayersForScope", "getPlayerNumbersForScope", "getLiberosForScope", "getCaptainsForScope"]);
   load(context, roster, ["getTeamCourt", "formatNameWithNumberFor"]);
-  vm.runInContext(sourceFunctions(read("src/features/scout/court-view.js"), ["publishScoutCourtView", "publishLiberoBench"]), context);
+  vm.runInContext(read("src/features/scout/court-model.js") + read("src/features/scout/court-view.js") + read("src/features/scout/court-commands.js"), context);
   load(context, scout, [ "getScoutCourtSkill", "renderPlayers", "renderOpponentPlayers", "renderScoutTeamCourt", "syncCourtSideLayout"]);
   for(const name of ["renderPlayers", "renderOpponentPlayers"]){
     const render=context[name]; context[name]=(...args)=>{render(...args);context.__flushReactViews();};
@@ -145,12 +146,16 @@ test("liberi e rientri usano le stesse interazioni per entrambe le squadre", () 
   for (const name of ['handleBenchDragStart', 'handleBenchDragEnd', 'handleBenchPointerDown', 'handleBenchTouchStart', 'handleBenchTouchMove', 'handleBenchTouchEnd', 'handleBenchTouchCancel']) c[name] = () => {};
   c.handleBenchClickForScope = (name, scope) => { c.clicked = [name, scope]; };
   c.restorePlayerFromLiberoForScope = (idx, scope) => { c.restored = [idx, scope]; };
-  load(c, roster, ['getTeamNumbers', 'getTeamPlayers', 'getTeamLiberos', 'renderTeamLiberoChipsInline', 'renderLiberoChipsInline', 'renderOpponentLiberoChipsInline']);
+  load(c, roster, ['getTeamNumbers', 'getTeamPlayers', 'getTeamLiberos', 'renderLiberoChipsInline', 'renderOpponentLiberoChipsInline']);
+  let publications = 0;
+  const unsubscribe = c.__reactViews.liberoBenchStore.subscribe(() => publications++);
   for (const scope of ['our', 'opponent']) {
     const prefix = scope === 'our' ? '' : 'opponent';
     c.state[prefix ? 'opponentPlayers' : 'players'].push('Libero');
     c.state[prefix ? 'opponentLiberos' : 'liberos'] = ['Libero'];
+    const before = publications;
     c.renderLiberoChipsInline();
+    assert.equal(publications, before + 1);
     c.__flushReactViews();
     const chip = dom.window.document.querySelector(`.libero-tags [data-team-scope="${scope}"][data-player-name="Libero"]`);
     chip.click();
@@ -166,6 +171,7 @@ test("liberi e rientri usano le stesse interazioni per entrambe le squadre", () 
     replaced.click();
     assert.deepEqual(c.restored, [4, scope]);
   }
+  unsubscribe();
   dom.window.close();
 });
 
@@ -208,7 +214,7 @@ test("cambi, ingresso libero e rientro usano la stessa logica e modificano solta
   load(c, roster, [
     'getTeamPlayers', 'getTeamLiberos', 'setTeamPreferredLibero', 'getTeamPreferredLibero',
     'setTeamAutoLiberoRole', 'setTeamAutoLiberoBackline', 'isLiberoForScope',
-    'getUsedNamesForScope', 'getLockedMapForScope', 'canPlaceInSlotForScope',
+    'getUsedNamesForScope', 'getLockedMapForScope', 'getCourtPlacementError', 'canPlaceInSlotForScope',
     'setCourtPlayer', 'setCourtPlayerForScope'
   ]);
   for (const scope of ['our', 'opponent']) {

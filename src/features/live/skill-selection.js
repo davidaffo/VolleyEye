@@ -4,7 +4,7 @@ import { getPlayersForScope, makePlayerKey, isPlayerKeyInScope, isFarSideForScop
 import { getServeDisplayCourt } from "../teams/serve-court.js";
 import { session as matchState } from "../../../js/globals.js";
 import { setTeamPreferredLibero, setTeamLiberoAutoMap } from "../teams/roster-data.js";
-import { enforceAutoLiberoForScope } from "../teams/court/court-engine.js";
+import { enforceAutoLiberoForScope, getCurrentZoneForPlayer } from "../teams/court-state-model.js";
 
 import { publishLineupView } from "./lineup-view.js";
 import { loadTeamFromStorage, extractRosterFromTeam } from "../teams/storage/team-repository.js";
@@ -13,12 +13,13 @@ import { trajectoryModalStore } from "../../state/roster-import-store.mjs";
 import { listenRuntime, unlistenRuntime } from "../../app/browser-effects.js";
 import { setSelectedSkillForScope } from "./game-flow.js";
 import { getServerPlayerForScope } from "./flow-model.js";
-import { closeSkillModal, isErrorPickModeForScope, stopErrorPickMode, getActiveVideoPlaybackSeconds } from "./live-entry.js";
-import { getCurrentZoneForPlayer } from "../analysis/stats-update.js";
+import { closeSkillModal, stopErrorPickMode, getActiveVideoPlaybackSeconds } from "./live-entry.js";
+import { isErrorPickModeForScope } from "../scout/pick-model.js";
+
 import { openAttackTrajectoryModal } from "./trajectories.js";
 import { saveState } from "../storage/save-state.js";
 import { renderOpponentPlayers, renderPlayers } from "./team-rendering.js";
-import { renderOpponentLiberoChipsInline, updateOpponentRotationDisplay, renderLineupChips, renderLiberoChipsInline, updateRotationDisplay } from "../teams/court/court-ui-bootstrap.js";
+import { renderOpponentLiberoChipsInline, updateOpponentRotationDisplay, renderLiberoChipsInline, updateRotationDisplay } from "../teams/court/court-ui-bootstrap.js";
 
 
 
@@ -97,7 +98,7 @@ export function setServeTypeSelection(type) {
   scoutUiState.serveTrajectoryType = normalized;
   if (!scoutUiState.elServeTypeButtons) return;
   trajectoryModalStore.publish({serveType:normalized});return;
-  
+
 }
 
 export function bindServeTypeInlineListener(playerIdx, onSelect, scope = "our") {
@@ -368,7 +369,7 @@ export function changeLineupPreferredLibero(next) {
         updateOpponentRotationDisplay();
       } else {
         renderPlayers();
-        renderLineupChips();
+
         renderLiberoChipsInline();
         updateRotationDisplay();
       }

@@ -1,18 +1,20 @@
 
-import { normalizePhaseValue } from "../analysis/values.js";
+
+
 
 import { session as matchState } from "../../../js/globals.js";
 import { session as workspaceLayoutState } from "../state/live-workspace-layout.js";
 import { session as browserEffectsState } from "../../app/browser-effects.js";
 import { renderPlayers } from "./team-rendering.js";
 import { saveState } from "../storage/save-state.js";
-import { getCurrentZoneForPlayer } from "../analysis/stats-update.js";
+import { getCurrentZoneForPlayer } from "../teams/court-state-model.js";
 import { scrollToActiveCourtOnMobileAlways, isDesktopCourtModalLayout, setCourtAreaLocked, setModalOpenState } from "../layout/modals.js";
 import { updateCourtModalPlacement } from "../scout-ui.js";
 import { getTeamOfficialMetaForScope, sanitizeOfficialString, getPlayerOfficialCodeForScope, normalizeDataVolleyEventMeta } from "../teams/player-identity.js";
 import { getPlayersForScope, getPlayerNumbersForScope, getTeamNameForScope } from "../teams/selectors.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
-import { renderEventsLog, getDefaultSkillDurationMs } from "../video/video-events.js";
+import { renderEventsLog } from "../video/video-events.js";
+import { getDefaultSkillDurationMs } from "../video/playback-model.js";
 import { renderLiveScore, renderScoreAndRotations, addPlayerPoint } from "./live-score-and-set.js";
 import { computePointsSummary } from "../analysis/scores.js";
 import { renderAggregatedTable } from "../analysis/aggregated-table.js";
@@ -20,8 +22,8 @@ import { renderVideoAnalysis } from "../video/playback.js";
 import { renderTrajectoryAnalysis, renderServeTrajectoryAnalysis } from "../analysis/trajectory-rendering.js";
 import { publishSkillModalCancel, publishSkillModalChoice, publishSkillModalCodes, setSkillModalOpen } from "../scout/skill-dialog.js";
 import { resetSkillSelectionForPlayer } from "./skill-selection.js";
-import { getSortedPlayerEntriesForScope } from "../teams/lineup-selectors.js";
-import { ensureCourtShapeFor } from "../teams/court-model.js";
+
+
 
 import { publishAttributionView, setAttributionOpen } from "../scout/attribution-view.js";
 
@@ -29,12 +31,7 @@ import { publishAttributionView, setAttributionOpen } from "../scout/attribution
 
 
 
-export function formatAttackPhaseLabel(val) {
-  const phase = normalizePhaseValue(val);
-  if (phase === "bp") return "BP";
-  if (phase === "so") return "SO";
-  return "";
-}
+
 
 export function getNextEventId() {
   const maxId = (matchState.state.events || []).reduce((max, ev) => {
@@ -482,13 +479,9 @@ export function closeSkillModal() {
   setSkillModalCancelVisibility(false);
 }
 
-export function isErrorPickModeForScope(scope) {
-  return !!(scoutUiState.errorPickModeState && scoutUiState.errorPickModeState.scope === scope);
-}
 
-export function isPointPickModeForScope(scope) {
-  return !!(scoutUiState.pointPickModeState && scoutUiState.pointPickModeState.scope === scope);
-}
+
+
 
 export function stopErrorPickMode(options = {}) {
   if (!scoutUiState.errorPickModeState) return;
@@ -547,20 +540,7 @@ export function applyPointForPickedPlayer(scope, playerIdx, playerName) {
   stopPointPickMode();
 }
 
-export function getBenchEntriesForScope(scope) {
-  const players = getPlayersForScope(scope) || [];
-  if (!players.length) return [];
-  const courtSource = scope === "opponent" ? matchState.state.opponentCourt || [] : matchState.state.court || [];
-  const court =
-    (ensureCourtShapeFor(courtSource));
-  const inCourt = new Set();
-  court.forEach(slot => {
-    const name = slot && slot.main ? slot.main : "";
-    if (name) inCourt.add(name);
-  });
-  const entries = getSortedPlayerEntriesForScope(scope);
-  return entries.filter(entry => entry && entry.name && !inCourt.has(entry.name));
-}
+
 
 export function renderErrorModal() {
   if (!matchState.elErrorModalBody) return;

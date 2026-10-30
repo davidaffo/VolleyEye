@@ -1,18 +1,20 @@
+
 import { session } from "../state/live-team-management.js";
 import { ensureMatchDefaults } from "../teams/match-details.js";
 import { PLAYER_PREFIX, STORAGE_KEY } from "../../../js/globals.js";
-import { getSelectedRows, renderEventsLog, updateVideoAnalysisOverlay } from "../video/video-events.js";
+import { renderEventsLog, updateVideoAnalysisOverlay } from "../video/video-events.js";
+import { getSelectedRows } from "../events/selection-model.js";
 import { pushVideoUndoSnapshot } from "../video/video-sources.js";
 import { refreshAfterVideoEdit } from "../video/event-editor.js";
 import { renderVideoAnalysis } from "../video/playback.js";
 import { saveState } from "../storage/save-state.js";
 import { buildCompactLocalStateSnapshot } from "../storage/state-snapshot.js";
 import { buildLocalUiSnapshot } from "../storage/ui-preferences.js";
-import { invalidateAnalysisCaches } from "../analysis/analysis-filters.js";
+import { invalidateAnalysisCaches } from "../analysis/cache-model.js";
 import { recalcAllStatsAndUpdateUI } from "../analysis/stats-update.js";
-import { getTeamScopeFromEvent, getPlayersForScope, isServingForScope } from "../teams/selectors.js";
+import { getTeamScopeFromEvent, getPlayersForScope } from "../teams/selectors.js";
 import { setGlobalModalState } from "../layout/modals.js";
-import { getServeDisplayCourt } from "../teams/serve-court.js";
+
 import { normalizeDataVolleyEventMeta, invalidateRosterIdMapsCache } from "../teams/player-identity.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { session as workspaceLayoutState } from "../state/live-workspace-layout.js";
@@ -22,8 +24,8 @@ import { publishTeamsManagerView, setTeamsManagerOpen } from "../teams/manager-v
 import { session as rosterLineupState } from "../state/roster-lineup.js";
 import { renderTeamsSelect } from "../teams/storage/match-repository.js";
 import { loadMatchesMapFromStorage, getMatchStorageKey } from "../storage/match-repository.js";
-import { ensureCourtShapeFor } from "../teams/court-model.js";
-import { sanitizeAutoRoleBaseCourtForScope, getCurrentPhase } from "../teams/court/court-engine.js";
+
+
 import { session as matchState, logError } from "../../../js/globals.js";
 import { normalizeTeamPayload, listTeamsFromStorage, extractRosterFromTeam, saveTeamToStorage, syncTeamsFromStorage, loadTeamsMapFromStorage, savePlayersDbToStorage, loadPlayersDbFromStorage, buildPlayersDbEntry, compactTeamPayload, getTeamStorageKey } from "../teams/storage/team-repository.js";
 import { buildFullName } from "../../domain/player-names.js";
@@ -583,70 +585,9 @@ export function updatePlayerPhotoInDbAndTeams(playerId, photoDataUrl = "") {
   return true;
 }
 
-export function buildReceiveDisplayMapping(court, rotation, scope = "our") {
-  const perm =
-    rosterLineupState.buildAutoRolePermutation({
-      baseLineup: court,
-      rotation,
-      phase: "receive",
-      isServing: matchState.state.isServing,
-      autoRoleP1American:
-        scope === "opponent"
-          ? !!matchState.state.opponentAutoRoleP1American
-          : !!matchState.state.autoRoleP1American,
-    }) || [];
-  return perm.map((item) => ({
-    slot: (item && item.slot) || { main: "", replaced: "" },
-    idx: typeof item.idx === "number" ? item.idx : 0,
-  }));
-}
 
-export function getAutoRoleDisplayCourt(forSkillId = null, scope = "our") {
-  const useAuto = !!matchState.state.autoRolePositioning;
-  if (useAuto) {
-    sanitizeAutoRoleBaseCourtForScope(scope);
-  }
-  const opponentBase =
-    useAuto && scope === "opponent" && matchState.state.opponentAutoRoleBaseCourt && matchState.state.opponentAutoRoleBaseCourt.length === 6
-      ? ensureCourtShapeFor(matchState.state.opponentAutoRoleBaseCourt)
-      : ensureCourtShapeFor(matchState.state.opponentCourt);
-  const baseCourt =
-    useAuto && scope === "our" && rosterLineupState.autoRoleBaseCourt
-      ? ensureCourtShapeFor(rosterLineupState.autoRoleBaseCourt)
-      : scope === "opponent"
-        ? opponentBase
-        : ensureCourtShapeFor(matchState.state.court);
-  const effectiveBase = baseCourt;
-  if (!useAuto) {
-    return effectiveBase.map((slot, idx) => ({ slot, idx }));
-  }
-  if (forSkillId === "serve") {
-    const servingCourt = getServeDisplayCourt(scope);
-    return ensureCourtShapeFor(servingCourt || effectiveBase).map((slot, idx) => ({ slot, idx }));
-  }
-  if (forSkillId === "pass") {
-    const rotation = scope === "opponent" ? matchState.state.opponentRotation : matchState.state.rotation;
-    return buildReceiveDisplayMapping(effectiveBase, rotation || 1, scope);
-  }
-  const phase = forSkillId ? getCurrentPhase(scope) : isServingForScope(scope) ? "attack" : "receive";
-  
-    const perm =
-      rosterLineupState.buildAutoRolePermutation({
-        baseLineup: effectiveBase,
-        rotation: scope === "opponent" ? matchState.state.opponentRotation || 1 : matchState.state.rotation || 1,
-        phase,
-        isServing: scope === "opponent" ? !matchState.state.isServing : matchState.state.isServing,
-        autoRoleP1American: scope === "opponent"
-          ? !!matchState.state.opponentAutoRoleP1American
-          : !!matchState.state.autoRoleP1American
-      }) || [];
-    return perm.map(item => ({
-      slot: (item && item.slot) || { main: "", replaced: "" },
-      idx: typeof item.idx === "number" ? item.idx : 0
-    }));
-  
-  
-}
+
+
 
 export function buildTeamMerge(primaryName, secondaryName, choices) {
   if (!primaryName || primaryName === secondaryName) throw new Error("Scegli due squadre diverse.");
