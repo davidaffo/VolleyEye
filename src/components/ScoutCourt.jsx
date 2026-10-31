@@ -117,7 +117,7 @@ export function ScoutCourt({ scope }) {
           }
           disabled={disabled}
           onClick={(event) =>
-            act(view.pointPick ? view.onTeamPoint : view.onTeamError, event)
+            actSkill(view.pointPick ? view.teamPointAction : view.teamErrorAction, event)
           }
         >
           {view.pointPick ? "Assegna alla squadra" : "Errore squadra"}
@@ -131,7 +131,7 @@ export function ScoutCourt({ scope }) {
                   type="button"
                   className="error-choice-btn danger error-pick-bench-btn"
                   disabled={disabled}
-                  onClick={(event) => act(player.onPick, event)}
+                  onClick={(event) => actSkill(player.pickAction, event)}
                 >
                   {player.label}
                 </button>
@@ -175,7 +175,7 @@ export function ScoutCourt({ scope }) {
                       : "Annulla selezione errore"
                   }
                   disabled={disabled}
-                  onClick={(event) => act(view.onCancelPick, event)}
+                  onClick={(event) => actSkill(view.cancelPickAction, event)}
                 >
                   ✕
                 </button>
@@ -264,7 +264,7 @@ export function ScoutCourt({ scope }) {
                     >
                       {card.libero ? "L" : "P"}
                     </span>
-                    {card.onRestore && (
+                    {card.restoreAction && (
                       <button
                         type="button"
                         className="libero-return-btn"
@@ -272,12 +272,12 @@ export function ScoutCourt({ scope }) {
                         disabled={disabled}
                         onClick={(event) => {
                           event.stopPropagation();
-                          act(card.onRestore, event);
+                          actSkill(card.restoreAction, event);
                         }}
                         onKeyDown={(event) => {
                           if (event.key === "Enter" || event.key === " ") {
                             event.stopPropagation();
-                            act(card.onRestore, event);
+                            actSkill(card.restoreAction, event);
                           }
                         }}
                       >
@@ -296,7 +296,7 @@ export function ScoutCourt({ scope }) {
                     <span className="court-role-tag">{card.role}</span>
                   </div>
                 </div>
-                {card.onPick ? (
+                {card.pickAction ? (
                   <div className="skill-row error-pick-row">
                     <button
                       type="button"
@@ -306,7 +306,7 @@ export function ScoutCourt({ scope }) {
                         " error-pick-btn"
                       }
                       disabled={disabled}
-                      onClick={(event) => act(card.onPick, event)}
+                      onClick={(event) => actSkill(card.pickAction, event)}
                     >
                       {view.pointPick ? "Punto" : "Errore"}
                     </button>

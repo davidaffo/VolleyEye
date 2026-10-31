@@ -1,4 +1,5 @@
-import { session as matchState, SKILLS } from '../../../js/globals.js';
+import { session as matchState, SKILLS } from "../../../js/globals.js";
+
 export function getEnabledSkills() {
   return SKILLS.filter(skill => {
     const cfg = matchState.state.metricsConfig[skill.id];
@@ -84,4 +85,16 @@ export function makePlayerKey(scope, playerIdx) {
 export function isPlayerKeyInScope(key, scope) {
   if (!key || !scope) return false;
   return key.startsWith(scope + ":");
+}
+
+export function isTeamReadyForScout() {
+  const teams = Object.keys(matchState.state.savedTeams || {});
+  const selected = (matchState.state.selectedTeam || "").trim();
+  return (
+    teams.length > 0 &&
+    !!selected &&
+    teams.includes(selected) &&
+    Array.isArray(matchState.state.players) &&
+    matchState.state.players.length > 0
+  );
 }

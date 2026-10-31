@@ -3,35 +3,24 @@ import { resetMatchVideoPlayback } from "../video/reset-commands.js";
 import { stripCourtReplacements } from "../../domain/player-names.js";
 import { STORAGE_KEY, session as matchState } from "../../../js/globals.js";
 import { resetSetTypeState } from "../live/flow-model.js";
-import { getLastFlowEvent, computeTwoTeamFlowFromEvent } from "../live/flow-model.js";
-
 import { session as rosterLineupState } from "../state/roster-lineup.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { broadcastResetSignal, navigateToResetBootstrap, applyScoutColumnLayout } from "../scout-ui.js";
-import { getTeamScopeFromEvent, getPlayerNumbersForScope } from "../teams/selectors.js";
-import { commitCourtChangeForScope, commitCourtChange } from "../teams/court/court-engine.js";
 import { enforceAutoLiberoForState, initStats } from "../teams/court-state-model.js";
-import { isLiberoForScope } from "../teams/libero-model.js";
-import { clearEventSelection, renderEventsLog } from "../video/video-events.js";
-import { getEventKey } from "../../domain/event-key.js";
-
+import { renderEventsLog } from "../events/log-view.js";
 import { saveState } from "../storage/save-state.js";
 import { buildMatchDisplayName } from "../teams/match-details.js";
 import { recalcAllStatsAndUpdateUI } from "../analysis/stats-update.js";
 import { renderPlayers } from "../live/team-rendering.js";
-import { updateRotationDisplay, renderLiberoChipsInline, setCurrentSet, rotateOpponentCourt, rotateCourt } from "../teams/court/court-ui-bootstrap.js";
+import { updateRotationDisplay } from "../teams/court-view.js";
 import { session as stateDbState } from "../state/storage-state-db.js";
 import { getStateDb } from "../storage/state-db.js";
-import { hasUsableMatch } from "../teams/settings/scouting-config.js";
-import { persistCurrentMatch } from "../storage/match-persistence.js";
+import { hasUsableMatch, getSelectedArchivedMatch, syncMatchesFromStorage } from "../storage/match-repository.js";
 import { session as teamManagementState } from "../state/live-team-management.js";
 import { resetAttackShortcutModals } from "../live/team-management.js";
 import { session as persistentStorageState } from "../state/storage-persistent-storage.js";
-import { isolation } from "../../domain/isolation.js";
-import { renderLiveScore, restoreSkillClock, restoreVideoClock, updateMatchStatusUI, setScoutControlsDisabled, recomputeServeFlagsFromHistory } from "../live/live-score-and-set.js";
-import { updateSetScoreDisplays, shouldOpenNextSetModal, openNextSetModal } from "../live/next-set-lineups.js";
-import { getCourtShape, cloneCourt } from "../teams/court-model.js";
-import { formatNameWithNumberFor } from "../teams/roster-data.js";
+import { publishRuntimeView, updateMatchButtonsState, renderMatchesList, renderMatchSummary } from "./runtime-view.js";
+import { shouldOpenNextSetModal, openNextSetModal } from "../live/next-set-lineups.js";
 import { renderTrajectoryAnalysis, renderServeTrajectoryAnalysis } from "../analysis/trajectory-rendering.js";
 import { updateBannerStore } from "../../state/roster-import-store.mjs";
 import { listenRuntime, session as browserEffectsState } from "../../app/browser-effects.js";
@@ -40,11 +29,6 @@ import { renderSetTrendAnalysis, renderPlayByPlayAnalysis } from "../live/score-
 import { renderAnalysisSkillChartsPanel } from "../analysis/skill-analysis.js";
 import { renderMatchSheetAnalysis } from "../analysis/match-sheet.js";
 import { stopPlayByPlay, scheduleVideoMobileSourcePrompt } from "../video/playback.js";
-import { publishRuntimeView } from "./runtime-view.js";
-import { getSelectedArchivedMatch } from "../storage/match-repository.js";
-import { renderMatchesSelect } from "../teams/storage/match-repository.js";
-import { loadSelectedMatch } from "../teams/storage/archive-actions.js";
-import { pauseSkillClock, pauseVideoClock } from "../live/live-entry.js";
 
 export function resetMatch() {
   if (!confirm("Sei sicuro di voler resettare tutti i dati del match?")) return;
@@ -210,231 +194,12 @@ export async function forceRefreshAppAssets() {
   window.location.replace(url.toString());
 }
 
-export function captureScoutActionSnapshot() {
-  const clone = isolation
-    ? isolation.cloneData
-    : value => JSON.parse(JSON.stringify(value));
-  return clone(matchState.state);
-}
 
-export function attachScoutActionSnapshot(event, snapshot) {
-  if (!event || !snapshot) return event;
-  Object.defineProperty(event, "__undoSnapshot", {
-    value: snapshot,
-    enumerable: false,
-    configurable: true
-  });
-  return event;
-}
 
-export function restoreScoutActionSnapshot(snapshot) {
-  if (!snapshot || typeof snapshot !== "object") return false;
-  Object.keys(matchState.state).forEach(key => delete matchState.state[key]);
-  Object.assign(matchState.state, snapshot);
-  resetSetTypeState();
-  saveState({ persistLocal: true });
-  recalcAllStatsAndUpdateUI();
-  renderEventsLog();
-  renderPlayers();
-  renderLiberoChipsInline();
 
-  updateRotationDisplay();
-  renderLiveScore();
-  updateSetScoreDisplays();
-  return true;
-}
 
-export function undoLastEvent() {
-  if (!matchState.state.events || matchState.state.events.length === 0) {
-    alert("Non ci sono eventi da annullare.");
-    return;
-  }
-  const ev = matchState.state.events[matchState.state.events.length - 1];
-  if (ev && ev.__undoSnapshot && restoreScoutActionSnapshot(ev.__undoSnapshot)) {
-    return;
-  }
-  matchState.state.events.pop();
-  if (!ev) {
-    saveState();
-    recalcAllStatsAndUpdateUI();
-    renderEventsLog();
-    renderPlayers();
-    renderLiberoChipsInline();
 
-    updateRotationDisplay();
-    return;
-  }
-  if (ev.actionType === "set-change" || ev.actionType === "match-end") {
-    const prevSet = ev.prevSet || 1;
-    const prevFinished = !!ev.prevMatchFinished;
-    if (ev.prevSetResults) {
-      matchState.state.setResults = ev.prevSetResults;
-    }
-    if (ev.prevSetStarts) {
-      matchState.state.setStarts = ev.prevSetStarts;
-    }
-    matchState.state.matchFinished = prevFinished;
-    restoreSkillClock(ev.prevClock || null);
-    restoreVideoClock(ev.prevVideoClock || null);
-    setCurrentSet(prevSet, { save: false });
-    updateMatchStatusUI();
-    setScoutControlsDisabled(!!matchState.state.matchFinished);
-    saveState();
-    recalcAllStatsAndUpdateUI();
-    renderEventsLog();
-    renderPlayers();
-    renderLiberoChipsInline();
 
-    updateRotationDisplay();
-    updateSetScoreDisplays();
-    return;
-  }
-  if (ev && ev.autoRotationDirection) {
-    const reverseDir = ev.autoRotationDirection === "ccw" ? "cw" : "ccw";
-    const scope = ev.autoRotationScope || "our";
-    if (scope === "opponent") {
-      rotateOpponentCourt(reverseDir);
-    } else {
-      rotateCourt(reverseDir);
-    }
-  }
-  if (ev && ev.actionType === "substitution") {
-    undoSubstitutionEvent(ev);
-  }
-  const idx = ev.playerIdx;
-  const skillId = ev.skillId;
-  if (
-    matchState.state.stats[idx] &&
-    matchState.state.stats[idx][skillId] &&
-    matchState.state.stats[idx][skillId][ev.code] > 0
-  ) {
-    matchState.state.stats[idx][skillId][ev.code]--;
-  }
-  if (matchState.state.predictiveSkillFlow) {
-    resetSetTypeState();
-    const lastFlow = getLastFlowEvent(matchState.state.events || []);
-    if (matchState.state.useOpponentTeam) {
-      if (lastFlow) {
-        const next = computeTwoTeamFlowFromEvent(lastFlow);
-        matchState.state.flowTeamScope = next.teamScope || matchState.state.flowTeamScope || (matchState.state.isServing ? "our" : "opponent");
-      } else {
-        matchState.state.flowTeamScope = matchState.state.isServing ? "our" : "opponent";
-      }
-    } else {
-      matchState.state.flowTeamScope = "our";
-    }
-  }
-  recomputeServeFlagsFromHistory({ skipAutoLibero: true });
-  saveState();
-  recalcAllStatsAndUpdateUI();
-  renderEventsLog();
-  renderPlayers();
-  renderLiberoChipsInline();
-
-  updateRotationDisplay();
-}
-
-export function undoContestedRally() {
-  const events = matchState.state.events || [];
-  const currentSet = Number(matchState.state.currentSet || 1);
-  let serveIndex = -1;
-  for (let index = events.length - 1; index >= 0; index--) {
-    const event = events[index];
-    if (!event) continue;
-    if (
-      Number(event.set || 1) !== currentSet ||
-      event.actionType === "set-change" ||
-      event.actionType === "match-end"
-    ) break;
-    if (event.skillId === "serve") {
-      serveIndex = index;
-      break;
-    }
-  }
-  if (serveIndex === -1) {
-    alert("Non c’è una battuta da annullare nell’azione corrente.");
-    return;
-  }
-  // Uno snapshot può annullare insieme battuta derivata e ricezione.
-  while (matchState.state.events.length > serveIndex) {
-    const previousLength = matchState.state.events.length;
-    undoLastEvent();
-    if (matchState.state.events.length >= previousLength) break;
-  }
-}
-
-export function deleteEventByKey(eventKey) {
-  if (!eventKey) return;
-  const evIndex = (matchState.state.events || []).findIndex((ev, idx) => getEventKey(ev, idx) === eventKey);
-  if (evIndex === -1) return;
-  const ev = matchState.state.events[evIndex];
-  const isStructuralEvent =
-    ev && ["substitution", "set-change", "match-end"].includes(ev.actionType);
-  if (isStructuralEvent && evIndex !== matchState.state.events.length - 1) {
-    alert(
-      "Non puoi eliminare un cambio o un passaggio di set nel mezzo dello storico: il campo successivo diventerebbe incoerente. Annulla prima le azioni più recenti."
-    );
-    return;
-  }
-  const label = ev
-    ? (() => {
-        const scope = getTeamScopeFromEvent(ev);
-        const numbers = getPlayerNumbersForScope(scope);
-        const nameLabel = ev.playerName ? formatNameWithNumberFor(ev.playerName, numbers) : "";
-        return `${nameLabel} ${ev.skillId || ""} ${ev.code || ""}`.trim();
-      })()
-    : "questa skill";
-  if (!confirm(`Eliminare ${label}?`)) return;
-  if (isStructuralEvent) {
-    undoLastEvent();
-    clearEventSelection();
-    renderTrajectoryAnalysis();
-    renderServeTrajectoryAnalysis();
-    return;
-  }
-  matchState.state.events.splice(evIndex, 1);
-  clearEventSelection();
-  recomputeServeFlagsFromHistory({ skipAutoLibero: true });
-  saveState();
-  recalcAllStatsAndUpdateUI();
-  renderEventsLog();
-  renderPlayers();
-  renderLiberoChipsInline();
-
-  updateRotationDisplay();
-  renderTrajectoryAnalysis();
-  renderServeTrajectoryAnalysis();
-}
-
-export function undoSubstitutionEvent(ev) {
-  if (!ev) return false;
-  const playerIn = (ev.playerIn || "").trim();
-  const playerOut = (ev.playerOut || "").trim();
-  if (!playerIn || !playerOut) return false;
-  const scope = getTeamScopeFromEvent(ev);
-  if (
-    isLiberoForScope(playerIn, scope) || isLiberoForScope(playerOut, scope)
-  ) {
-    return false;
-  }
-  const baseCourt = getCourtShape(scope === "opponent" ? matchState.state.opponentCourt : matchState.state.court);
-  const inIdx = baseCourt.findIndex(slot => slot && slot.main === playerIn);
-  if (inIdx === -1) return false;
-  const outIdx = baseCourt.findIndex(slot => slot && slot.main === playerOut);
-  const nextCourt = cloneCourt(baseCourt);
-  if (outIdx !== -1 && outIdx !== inIdx) {
-    nextCourt[inIdx].main = playerOut;
-    nextCourt[outIdx].main = playerIn;
-  } else {
-    nextCourt[inIdx].main = playerOut;
-  }
-  if (scope === "opponent") {
-    commitCourtChangeForScope(nextCourt, "opponent");
-  } else {
-    commitCourtChange(nextCourt, { clean: true });
-  }
-  return true;
-}
 
 export function registerServiceWorker() {
   if (typeof location !== "undefined" && location.protocol === "file:") {
@@ -690,29 +455,7 @@ export function syncMatchSessionUI() {
   }
 }
 
-export function enterSelectedMatch() {
-  if (!getSelectedArchivedMatch()) return false;
-  loadSelectedMatch();
-  if (!hasUsableMatch()) return false;
-  matchState.state.uiMatchSessionActive = true;
-  syncMatchSessionUI();
-  setActiveTab("scout");
-  saveState({ persistLocal: true });
-  return true;
-}
 
-export function exitCurrentMatch() {
-  if (!matchState.state || !matchState.state.uiMatchSessionActive) return;
-  pauseSkillClock();
-  pauseVideoClock();
-  persistCurrentMatch({ allowCreate: false });
-  matchState.state.uiMatchSessionActive = false;
-  document.body.classList.remove("drawer-menu-open", "drawer-log-open");
-  syncMatchSessionUI();
-  setActiveTab("match");
-  renderMatchesSelect();
-  saveState({ persistLocal: true, skipMatchPersist: true });
-}
 
 export function initMobileNavigation() {
   const navigation = document.getElementById("mobile-navigation");
@@ -800,4 +543,39 @@ export function initBugReportLink() {
     body
   });
   link.href = `https://github.com/davidaffo/VolleyEye/issues/new?${params.toString()}`;
+}
+
+export function applyMatchRequirementLock() {
+  const hasMatches = hasUsableMatch();
+  if (!hasMatches) matchState.state.uiMatchSessionActive = false;
+  if (document && document.body) {
+    document.body.dataset.noMatch = hasMatches ? "false" : "true";
+  }
+  if (rosterLineupState.tabButtons && rosterLineupState.tabButtons.forEach) {
+    rosterLineupState.tabButtons.forEach(btn => {
+      const target = btn && btn.dataset ? btn.dataset.tabTarget : "";
+      if (!target) return;
+      btn.disabled = false;
+      btn.dataset.noMatchLocked = !hasMatches && !["match", "info"].includes(target) ? "true" : "false";
+    });
+  }
+  syncMatchSessionUI();
+  if (!hasMatches && typeof setActiveTab === "function" && !["match", "info"].includes(rosterLineupState.activeTab)) {
+    setActiveTab("match");
+  }
+}
+
+export function renderMatchesSelect() {
+  if (!rosterLineupState.elSavedMatchesSelect) return;
+  syncMatchesFromStorage();
+  const names = Object.keys(matchState.state.savedMatches || {});
+  const prev = getSelectedArchivedMatch() || matchState.state.selectedMatch || "";
+
+    matchState.state.selectedMatch = names.includes(prev) ? prev : "";
+    renderMatchesList(names, matchState.state.selectedMatch);
+    applyMatchRequirementLock();
+    renderMatchSummary();
+    updateMatchButtonsState();
+    return;
+
 }

@@ -1,182 +1,47 @@
-import { eventTableStore, eventLogSummaryStore } from "../../state/event-table-store.mjs";
 import { getDefaultSkillDurationMs } from "./playback-model.js";
-import { pruneEventSelection, getRowsForContext, getSelectedRows, getActiveEventContextKey, getSelectedVideoRowForInsert } from "../events/selection-model.js";
+import { getSelectedRows, getActiveEventContextKey, getSelectedVideoRowForInsert } from "../events/selection-model.js";
 import { buildVideoOverlayLinesForEvent } from "./overlay-model.js";
-import { getEventKey } from "../../domain/event-key.js";
 import { session } from "../state/video-video-events.js";
-import { SKILLS, session as matchState } from "../../../js/globals.js";
+import { session as matchState } from "../../../js/globals.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { getPlayerNumbersForScope, getTeamScopeFromEvent, getTeamNameForScope } from "../teams/selectors.js";
 import { setModalOpenState } from "../layout/modals.js";
-import { publishReactEventTable } from "../events/table-commands.js";
-import { videoViewStore } from "../../state/video-view-store.mjs";
-import { closeCurrentEdit } from "../live/game-flow.js";
-import { session as rosterLineupState } from "../state/roster-lineup.js";
-import { seekVideoToTime, renderVideoAnalysis } from "./playback.js";
-import { pushVideoUndoSnapshot } from "./video-sources.js";
+import { refreshAfterVideoEdit } from "./event-editor.js";
+import { renderVideoAnalysis } from "./playback.js";
+import { pushVideoUndoSnapshot } from "./undo-model.js";
 import { getVideoBaseTimeMs, getVideoSkillEvents } from "./event-model.js";
 import { computeEventVideoTime } from "./timing.js";
-import { refreshAfterVideoEdit } from "./event-editor.js";
 import { saveState } from "../storage/save-state.js";
 import { formatNameWithNumberFor } from "../teams/roster-data.js";
 import { publishReactVideoOverlay } from "./view.js";
 import { openReactVideoScore, closeReactVideoScore, chooseReactFfmpegEncoder } from "../events/dialog-view.js";
-import { publishRuntimeView } from "../core/runtime-view.js";
 import { openReactVideoEdit, closeReactVideoEdit, readVideoEditInputs } from "./edit-view.js";
 import { getPointDirectionForScope, getEventPointValue } from "../analysis/scores.js";
-import { getNextEventId } from "../live/live-entry.js";
+import { getNextEventId, recordSetAction } from "../events/recording-model.js";
 import { getActiveVideoFilterPresetName } from "../analysis/video-filter-model.js";
 import { matchesVideoFilters } from "../analysis/filter-model.js";
 import { session as analysisFiltersState } from "../state/analysis-analysis-filters.js";
 import { recalcAllStatsAndUpdateUI } from "../analysis/stats-update.js";
 import { renderTrajectoryAnalysis, renderServeTrajectoryAnalysis } from "../analysis/trajectory-rendering.js";
-import { publishReactLogServeTrajectories } from "../analysis/trajectory-view.js";
-import { updateLiveDvwMirror } from "../io/datavolley-live-entry.js";
-import { getErrorTypeLabel } from "../analysis/player-model.js";
-import { recordSetAction } from "../live/live-score-and-set.js";
 import { renderPlayers } from "../live/team-rendering.js";
-import { renderLiberoChipsInline, updateRotationDisplay } from "../teams/court/court-ui-bootstrap.js";
+import { renderLiberoBench } from "../scout/court-commands.js";
+import { updateRotationDisplay } from "../teams/court-view.js";
 import { session as teamManagementState } from "../state/live-team-management.js";
+import { handleSeekForSelection } from "../events/selection-commands.js";
+import { renderEventsLog } from "../events/log-view.js";
 
 const videoEventsState = session;
 
-export function clearEventSelection({ clearContexts = true } = {}) {
-  scoutUiState.selectedEventIds.clear();
-  scoutUiState.lastSelectedEventId = null;
-  scoutUiState.lastEventContextKey = null;
-  if (clearContexts) {
-    Object.keys(scoutUiState.eventTableContexts).forEach(key => {
-      delete scoutUiState.eventTableContexts[key];
-    });
-  }
-  updateSelectionStyles();
-}
 
-export function updateSelectionStyles() {
-  pruneEventSelection();
-  eventTableStore.select([...scoutUiState.selectedEventIds]);
-  updateVideoSelectionCount();
-}
 
-export function updateVideoSelectionCount() {
-  if (!matchState.elVideoSelectionCount) return;
-  const ctx = scoutUiState.eventTableContexts.video;
-  const count = ctx && ctx.rows ? ctx.rows.filter(r => scoutUiState.selectedEventIds.has(r.key)).length : 0;
-   videoViewStore.publish({ selectionCount: count }); return;
 
-}
 
-export function removeEventTableContext(key) {
-  if (!key) return;
-  delete scoutUiState.eventTableContexts[key];
-  updateSelectionStyles();
-}
 
-export function setSelectionForContext(contextKey, keysSet, anchorKey = null, opts = {}) {
-  const ctx = contextKey ? scoutUiState.eventTableContexts[contextKey] : null;
-  if (!ctx) return;
-  scoutUiState.selectedEventIds.clear();
-  keysSet.forEach(k => scoutUiState.selectedEventIds.add(k));
-  scoutUiState.lastSelectedEventId = anchorKey || Array.from(keysSet)[0] || null;
-  scoutUiState.lastEventContextKey = contextKey;
-  updateSelectionStyles();
-  closeCurrentEdit();
-  if (typeof ctx.onSelectionChange === "function") {
-    ctx.onSelectionChange(getSelectedRows(contextKey), contextKey, opts);
-  }
-  if (contextKey === "video") {
-    publishReactVideoOverlay();
-  }
-}
 
-export function toggleSelectionForContext(contextKey, key, opts = {}) {
-  const next = new Set(scoutUiState.selectedEventIds);
-  if (next.has(key)) next.delete(key);
-  else next.add(key);
-  setSelectionForContext(contextKey, next, key, opts);
-}
 
-export function selectRangeForContext(contextKey, anchorKey, targetKey, opts = {}) {
-  const rows = getRowsForContext(contextKey);
-  if (!rows.length) return;
-  const anchorIdx = Math.max(0, rows.findIndex(r => r.key === anchorKey));
-  const targetIdx = Math.max(0, rows.findIndex(r => r.key === targetKey));
-  const start = Math.min(anchorIdx, targetIdx);
-  const end = Math.max(anchorIdx, targetIdx);
-  const range = new Set(rows.slice(start, end + 1).map(r => r.key));
-  setSelectionForContext(contextKey, range, anchorKey, opts);
-}
 
-export function isEditingField(target) {
-  if (!target) return false;
-  const tag = (target.tagName || "").toLowerCase();
-  if (target.isContentEditable) return true;
-  return ["input", "textarea", "select", "option", "button"].includes(tag);
-}
 
-export function scrollRowIntoView(record) {
-  if (!record || !record.tr || typeof record.tr.scrollIntoView !== "function") return;
-  record.tr.scrollIntoView({ block: "nearest", behavior: "smooth" });
-}
 
-export function handleSeekForSelection(contextKey, opts = {}) {
-  if (!opts || !opts.userAction) return;
-  const activeTab = document && document.body ? document.body.dataset.activeTab : "";
-  if (contextKey === "log" && !matchState.state.videoScoutMode && activeTab !== "video") {
-    return;
-  }
-  const rows = getSelectedRows(contextKey);
-  if (!rows.length) return;
-  const target =
-    rows.find(r => r.key === scoutUiState.lastSelectedEventId) ||
-    rows[rows.length - 1];
-  if (!target) return;
-  const t = typeof target.videoTime === "number" ? target.videoTime : null;
-  if (isFinite(t)) {
-    const preservePlayback =
-      typeof opts.preservePlayback === "boolean" ? opts.preservePlayback : contextKey === "log";
-    seekVideoToTime(t, { preservePlayback });
-  }
-}
-
-export function moveSelection(contextKey, delta, extendRange = false) {
-  const ctx = scoutUiState.eventTableContexts[contextKey];
-  if (!ctx || !ctx.rows.length) return;
-  const rows = ctx.rows;
-  const currentKey =
-    (scoutUiState.selectedEventIds.size && scoutUiState.lastSelectedEventId && scoutUiState.selectedEventIds.has(scoutUiState.lastSelectedEventId)
-      ? scoutUiState.lastSelectedEventId
-      : scoutUiState.selectedEventIds.values().next().value) || rows[0].key;
-  if (extendRange && scoutUiState.selectedEventIds.size) {
-    const selectedIdx = rows
-      .map((row, idx) => (scoutUiState.selectedEventIds.has(row.key) ? idx : -1))
-      .filter(idx => idx !== -1);
-    const edgeIdx = delta > 0 ? Math.max(...selectedIdx) : Math.min(...selectedIdx);
-    let anchorKey =
-      scoutUiState.lastSelectedEventId && scoutUiState.selectedEventIds.has(scoutUiState.lastSelectedEventId)
-        ? scoutUiState.lastSelectedEventId
-        : rows[selectedIdx[0]].key;
-    let targetIdx = Math.min(rows.length - 1, Math.max(0, edgeIdx + delta));
-    const targetKey = rows[targetIdx].key;
-    selectRangeForContext(contextKey, anchorKey, targetKey, { userAction: true });
-    const targetRow = rows.find(r => r.key === targetKey);
-    scrollRowIntoView(targetRow);
-    handleSeekForSelection(contextKey, { userAction: true });
-    return;
-  }
-  let anchorKey = currentKey;
-  let anchorIdx = rows.findIndex(r => r.key === anchorKey);
-  if (anchorIdx === -1) {
-    anchorIdx = 0;
-    anchorKey = rows[0].key;
-  }
-  let targetIdx = Math.min(rows.length - 1, Math.max(0, anchorIdx + delta));
-  const targetKey = rows[targetIdx].key;
-  setSelectionForContext(contextKey, new Set([targetKey]), targetKey, { userAction: true });
-  const targetRow = rows.find(r => r.key === targetKey);
-  scrollRowIntoView(targetRow);
-  handleSeekForSelection(contextKey, { userAction: true });
-}
 
 export function adjustSelectedVideoTimes(deltaSeconds) {
   const rows = getSelectedRows(getActiveEventContextKey());
@@ -500,85 +365,13 @@ export async function copyFfmpegFromSelection() {
   );
 }
 
-export function renderEventsLog(options = {}) {
-  let summaryText = "Nessun evento";
-  const suppressScroll = !!options.suppressScroll;
-  if (!matchState.state.events || matchState.state.events.length === 0) {
-    publishReactEventTable("events-log",[],{contextKey:"log",empty:"Nessun evento ancora registrato."});
-    eventLogSummaryStore.publish({ text: summaryText });
-    updateLiveDvwMirror();
-    return;
-  }
-  const recent = matchState.state.events.slice(-40).sort((a, b) => {
-    const at = new Date(a.t || 0).getTime();
-    const bt = new Date(b.t || 0).getTime();
-    if (isFinite(at) && isFinite(bt) && at !== bt) return at - bt; // oldest first
-    return (a.eventId || 0) - (b.eventId || 0);
-  });
-  const latest = recent[recent.length - 1];
-  const getEventSkillLabel = ev => {
-    if (ev.actionType === "timeout") return "Timeout";
-    if (ev.actionType === "substitution") return "Cambio";
-    const meta = SKILLS.find(s => s.id === ev.skillId);
-    return meta ? meta.label : ev.skillId || "";
-  };
-  const formatEv = ev => {
-    const dateObj = new Date(ev.t);
-    const timeStr = isNaN(dateObj.getTime())
-      ? ""
-      : dateObj.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit"
-        });
-    const errorTypeLabel =
-      ev.errorType && (ev.code === "error" || ev.code === "team-error")
-        ? getErrorTypeLabel(ev.errorType)
-        : "";
-    const scope = getTeamScopeFromEvent(ev);
-    const numbers = getPlayerNumbersForScope(scope);
-    const nameLabel = ev.playerName ? formatNameWithNumberFor(ev.playerName, numbers) : null;
-    const leftText =
-      "[S" +
-      ev.set +
-      "] " +
-      (nameLabel || "#" + ev.playerIdx) +
-      " - " +
-      getEventSkillLabel(ev) +
-      " " +
-      ev.code +
-      (errorTypeLabel ? " · " + errorTypeLabel : "");
-    return { leftText, timeStr };
-  };
-  const latestFmt = formatEv(latest);
-  summaryText = latestFmt.leftText;
-  const skillEvents = getVideoSkillEvents();
-  const baseMs = getVideoBaseTimeMs(skillEvents);
-  publishReactEventTable("events-log", recent, {
-    showSeek: false,
-    showVideoTime: true,
-    baseMs,
-    enableSelection: true,
-    contextKey: "log",
-    onSelectionChange: (_rows, _ctx, opts) => handleSeekForSelection("log", opts),
-  });
-  if (rosterLineupState.elEventsLog && !suppressScroll) {
-    requestAnimationFrame(() => {
-      rosterLineupState.elEventsLog.scrollTop = rosterLineupState.elEventsLog.scrollHeight;
-    });
-  }
-  eventLogSummaryStore.publish({ text: summaryText });
-  publishRuntimeView();
-  publishReactLogServeTrajectories();
-  updateLiveDvwMirror();
-}
 
 export function recordTimeoutEvent() {
   recordSetAction("timeout", { playerName: "Timeout", code: "TO" });
   saveState({ persistLocal: true });
   renderEventsLog();
   renderPlayers();
-  renderLiberoChipsInline();
+  renderLiberoBench();
 
   updateRotationDisplay();
 }
@@ -588,7 +381,7 @@ export function recordOpponentTimeoutEvent() {
   saveState({ persistLocal: true });
   renderEventsLog();
   renderPlayers();
-  renderLiberoChipsInline();
+  renderLiberoBench();
 
   updateRotationDisplay();
 }
@@ -605,7 +398,7 @@ export function recordSubstitutionEvent({ playerIn, playerOut, teamScope = "our"
   saveState({ persistLocal: true });
   renderEventsLog();
   renderPlayers();
-  renderLiberoChipsInline();
+  renderLiberoBench();
 
   updateRotationDisplay();
 }

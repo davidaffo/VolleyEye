@@ -2,17 +2,9 @@ import { buildPlayersDbUsage } from "../players/database-model.js";
 import { session } from "../state/live-team-management.js";
 import { ensureMatchDefaults } from "../teams/match-details.js";
 import { PLAYER_PREFIX, STORAGE_KEY, session as matchState, logError } from "../../../js/globals.js";
-import { renderEventsLog } from "../video/video-events.js";
-import { publishReactVideoOverlay } from "../video/view.js";
-import { getSelectedRows } from "../events/selection-model.js";
-import { pushVideoUndoSnapshot } from "../video/video-sources.js";
-import { refreshAfterVideoEdit } from "../video/event-editor.js";
-import { renderVideoAnalysis } from "../video/playback.js";
 import { saveState } from "../storage/save-state.js";
 import { buildCompactLocalStateSnapshot } from "../storage/state-snapshot.js";
 import { buildLocalUiSnapshot } from "../storage/ui-preferences.js";
-import { invalidateAnalysisCaches } from "../analysis/cache-model.js";
-import { recalcAllStatsAndUpdateUI } from "../analysis/stats-update.js";
 import { getTeamScopeFromEvent, getPlayersForScope } from "../teams/selectors.js";
 import { setGlobalModalState } from "../layout/modals.js";
 import { normalizeDataVolleyEventMeta, invalidateRosterIdMapsCache } from "../teams/player-identity.js";
@@ -30,16 +22,11 @@ import { syncCourtSideLayout, renderPlayers } from "./team-rendering.js";
 import { getCurrentMatchPayload } from "../teams/current-payload.js";
 import { renderPlayerAnalysis } from "../analysis/skill-tables.js";
 import { session as persistentStorageState } from "../state/storage-persistent-storage.js";
+import { getSelectedVideoAttackEvents } from "../events/selection-model.js";
+import { applyAttackFieldToEvents } from "../video/event-editor.js";
 
 const teamManagementState = session;
 
-export function getSelectedVideoAttackEvents() {
-  if (!(document && document.body && document.body.dataset.activeTab === "video")) return [];
-  const rows = getSelectedRows("video");
-  return rows
-    .map(row => row.ev)
-    .filter(ev => ev && ev.skillId === "attack");
-}
 
 export function getAttackShortcutTargetEvents() {
   const videoEvents = getSelectedVideoAttackEvents();
@@ -52,31 +39,6 @@ export function getAttackShortcutTargetEvents() {
   return [];
 }
 
-export function applyAttackFieldToEvents(events, updater, { shouldRecalc = true } = {}) {
-  const targetEvents = Array.isArray(events) ? events.filter(Boolean) : [];
-  if (!targetEvents.length || typeof updater !== "function") return false;
-  if (targetEvents.length > 1 || (document && document.body && document.body.dataset.activeTab === "video")) {
-    pushVideoUndoSnapshot(true);
-  }
-  targetEvents.forEach(ev => updater(ev));
-  if (document && document.body && document.body.dataset.activeTab === "video") {
-    refreshAfterVideoEdit(shouldRecalc);
-    renderEventsLog({ suppressScroll: true });
-    renderVideoAnalysis();
-    publishReactVideoOverlay();
-  } else {
-    saveState({ persistLocal: true });
-    if (shouldRecalc) {
-      invalidateAnalysisCaches();
-      recalcAllStatsAndUpdateUI();
-    }
-    renderEventsLog({ suppressScroll: true });
-    if (document && document.body && document.body.dataset.activeTab === "video") {
-      renderVideoAnalysis();
-    }
-  }
-  return true;
-}
 
 export function getSetterShortcutScope(events) {
   const scopes = new Set((events || []).map(ev => getTeamScopeFromEvent(ev)));

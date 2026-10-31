@@ -1,4 +1,4 @@
-import { updateVideoScoutModeLayout } from "../live/workspace-layout.js";
+import { updateVideoScoutModeLayout } from "../video/view-commands.js";
 import { renderVideoAnalysis } from "../video/playback.js";
 import { shouldOpenNextSetModal, openNextSetModal } from "../live/next-set-lineups.js";
 import { session as matchState } from "../../../js/globals.js";

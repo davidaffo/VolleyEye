@@ -1,21 +1,28 @@
-import { getLineupModalLiberos, formatLineupModalName, getSortedPlayerEntriesForScope, getSortedPlayerEntries } from "../teams/lineup-selectors.js";
+import { getLineupModalLiberos, formatLineupModalName, getLineupModalPlayers, getLineupModalNumbers } from "../teams/lineup-selectors.js";
 import { publishLineupView, setLineupOpen } from "./lineup-view.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { isDesktopCourtModalLayout, setCourtAreaLocked, setModalOpenState } from "../layout/modals.js";
 import { updateCourtModalPlacement } from "../scout-ui.js";
 import { session as matchState } from "../../../js/globals.js";
 import { getCourtShape, cloneCourt } from "../teams/court-model.js";
-import { getNextSetEntry, swapNextSetSlots, setNextSetPlayer, renderNextSetLineups, clearNextSetSlot } from "./next-set-lineups.js";
+import { getNextSetEntry, swapNextSetSlots, setNextSetPlayer, clearNextSetSlot } from "./next-set-model.js";
+import { renderNextSetLineups } from "./next-set-view.js";
 import { lineup } from "../../domain/lineup.js";
 import { listenRuntime } from "../../app/browser-effects.js";
 import { publishSetStartView, setSetStartOpen } from "./set-start-view.js";
-import { buildSetStartInfoList, makePlayerNameKey, ensureSetStartSnapshot } from "../analysis/player-model.js";
+import { makePlayerNameKey, ensureSetStartSnapshot } from "../analysis/player-model.js";
 import { saveState } from "../storage/save-state.js";
 import { renderAggregatedTable } from "../analysis/aggregated-table.js";
 import { commitCourtChangeForScope, commitCourtChange } from "../teams/court/court-engine.js";
-import { renderOpponentPlayers } from "./team-rendering.js";
-import { setOpponentRotation, updateOpponentRotationDisplay, setRotation } from "../teams/court/court-ui-bootstrap.js";
+import { renderOpponentPlayers, renderPlayers } from "./team-rendering.js";
+import { setOpponentRotation, setRotation } from "../teams/court/court-ui-bootstrap.js";
+import { updateOpponentRotationDisplay, updateRotationDisplay } from "../teams/court-view.js";
 import { recordSubstitutionEvent } from "../video/video-events.js";
+import { ensureSetStartDraft } from "./set-start-draft.js";
+import { setTeamPreferredLibero, setTeamLiberoAutoMap } from "../teams/roster-data.js";
+import { enforceAutoLiberoForScope } from "../teams/court-state-model.js";
+import { loadTeamFromStorage, extractRosterFromTeam } from "../teams/storage/team-repository.js";
+import { renderLiberoBench } from "../scout/court-commands.js";
 
 export function getLineupBaseCourtFromState() {
   const libSet = new Set(getLineupModalLiberos());
@@ -312,42 +319,9 @@ export function renderSetStartModal() {
  publishSetStartView(); return;
 }
 
-export function buildSetStartDraft(setNum, scope) {
-  const startInfo = buildSetStartInfoList([setNum], scope)[0];
-  const entries =
-    scope === "opponent" ? getSortedPlayerEntriesForScope(scope) : getSortedPlayerEntries();
-  const selections = new Map();
-  entries.forEach(({ name }) => {
-    const key = makePlayerNameKey(name);
-    const pos = startInfo && startInfo.positions ? startInfo.positions.get(key) : null;
-    const isSub = startInfo && startInfo.subsIn ? startInfo.subsIn.has(key) : false;
-    selections.set(key, { name, value: pos ? String(pos) : isSub ? "in" : "" });
-  });
-  return { setNum, scope, selections };
-}
 
-export function suppressTransientClicks(ms = 350) {
-  scoutUiState.suppressClickUntil = Date.now() + ms;
-}
 
-export function shouldSuppressClick(e) {
-  if (Date.now() < scoutUiState.suppressClickUntil) {
-    if (e) {
-      if (e.cancelable) e.preventDefault();
-      if (typeof e.stopPropagation === "function") e.stopPropagation();
-    }
-    return true;
-  }
-  return false;
-}
 
-export function ensureSetStartDraft(setNum, scope) {
-  if (scoutUiState.setStartDraft && scoutUiState.setStartDraft.setNum === setNum && scoutUiState.setStartDraft.scope === scope) {
-    return scoutUiState.setStartDraft;
-  }
-  scoutUiState.setStartDraft = buildSetStartDraft(setNum, scope);
-  return scoutUiState.setStartDraft;
-}
 
 export function updateSetStartSelection(setNum, scope, playerName, value) {
   const draft = ensureSetStartDraft(setNum, scope);
@@ -477,4 +451,69 @@ export function saveLineupModal({ countSubstitutions = false } = {}) {
   }
   scoutUiState.lineupModalDefaultRotation = null;
   closeLineupModal();
+}
+
+export function setLineupModalPreferredLibero(name) {
+  const next = name || "";
+  setTeamPreferredLibero(scoutUiState.lineupModalScope, next);
+  setTeamLiberoAutoMap(scoutUiState.lineupModalScope, {});
+  enforceAutoLiberoForScope(scoutUiState.lineupModalScope, { skipServerOnServe: true });
+}
+
+export function applyDefaultLineupToModal() {
+  const teamName = scoutUiState.lineupModalScope === "opponent" ? matchState.state.selectedOpponentTeam || "" : matchState.state.selectedTeam || "";
+  if (!teamName) {
+    alert("Seleziona prima una squadra.");
+    return;
+  }
+  ;
+  const team = loadTeamFromStorage(teamName);
+  if (!team) {
+    alert("Squadra non trovata o corrotta.");
+    return;
+  }
+  const roster = extractRosterFromTeam(team);
+  const fallback = roster.playersDetailed && roster.playersDetailed.length > 0
+    ? roster.playersDetailed.filter(p => !p.out && p.role !== "L").map(p => p.name)
+    : roster.players || [];
+  const names =
+    roster.defaultLineup && roster.defaultLineup.length > 0 ? roster.defaultLineup : fallback;
+  scoutUiState.lineupModalCourt = Array.from({ length: 6 }, (_, idx) => ({ main: names[idx] || "", replaced: "" }));
+  scoutUiState.lineupModalDefaultRotation = roster.defaultRotation || 1;
+  renderLineupModal();
+}
+
+export function applyNumberToLineupSlot(slotIdx, rawValue) {
+  const value = (rawValue || "").trim();
+  if (!value) return false;
+  const players = getLineupModalPlayers();
+  const numbers = getLineupModalNumbers();
+  const matchName = players.find(name => numbers[name] === value);
+  if (!matchName) return false;
+  assignPlayerToLineup(matchName, slotIdx);
+  return true;
+}
+
+export function exitLineupNumberMode() {
+  scoutUiState.lineupNumberMode = false;
+  renderLineupModal();
+}
+
+export function changeLineupPreferredLibero(next) {
+      next = next || "";
+      setLineupModalPreferredLibero(next);
+      saveState();
+      if (scoutUiState.lineupModalScope === "opponent") {
+        renderOpponentPlayers();
+        renderLiberoBench();
+        updateOpponentRotationDisplay();
+      } else {
+        renderPlayers();
+
+        renderLiberoBench();
+        updateRotationDisplay();
+      }
+      renderLiberoBench();
+      renderLiberoBench();
+  publishLineupView();
 }

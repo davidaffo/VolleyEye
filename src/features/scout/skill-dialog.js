@@ -1,52 +1,18 @@
-import { getScoutAttackTypeOptions } from "./skill-control-model.js";
-import {
-  buildPreparedScoutSkillView,
-  getScoutSkillCodes,
-} from "./skill-control-model.js";
-import { selectScoutServeType, startScoutAttack } from "./selection-commands.js";
-import { SKILLS } from "../../../js/globals.js";
+import { getScoutAttackTypeOptions, buildPreparedScoutSkillView, getScoutSkillCodes } from "./skill-control-model.js";
+import { SKILLS, session as matchState } from "../../../js/globals.js";
 import { skillModalStore } from "../../state/skill-modal-store.mjs";
-import { isDesktopCourtModalLayout } from "../layout/modals.js";
-import { getAttackMetaForPlayer } from "../live/flow-model.js";
-import {
-  getPlayersForScope,
-  getPlayerNumbersForScope,
-  getEnabledSkillsForScope,
-  makePlayerKey,
-  isPlayerKeyInScope,
-} from "../teams/selectors.js";
+import { getAttackMetaForPlayer, getPredictedSkillIdForScope, getPredictedSkillId, isSetterPlayerForScope } from "../live/flow-model.js";
+import { getPlayersForScope, getPlayerNumbersForScope, getEnabledSkillsForScope, makePlayerKey, isPlayerKeyInScope } from "../teams/selectors.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
-import {
-  formatNameWithNumberFor,
-  formatNameWithNumber,
-} from "../teams/roster-data.js";
-import {
-  setSkillModalCancelVisibility,
-  renderSkillCodes,
-  renderSkillChoice,
-  closeSkillModal,
-} from "../live/live-entry.js";
-import { updateSetTypeVisibility } from "../live/game-flow.js";
-import {
-  getPredictedSkillIdForScope,
-  getPredictedSkillId,
-  isSetterPlayerForScope,
-} from "../live/flow-model.js";
-import { session as matchState } from "../../../js/globals.js";
+import { formatNameWithNumberFor, formatNameWithNumber } from "../teams/roster-data.js";
+import { updateSetTypeVisibility } from "./flow-view.js";
 import { clearServeTypeInlineListener, setServeTypeFocusPlayer, bindServeTypeInlineListener } from "./serve-keyboard.js";
 import { clearAttackSelection, shouldPromptAttackSetType } from "./selection-state.js";
-import { renderPlayers } from "../live/team-rendering.js";
+import { renderPlayers, setNextSetType } from "../live/team-rendering.js";
 import { normalizeSetTypeValue } from "../../domain/skill-values.js";
-
 import { getCodeTone } from "../settings/rules.js";
-
-export function publishSkillModalCancel(cancelVisible) {
-  skillModalStore.publish({ cancelVisible });
-}
-
-export function setSkillModalOpen(open) {
-  skillModalStore.publish({ open, courtModal: isDesktopCourtModalLayout() });
-}
+import { setSkillModalCancelVisibility, closeSkillModal } from "./skill-modal-state.js";
+import { startServeTypeSelection, startAttackSelection } from "./selection-flow.js";
 
 export function skillModalPlayerLabel(playerIdx, playerName, scope) {
   const name = playerName || getPlayersForScope(scope)[playerIdx];
@@ -199,4 +165,62 @@ export function publishSkillModalCodes(playerIdx, playerName, skillId, scope) {
     playerName: nameValue,
     codes: ordered.map((code) => ({ code, tone: getCodeTone(skillId, code) })),
   });
+}
+
+
+export function renderSkillChoice(playerIdx, playerName, scope = "our") {
+  if (matchState.state.matchFinished) {
+    alert("Partita in pausa. Riprendi per continuare lo scout.");
+    return;
+  }
+  if (!matchState.elSkillModalBody) return;
+
+ publishSkillModalChoice(playerIdx, playerName, scope); return;
+}
+
+export function renderSkillCodes(playerIdx, playerName, skillId, scope = "our") {
+  if (!matchState.elSkillModalBody) return;
+
+ publishSkillModalCodes(playerIdx, playerName, skillId, scope); return;
+}
+
+
+function refreshScoutSkill(player) {
+  if (player.inModal)
+    renderSkillCodes(
+      player.playerIdx,
+      player.activeName,
+      player.skillId,
+      player.scope,
+    );
+  else renderPlayers();
+}
+
+export async function selectScoutServeType(player, type) {
+  const { playerIdx, scope } = player;
+  await startServeTypeSelection(
+    playerIdx,
+    type,
+    player.inModal ? () => refreshScoutSkill(player) : renderPlayers,
+    scope,
+  );
+}
+
+export async function startScoutAttack(player, choice, queued = false) {
+  const { playerIdx, scope, inModal } = player;
+  const markQueued = () => {
+    const key = makePlayerKey(scope, playerIdx);
+    if (scoutUiState.attackMetaByPlayer[key])
+      scoutUiState.attackMetaByPlayer[key].fromNextSetType = true;
+    scoutUiState.queuedSetTypeChoice = null;
+    setNextSetType("");
+  };
+  const done = inModal
+    ? () => {
+        if (queued) markQueued();
+        refreshScoutSkill(player);
+      }
+    : renderPlayers;
+  await startAttackSelection(playerIdx, choice, done, scope);
+  if (queued && !inModal) markQueued();
 }

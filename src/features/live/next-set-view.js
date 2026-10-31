@@ -1,7 +1,7 @@
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { getPlayerNumbersForScope, getLiberosForScope, getTeamNameForScope, getPlayersForScope } from "../teams/selectors.js";
 import { nextSetStore } from "../../state/next-set-store.mjs";
-import { getNextSetEntry } from "./next-set-lineups.js";
+import { getNextSetEntry } from "./next-set-model.js";
 import { getRawDefaultStartForScope } from "../teams/set-start-model.js";
 import { getCourtShape } from "../teams/court-model.js";
 import { formatLineupModalName, getBenchForLineupWithRoster } from "../teams/lineup-selectors.js";
@@ -66,4 +66,12 @@ export function publishNextSetView() {
     isServing: !!scoutUiState.nextSetDraft.isServing,
     teams: Object.freeze(teams),
   });
+}
+
+export function renderNextSetLineups() {
+  if (!scoutUiState.nextSetDraft) return;
+
+    publishNextSetView();
+    return;
+
 }

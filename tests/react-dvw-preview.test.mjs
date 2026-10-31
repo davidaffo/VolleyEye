@@ -7,6 +7,8 @@ import { JSDOM } from "jsdom";
 const context = vm.createContext({});
 for (const path of [
   "src/features/io/datavolley-skills.js",
+  "src/features/io/datavolley-format.js",
+  "src/features/io/datavolley-entry-view.js",
   "src/features/io/datavolley-export.js",
   "src/features/io/datavolley-codec.js",
   "src/features/io/datavolley-live-entry.js",

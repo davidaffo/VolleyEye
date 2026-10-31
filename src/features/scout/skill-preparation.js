@@ -1,21 +1,11 @@
-import { getScoutAttackTypeOptions } from "./skill-control-model.js";
-import { getScoutSkillCodes } from "./skill-control-model.js";
-import { selectScoutServeType, startQueuedSetterAttack } from "./selection-commands.js";
-import {
-  makePlayerKey,
-  getEnabledSkillsForScope,
-  isSkillEnabledForScope,
-  isPlayerKeyInScope,
-} from "../teams/selectors.js";
+import { getScoutAttackTypeOptions, getScoutSkillCodes } from "./skill-control-model.js";
+import { startServeTypeSelection } from "./selection-flow.js";
+import { makePlayerKey, getEnabledSkillsForScope, isSkillEnabledForScope, isPlayerKeyInScope } from "../teams/selectors.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
-import { getAttackMetaForPlayer, getActiveAttackKeyForScope, getSelectedSkillForScope, getNetBlockPromptScope, isForcedBlockScope, getServerPlayerForScope, isPostServeLockForScope, getActiveServerName, getAutoFlowState, shouldSkipBlockConfirm, resolveFlowSkillForScope, isBlockEligibleForScope, isSetterPlayerForScope } from "../live/flow-model.js";
-import { setSelectedSkillForScope } from "../live/flow-model.js";
+import { getAttackMetaForPlayer, getActiveAttackKeyForScope, getSelectedSkillForScope, getNetBlockPromptScope, isForcedBlockScope, getServerPlayerForScope, isPostServeLockForScope, getActiveServerName, getAutoFlowState, shouldSkipBlockConfirm, resolveFlowSkillForScope, isBlockEligibleForScope, isSetterPlayerForScope, setSelectedSkillForScope } from "../live/flow-model.js";
 import { clearServeTypeInlineListener, bindServeTypeInlineListener } from "./serve-keyboard.js";
 import { getServeBaseZoneForPlayer, clearAttackSelection, shouldPromptAttackSetType } from "./selection-state.js";
-
 import { session as matchState } from "../../../js/globals.js";
-
-import { scheduleRenderPlayers } from "../live/live-entry.js";
 import { normalizeSetTypeValue } from "../../domain/skill-values.js";
 import { getCodeTone } from "../settings/rules.js";
 
@@ -23,6 +13,7 @@ export function prepareScoutSkillControls(
   playerIdx,
   activeName,
   { nextSkillId = null, scope = "our" } = {},
+  effects,
 ) {
   const playerKey = makePlayerKey(scope, playerIdx);
   const selectedSkill = getSelectedSkillForScope(scope, playerIdx);
@@ -172,7 +163,7 @@ export function prepareScoutSkillControls(
     };
     delete scoutUiState.serveMetaByPlayer[playerKey];
     setSelectedSkillForScope(scope, playerIdx, null);
-    scheduleRenderPlayers();
+    effects.onScheduleRender();
     return empty();
   }
   if (picked !== "serve" && scoutUiState.serveTypeInlinePlayer === playerKey)
@@ -191,7 +182,7 @@ export function prepareScoutSkillControls(
       scoutUiState.serveTypeInlinePlayer !== playerKey
     )
       return empty();
-    const select = (type) => selectScoutServeType(player, type);
+    const select = (type) => startServeTypeSelection(playerIdx, type, effects.onRender, scope);
     bindServeTypeInlineListener(playerIdx, select, scope);
     return finish("serve-types");
   }
@@ -211,7 +202,7 @@ export function prepareScoutSkillControls(
       ) {
         if (scoutUiState.attackInlinePlayer === playerKey) return empty();
         const choice = scoutUiState.queuedSetTypeChoice;
-        startQueuedSetterAttack(player, choice);
+        effects.onQueuedAttack(player, choice);
         return empty();
       }
       if (queued)

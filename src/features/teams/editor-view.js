@@ -1,12 +1,10 @@
 import { openPlayerPhotoEditor, preparePlayerPhotoDataUrl } from "../players/photo-editor.js";
-import { PLAYER_PHOTO_REMOVE_RESULT } from "../../../js/globals.js";
+import { PLAYER_PHOTO_REMOVE_RESULT, pickImageFile, logError } from "../../../js/globals.js";
 import { session as rosterLineupState } from "../state/roster-lineup.js";
 import { isValidPlayerId, generatePlayerId, findPlayersDbMatchByName } from "./storage/team-repository.js";
 import { buildFullName, enforceSingleCaptainFlag } from "../../domain/player-names.js";
-import { sortNamesByNumber, formatNameWithNumberFor } from "./roster-data.js";
-import { renderTeamManagerTable, getDefaultLineupRoster, normalizeDefaultLineup, formatDefaultLineupName, clearDefaultLineupSlot, setDefaultLineupSlot, rotateDefaultLineup } from "./editor/team-editor.js";
+import { sortNamesByNumber, formatNameWithNumberFor, formatStructuredPlayerName } from "./roster-data.js";
 import { teamEditorStore } from "../../state/team-editor-store.mjs";
-import { pickImageFile, logError } from "../../../js/globals.js";
 import { setGlobalModalState } from "../layout/modals.js";
 
 export function publishTeamEditorView() {
@@ -281,4 +279,112 @@ export function publishTeamEditorMode() {
 
 export function getReactTeamEditorMetadata() {
   return teamEditorStore.getSnapshot().meta;
+}
+
+export function renderTeamManagerTable() {
+  if (!rosterLineupState.elTeamManagerBody || !rosterLineupState.teamManagerState) return;
+
+ publishTeamEditorView(); return;
+}
+
+export function getDefaultLineupRoster() {
+  if (!rosterLineupState.teamManagerState) return [];
+  const roster = (rosterLineupState.teamManagerState.players || [])
+    .filter(p => (p.name || "").trim() !== "" && String(p.role || "").toUpperCase() !== "L")
+    .map(p => ({
+      name: buildFullName(p.lastName, p.firstName) || p.name.trim(),
+      number: p.number || "",
+      isCaptain: !!p.isCaptain,
+      out: !!p.out
+    }));
+  roster.sort((a, b) => {
+    const numA = a.number !== "" ? parseInt(a.number, 10) : NaN;
+    const numB = b.number !== "" ? parseInt(b.number, 10) : NaN;
+    const cleanA = Number.isFinite(numA) ? numA : null;
+    const cleanB = Number.isFinite(numB) ? numB : null;
+    if (cleanA === null && cleanB === null) {
+      return a.name.localeCompare(b.name, "it", { sensitivity: "base" });
+    }
+    if (cleanA === null) return 1;
+    if (cleanB === null) return -1;
+    if (cleanA !== cleanB) return cleanA - cleanB;
+    return a.name.localeCompare(b.name, "it", { sensitivity: "base" });
+  });
+  return roster;
+}
+
+export function formatDefaultLineupName(name, numbersMap, captainSet, options = {}) {
+  if (!name) return "";
+  const num = (numbersMap && numbersMap[name]) || "";
+  const compactCourt = !!options.compactCourt;
+  let baseName = formatStructuredPlayerName(name, rosterLineupState.teamManagerScope || "our");
+  if (compactCourt) {
+    baseName = baseName || name || "";
+  }
+  const base = num ? num + " - " + baseName : baseName;
+  if (options.includeCaptain !== false && captainSet && captainSet.has(name)) {
+    return base + " (K)";
+  }
+  return base;
+}
+
+export function normalizeDefaultLineup(names, rosterNames) {
+  const allowed = new Set(rosterNames);
+  const list = Array.isArray(names) ? names.slice(0, 6) : [];
+  const cleaned = list.map(name => (name && allowed.has(name) ? name : ""));
+  while (cleaned.length < 6) cleaned.push("");
+  return cleaned;
+}
+
+export function setDefaultLineupSlot(slotIdx, name) {
+  if (!rosterLineupState.teamManagerState) return;
+  const roster = getDefaultLineupRoster();
+  const rosterNames = roster.map(p => p.name);
+  if (!rosterNames.includes(name)) return;
+  const current = normalizeDefaultLineup(rosterLineupState.teamManagerState.defaultLineup || [], rosterNames);
+  const existingIdx = current.findIndex(n => n === name);
+  const targetName = current[slotIdx] || "";
+  if (targetName && targetName !== name) {
+    if (existingIdx !== -1) {
+      current[existingIdx] = targetName;
+    }
+  }
+  if (existingIdx !== -1 && existingIdx !== slotIdx && !targetName) {
+    current[existingIdx] = "";
+  }
+  current[slotIdx] = name;
+  rosterLineupState.teamManagerState.defaultLineup = current;
+  renderDefaultLineupEditor();
+}
+
+export function rotateDefaultLineup(direction) {
+  if (!rosterLineupState.teamManagerState) return;
+  const rosterNames = getDefaultLineupRoster().map(p => p.name);
+  const current = normalizeDefaultLineup(rosterLineupState.teamManagerState.defaultLineup || [], rosterNames);
+  let rotated = current.slice();
+  if (direction === "cw") {
+    rotated = [current[5], current[0], current[1], current[2], current[3], current[4]];
+    rosterLineupState.teamManagerState.defaultRotation = ((rosterLineupState.teamManagerState.defaultRotation || 1) % 6) + 1;
+  } else {
+    rotated = [current[1], current[2], current[3], current[4], current[5], current[0]];
+    rosterLineupState.teamManagerState.defaultRotation =
+      rosterLineupState.teamManagerState.defaultRotation === 1 ? 6 : (rosterLineupState.teamManagerState.defaultRotation || 1) - 1;
+  }
+  rosterLineupState.teamManagerState.defaultLineup = rotated;
+  renderDefaultLineupEditor();
+}
+
+export function clearDefaultLineupSlot(slotIdx) {
+  if (!rosterLineupState.teamManagerState) return;
+  const rosterNames = getDefaultLineupRoster().map(p => p.name);
+  const current = normalizeDefaultLineup(rosterLineupState.teamManagerState.defaultLineup || [], rosterNames);
+  current[slotIdx] = "";
+  rosterLineupState.teamManagerState.defaultLineup = current;
+  renderDefaultLineupEditor();
+}
+
+export function renderDefaultLineupEditor() {
+  if (!rosterLineupState.elDefaultLineupGrid || !rosterLineupState.elDefaultLineupBench || !rosterLineupState.teamManagerState) return;
+
+ publishTeamEditorView(); return;
 }

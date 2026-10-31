@@ -4,21 +4,13 @@ import { session as rosterLineupState } from "../state/roster-lineup.js";
 import { renderTrajectoryAnalysis, renderServeTrajectoryAnalysis } from "../analysis/trajectory-rendering.js";
 import { getTrajectoryBg, getServeTrajectoryImages } from "../analysis/trajectory-canvas.js";
 import { renderPlayerTrajectoryAnalysis, renderPlayerServeTrajectoryAnalysis } from "../analysis/player-trajectories.js";
-import { buildMatchDisplayName } from "../teams/match-details.js";
+import { buildMatchDisplayName, safeMatchSlug } from "../teams/match-details.js";
 import { applyTheme } from "../teams/core/state-store.js";
-
 import { cloneIsolationData } from "../../domain/snapshots.js";
 import { setActiveTab, setActiveAggTab } from "../core/app-lifecycle.js";
 import { session as browserEffectsState } from "../../app/browser-effects.js";
-
 import { getCurrentMatchPayload } from "../teams/current-payload.js";
 import { loadTeamsMapFromStorage } from "../teams/storage/team-repository.js";
-
-export function safeMatchSlug() {
-  const datePart = (matchState.state.match && matchState.state.match.date) || "";
-  const opponentSlug = (matchState.state.match.opponent || "match").replace(/\s+/g, "_");
-  return (datePart ? datePart + "_" : "") + opponentSlug;
-}
 
 export function prepareAnalysisFiltersForPdf(container) {
   if (!container) return () => {};

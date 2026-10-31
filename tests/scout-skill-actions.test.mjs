@@ -1,8 +1,9 @@
+import { sourceFunctions } from "./helpers/source-functions.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import vm from "node:vm";
 import { readSourceFixture } from "./helpers/source-fixture.mjs";
-const source = readSourceFixture(new URL("../src/features/scout/selection-commands.js", import.meta.url), "utf8") + readSourceFixture(
+const source = sourceFunctions(readSourceFixture(new URL("../src/features/scout/skill-dialog.js", import.meta.url), "utf8"), ["refreshScoutSkill", "selectScoutServeType", "startScoutAttack"]) + sourceFunctions(readSourceFixture(new URL("../src/features/live/team-rendering.js", import.meta.url), "utf8"), ["startQueuedSetterAttack"]) + readSourceFixture(
   new URL("../src/features/scout/skill-actions.js", import.meta.url),
   "utf8",
 );
@@ -37,6 +38,8 @@ function setup() {
     renderSkillCodes: (...args) => calls.push(["modal-codes", ...args]),
     closeSkillModal: () => calls.push("close-modal"),
   });
+  for (const name of ["restorePlayerFromLiberoForScope", "handleBenchClickForScope", "applyPointForPickedPlayer", "openErrorModalForPickedPlayer", "stopPointPickMode", "stopErrorPickMode", "openErrorModal", "handleTeamPoint"])
+    ctx[name] = (...args) => calls.push([name, ...args]);
   vm.runInContext(source, ctx);
   return { ctx, calls };
 }
@@ -345,10 +348,8 @@ test("modal controls share the cloneable command schema and record through the s
     ctx,
   );
   vm.runInContext(
-    readSourceFixture(
-      new URL("../src/features/scout/skill-dialog.js", import.meta.url),
-      "utf8",
-    ),
+    sourceFunctions(readSourceFixture(new URL("../src/features/scout/skill-dialog.js", import.meta.url), "utf8"),
+      ["publishSkillModalCancel", "setSkillModalOpen", "skillModalPlayerLabel", "publishSkillModalChoice", "publishSkillModalCodes"]),
     ctx,
   );
   ctx.publishSkillModalCodes(2, "Ada", "pass", "opponent");
@@ -370,4 +371,21 @@ test("modal controls share the cloneable command schema and record through the s
   );
   await ctx.runScoutSkillAction(buttons[1].action, { currentTarget: {} });
   assert.deepEqual(calls, ["metadata", "close-modal"]);
+});
+
+test('team point action records the point before leaving pick mode', () => {
+  const { ctx, calls } = setup();
+  ctx.runScoutSkillAction({ command: 'assignScoutTeamPoint', args: ['opponent'] });
+  assert.deepEqual(calls, [['handleTeamPoint', 'opponent'], ['stopPointPickMode']]);
+});
+
+test('court actions retain the player, court position and team scope through the shared dispatcher', () => {
+  const { ctx, calls } = setup();
+  const gesture = { currentTarget: {} };
+  ctx.runScoutSkillAction({ command: 'restorePlayerFromLiberoForScope', args: [4, 'opponent'] }, gesture);
+  ctx.runScoutSkillAction({ command: 'applyPointForPickedPlayer', args: ['our', 2, 'Ada'] }, gesture);
+  assert.deepEqual(calls, [
+    ['restorePlayerFromLiberoForScope', 4, 'opponent', gesture],
+    ['applyPointForPickedPlayer', 'our', 2, 'Ada', gesture],
+  ]);
 });

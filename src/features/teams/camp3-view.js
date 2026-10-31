@@ -1,4 +1,4 @@
-import { getCamp3RowKind } from "./imports/camp3-import.js";
+import { getCamp3RowKind } from "./imports/camp3-model.js";
 import { camp3ConfirmStore } from "../../state/roster-import-store.mjs";
 
 export function publishCamp3ConfirmView(draft) {

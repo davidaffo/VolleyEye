@@ -110,9 +110,12 @@ test("il clic sul libero avversario usa il cambio e non rimuove il ruolo", () =>
   for (const name of ["handleBenchDragStart", "handleBenchDragEnd", "handleBenchTouchMove", "handleBenchTouchEnd", "handleBenchTouchCancel"]) c[name] = () => {};
   load(c, readFileSync(new URL("../src/features/scout/court-model.js", import.meta.url), "utf8"), ["buildLiberoBenchModel"]);
   load(c, readFileSync(new URL("../src/features/scout/court-view.js", import.meta.url), "utf8"), ["publishLiberoBench"]);
+  load(c, readFileSync(new URL("../src/features/scout/skill-control-model.js", import.meta.url), "utf8"), ["createScoutAction"]);
   load(c, readFileSync(new URL("../src/features/scout/court-commands.js", import.meta.url), "utf8"), ["renderLiberoBench"]);
   c.renderLiberoBench();
-  view.opponent[0].onClick();
+  const action = view.opponent[0].action;
+  assert.equal(action.command, "handleBenchClickForScope");
+  c[action.command](...action.args);
   assert.deepEqual(c.clicked, ["Libero", "opponent"]);
   assert.deepEqual(c.state.opponentLiberos, ["Libero"]);
 });
@@ -145,7 +148,7 @@ test("selezionare l'avversaria conserva tutte le riserve e salva la formazione f
     updateOpponentPlayersList: names => { c.state.opponentPlayers = names; return true; },
     saveState: () => { c.saved = plain(c.state); }
   };
-  for (const name of ["updateOpponentTeamButtonsState", "ensureMatchDefaults", "renderOpponentLiberoChipsInline", "renderOpponentPlayers", "publishTeamsManagerView", "updateOpponentRotationDisplay"]) c[name] = () => {};
+  for (const name of ["updateOpponentTeamButtonsState", "ensureMatchDefaults", "renderLiberoBench", "renderOpponentPlayers", "publishTeamsManagerView", "updateOpponentRotationDisplay"]) c[name] = () => {};
   load(c, roster, ["handleOpponentTeamSelectChange", "applyOpponentDefaultLineup"]);
   c.handleOpponentTeamSelectChange();
   assert.deepEqual(c.saved.opponentPlayers, players);
@@ -200,7 +203,7 @@ function managerContext(storageOnly = false) {
     saveState: () => { c.saved = plain(c.state); }
   };
   for (const name of ["syncOpponentTeamsFromStorage", "publishTeamsManagerView", "publishTeamsManagerView", "ensureMatchDefaults",
-    "renderOpponentLiberoChipsInline", "renderOpponentPlayers", "updateOpponentRotationDisplay", "invalidateRosterIdMapsCache"]) c[name] = () => {};
+    "renderLiberoBench", "renderOpponentPlayers", "updateOpponentRotationDisplay", "invalidateRosterIdMapsCache"]) c[name] = () => {};
   return load(c, roster, ["saveTeamManagerPayload", "applyOpponentDefaultLineup"]);
 }
 test("salvare l'avversaria applica e persiste anche titolari e rotazione predefiniti", () => {

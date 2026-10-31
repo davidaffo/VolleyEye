@@ -1,4 +1,5 @@
-import { session as matchState } from '../../../js/globals.js';
+import { session as matchState } from "../../../js/globals.js";
+
 export function getTodayIso() {
   const d = new Date();
   const off = d.getTimezoneOffset();
@@ -55,4 +56,10 @@ export function ensureMatchDefaults() {
   if (typeof matchState.state.match.leg !== "string") {
     matchState.state.match.leg = "";
   }
+}
+
+export function safeMatchSlug() {
+  const datePart = (matchState.state.match && matchState.state.match.date) || "";
+  const opponentSlug = (matchState.state.match.opponent || "match").replace(/\s+/g, "_");
+  return (datePart ? datePart + "_" : "") + opponentSlug;
 }

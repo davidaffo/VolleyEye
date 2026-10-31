@@ -5,7 +5,7 @@ import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs'
 import test from "node:test";
 import vm from "node:vm";
 
-const lifecycle = readFileSync(new URL("../src/features/core/app-lifecycle.js", import.meta.url), "utf8");
+const lifecycle = readFileSync(new URL("../src/features/events/history-model.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/events/history-commands.js", import.meta.url), "utf8");
 const source = lifecycle.slice(
   lifecycle.indexOf("function captureScoutActionSnapshot"),
   lifecycle.indexOf("function deleteEventByKey")
@@ -20,8 +20,8 @@ function setup(events, currentSet = 1) {
   };
   for (const name of [
     "saveState", "recalcAllStatsAndUpdateUI", "renderEventsLog", "renderPlayers",
-    "renderLiberoChipsInline", "renderLineupChips",
-    "updateRotationDisplay", "renderLiveScore", "updateSetScoreDisplays",
+    "renderLiberoBench", "renderLineupChips",
+    "updateRotationDisplay", "renderLiveScore", "publishRuntimeView",
     "recomputeServeFlagsFromHistory", "resetSetTypeState"
   ]) context[name] = () => {};
   vm.runInNewContext(source, context);

@@ -1,26 +1,20 @@
-import { formatSetTypeLabelWithShortcut } from "../scout/skill-control-model.js";
-import { SKILLS } from "../../../js/globals.js";
+import { SKILLS, session as matchState } from "../../../js/globals.js";
 import { session as rosterLineupState } from "../state/roster-lineup.js";
 import { importDatabaseFromUrl } from "../io/file-and-url-import.js";
-import { databaseImportStore, setTypeShortcutsStore, floatingServeErrorStore } from "../../state/roster-import-store.mjs";
+import { databaseImportStore, floatingServeErrorStore } from "../../state/roster-import-store.mjs";
 import { openTeamManagerModal } from "../teams/editor/team-editor.js";
 import { openMobileLineupModal } from "../live/lineup-editor.js";
 import { startPointPickMode, startErrorPickMode } from "../live/live-entry.js";
-import { session as matchState } from "../../../js/globals.js";
 import { applyScoutWidgetLayout } from "../live/workspace-layout.js";
 import { saveState } from "../storage/save-state.js";
 import { publishReactSettings } from "../settings/view.js";
-import { normalizeSetTypeValue } from "../../domain/skill-values.js";
-import { setNextSetType } from "../live/scout-shortcuts.js";
+import { setNextSetType, renderPlayers } from "../live/team-rendering.js";
 import { session as liveScoreAndSetState } from "../state/live-live-score-and-set.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
-import { getOppositeScope, isSkillEnabledForScope } from "../teams/selectors.js";
 import { startVideoResizeDrag, startScoutColumnResize, setVideoLayoutWidth, applyScoutColumnLayout, setScoutColumnWidth, ensureScoutColumnState } from "../scout-ui.js";
-import { getAutoFlowState, getServerPlayerForScope } from "../live/flow-model.js";
 import { setSelectedSkillForScope } from "../live/flow-model.js";
 import { handleEventClick } from "../live/event-recording.js";
 import { clearServeTypeInlineListener } from "../scout/serve-keyboard.js";
-import { renderPlayers } from "../live/team-rendering.js";
 
 export function openReactDatabasePicker() {
   if (!rosterLineupState.elDbFileInput) return;
@@ -66,15 +60,6 @@ export function changeReactOpponentSkill(skillId, enabled) {
   publishReactSettings();
 }
 
-export function publishReactSetTypeShortcuts() {
-  setTypeShortcutsStore.publish({
-    selected: normalizeSetTypeValue(matchState.state.nextSetType) || "",
-    choices: liveScoreAndSetState.DEFAULT_SET_TYPE_OPTIONS.map((option) => ({
-      value: option.value,
-      label: formatSetTypeLabelWithShortcut(option.value, option.label),
-    })),
-  });
-}
 
 export function changeReactSetType(value) {
   if (
@@ -86,24 +71,6 @@ export function changeReactSetType(value) {
   setNextSetType(value);
 }
 
-export function publishReactFloatingServeError(isCompactMobile) {
-  const flow =
-    isCompactMobile && matchState.state.useOpponentTeam && matchState.state.predictiveSkillFlow
-      ? getAutoFlowState()
-      : null;
-  const scope =
-    flow?.skillId === "pass" ? getOppositeScope(flow.teamScope) : "";
-  const server =
-    scope && isSkillEnabledForScope("serve", scope)
-      ? getServerPlayerForScope(scope)
-      : null;
-  floatingServeErrorStore.publish({
-    visible: !!server?.name,
-    scope,
-    playerIdx: server?.idx ?? null,
-    playerName: server?.name || "",
-  });
-}
 
 export async function recordReactFloatingServeError() {
   const { visible, scope, playerIdx, playerName } =

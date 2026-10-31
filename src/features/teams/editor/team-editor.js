@@ -2,21 +2,22 @@ import { getRemovedLiveTeamPlayers } from "../player-reference-model.js";
 import { ensureMatchDefaults } from "../match-details.js";
 import { TEMPLATE_TEAM, session as matchState } from "../../../../js/globals.js";
 import { normalizePlayers, buildFullName, enforceSingleCaptainFlag } from "../../../domain/player-names.js";
-import { applyOpponentDefaultLineup, applyLiveOpponentTeamManagerPayload, applyLiveTeamManagerPayload } from "../core/player-model.js";
-import { publishTeamEditorMode, publishTeamEditorView, openReactTeamEditor, closeReactTeamEditor, getReactTeamEditorMetadata } from "../editor-view.js";
-import { formatStructuredPlayerName } from "../roster-data.js";
-import { updatePlayersList, renderOpponentLiberoChipsInline } from "../court/court-ui-bootstrap.js";
+import { applyOpponentDefaultLineup } from "../lineup-commands.js";
+import { applyLiveOpponentTeamManagerPayload, applyLiveTeamManagerPayload } from "../core/player-model.js";
+import { publishTeamEditorMode, openReactTeamEditor, closeReactTeamEditor, getReactTeamEditorMetadata, renderTeamManagerTable, getDefaultLineupRoster, formatDefaultLineupName, normalizeDefaultLineup, setDefaultLineupSlot, clearDefaultLineupSlot } from "../editor-view.js";
+import { updatePlayersList } from "../court/court-ui-bootstrap.js";
+import { renderLiberoBench } from "../../scout/court-commands.js";
 import { session as courtEngineState } from "../court/court-engine.js";
 import { renderOpponentPlayers } from "../../live/team-rendering.js";
 import { normalizeTeamPayload, findPlayersDbMatchByFullName, isValidPlayerId, generatePlayerId, isTemplatePlayerName, buildPlayersDbEntry, savePlayersDbToStorage, loadTeamFromStorage, loadOpponentTeamFromStorage, compactTeamPayload, saveOpponentTeamToStorage, deleteOpponentTeamFromStorage, syncOpponentTeamsFromStorage, saveTeamToStorage, deleteTeamFromStorage, syncTeamsFromStorage, extractRosterFromTeam } from "../storage/team-repository.js";
 import { session as rosterLineupState } from "../../state/roster-lineup.js";
 import { listenRuntime } from "../../../app/browser-effects.js";
 import { getCurrentOpponentPayload, getCurrentTeamPayload } from "../current-payload.js";
-import { renameTeamReferencesAcrossSavedMatches } from "../storage/archive-actions.js";
+import { renameTeamReferencesAcrossSavedMatches } from "../team-reference-model.js";
 import { setGlobalModalState } from "../../layout/modals.js";
 import { invalidateRosterIdMapsCache } from "../player-identity.js";
 import { session as scoutUiState } from "../../state/scout-ui.js";
-import { hasMatchDataForReset } from "../storage/match-repository.js";
+import { hasMatchDataForReset } from "../../storage/match-repository.js";
 import { publishTeamsManagerView } from "../manager-view.js";
 import { cloneIsolationData } from "../../../domain/snapshots.js";
 import { saveState } from "../../storage/save-state.js";
@@ -193,107 +194,12 @@ export function buildTeamManagerStateFromSource(source, scope = "our") {
   };
 }
 
-export function renderTeamManagerTable() {
-  if (!rosterLineupState.elTeamManagerBody || !rosterLineupState.teamManagerState) return;
 
- publishTeamEditorView(); return;
-}
 
-export function getDefaultLineupRoster() {
-  if (!rosterLineupState.teamManagerState) return [];
-  const roster = (rosterLineupState.teamManagerState.players || [])
-    .filter(p => (p.name || "").trim() !== "" && String(p.role || "").toUpperCase() !== "L")
-    .map(p => ({
-      name: buildFullName(p.lastName, p.firstName) || p.name.trim(),
-      number: p.number || "",
-      isCaptain: !!p.isCaptain,
-      out: !!p.out
-    }));
-  roster.sort((a, b) => {
-    const numA = a.number !== "" ? parseInt(a.number, 10) : NaN;
-    const numB = b.number !== "" ? parseInt(b.number, 10) : NaN;
-    const cleanA = Number.isFinite(numA) ? numA : null;
-    const cleanB = Number.isFinite(numB) ? numB : null;
-    if (cleanA === null && cleanB === null) {
-      return a.name.localeCompare(b.name, "it", { sensitivity: "base" });
-    }
-    if (cleanA === null) return 1;
-    if (cleanB === null) return -1;
-    if (cleanA !== cleanB) return cleanA - cleanB;
-    return a.name.localeCompare(b.name, "it", { sensitivity: "base" });
-  });
-  return roster;
-}
 
-export function formatDefaultLineupName(name, numbersMap, captainSet, options = {}) {
-  if (!name) return "";
-  const num = (numbersMap && numbersMap[name]) || "";
-  const compactCourt = !!options.compactCourt;
-  let baseName = formatStructuredPlayerName(name, rosterLineupState.teamManagerScope || "our");
-  if (compactCourt) {
-    baseName = baseName || name || "";
-  }
-  const base = num ? num + " - " + baseName : baseName;
-  if (options.includeCaptain !== false && captainSet && captainSet.has(name)) {
-    return base + " (K)";
-  }
-  return base;
-}
 
-export function normalizeDefaultLineup(names, rosterNames) {
-  const allowed = new Set(rosterNames);
-  const list = Array.isArray(names) ? names.slice(0, 6) : [];
-  const cleaned = list.map(name => (name && allowed.has(name) ? name : ""));
-  while (cleaned.length < 6) cleaned.push("");
-  return cleaned;
-}
 
-export function setDefaultLineupSlot(slotIdx, name) {
-  if (!rosterLineupState.teamManagerState) return;
-  const roster = getDefaultLineupRoster();
-  const rosterNames = roster.map(p => p.name);
-  if (!rosterNames.includes(name)) return;
-  const current = normalizeDefaultLineup(rosterLineupState.teamManagerState.defaultLineup || [], rosterNames);
-  const existingIdx = current.findIndex(n => n === name);
-  const targetName = current[slotIdx] || "";
-  if (targetName && targetName !== name) {
-    if (existingIdx !== -1) {
-      current[existingIdx] = targetName;
-    }
-  }
-  if (existingIdx !== -1 && existingIdx !== slotIdx && !targetName) {
-    current[existingIdx] = "";
-  }
-  current[slotIdx] = name;
-  rosterLineupState.teamManagerState.defaultLineup = current;
-  renderDefaultLineupEditor();
-}
 
-export function rotateDefaultLineup(direction) {
-  if (!rosterLineupState.teamManagerState) return;
-  const rosterNames = getDefaultLineupRoster().map(p => p.name);
-  const current = normalizeDefaultLineup(rosterLineupState.teamManagerState.defaultLineup || [], rosterNames);
-  let rotated = current.slice();
-  if (direction === "cw") {
-    rotated = [current[5], current[0], current[1], current[2], current[3], current[4]];
-    rosterLineupState.teamManagerState.defaultRotation = ((rosterLineupState.teamManagerState.defaultRotation || 1) % 6) + 1;
-  } else {
-    rotated = [current[1], current[2], current[3], current[4], current[5], current[0]];
-    rosterLineupState.teamManagerState.defaultRotation =
-      rosterLineupState.teamManagerState.defaultRotation === 1 ? 6 : (rosterLineupState.teamManagerState.defaultRotation || 1) - 1;
-  }
-  rosterLineupState.teamManagerState.defaultLineup = rotated;
-  renderDefaultLineupEditor();
-}
-
-export function clearDefaultLineupSlot(slotIdx) {
-  if (!rosterLineupState.teamManagerState) return;
-  const rosterNames = getDefaultLineupRoster().map(p => p.name);
-  const current = normalizeDefaultLineup(rosterLineupState.teamManagerState.defaultLineup || [], rosterNames);
-  current[slotIdx] = "";
-  rosterLineupState.teamManagerState.defaultLineup = current;
-  renderDefaultLineupEditor();
-}
 
 export function ensureDefaultLineupTouchListeners() {
   if (rosterLineupState.defaultLineupTouchListenersAttached) return;
@@ -410,11 +316,6 @@ export function handleDefaultLineupTouchCancel() {
   clearDefaultLineupTouch();
 }
 
-export function renderDefaultLineupEditor() {
-  if (!rosterLineupState.elDefaultLineupGrid || !rosterLineupState.elDefaultLineupBench || !rosterLineupState.teamManagerState) return;
-
- publishTeamEditorView(); return;
-}
 
 export function refreshTeamManagerPlayersFromState() {
   if (!rosterLineupState.elTeamManagerModal || rosterLineupState.elTeamManagerModal.classList.contains("hidden")) return;
@@ -697,7 +598,7 @@ export function saveTeamManagerPayload(options = {}) {
           roster.defaultRotation || 1
         );
       }
-      renderOpponentLiberoChipsInline();
+      renderLiberoBench();
       renderOpponentPlayers();
     }
   } else {

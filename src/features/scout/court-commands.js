@@ -1,27 +1,9 @@
 import { publishLiberoBench, publishScoutCourtView } from "./court-view.js";
-import {
-  COURT_CARD_ORDER,
-  getScoutCourtFarSide,
-  buildLiberoBenchModel,
-  prepareScoutCourtData,
-  buildScoutCourtCard,
-  buildScoutCourtBench,
-} from "./court-model.js";
-import { restorePlayerFromLiberoForScope } from "../teams/court/court-engine.js";
-import {
-  handleBenchClickForScope,
-  captureRects,
-} from "../teams/court/court-ui-bootstrap.js";
-import {
-  applyPointForPickedPlayer,
-  openErrorModalForPickedPlayer,
-  stopPointPickMode,
-  stopErrorPickMode,
-  openErrorModal,
-} from "../live/live-entry.js";
+import { COURT_CARD_ORDER, getScoutCourtFarSide, buildLiberoBenchModel, prepareScoutCourtData, buildScoutCourtCard, buildScoutCourtBench } from "./court-model.js";
+import { captureRects } from "../layout/animation.js";
 import { prepareScoutSkillControls } from "./skill-preparation.js";
-import { buildPreparedScoutSkillView } from "./skill-control-model.js";
-import { handleTeamPoint } from "../live/live-score-and-set.js";
+import { buildPreparedScoutSkillView, createScoutAction } from "./skill-control-model.js";
+
 export function renderLiberoBench() {
   const model = buildLiberoBenchModel();
   const view = Object.fromEntries(
@@ -29,10 +11,9 @@ export function renderLiberoBench() {
       scope,
       players.map((player) => ({
         ...player,
-        onClick: () =>
-          player.restorePosition !== undefined
-            ? restorePlayerFromLiberoForScope(player.restorePosition, scope)
-            : handleBenchClickForScope(player.name, scope),
+        action: player.restorePosition !== undefined
+          ? createScoutAction("restorePlayerFromLiberoForScope", player.restorePosition, scope)
+          : createScoutAction("handleBenchClickForScope", player.name, scope),
       })),
     ]),
   );
@@ -40,7 +21,7 @@ export function renderLiberoBench() {
 }
 export function renderScoutCourt(
   scope,
-  { hidden, compact, nextSkillId, animate },
+  { hidden, compact, nextSkillId, animate, effects },
 ) {
   if (hidden) {
     publishScoutCourtView(scope, {
@@ -62,15 +43,15 @@ export function renderScoutCourt(
     const { name, playerIndex, posIndex, restoreLabel } = card;
     return Object.freeze({
       ...card,
-      onRestore: restoreLabel
-        ? () => restorePlayerFromLiberoForScope(posIndex, scope)
+      restoreAction: restoreLabel
+        ? createScoutAction("restorePlayerFromLiberoForScope", posIndex, scope)
         : null,
-      onPick:
+      pickAction:
         name && playerIndex !== -1
           ? pointPick
-            ? () => applyPointForPickedPlayer(scope, playerIndex, name)
+            ? createScoutAction("applyPointForPickedPlayer", scope, playerIndex, name)
             : errorPick
-              ? () => openErrorModalForPickedPlayer(scope, playerIndex, name)
+              ? createScoutAction("openErrorModalForPickedPlayer", scope, playerIndex, name)
               : null
           : null,
       skills:
@@ -79,7 +60,7 @@ export function renderScoutCourt(
               prepareScoutSkillControls(playerIndex, name, {
                 nextSkillId: predicted,
                 scope,
-              }),
+              }, effects),
             )
           : null,
     });
@@ -88,7 +69,7 @@ export function renderScoutCourt(
     Object.freeze({
       name,
       label,
-      onPick: () => openErrorModalForPickedPlayer(scope, idx, name),
+      pickAction: createScoutAction("openErrorModalForPickedPlayer", scope, idx, name),
     }),
   );
   publishScoutCourtView(scope, {
@@ -101,11 +82,8 @@ export function renderScoutCourt(
     errorPick,
     pointPick,
     far: getScoutCourtFarSide(scope),
-    onCancelPick: pointPick ? stopPointPickMode : stopErrorPickMode,
-    onTeamPoint: () => {
-      handleTeamPoint(scope);
-      stopPointPickMode();
-    },
-    onTeamError: () => openErrorModal({ scope, teamFromPicker: true }),
+    cancelPickAction: createScoutAction(pointPick ? "stopPointPickMode" : "stopErrorPickMode"),
+    teamPointAction: createScoutAction("assignScoutTeamPoint", scope),
+    teamErrorAction: createScoutAction("openErrorModal", { scope, teamFromPicker: true }),
   });
 }

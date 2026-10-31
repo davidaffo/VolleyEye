@@ -2,7 +2,8 @@ import { setTeamPreferredLibero, setTeamLiberoAutoMap } from "../teams/roster-da
 import { enforceAutoLiberoForScope } from "../teams/court-state-model.js";
 import { saveState } from "../storage/save-state.js";
 import { renderOpponentPlayers, renderPlayers } from "./team-rendering.js";
-import { renderOpponentLiberoChipsInline, updateOpponentRotationDisplay, renderLiberoChipsInline, updateRotationDisplay } from "../teams/court/court-ui-bootstrap.js";
+import { renderLiberoBench } from "../scout/court-commands.js";
+import { updateOpponentRotationDisplay, updateRotationDisplay } from "../teams/court-view.js";
 import { publishNextSetView } from "./next-set-view.js";
 
 export function setNextSetPreferredLibero(scope, next) {
@@ -12,12 +13,12 @@ export function setNextSetPreferredLibero(scope, next) {
   saveState();
   if (scope === "opponent") {
     renderOpponentPlayers();
-    renderOpponentLiberoChipsInline();
+    renderLiberoBench();
     updateOpponentRotationDisplay();
   } else {
     renderPlayers();
 
-    renderLiberoChipsInline();
+    renderLiberoBench();
     updateRotationDisplay();
   }
   publishNextSetView();

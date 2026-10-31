@@ -6,7 +6,7 @@ import test from "node:test";
 import { JSDOM } from "jsdom";
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const old = read("../src/features/events/point-direction.js") + read("../src/features/video/event-editor.js"),
-  model = read("../src/features/events/display-model.js") + read("../src/features/events/table-model.js") + read("../src/features/events/edit-model.js") + read("../src/features/events/table-commands.js"),
+  model = read("../src/features/events/display-model.js") + read("../src/features/events/table-model.js") + read("../src/features/events/edit-model.js") + read("../src/features/events/table-view.js") + read("../src/features/events/table-commands.js"),
   live = read("../src/domain/value-string.js") + read("../src/features/live/live-entry.js"),
   adapter = read("../src/features/events/editor-controls.js");
 function setup() {
@@ -231,11 +231,57 @@ test('editing an event captures one undo snapshot before changes and refreshes v
   context.renderVideoAnalysis = () => calls.push(['video']);
   context.renderEventsLog = () => calls.push(['log']);
   context.publishReactEventTable('target', [ev], {contextKey: 'video'});
-  const cell = view().rows[0].cells.find(cell => cell.field === 'homeScore');
-  const control = cell.onEdit();
+  const row = view().rows[0];
+  const cell = row.cells.find(cell => cell.field === 'homeScore');
+  const control = context.editEventCell(row, cell.field, view().interaction);
   control.onChange('2');
   control.onChange('3');
-  cell.onDone();
+  context.finishEventCellEdit(cell.field);
   assert.equal(ev.homeScore, 3);
   assert.deepEqual(calls, [['select'], ['close'], ['undo', 0], ['refresh', true, 2], ['refresh', true, 3], ['video'], ['log']]);
+});
+
+test('event table publication retains cloneable row data without touching the DOM', () => {
+  const { context, view } = setup();
+  Object.defineProperty(context, 'document', { get() { throw new Error('Unexpected DOM access'); } });
+  context.publishReactEventTable('target', structuredClone(events), { contextKey: 'video', showVideoTime: true });
+  assert.deepEqual(JSON.parse(JSON.stringify(structuredClone(view().rows))), JSON.parse(JSON.stringify(view().rows)));
+  assert.equal(view().rows[0].cells.some(cell => typeof cell.onEdit === 'function'), false);
+});
+
+test('event table gestures preserve range, modifier, plain selection and disabled selection', () => {
+  const { context, view } = setup(), calls = [];
+  context.publishReactEventTable('target', [events[0]], { contextKey: 'video' });
+  const row = view().rows[0], table = view().interaction;
+  context.selectedEventIds = new Set([row.key]);
+  context.lastSelectedEventId = row.key;
+  context.getRowsForContext = key => context.eventTableContexts[key].rows;
+  context.scrollRowIntoView = record => calls.push(['scroll', record.key]);
+  context.selectRangeForContext = (...args) => calls.push(['range', ...args.slice(0, 3)]);
+  context.toggleSelectionForContext = (key, id) => calls.push(['toggle', key, id]);
+  context.setSelectionForContext = (key, ids, anchor) => calls.push(['select', key, [...ids], anchor]);
+  context.selectEventTableRow(row, table, { shiftKey: true });
+  context.selectEventTableRow(row, table, { ctrlKey: true });
+  context.selectEventTableRow(row, table, {});
+  context.selectEventTableRow(row, { ...table, enableSelection: false }, {});
+  assert.deepEqual(calls, [
+    ['range', 'video', row.key, row.key], ['scroll', row.key],
+    ['toggle', 'video', row.key], ['scroll', row.key],
+    ['select', 'video', [row.key], row.key], ['scroll', row.key],
+  ]);
+});
+
+test('header sorting runs before bulk selection is read from the refreshed context', () => {
+  const { context } = setup(), calls = [];
+  let selected = [1, 2];
+  context.getSelectedRows = () => selected;
+  context.openBulkEditModal = (...args) => calls.push(['bulk', ...args]);
+  const table = { contextKey: 'video', options: { onSortChange: key => { calls.push(['sort', key]); selected = []; } } };
+  const header = { sortKey: 'set', bulkKey: 'set' };
+  context.handleEventTableHeader(table, header);
+  assert.deepEqual(calls, [['sort', 'set']]);
+  selected = [1, 2];
+  table.options.onSortChange = key => calls.push(['sort', key]);
+  context.handleEventTableHeader(table, header);
+  assert.deepEqual(calls.slice(1), [['sort', 'set'], ['bulk', 'video', 'set']]);
 });

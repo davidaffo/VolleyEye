@@ -1,12 +1,12 @@
 import { computePointsSummary, computeSetScores } from "./scores.js";
-import { updateSetScoreDisplays } from "../live/next-set-lineups.js";
+import { publishRuntimeView } from "../core/runtime-view.js";
 import { aggregatedScoreStore } from "../../state/roster-import-store.mjs";
 
-export function publishReactAggregatedScore(summary, scope, options = {}) {
+export function renderScoreAndRotations(summary, scope = "our", options = {}) {
   const score =
     summary ||
     computePointsSummary(null, { teamScope: scope, events: options.events });
-  updateSetScoreDisplays();
+  publishRuntimeView();
   const data = computeSetScores(scope, { events: options.events });
   aggregatedScoreStore.publish({
     label: score.totalFor + " - " + score.totalAgainst,

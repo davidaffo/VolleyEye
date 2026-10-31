@@ -1,45 +1,32 @@
 import { session } from "../state/live-live-score-and-set.js";
-
 import { computePointsSummary, getPointDirection, ensureScoreOverrides, getScoreOverrideForSet } from "../analysis/scores.js";
 import { session as matchState } from "../../../js/globals.js";
-import { session as rosterLineupState } from "../state/roster-lineup.js";
-import { updateSetScoreDisplays, cloneSetMap } from "./next-set-lineups.js";
+import { publishRuntimeView, renderLiveScore, updateMatchStatusUI } from "../core/runtime-view.js";
+import { cloneSetMap } from "./next-set-model.js";
 import { computeSetWinner } from "../teams/set-start-model.js";
-import { publishRuntimeView, publishScoutControlState } from "../core/runtime-view.js";
-import { publishReactAggregatedScore } from "../analysis/score-view.js";
 import { getTeamScopeFromEvent, getOppositeScope, getTeamNameForScope } from "../teams/selectors.js";
 import { getPlayerIdForScope } from "../teams/player-identity.js";
-import { session as scoutUiState } from "../state/scout-ui.js";
 import { ensurePointRulesDefaults } from "../settings/rules.js";
-import { rotateCourt, rotateOpponentCourt, applyAutoRolePositioning, setCurrentSet } from "../teams/court/court-ui-bootstrap.js";
+import { rotateCourt, rotateOpponentCourt, setCurrentSet } from "../teams/court/court-ui-bootstrap.js";
+import { applyAutoRolePositioning } from "../teams/court/court-engine.js";
 import { enforceAutoLiberoForScope, enforceAutoLiberoForState } from "../teams/court-state-model.js";
 import { saveState } from "../storage/save-state.js";
-import { getLastFlowEvent, computeTwoTeamFlowFromEvent, getPredictedSkillId } from "./flow-model.js";
-import { updateNextSkillIndicator } from "./game-flow.js";
-import { captureScoutActionSnapshot, attachScoutActionSnapshot } from "../core/app-lifecycle.js";
-import { cancelPartialSkillFlowForScope } from "./skill-selection.js";
-import { buildBaseEventPayload, ensureSkillClock, ensureVideoClock, pauseSkillClock, pauseVideoClock, resumeSkillClock, resumeVideoClock } from "./live-entry.js";
-import { clearReceiveContext } from "./event-recording.js";
-import { renderEventsLog } from "../video/video-events.js";
+import { getLastFlowEvent, computeTwoTeamFlowFromEvent, getPredictedSkillId, clearReceiveContext } from "./flow-model.js";
+import { updateNextSkillIndicator } from "../scout/flow-view.js";
+import { captureScoutActionSnapshot, attachScoutActionSnapshot } from "../events/history-model.js";
+import { cancelPartialSkillFlowForScope } from "../scout/selection-state.js";
+import { buildBaseEventPayload, recordSetAction } from "../events/recording-model.js";
+import { pauseSkillClock, pauseVideoClock, resumeSkillClock, resumeVideoClock, snapshotSkillClock, snapshotVideoClock } from "./clocks.js";
+import { renderEventsLog } from "../events/log-view.js";
 import { recalcAllStatsAndUpdateUI } from "../analysis/stats-update.js";
 import { renderPlayers } from "./team-rendering.js";
 import { renderAggregatedTable } from "../analysis/aggregated-table.js";
 import { renderVideoAnalysis } from "../video/playback.js";
 import { forceNextSkill } from "./trajectories.js";
-import { ensureSetStartSnapshot } from "../analysis/player-model.js";
-
-
+import { renderScoreAndRotations } from "../analysis/score-view.js";
 
 const liveScoreAndSetState = session;
 
-export function renderLiveScore() {
-  const summary = computePointsSummary(matchState.state.currentSet || 1);
-  const totalLabel = summary.totalFor + " - " + summary.totalAgainst;
-
-  updateSetScoreDisplays();
-  updateMatchStatusUI();
-  publishRuntimeView();
-}
 
 export function handleAutoRotationFromEvent(eventObj, scope = "our") {
   if (!matchState.state || !matchState.state.autoRotate) {
@@ -370,102 +357,13 @@ export function handleOpponentFreeballSingle() {
   }
 }
 
-export function snapshotSkillClock() {
-  ensureSkillClock();
-  return {
-    paused: !!matchState.state.skillClock.paused,
-    pausedAtMs: matchState.state.skillClock.pausedAtMs || null,
-    pausedAccumMs: matchState.state.skillClock.pausedAccumMs || 0,
-    lastEffectiveMs: matchState.state.skillClock.lastEffectiveMs || null
-  };
-}
 
-export function restoreSkillClock(snapshot) {
-  ensureSkillClock();
-  if (!snapshot) return;
-  matchState.state.skillClock.paused = !!snapshot.paused;
-  matchState.state.skillClock.pausedAtMs = snapshot.pausedAtMs || null;
-  matchState.state.skillClock.pausedAccumMs = snapshot.pausedAccumMs || 0;
-  matchState.state.skillClock.lastEffectiveMs = snapshot.lastEffectiveMs || null;
-}
 
-export function snapshotVideoClock() {
-  ensureVideoClock();
-  return {
-    paused: !!matchState.state.videoClock.paused,
-    pausedAtMs: matchState.state.videoClock.pausedAtMs || null,
-    pausedAccumMs: matchState.state.videoClock.pausedAccumMs || 0,
-    startMs: matchState.state.videoClock.startMs || Date.now(),
-    currentSeconds: matchState.state.videoClock.currentSeconds || 0
-  };
-}
 
-export function restoreVideoClock(snapshot) {
-  ensureVideoClock();
-  if (!snapshot) return;
-  matchState.state.videoClock.paused = !!snapshot.paused;
-  matchState.state.videoClock.pausedAtMs = snapshot.pausedAtMs || null;
-  matchState.state.videoClock.pausedAccumMs = snapshot.pausedAccumMs || 0;
-  matchState.state.videoClock.startMs = snapshot.startMs || Date.now();
-  matchState.state.videoClock.currentSeconds = snapshot.currentSeconds || 0;
-}
 
-export function isTeamReadyForScout() {
-  const teams = Object.keys(matchState.state.savedTeams || {});
-  const selected = (matchState.state.selectedTeam || "").trim();
-  return (
-    teams.length > 0 &&
-    !!selected &&
-    teams.includes(selected) &&
-    Array.isArray(matchState.state.players) &&
-    matchState.state.players.length > 0
-  );
-}
 
-export function updateMatchStatusUI() {
-  const finished = !!matchState.state.matchFinished;
-  const teamReady = isTeamReadyForScout();
-  const label = finished ? "Riprendi partita" : "Pausa/Termina";
-  const mainBtns = [rosterLineupState.elBtnEndMatch, rosterLineupState.elBtnEndMatchModal].filter(Boolean);
 
-  if (!scoutUiState.nextSetModalOpen) {
-    setScoutControlsDisabled(finished || !teamReady);
-  }
-  document.body.dataset.teamReady = teamReady ? "true" : "false";
-  document.body.dataset.matchFinished = finished ? "true" : "false";
-}
 
-export function setScoutControlsDisabled(disabled) {
-  publishScoutControlState(disabled);
-  const allowIds = new Set([
-    "btn-end-match",
-    "btn-end-match-modal",
-    "btn-swap-libero",
-    "btn-swap-libero-opp",
-    "btn-libero-to-bench"
-  ]);
-  const scope = document.querySelector('[data-tab="scout"]');
-  if (!scope) return;
-  scope.querySelectorAll("button").forEach(btn => {
-    if (!btn || allowIds.has(btn.id)) return;
-
-return;
-});
-}
-
-export function recordSetAction(actionType, payload) {
-  ensureSetStartSnapshot(matchState.state.currentSet || 1);
-  const code = payload && payload.code ? payload.code : actionType;
-  const event = buildBaseEventPayload(
-    Object.assign({}, payload, {
-      skillId: "manual",
-      code,
-      actionType
-    })
-  );
-  clearReceiveContext();
-  matchState.state.events.push(event);
-}
 
 export function applySetChange(nextSet, options = {}) {
   const actionSnapshot = captureScoutActionSnapshot();
@@ -540,7 +438,7 @@ export function endMatch() {
     }
     matchState.state.matchEndSetRecorded = null;
     saveState({ persistLocal: true });
-    updateSetScoreDisplays();
+    publishRuntimeView();
     updateMatchStatusUI();
     return;
   }
@@ -565,9 +463,4 @@ export function endMatch() {
   if (typeof window !== "undefined" && window.trackVolleyEyeEventOnce) {
     window.trackVolleyEyeEventOnce("match_completed", { set_count: current });
   }
-}
-
-export function renderScoreAndRotations(summary, teamScope = "our", options = {}) {
-
-return publishReactAggregatedScore(summary,teamScope,options);
 }

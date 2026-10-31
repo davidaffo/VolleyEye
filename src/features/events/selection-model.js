@@ -115,3 +115,11 @@ export function getVideoMobileCurrentRow() {
   if (index < 0) index = 0;
   return { rows, row: rows[index], index };
 }
+
+export function getSelectedVideoAttackEvents() {
+  if (!(document && document.body && document.body.dataset.activeTab === "video")) return [];
+  const rows = getSelectedRows("video");
+  return rows
+    .map(row => row.ev)
+    .filter(ev => ev && ev.skillId === "attack");
+}

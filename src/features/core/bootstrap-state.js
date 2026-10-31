@@ -2,17 +2,18 @@ import { ensureMatchDefaults } from "../teams/match-details.js";
 import { renderPlayers } from "../live/team-rendering.js";
 import { updateCourtModalPlacement, initCrossTabResetSync, applyVideoLayoutWidths, applyScoutColumnLayout, applyTopBarVisibility } from "../scout-ui.js";
 import { session as rosterLineupState } from "../state/roster-lineup.js";
-import { initBugReportLink, initTabs, initMobileNavigation, setupFocusGuards, setActiveAggTab, clearStateSnapshotFromIndexedDb, deleteAllIndexedDbDatabases, syncMatchSessionUI, setActiveTab, ensureBaseRotationDefault } from "./app-lifecycle.js";
+import { initBugReportLink, initTabs, initMobileNavigation, setupFocusGuards, setActiveAggTab, clearStateSnapshotFromIndexedDb, deleteAllIndexedDbDatabases, syncMatchSessionUI, setActiveTab, ensureBaseRotationDefault, renderMatchesSelect } from "./app-lifecycle.js";
 import { resetAttackShortcutModals } from "../live/team-management.js";
 import { initSetTypeShortcuts, handleVideoShortcut } from "../live/scout-shortcuts.js";
 import { listenRuntime } from "../../app/browser-effects.js";
-import { clearCachedLocalVideo, renderYoutubePlayer, renderYoutubePlayerScout, restoreCachedLocalVideo, restoreYoutubeFromState } from "../video/video-sources.js";
+import { clearCachedLocalVideo } from "../video/local-file-storage.js";
+import { renderYoutubePlayer, renderYoutubePlayerScout } from "../video/youtube-player.js";
+import { restoreYoutubeFromState, restoreCachedLocalVideo } from "../video/video-sources.js";
 import { initializePersistentStorage } from "../storage/persistent-storage.js";
 import { session as persistentStorageState } from "../state/storage-persistent-storage.js";
 import { applyStateSnapshot, loadStateFromIndexedDb, loadState, applyTheme } from "../teams/core/state-store.js";
 import { listMatchesFromStorage, syncMatchesFromStorage, saveMatchToStorage } from "../storage/match-repository.js";
 import { publishTeamsManagerView } from "../teams/manager-view.js";
-import { renderMatchesSelect } from "../teams/storage/match-repository.js";
 import { listTeamsFromStorage } from "../teams/storage/team-repository.js";
 import { readMatchLinkParam, maybeImportMatchFromUrl } from "../io/file-and-url-import.js";
 import { getDefaultDemoPreference, loadDefaultDemoMatch } from "../io/match-io.js";
@@ -21,17 +22,17 @@ import { getCurrentMatchPayload } from "../teams/current-payload.js";
 import { session as matchState } from "../../../js/globals.js";
 import { publishReactSettings } from "../settings/view.js";
 import { initStats } from "../teams/court-state-model.js";
-import { updateRotationDisplay, renderLiberoChipsInline, applyAutoRolePositioning } from "../teams/court/court-ui-bootstrap.js";
-import { renderOpponentLiberoTags, renderLiberoTags } from "../teams/imports/camp3-import.js";
-import { renderMetricsConfig } from "../teams/settings/metrics-editor.js";
-import { renderLiveScore, updateMatchStatusUI, setScoutControlsDisabled } from "../live/live-score-and-set.js";
+import { updateRotationDisplay } from "../teams/court-view.js";
+import { renderLiberoBench } from "../scout/court-commands.js";
+import { applyAutoRolePositioning } from "../teams/court/court-engine.js";
+import { renderMetricsConfig } from "../settings/metrics-view.js";
+import { renderLiveScore, updateMatchStatusUI, setScoutControlsDisabled, publishRuntimeView } from "./runtime-view.js";
 import { initLogServeTrajectoryControls } from "../analysis/trajectory-rendering.js";
 import { applyTemplateTeam } from "../teams/editor/team-editor.js";
 import { recalcAllStatsAndUpdateUI } from "../analysis/stats-update.js";
-import { renderEventsLog } from "../video/video-events.js";
-import { publishRuntimeView } from "./runtime-view.js";
+import { renderEventsLog } from "../events/log-view.js";
 import { renderAggregatedTable } from "../analysis/aggregated-table.js";
-import { ensureSkillClock, ensureVideoClock } from "../live/live-entry.js";
+import { ensureSkillClock, ensureVideoClock } from "../live/clocks.js";
 
 export function applyForceMobileLayout(enabled) {
   document.body.classList.toggle("force-mobile", !!enabled);
@@ -180,11 +181,11 @@ export async function initializeApplicationState() {
   ensureMatchDefaults();
   updateRotationDisplay();
   publishReactSettings();
-  renderOpponentLiberoTags();
+  renderLiberoBench();
   publishReactSettings();
-  renderLiberoChipsInline();
+  renderLiberoBench();
 
-  renderLiberoTags();
+  renderLiberoBench();
   renderMetricsConfig();
   publishTeamsManagerView();
 
@@ -205,9 +206,9 @@ export async function initializeApplicationState() {
     renderPlayers();
     renderEventsLog();
     renderAggregatedTable();
-    renderLiberoChipsInline();
+    renderLiberoBench();
 
-    renderLiberoTags();
+    renderLiberoBench();
     renderMetricsConfig();
     publishTeamsManagerView();
   }

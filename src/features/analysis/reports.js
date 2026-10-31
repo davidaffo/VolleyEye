@@ -1,7 +1,6 @@
-
 import { session as matchState, blobToDataUrl, downloadBlob } from "../../../js/globals.js";
-
-import { openAnalysisPrintLayout, safeMatchSlug } from "../io/exports.js";
+import { openAnalysisPrintLayout } from "../io/exports.js";
+import { safeMatchSlug } from "../teams/match-details.js";
 import { exportProgressStore } from "../../state/roster-import-store.mjs";
 import { saveState } from "../storage/save-state.js";
 import { cloneIsolationData } from "../../domain/snapshots.js";

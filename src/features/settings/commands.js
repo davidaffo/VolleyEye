@@ -1,9 +1,9 @@
-import { setAutoRotateEnabled, applyAutoRolePositioning } from "../teams/court/court-ui-bootstrap.js";
-import { setAutoRolePositioning, setAutoRoleP1American, setAutoLiberoRole } from "../teams/court/court-engine.js";
+import { setAutoRotateEnabled } from "../teams/court/court-ui-bootstrap.js";
+import { applyAutoRolePositioning, setAutoRolePositioning, setAutoRoleP1American, setAutoLiberoRole } from "../teams/court/court-engine.js";
 import { session as matchState } from "../../../js/globals.js";
-import { updateVideoPlaybackSnapshot } from "../live/live-entry.js";
+import { updateVideoPlaybackSnapshot } from "../video/media-state.js";
 import { saveState } from "../storage/save-state.js";
-import { updateVideoScoutModeLayout } from "../live/workspace-layout.js";
+import { updateVideoScoutModeLayout } from "../video/view-commands.js";
 import { applyForceMobileLayout } from "../core/bootstrap-state.js";
 import { renderPlayers } from "../live/team-rendering.js";
 import { publishReactLogServeTrajectories } from "../analysis/trajectory-view.js";

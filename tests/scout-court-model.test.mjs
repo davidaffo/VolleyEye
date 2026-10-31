@@ -165,7 +165,7 @@ test("court coordination preserves animation capture, per-card control transitio
       view = next;
     },
   });
-  vm.runInContext(sourceFunctions(source, ["renderScoutCourt"]), context);
+  vm.runInContext(sourceFunctions(readSourceFixture(new URL("../src/features/scout/skill-control-model.js", import.meta.url), "utf8"), ["createScoutAction"]) + sourceFunctions(source, ["renderScoutCourt"]), context);
   context.renderScoutCourt("our", { animate: true });
   assert.deepEqual(calls, [
     "capture",

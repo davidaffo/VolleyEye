@@ -37,7 +37,7 @@ export function LiberoBench({ scope }) {
             data-team-scope={scope}
             draggable={!player.used && !player.replaced}
             aria-disabled={player.used ? "true" : undefined}
-            onClick={player.used ? undefined : player.onClick}
+            onClick={player.used ? undefined : () => appEvents.runScoutSkillAction(player.action)}
             onDragStart={(event) =>
               appEvents.handleBenchDragStart(event)
             }

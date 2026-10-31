@@ -1,10 +1,11 @@
-import { getCourtPlacementError, cacheAutoRoleBaseCourt, restoreAutoRoleBaseCourt, cleanCourtPlayers, registerLiberoPairForScope, roleToAutoCategory, enforceAutoLiberoForState, enforceAutoLiberoForScope, getUsedNamesForScope, resetAutoRoleCache, updateAutoRoleBaseCourtCache, setTeamCourt } from "../court-state-model.js";
+import { getCourtPlacementError, cacheAutoRoleBaseCourt, restoreAutoRoleBaseCourt, cleanCourtPlayers, registerLiberoPairForScope, roleToAutoCategory, enforceAutoLiberoForState, enforceAutoLiberoForScope, getUsedNamesForScope, resetAutoRoleCache, updateAutoRoleBaseCourtCache, setTeamCourt, prepareAutoRolePositioning } from "../court-state-model.js";
 import { isLiberoForScope } from "../libero-model.js";
 import { ensureCourtShapeFor, cloneCourtLineup } from "../court-model.js";
 import { AUTO_LIBERO_ROLE_DEFAULT_VERSION, session as matchState } from "../../../../js/globals.js";
 import { saveState } from "../../storage/save-state.js";
 import { renderPlayers, renderOpponentPlayers } from "../../live/team-rendering.js";
-import { renderLiberoChipsInline, updateRotationDisplay, applyAutoRolePositioning, syncAutoRoleP1AmericanToggle, renderOpponentLiberoChipsInline, updateOpponentRotationDisplay } from "./court-ui-bootstrap.js";
+import { renderLiberoBench } from "../../scout/court-commands.js";
+import { updateRotationDisplay, updateOpponentRotationDisplay } from "../court-view.js";
 import { getRoleLabelForRotation } from "../roles.js";
 import { setTeamAutoLiberoRole, setTeamAutoLiberoBackline, setTeamLiberoAutoMap, getTeamPreferredLibero, setTeamPreferredLibero, getTeamPlayers, getTeamLiberos, getTeamCourt, buildNumbersForNames, syncOpponentPlayerNumbers } from "../roster-data.js";
 import { replaceTeamPlayerNameReferences } from "../player-reference-model.js";
@@ -12,8 +13,7 @@ import { normalizePlayers } from "../../../domain/player-names.js";
 import { session as rosterLineupState } from "../../state/roster-lineup.js";
 import { recordSubstitutionEvent } from "../../video/video-events.js";
 import { opponentRoster } from "../../../domain/opponent-roster.js";
-import { parseDelimitedTeamText } from "../storage/archive-actions.js";
-import { renderOpponentLiberoTags } from "../imports/camp3-import.js";
+import { parseDelimitedTeamText } from "../../../domain/roster-text.js";
 import { publishReactSettings } from "../../settings/view.js";
 import { createDomainState } from "../../../app/domain-state.mjs";
 
@@ -26,7 +26,7 @@ export const session = createDomainState({
       buildNumbersForNames,
       syncOpponentPlayerNumbers,
       renderOpponentPlayersList: publishReactSettings,
-      renderOpponentLiberoTags: (...args) => renderOpponentLiberoTags(...args),
+      renderOpponentLiberoTags: (...args) => renderLiberoBench(...args),
       onRenameReferences: (...args) => replaceTeamPlayerNameReferences("opponent", ...args)
     })),
 "updateOpponentPlayersList": () => (courtEngineState.opponentSettings["updateOpponentPlayersList"]),
@@ -50,7 +50,7 @@ export function setAutoRolePositioning(enabled) {
     saveState();
     if (restored) {
       renderPlayers();
-      renderLiberoChipsInline();
+      renderLiberoBench();
 
       updateRotationDisplay();
     } else {
@@ -78,7 +78,6 @@ export function setAutoRoleP1American(enabled) {
   if (matchState.state.autoRolePositioning) {
     applyAutoRolePositioning();
   }
-  syncAutoRoleP1AmericanToggle();
 }
 
 export function setIsServing(flag) {
@@ -100,7 +99,7 @@ export function setAutoLiberoRole(role, scope = "our") {
   saveState();
   publishReactSettings();
   renderPlayers();
-  renderLiberoChipsInline();
+  renderLiberoBench();
 
 }
 
@@ -120,7 +119,7 @@ export function swapPreferredLiberoForScope(scope = "our") {
   enforceAutoLiberoForScope(scope, { skipServerOnServe: true });
   saveState();
   renderPlayers();
-  renderLiberoChipsInline();
+  renderLiberoBench();
 
   renderOpponentPlayers();
 }
@@ -146,7 +145,7 @@ export function restorePlayerFromLiberoForScope(posIdx, scope = "our") {
   }
   saveState();
   renderPlayers();
-  renderLiberoChipsInline();
+  renderLiberoBench();
 
   renderOpponentPlayers();
 }
@@ -172,7 +171,7 @@ export function commitCourtChange(baseCourt, options = {}) {
   enforceAutoLiberoForState({ skipServerOnServe: true });
   saveState();
   renderPlayers();
-  renderLiberoChipsInline();
+  renderLiberoBench();
 
   updateRotationDisplay();
 }
@@ -191,7 +190,7 @@ export function commitCourtChangeForScope(baseCourt, scope = "our") {
   }
   saveState();
   renderOpponentPlayers();
-  renderOpponentLiberoChipsInline();
+  renderLiberoBench();
   updateOpponentRotationDisplay();
 }
 
@@ -263,4 +262,13 @@ export function setCourtPlayerForScope(
       teamScope: scope,
     });
   }
+}
+
+export function applyAutoRolePositioning() {
+ if (!prepareAutoRolePositioning()) return;
+ saveState();
+ renderPlayers();
+ renderLiberoBench();
+
+ updateRotationDisplay();
 }

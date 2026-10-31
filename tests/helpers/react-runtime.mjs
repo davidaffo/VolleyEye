@@ -26,6 +26,8 @@ const result = await build({
       import {createRoot} from 'react-dom/client';
       import {flushSync} from 'react-dom';
       import {AppLayout} from './src/components/AppLayout.jsx';
+      import {events as appEvents} from './src/app/actions.mjs';
+      globalThis.__reactEvents = appEvents;
       globalThis.__reactViews = {${names.join(", ")}};
       const host=document.getElementById('root');
       if(host?.nodeType===1){

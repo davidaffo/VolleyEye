@@ -3,27 +3,11 @@ import { getBaseZoneForPlayer, ensureCourtShapeFor, cloneCourtLineup } from "./c
 import { getPlayersForScope, getTeamScopeFromEvent, isServingForScope } from "./selectors.js";
 import { session as matchState, SKILLS } from "../../../js/globals.js";
 import { session as rosterLineupState } from "../state/roster-lineup.js";
-
-import {
-  isLiberoForScope,
-  removeLiberosAndRestoreForScope,
-} from "./libero-model.js";
+import { isLiberoForScope, removeLiberosAndRestoreForScope } from "./libero-model.js";
 import { getTeamAutoLiberoRole } from "./auto-libero-selectors.js";
-import {
-  getTeamPlayers,
-  getTeamLiberos,
-  getTeamCourt,
-  getTeamAutoLiberoBackline,
-  getTeamRotation,
-  getTeamLiberoAutoMap,
-  setTeamLiberoAutoMap,
-  getTeamPreferredLibero,
-  setTeamPreferredLibero,
-  sortNamesByNumber,
-} from "./roster-data.js";
+import { getTeamPlayers, getTeamLiberos, getTeamCourt, getTeamAutoLiberoBackline, getTeamRotation, getTeamLiberoAutoMap, setTeamLiberoAutoMap, getTeamPreferredLibero, setTeamPreferredLibero, sortNamesByNumber } from "./roster-data.js";
 import { getRoleLabelForRotation } from "./roles.js";
 import { getPointDirection } from "../analysis/scores.js";
-
 import { getServeDisplayCourt } from "./serve-court.js";
 import { normalizePlayers } from "../../domain/player-names.js";
 import { ensureMetricsConfigDefaults } from "../settings/rules.js";

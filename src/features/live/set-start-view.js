@@ -2,7 +2,7 @@ import { session as scoutUiState } from "../state/scout-ui.js";
 import { getPlayerNumbersForScope } from "../teams/selectors.js";
 import { session as matchState } from "../../../js/globals.js";
 import { ensureSetStartSnapshot, buildSetStartInfoList, makePlayerNameKey } from "../analysis/player-model.js";
-import { ensureSetStartDraft } from "./lineup-editor.js";
+import { ensureSetStartDraft } from "./set-start-draft.js";
 import { getSortedPlayerEntriesForScope, getSortedPlayerEntries } from "../teams/lineup-selectors.js";
 import { formatNameWithNumberFor, formatNameWithNumber } from "../teams/roster-data.js";
 import { setStartStore } from "../../state/set-start-store.mjs";

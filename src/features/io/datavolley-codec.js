@@ -1,4 +1,4 @@
-import { sanitizeDvField, parseDvwZoneMeta, padDv } from "./datavolley-export.js";
+import { sanitizeDvField, parseDvwZoneMeta, padDv } from "./datavolley-format.js";
 import { getPlayerNumbersForScope, getOppositeScope } from "../teams/selectors.js";
 import { session as matchState } from "../../../js/globals.js";
 import { getAutoFlowState } from "../live/flow-model.js";

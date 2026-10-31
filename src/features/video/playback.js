@@ -6,23 +6,26 @@ import { setModalOpenState } from "../layout/modals.js";
 import { ensureVideoAnalysisSortState, sortVideoEvents } from "./sort-model.js";
 import { getTeamScopeFromEvent } from "../teams/selectors.js";
 import { computeEventVideoTime } from "./timing.js";
-import { updateVideoSyncLabel, buildYoutubeEmbedSrc, queueYoutubeSeek, clearYoutubeSource, persistLocalVideoReference, renderYoutubePlayer, renderYoutubePlayerScout, pushVideoUndoSnapshot } from "./video-sources.js";
+import { updateVideoSyncLabel, publishReactVideoView } from "./source-view.js";
+import { clearYoutubeSource, renderYoutubePlayer, renderYoutubePlayerScout } from "./youtube-player.js";
+import { persistLocalVideoReference } from "./local-file-storage.js";
+import { pushVideoUndoSnapshot } from "./undo-model.js";
 import { getVideoBaseTimeMs, getVideoSkillEvents } from "./event-model.js";
 import { resolvePlayerIdx } from "../events/player-links.js";
-import { updateSelectionStyles, setSelectionForContext, scrollRowIntoView, handleSeekForSelection, updateVideoSelectionCount } from "./video-events.js";
+import { updateSelectionStyles, updateVideoSelectionCount } from "../events/selection-view.js";
+import { setSelectionForContext, scrollRowIntoView, handleSeekForSelection } from "../events/selection-commands.js";
 import { publishReactVideoOverlay, publishReactVideoMobileReview } from "./view.js";
 import { getEventKey } from "../../domain/event-key.js";
 import { session as workspaceLayoutState } from "../state/live-workspace-layout.js";
 import { session as browserEffectsState } from "../../app/browser-effects.js";
 import { session as matchState } from "../../../js/globals.js";
-import { getActiveVideoPlaybackSeconds, updateVideoPlaybackSnapshot, isYoutubePlayerPlaying, isVideoElementPlaying } from "../live/live-entry.js";
+import { getActiveVideoPlaybackSeconds, seekVideoToTime } from "./media-state.js";
 import { countActiveVideoFilters, snapshotVideoFilters } from "../analysis/video-filter-model.js";
 import { matchesVideoFilters } from "../analysis/filter-model.js";
 import { session as analysisFiltersState } from "../state/analysis-analysis-filters.js";
-import { publishReactVideoView } from "./source-view.js";
 import { mobileVideoSourceStore } from "../../state/roster-import-store.mjs";
 import { renderVideoFilters } from "../analysis/video-filters.js";
-import { publishReactEventTable } from "../events/table-commands.js";
+import { publishReactEventTable } from "../events/table-view.js";
 import { getBaseZoneForPlayer } from "../teams/court-model.js";
 import { saveState } from "../storage/save-state.js";
 
@@ -328,159 +331,6 @@ export function renderVideoAnalysis() {
   }
 }
 
-export function seekVideoToTime(seconds, options = {}) {
-  if (!isFinite(seconds)) return;
-  const preservePlayback = !!options.preservePlayback;
-  const target = Math.max(0, seconds);
-  updateVideoPlaybackSnapshot(target, true);
-  const activeTab = document && document.body ? document.body.dataset.activeTab : "";
-  const preferScout = !!matchState.state.videoScoutMode && activeTab !== "video";
-  const wasPlaying =
-    matchState.state.video && matchState.state.video.youtubeId
-      ? (preferScout ? isYoutubePlayerPlaying(workspaceLayoutState.ytPlayerScout, workspaceLayoutState.ytPlayerScoutReady) : false) ||
-        isYoutubePlayerPlaying(workspaceLayoutState.ytPlayer, workspaceLayoutState.ytPlayerReady)
-      : isVideoElementPlaying(preferScout ? matchState.elAnalysisVideoScout : matchState.elAnalysisVideo) ||
-        isVideoElementPlaying(matchState.elAnalysisVideoScout) ||
-        isVideoElementPlaying(matchState.elAnalysisVideo);
-  const playbackCommand = preservePlayback ? (wasPlaying ? "play" : "none") : "play";
-  if (matchState.state.video && matchState.state.video.youtubeId) {
-    if (preferScout) {
-      if (workspaceLayoutState.youtubeScoutFallback && matchState.elYoutubeFrameScout) {
-        if (matchState.elYoutubeFrameScout.contentWindow) {
-          try {
-            matchState.elYoutubeFrameScout.contentWindow.postMessage(
-              JSON.stringify({ event: "command", func: "seekTo", args: [target, true] }),
-              "*"
-            );
-            if (playbackCommand !== "none") {
-              matchState.elYoutubeFrameScout.contentWindow.postMessage(
-                JSON.stringify({ event: "command", func: "playVideo", args: [] }),
-                "*"
-              );
-            }
-            return;
-          } catch (_) {
-            // ignore postMessage errors and fall back to src update
-          }
-        }
-        matchState.elYoutubeFrameScout.src = buildYoutubeEmbedSrc(
-          matchState.state.video.youtubeId,
-          target,
-          true,
-          playbackCommand === "play"
-        );
-        return;
-      }
-      if (workspaceLayoutState.ytPlayerScout && typeof workspaceLayoutState.ytPlayerScout.seekTo === "function") {
-        workspaceLayoutState.ytPlayerScout.seekTo(target, true);
-        if (playbackCommand === "play" && typeof workspaceLayoutState.ytPlayerScout.playVideo === "function") {
-          workspaceLayoutState.ytPlayerScout.playVideo();
-        }
-      } else if (matchState.elYoutubeFrameScout) {
-        if (matchState.elYoutubeFrameScout.contentWindow) {
-          try {
-            matchState.elYoutubeFrameScout.contentWindow.postMessage(
-              JSON.stringify({ event: "command", func: "seekTo", args: [target, true] }),
-              "*"
-            );
-            if (playbackCommand !== "none") {
-              matchState.elYoutubeFrameScout.contentWindow.postMessage(
-                JSON.stringify({ event: "command", func: "playVideo", args: [] }),
-                "*"
-              );
-            }
-            return;
-          } catch (_) {
-            // ignore postMessage errors and fall back to src update
-          }
-        }
-        matchState.elYoutubeFrameScout.src = buildYoutubeEmbedSrc(
-          matchState.state.video.youtubeId,
-          target,
-          true,
-          playbackCommand === "play"
-        );
-      }
-      return;
-    }
-    if (workspaceLayoutState.youtubeFallback && matchState.elYoutubeFrame) {
-      if (matchState.elYoutubeFrame.contentWindow) {
-        try {
-          matchState.elYoutubeFrame.contentWindow.postMessage(
-            JSON.stringify({ event: "command", func: "seekTo", args: [target, true] }),
-            "*"
-          );
-          if (playbackCommand !== "none") {
-            matchState.elYoutubeFrame.contentWindow.postMessage(
-              JSON.stringify({ event: "command", func: "playVideo", args: [] }),
-              "*"
-            );
-          }
-          return;
-        } catch (_) {
-          // ignore postMessage errors and fall back to src update
-        }
-      }
-      matchState.elYoutubeFrame.src = buildYoutubeEmbedSrc(
-        matchState.state.video.youtubeId,
-        target,
-        true,
-        playbackCommand === "play"
-      );
-      return;
-    }
-    if (workspaceLayoutState.ytPlayer && typeof workspaceLayoutState.ytPlayer.seekTo === "function") {
-      queueYoutubeSeek(target, playbackCommand === "play");
-    } else if (matchState.elYoutubeFrame) {
-      if (matchState.elYoutubeFrame.contentWindow) {
-        try {
-          matchState.elYoutubeFrame.contentWindow.postMessage(
-            JSON.stringify({ event: "command", func: "seekTo", args: [target, true] }),
-            "*"
-          );
-          if (playbackCommand !== "none") {
-            matchState.elYoutubeFrame.contentWindow.postMessage(
-              JSON.stringify({ event: "command", func: "playVideo", args: [] }),
-              "*"
-            );
-          }
-          return;
-        } catch (_) {
-          // ignore postMessage errors and fall back to src update
-        }
-      }
-      matchState.elYoutubeFrame.src = buildYoutubeEmbedSrc(
-        matchState.state.video.youtubeId,
-        target,
-        true,
-        playbackCommand === "play"
-      );
-    }
-    return;
-  }
-  if (preferScout && matchState.elAnalysisVideoScout) {
-    try {
-      const wasPaused = matchState.elAnalysisVideoScout.paused;
-      matchState.elAnalysisVideoScout.currentTime = target;
-      if (!preservePlayback || !wasPaused) {
-        matchState.elAnalysisVideoScout.play().catch(() => {});
-      }
-    } catch (_) {
-      // ignore errors when seeking
-    }
-    return;
-  }
-  if (!matchState.elAnalysisVideo) return;
-  try {
-    const wasPaused = matchState.elAnalysisVideo.paused;
-    matchState.elAnalysisVideo.currentTime = target;
-    if (!preservePlayback || !wasPaused) {
-      matchState.elAnalysisVideo.play().catch(() => {});
-    }
-  } catch (_) {
-    // ignore errors when seeking
-  }
-}
 
 export function handleVideoFileChange(file, options = {}) {
   if (!file || (!matchState.elAnalysisVideo && !matchState.elAnalysisVideoScout)) return;

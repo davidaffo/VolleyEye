@@ -1,7 +1,6 @@
 import { expandDvwCompoundToken, normalizeDvwScoutToken } from "../io/datavolley-codec.js";
-import { parseDvwSuffixMeta, parseDvwZoneMeta } from "../io/datavolley-export.js";
-import { getDvwScoutSkillLabel, getDvwScoutTypeLabel, getDvwScoutEvalLabel, getDvwScoutChipSkillClass, setDvwScoutStatus } from "../io/datavolley-live-entry.js";
-
+import { parseDvwSuffixMeta, parseDvwZoneMeta } from "../io/datavolley-format.js";
+import { getDvwScoutSkillLabel, getDvwScoutTypeLabel, getDvwScoutEvalLabel, getDvwScoutChipSkillClass, setDvwScoutStatus } from "../io/datavolley-entry-view.js";
 import { session as teamManagementState } from "../state/live-team-management.js";
 import { dvwEntryStore } from "../../state/roster-import-store.mjs";
 

@@ -4,6 +4,8 @@ import { makePlayerKey, getPlayersForScope } from "../teams/selectors.js";
 import { getServeDisplayCourt } from "../teams/serve-court.js";
 import { setSelectedSkillForScope } from "../live/flow-model.js";
 import { clearServeTypeInlineListener } from "./serve-keyboard.js";
+import { closeSkillModal } from "./skill-modal-state.js";
+import { clearErrorPickMode, isErrorPickModeForScope } from "./pick-model.js";
 
 export function clearAttackSelection(playerIdx = null, scope = "our") {
   if (playerIdx === null || playerIdx === undefined) {
@@ -58,4 +60,34 @@ export function getServeBaseZoneForPlayer(playerIdx, scope = "our") {
   if (!baseCourt || !baseCourt.length) return null;
   const slotIdx = baseCourt.findIndex(slot => slot && slot.main === name);
   return slotIdx === -1 ? null : slotIdx + 1;
+}
+
+export function cancelPartialSkillFlowForScope(scope = "our") {
+  const targetScope = scope || "our";
+  const prefix = targetScope + ":";
+  const playerIdxs = new Set();
+  const collectFromKey = key => {
+    if (!key || !key.startsWith(prefix)) return;
+    const idx = parseInt(key.slice(prefix.length), 10);
+    if (!Number.isNaN(idx)) playerIdxs.add(idx);
+  };
+  [scoutUiState.selectedSkillPerPlayer, scoutUiState.serveMetaByPlayer, scoutUiState.attackMetaByPlayer, scoutUiState.blockConfirmByPlayer, scoutUiState.serveTypeSelectHandlers]
+    .forEach(mapObj => {
+      Object.keys(mapObj || {}).forEach(collectFromKey);
+    });
+  [scoutUiState.attackInlinePlayer, scoutUiState.serveTypeInlinePlayer, scoutUiState.serveTypeFocusPlayer, scoutUiState.blockInlinePlayer].forEach(collectFromKey);
+  if (
+    scoutUiState.activeSkillModalContext &&
+    scoutUiState.activeSkillModalContext.scope === targetScope &&
+    typeof scoutUiState.activeSkillModalContext.playerIdx === "number"
+  ) {
+    playerIdxs.add(scoutUiState.activeSkillModalContext.playerIdx);
+  }
+  playerIdxs.forEach(playerIdx => resetSkillSelectionForPlayer(playerIdx, targetScope));
+  if (scoutUiState.activeSkillModalContext && scoutUiState.activeSkillModalContext.scope === targetScope) {
+    closeSkillModal();
+  }
+  if (isErrorPickModeForScope(targetScope)) {
+    clearErrorPickMode();
+  }
 }

@@ -1,10 +1,11 @@
 import { session as rosterLineupState } from "../state/roster-lineup.js";
 import { normalizePlayers, normalizePlayerNameCase } from "../../domain/player-names.js";
 import { findPlayersDbMatchByFullName, isValidPlayerId, generatePlayerId } from "../teams/storage/team-repository.js";
-import { renderTeamManagerTable, refreshTeamManagerPlayersFromState } from "../teams/editor/team-editor.js";
+import { renderTeamManagerTable } from "../teams/editor-view.js";
+import { refreshTeamManagerPlayersFromState } from "../teams/editor/team-editor.js";
 import { session as matchState } from "../../../js/globals.js";
 import { pastePlayersStore } from "../../state/roster-import-store.mjs";
-import { parseDelimitedTeamText } from "../teams/storage/archive-actions.js";
+import { parseDelimitedTeamText } from "../../domain/roster-text.js";
 import { updatePlayersList } from "../teams/court/court-ui-bootstrap.js";
 
 export function isTeamManagerPasteTarget() {

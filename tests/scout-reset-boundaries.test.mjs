@@ -170,7 +170,7 @@ test('video reset accepts missing media resources', () => {
 });
 
 test('scout preparation and selection commands do not import the recording dispatcher', () => {
-  for (const file of ['skill-preparation', 'selection-commands', 'selection-state', 'serve-keyboard']) {
+  for (const file of ['skill-preparation', 'selection-flow', 'selection-state', 'serve-keyboard']) {
     const source = readFileSync(new URL(`../src/features/scout/${file}.js`, import.meta.url), 'utf8');
     assert.doesNotMatch(source, /from\s+["'][^"']*(?:skill-actions|event-recording)\.js["']/);
   }

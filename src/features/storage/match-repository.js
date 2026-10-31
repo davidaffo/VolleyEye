@@ -1,6 +1,6 @@
-import { MATCH_PREFIX, session as matchState, logError } from '../../../js/globals.js';
-import { session as persistentStorageState } from '../state/storage-persistent-storage.js';
-import { cloneIsolationData } from '../../domain/snapshots.js';
+import { MATCH_PREFIX, session as matchState, logError } from "../../../js/globals.js";
+import { session as persistentStorageState } from "../state/storage-persistent-storage.js";
+import { cloneIsolationData } from "../../domain/snapshots.js";
 
 export function encodeMatchStoragePayload(data) {
   const events = data && data.state && data.state.events;
@@ -169,4 +169,15 @@ export function syncMatchesFromStorage() {
 export function getSelectedArchivedMatch() {
 
 return matchState.state.selectedMatch || "";
+}
+
+export function hasUsableMatch() {
+  const names = Object.keys(matchState.state.savedMatches || {});
+  if (names.length === 0) return false;
+  const selected = (matchState.state.selectedMatch || "").trim();
+  return !!selected && names.includes(selected);
+}
+
+export function hasMatchDataForReset() {
+  return Array.isArray(matchState.state.events) && matchState.state.events.length > 0;
 }

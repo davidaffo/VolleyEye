@@ -1,107 +1,22 @@
-
-import { getDefaultSetStartForScope, getMatchInitialSetStart, computeSetWinner, getDerivedServeForSetStart } from "../teams/set-start-model.js";
+import { computeSetWinner } from "../teams/set-start-model.js";
 import { getCourtShape, cloneCourt } from "../teams/court-model.js";
-import { computeSetWinScore } from "../analysis/set-results.js";
-import { removeLiberosAndRestoreForScope } from "../teams/libero-model.js";
 import { commitCourtChange, commitCourtChangeForScope, setIsServing } from "../teams/court/court-engine.js";
 import { enforceAutoLiberoForState, enforceAutoLiberoForScope } from "../teams/court-state-model.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
-import { getLiberosForScope } from "../teams/selectors.js";
 import { isDesktopCourtModalLayout, setCourtAreaLocked, setModalOpenState } from "../layout/modals.js";
 import { updateCourtModalPlacement } from "../scout-ui.js";
-import { lineup } from "../../domain/lineup.js";
-import { publishNextSetView } from "./next-set-view.js";
-import { publishRuntimeView } from "../core/runtime-view.js";
+import { publishNextSetView, renderNextSetLineups } from "./next-set-view.js";
 import { setLineupOpen, publishLineupView } from "./lineup-view.js";
 import { session as matchState } from "../../../js/globals.js";
 import { renderLineupModal } from "./lineup-editor.js";
-import { cancelPartialSkillFlowForScope } from "./skill-selection.js";
-import { setScoutControlsDisabled, applySetChange, renderLiveScore, updateMatchStatusUI } from "./live-score-and-set.js";
+import { cancelPartialSkillFlowForScope } from "../scout/selection-state.js";
+import { setScoutControlsDisabled, renderLiveScore, updateMatchStatusUI, publishRuntimeView } from "../core/runtime-view.js";
+import { applySetChange } from "./live-score-and-set.js";
 import { syncCourtSideLayout, renderPlayers, renderOpponentPlayers } from "./team-rendering.js";
 import { setRotation, setOpponentRotation } from "../teams/court/court-ui-bootstrap.js";
 import { saveState } from "../storage/save-state.js";
-import { renderEventsLog } from "../video/video-events.js";
-
-export function cloneSetMap(map) {
-  return JSON.parse(JSON.stringify(map || {}));
-}
-
-export function getNextSetEntry(scope) {
-  if (!scoutUiState.nextSetDraft) return null;
-  return scope === "opponent" ? scoutUiState.nextSetDraft.opponent : scoutUiState.nextSetDraft.our;
-}
-
-export function updateNextSetEntry(scope, entry) {
-  if (!scoutUiState.nextSetDraft || !entry) return;
-  if (scope === "opponent") {
-    scoutUiState.nextSetDraft.opponent = entry;
-  } else {
-    scoutUiState.nextSetDraft.our = entry;
-  }
-}
-
-export function setNextSetPlayer(scope, posIdx, name) {
-  const entry = getNextSetEntry(scope);
-  if (!entry) return;
-  const liberos = getLiberosForScope(scope);
-  const core = lineup;
-  let nextCourt = [];
-  if (core && typeof core.setPlayerOnCourt === "function") {
-    nextCourt = core.setPlayerOnCourt({
-      court: entry.court || [],
-      posIdx,
-      playerName: name,
-      liberos
-    });
-  } else {
-    nextCourt = getCourtShape(entry.court || []).map((slot, idx) => {
-      const updated = Object.assign({}, slot);
-      if (updated.main === name) updated.main = "";
-      if (updated.replaced === name) updated.replaced = "";
-      if (idx === posIdx) updated.main = name;
-      return updated;
-    });
-  }
-  updateNextSetEntry(scope, Object.assign({}, entry, { court: nextCourt }));
-}
-
-export function swapNextSetSlots(scope, fromIdx, toIdx) {
-  const entry = getNextSetEntry(scope);
-  if (!entry) return;
-  const core = lineup;
-  let nextCourt = [];
-  if (core && typeof core.swapCourtSlots === "function") {
-    nextCourt = core.swapCourtSlots({
-      court: entry.court || [],
-      fromIdx,
-      toIdx
-    });
-  } else {
-    nextCourt = getCourtShape(entry.court || []);
-    const tmp = nextCourt[fromIdx];
-    nextCourt[fromIdx] = nextCourt[toIdx];
-    nextCourt[toIdx] = tmp;
-  }
-  updateNextSetEntry(scope, Object.assign({}, entry, { court: nextCourt }));
-}
-
-export function clearNextSetSlot(scope, posIdx) {
-  const entry = getNextSetEntry(scope);
-  if (!entry) return;
-  const nextCourt = getCourtShape(entry.court || []).map((slot, idx) => {
-    if (idx !== posIdx) return slot;
-    return { main: "", replaced: "" };
-  });
-  updateNextSetEntry(scope, Object.assign({}, entry, { court: nextCourt }));
-}
-
-export function renderNextSetLineups() {
-  if (!scoutUiState.nextSetDraft) return;
-
-    publishNextSetView();
-    return;
-
-}
+import { renderEventsLog } from "../events/log-view.js";
+import { cloneSetMap, getNextSetEntry, updateNextSetEntry, buildNextSetDraft } from "./next-set-model.js";
 
 export function setNextSetRotation(scope, value) {
   if (!scoutUiState.nextSetDraft) return;
@@ -129,69 +44,7 @@ export function rotateNextSetCourt(scope, direction) {
   renderNextSetLineups();
 }
 
-export function updateSetScoreDisplays() {
-  const score = computeSetWinScore();
-  const label = score.for + " - " + score.against;
 
-  publishRuntimeView();
-}
-
-export function buildNextSetDraft(setNum) {
-  const nextSet = Math.min(5, Math.max(1, setNum || 1));
-  const defaultsOur = getDefaultSetStartForScope("our");
-  const defaultsOpp = getDefaultSetStartForScope("opponent");
-  const initialOur = getMatchInitialSetStart("our");
-  const initialOpp = getMatchInitialSetStart("opponent");
-  const savedStart = matchState.state.setStarts && matchState.state.setStarts[nextSet] ? matchState.state.setStarts[nextSet] : null;
-  const savedOur = savedStart && savedStart.our ? savedStart.our : null;
-  const savedOpp = savedStart && savedStart.opponent ? savedStart.opponent : null;
-  const baseOurCourt =
-    savedOur && savedOur.court
-      ? cloneCourt(savedOur.court)
-      : initialOur && initialOur.court
-      ? cloneCourt(initialOur.court)
-      : defaultsOur && defaultsOur.court
-      ? cloneCourt(defaultsOur.court)
-      : (removeLiberosAndRestoreForScope(matchState.state.court || [], "our"));
-  const baseOppCourt =
-    savedOpp && savedOpp.court
-      ? cloneCourt(savedOpp.court)
-      : initialOpp && initialOpp.court
-      ? cloneCourt(initialOpp.court)
-      : defaultsOpp && defaultsOpp.court
-      ? cloneCourt(defaultsOpp.court)
-      : (removeLiberosAndRestoreForScope(matchState.state.opponentCourt || [], "opponent"));
-  const our = {
-    court: cloneCourt(baseOurCourt),
-    rotation:
-      savedOur && typeof savedOur.rotation === "number"
-        ? savedOur.rotation
-        : initialOur && initialOur.rotation
-          ? initialOur.rotation
-          : defaultsOur && defaultsOur.rotation
-          ? defaultsOur.rotation
-          : matchState.state.rotation || 1
-  };
-  const opponent = {
-    court: cloneCourt(baseOppCourt),
-    rotation:
-      savedOpp && typeof savedOpp.rotation === "number"
-        ? savedOpp.rotation
-        : initialOpp && initialOpp.rotation
-          ? initialOpp.rotation
-          : defaultsOpp && defaultsOpp.rotation
-          ? defaultsOpp.rotation
-          : matchState.state.opponentRotation || 1
-  };
-  const serveDefault = getDerivedServeForSetStart(nextSet);
-  return {
-    setNum: nextSet,
-    our,
-    opponent,
-    swapCourt: savedStart ? !!savedStart.swapCourt : nextSet > 1 ? !matchState.state.courtSideSwapped : false,
-    isServing: serveDefault
-  };
-}
 
 export function openNextSetLineupModal(scope = "our") {
   if (!scoutUiState.nextSetDraft) return;
@@ -317,7 +170,7 @@ export function applyNextSetDraft() {
   renderPlayers();
 
   renderOpponentPlayers();
-  updateSetScoreDisplays();
+  publishRuntimeView();
   closeNextSetModal({ force: true });
 }
 

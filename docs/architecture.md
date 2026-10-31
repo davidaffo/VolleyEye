@@ -11,7 +11,8 @@ I file sono raggruppati per dominio in `src/features/`:
 - `live/`: acquisizione dello scout, modali dei fondamentali, rendering dei due
   campi, registrazione eventi, flusso automatico, formazioni, punteggio,
   traiettorie e layout del workspace. Per cambiare la sequenza
-  battuta-ricezione-alzata-attacco-muro-difesa partire da `live/game-flow.js`.
+  battuta-ricezione-alzata-attacco-muro-difesa partire da `live/flow-model.js`; l’inferenza degli esiti del muro è in
+  `events/block-inference-model.js` e gli indicatori in `scout/flow-view.js`.
 - `analysis/`: metriche, grafici, tabelle, filtri, viste giocatrice, traiettorie,
   match sheet, distribuzioni e report.
 - `events/`: selezione condivisa, schema delle tabelle, modelli degli editor e comandi di modifica.
@@ -27,7 +28,7 @@ Lo stato locale dei controller è in `src/features/state/`; i controller importa
 
 ## Selezioni e reset
 
-`scout/selection-state.js` contiene pulizia dei metadati, prompt e zone; `scout/serve-keyboard.js` registra un solo listener di battuta e lo libera esplicitamente. Entrambi sono indipendenti dai controller UI. `scout/selection-commands.js` coordina l’avvio delle selezioni e i callback di campo/dialogo, senza importare il dispatcher della registrazione. `live/skill-selection.js` mantiene le operazioni di traiettoria e formazione. La selezione del fondamentale e il reset dell’alzata appartengono a `live/flow-model.js`.
+`scout/selection-state.js` contiene pulizia dei metadati, prompt e zone; `scout/serve-keyboard.js` registra un solo listener di battuta e lo libera esplicitamente. `scout/skill-modal-state.js` gestisce apertura, chiusura e annullamento del dialogo senza importare i controller della registrazione. `scout/selection-flow.js` coordina le selezioni asincrone di battuta e attacco; `scout/trajectory-dialog.js` gestisce il dialogo delle traiettorie. Campo e dialogo compongono questi flussi tramite callback espliciti. Le operazioni di formazione appartengono a `live/lineup-editor.js`; selezione del fondamentale e reset dell’alzata a `live/flow-model.js`.
 
 I reset condividono `video/reset-model.js` per dati/preset/orologio e `video/reset-commands.js` per selezioni/cache/player. L’opzione `includeScout` conserva la differenza fra reset completo e reset dall’archivio; la cancellazione della cache resta asincrona e non blocca i player. La navigazione usa un solo catalogo dei renderer di analisi e una sola pianificazione, mantenendo scelta iniziale o rilettura della scheda corrente secondo il percorso originale.
 
@@ -63,7 +64,7 @@ La scheda giocatrice separa statistiche e foto in `player-snapshot-model.js`, mo
 
 `video/overlay-model.js` seleziona l’evento e costruisce il testo dell’overlay senza dipendere da playback o editor. Il publisher video e i comandi dei controlli video sono moduli distinti.
 
-`events/table-model.js` definisce ogni colonna una sola volta: intestazione, testo, ordinamento, modifica multipla e campo dell’editor. Produce dati senza callback UI; `table-commands.js` aggiunge i comandi e coordina contesti, selezione, undo, pubblicazione e traiettorie. `edit-model.js` descrive i controlli e le modifiche ai dati senza importare playback o aggiornamenti delle viste. Il collegamento alle righe DOM indicizza le righe precedenti una sola volta, conservando i riferimenti necessari allo scorrimento.
+`events/table-model.js` definisce ogni colonna una sola volta: intestazione, testo, ordinamento, modifica multipla e campo dell’editor. Produce righe e celle senza callback UI; `table-view.js` pubblica il modello e conserva i contesti e i riferimenti delle righe montate. `EventTable` richiama gli handler condivisi di `table-commands.js` per selezione, modifica, ordinamento e traiettorie attraverso gli eventi pronti dell’applicazione. I callback opzionali del chiamante restano nelle opzioni della tabella, senza replicarli in ogni cella. `edit-model.js` descrive i controlli e le modifiche ai dati senza importare playback o aggiornamenti delle viste. Il collegamento alle righe DOM indicizza le righe precedenti una sola volta, conservando i riferimenti necessari allo scorrimento.
 
 `events/selection-model.js` condivide lettura e potatura delle selezioni tra log, tabella video, overlay, inserimento, mobile e play by play. Le diverse priorità restano esplicite: l’overlay segue l’ordine della tabella, il play by play usa la prima chiave selezionata, il mobile può mostrare la prima riga senza selezionarla. `video/event-model.js` accede agli eventi e ne sincronizza i collegamenti alle giocatrici; `sort-model.js` ordina una copia, conservando la cronologia originale e lo spareggio crescente per ID. I tempi del play by play sono in `playback-model.js`; etichette di squadra e fondamentale sono condivise con la tabella in `events/display-model.js`.
 
@@ -82,6 +83,8 @@ Eliminati i precedenti richiami privi di effetti a `renderLineupChips` e `syncCu
 `scout/court-model.js` prepara i dati delle schede e della panchina: rosa della squadra, nomi, numeri, capitani, foto, ruoli, ordine sul campo e posizione del rientro. I dati delle singole schede sono clonabili e non contengono callback. La preparazione normalizza il campo come prima, senza leggere il DOM. `pick-model.js` legge ambito delle modalità punto/errore ed elenco ordinato delle riserve; previsione del fondamentale e selettori dell’attacco sono in `live/flow-model.js`, senza dipendere dai controller di layout.
 
 `scout/court-commands.js` coordina cattura delle posizioni per l’animazione, dati, controlli dei fondamentali e pubblicazione. Costruisce ogni scheda insieme ai propri controlli: la preparazione di un attacco può cambiare il flusso sincrono prima della scheda successiva. La panchina viene preparata dopo le schede e l’orientamento finale viene letto al momento della pubblicazione. Il campo nascosto non esegue queste operazioni.
+
+I comandi di campo, panchina e fondamentali condividono i descrittori di azione di `skill-control-model.js`; i componenti React li invocano attraverso `skill-actions.js`. Il publisher non importa il dispatcher. `live/team-rendering.js` passa per ogni chiamata i callback `onRender`, `onScheduleRender` e `onQueuedAttack` alla preparazione dei controlli. Le transizioni restano nei punti sincroni originali, anche fra una scheda e la successiva; non esiste un registro separato dei callback. Cattura delle posizioni e animazione FLIP sono in `layout/animation.js`.
 
 `scout/court-view.js` pubblica soltanto negli store React. `skill-preparation.js` contiene la preparazione sincrona dei controlli dei fondamentali e le relative transizioni; sostituisce il precedente `live/court-view-model.js`, che importava registrazione eventi, modali, salvataggi e renderer. I due campi continuano a riusare gli stessi componenti React e le stesse funzioni di composizione con ambito esplicito.
 
@@ -161,3 +164,74 @@ I test usano `fake-indexeddb` per verificare transazioni, migrazione, abort e
 riapertura. La prova dei moduli nativi importa consecutivamente tutti i DVW in
 `resources/data volley`, verifica la riapertura da un nuovo contesto e mantiene
 il contenuto complessivo di `localStorage` sotto 10 KB di testo.
+
+I parser DataVolley condividono le funzioni primitive di formato in
+`io/datavolley-format.js`; l'export risolve il nome del file dal modello della
+partita, senza importare il controller dell'export PDF. Etichette e stato
+DataVolley vivono in `io/datavolley-entry-view.js`, separati dall'applicazione
+dei comandi scout.
+
+`live/next-set-model.js` e `live/set-start-draft.js` gestiscono le bozze delle
+formazioni. Le viste leggono questi modelli; i controller coordinano apertura,
+conferma e aggiornamenti del resto dell'applicazione. Analogamente, il modello
+CAMP3 è indipendente dal controller che legge i file e applica l'importazione.
+La vista dell'editor squadra gestisce gli aggiornamenti locali del proprio
+roster e della formazione senza richiamare il controller di caricamento/salvataggio.
+
+`events/selection-view.js` pubblica la selezione delle tabelle; il reset può
+svuotarla senza importare i comandi di modifica degli eventi. La persistenza
+dei riferimenti ai file video è in `video/local-file-storage.js`, mentre gli
+snapshot di annullamento sono in `video/undo-model.js`. Questi moduli non
+importano riproduzione, editor o registrazione scout. I test architetturali
+verificano transitivamente l'assenza di cicli e di dipendenze dai controller
+per 50 punti di ingresso, includendo riesportazioni e import dinamici letterali.
+Un ulteriore test verifica l’assenza di cicli nell’intero grafo applicativo
+`src/` e `js/` (esclusi i vendor), compresi i riferimenti dinamici letterali
+e le riesportazioni. L’audit corrente non rileva cicli né import relativi mancanti.
+
+
+Gli orologi scout e video, incluse pausa, ripresa e snapshot, appartengono a
+`live/clocks.js`. `events/recording-model.js` costruisce i payload e assegna gli
+ID; `video/media-state.js` legge lo stato dei player e pianifica aggiornamenti
+compatibili con la riproduzione. Nessuno di questi moduli importa dialoghi,
+registrazione dello scout o controller di riproduzione. L’integrazione con l’API
+YouTube è in `video/youtube-player.js`; caricamento delle sorgenti e annullamento
+restano nei comandi video.
+
+`core/runtime-view.js` pubblica punteggio, stato partita e controlli scout.
+`storage/match-repository.js` possiede i predicati sui dati salvati; il lifecycle
+coordina il riallineamento dell’archivio con la navigazione. L’editor delle
+metriche pubblica attraverso `settings/metrics-view.js`, senza dipendere dai
+controller del campo. Gli aggiornamenti dei vecchi pulsanti che non eseguivano
+più operazioni sono stati rimossi.
+
+`core/viewport.js` coordina resize e aggiornamenti del campo; la geometria e il
+disegno del canvas sono in `scout/trajectory-canvas.js`. Il dialogo traiettorie
+può gestire puntatori, chiusura e risultato senza importare la registrazione
+degli eventi. `layout/modals.js` possiede la soppressione dei clic transitori,
+condivisa da formazione e traiettorie. `scout-ui.js` conserva layout, dimensioni
+e reset senza importare i controller del campo.
+
+
+`events/history-model.js` acquisisce gli snapshot dello scout e li associa agli
+eventi come proprietà non enumerabili. `events/history-commands.js` possiede
+ripristino, annullamento della contesa ed eliminazione degli eventi, mantenendo
+la protezione contro la rimozione di un cambio o passaggio set nel mezzo dello
+storico. Questi comandi non richiedono il lifecycle generale per acquisire uno
+snapshot.
+
+Caricamento ed entrata/uscita dalla partita appartengono ai comandi dell’archivio;
+`core/match-reset.js` coordina il reset richiesto da creazione e importazione.
+La rinomina dei riferimenti alle squadre negli archivi è in
+`teams/team-reference-model.js`, separata dall’editor. `domain/roster-text.js`
+interpreta il testo delimitato e `io/file-readers.js` legge i file scelti, senza
+importare i comandi dell’archivio.
+
+`teams/court-view.js` aggiorna le due indicazioni di rotazione.
+`teams/lineup-commands.js` applica le formazioni predefinite, conserva l’ordine
+fra aggiornamento della rotazione e cache dei ruoli e coordina l’eventuale
+salvataggio dei liberi recuperati. Questi effetti restano fuori dai modelli
+utilizzati dall’analisi. Le operazioni del dialogo formazione appartengono a
+`live/lineup-editor.js`; il semplice aggiornamento della bozza del set successivo
+appartiene alla sua vista. Tutti i percorsi di aggiornamento dei liberi usano
+`scout/court-commands.js:renderLiberoBench`, senza quattro funzioni di inoltro.

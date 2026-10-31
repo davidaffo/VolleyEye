@@ -132,7 +132,7 @@ test("la difesa slash viene rimossa anche dalle regole già salvate", () => {
 });
 
 test("annulla usa uno snapshot atomico non serializzato e non lo ricalcola", () => {
-  const lifecycle = readFileSync(new URL("../src/features/core/app-lifecycle.js", import.meta.url), "utf8");
+  const lifecycle = readFileSync(new URL("../src/features/events/history-model.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/events/history-commands.js", import.meta.url), "utf8");
   const snapshotCode = extract(lifecycle, "function captureScoutActionSnapshot", "function undoLastEvent");
   assert.match(snapshotCode, /Object\.defineProperty\(event, "__undoSnapshot"/);
   assert.match(snapshotCode, /enumerable:\s*false/);
@@ -197,12 +197,13 @@ test("lo snapshot locale conserva le impostazioni e viene scritto sincronicament
 
 test("il video locale conserva soltanto il riferimento al file, mai il blob", () => {
   const sources = readFileSync(new URL("../src/features/video/video-sources.js", import.meta.url), "utf8");
-  const persist = extract(sources, "async function persistLocalVideoReference", "async function getFileFromStoredVideoHandle");
+  const storage = readFileSync(new URL("../src/features/video/local-file-storage.js", import.meta.url), "utf8");
+  const persist = sourceFunctions(storage, ["persistLocalVideoReference"]);
   const restore = extract(sources, "async function restoreCachedLocalVideo", "function restoreYoutubeFromState");
   assert.match(persist, /saveVideoFileHandleToDb\(handle\)/);
   assert.match(restore, /getFileFromStoredVideoHandle/);
   assert.match(sources, /showOpenFilePicker/);
-  assert.doesNotMatch(sources, /saveVideoBlobToDb|loadVideoBlobFromDb|put\(file,/);
+  assert.doesNotMatch(sources + storage, /saveVideoBlobToDb|loadVideoBlobFromDb|put\(file,/);
 });
 
 test("la correzione punteggio video segue l'ordine reale degli eventi e viene salvata", () => {
@@ -241,7 +242,7 @@ test("il dialogo ffmpeg permette di copiare il comando CPU o GPU", () => {
 test("il nome output ffmpeg usa il preset video attivo", () => {
   const events = readFileSync(new URL("../src/features/video/video-events.js", import.meta.url), "utf8");
   const filters = readFileSync(new URL("../src/features/analysis/video-filter-model.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/video/view-commands.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/analysis/analysis-filters.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/video/view.js", import.meta.url), "utf8");
-  const copy = extract(events, "async function copyFfmpegFromSelection", "function renderEventsLog");
+  const copy = sourceFunctions(events, ["copyFfmpegFromSelection"]);
   assert.match(copy, /getActiveVideoFilterPresetName\(\)/);
   assert.match(copy, /sanitizeVideoOutputBase\(presetName\)/);
   assert.match(readFileSync(new URL("../src/features/analysis/video-preset-commands.js", import.meta.url), "utf8"), /activeVideoFilterPresetId = id/);

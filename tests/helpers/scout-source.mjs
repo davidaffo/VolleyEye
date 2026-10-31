@@ -1,11 +1,22 @@
+import { sourceFunctions } from "./source-functions.mjs";
 import { readSourceFixture as readFileSync } from "./source-fixture.mjs";
 
 export const SCOUT_SOURCE_FILES = [
+  "src/features/live/clocks.js",
+  "src/features/video/media-state.js",
+  "src/features/events/recording-model.js",
+  "src/features/video/youtube-player.js",
+  "src/features/video/local-file-storage.js",
+  "src/features/video/undo-model.js",
+  "src/features/events/selection-view.js",
   "src/features/video/reset-model.js",
   "src/features/video/reset-commands.js",
   "src/features/scout/serve-keyboard.js",
   "src/features/scout/selection-state.js",
-  "src/features/scout/selection-commands.js",
+  "src/features/scout/selection-flow.js",
+  "src/features/scout/skill-modal-state.js",
+  "src/features/events/selection-commands.js",
+  "src/features/events/log-view.js",
   "src/features/players/database-model.js",
   "src/features/analysis/stats-model.js",
   "src/features/analysis/shared-filter-view.js",
@@ -67,10 +78,16 @@ export const SCOUT_SOURCE_FILES = [
   "src/domain/previous-skill-options.js",
   "src/features/analysis/values.js",
   "src/features/scout-ui.js",
+  "src/features/core/viewport.js",
+  "src/features/scout/trajectory-canvas.js",
+  "src/features/layout/animation.js",
+  "src/features/live/next-set-model.js",
+  "src/features/live/set-start-draft.js",
   "src/features/live/next-set-lineups.js",
-  "src/features/live/skill-selection.js",
+
   "src/features/live/lineup-editor.js",
-  "src/features/live/game-flow.js",
+  "src/features/events/block-inference-model.js",
+  "src/features/scout/flow-view.js",
   "src/features/live/trajectories.js",
   "src/features/live/workspace-layout.js",
   "src/features/live/team-management.js",
@@ -100,6 +117,8 @@ export const SCOUT_SOURCE_FILES = [
   "src/features/analysis/aggregated-table.js",
   "src/features/analysis/second-distribution.js",
   "src/features/io/exports.js",
+  "src/features/io/datavolley-format.js",
+  "src/features/io/datavolley-entry-view.js",
   "src/features/io/datavolley-export.js",
   "src/features/io/match-io.js",
   "src/features/io/datavolley-codec.js",
@@ -107,6 +126,8 @@ export const SCOUT_SOURCE_FILES = [
   "src/features/io/datavolley-match-import.js",
   "src/features/io/file-and-url-import.js",
   "src/features/analysis/reports.js",
+  "src/features/events/history-model.js",
+  "src/features/events/history-commands.js",
   "src/features/core/app-lifecycle.js",
   "src/features/core/bootstrap-state.js",
   "src/features/core/bindings-roster.js",
@@ -121,5 +142,9 @@ export const SCOUT_SOURCE_FILES = [
 export function readScoutSource() {
   return SCOUT_SOURCE_FILES
     .map(path => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8"))
+    .concat(sourceFunctions(readFileSync(new URL("../../src/features/core/runtime-view.js", import.meta.url), "utf8"), ["renderLiveScore", "updateMatchStatusUI", "setScoutControlsDisabled"]))
+    .concat(sourceFunctions(readFileSync(new URL("../../src/features/scout/skill-dialog.js", import.meta.url), "utf8"), ["renderSkillChoice", "renderSkillCodes"]))
+    .concat(sourceFunctions(readFileSync(new URL("../../src/features/settings/metrics-view.js", import.meta.url), "utf8"), ["renderMetricsConfig"]))
+    .concat(sourceFunctions(readFileSync(new URL("../../src/features/video/edit-view.js", import.meta.url), "utf8"), ["clearCurrentEventEdit"]))
     .join("");
 }

@@ -35,6 +35,7 @@ function setup() {
   const context = dom.getInternalVMContext();
   context.matchMedia = () => ({matches:false});
   vm.runInContext(readRuntimeSource("react-views"), context);
+  context.__reactEvents.runScoutSkillAction = (action, event) => context[action.command](...action.args, event);
   Object.assign(context, {
     state,
     POSITIONS_META: [],
@@ -66,8 +67,9 @@ function setup() {
   ]) context[name] = () => {};
   load(context, scout, ["getPlayersForScope", "getPlayerNumbersForScope", "getLiberosForScope", "getCaptainsForScope"]);
   load(context, roster, ["getTeamCourt", "formatNameWithNumberFor"]);
+  load(context, read("src/features/scout/skill-control-model.js"), ["createScoutAction"]);
   vm.runInContext(read("src/features/scout/court-model.js") + read("src/features/scout/court-view.js") + read("src/features/scout/court-commands.js"), context);
-  load(context, scout, [ "getScoutCourtSkill", "renderPlayers", "renderOpponentPlayers", "renderScoutTeamCourt", "syncCourtSideLayout"]);
+  load(context, scout, [ "getScoutCourtSkill", "renderPlayers", "renderOpponentPlayers", "renderScoutTeamCourt", "syncCourtSideLayout", "scheduleRenderPlayers", "startQueuedSetterAttack"]);
   for(const name of ["renderPlayers", "renderOpponentPlayers"]){
     const render=context[name]; context[name]=(...args)=>{render(...args);context.__flushReactViews();};
   }
@@ -146,7 +148,7 @@ test("liberi e rientri usano le stesse interazioni per entrambe le squadre", () 
   for (const name of ['handleBenchDragStart', 'handleBenchDragEnd', 'handleBenchPointerDown', 'handleBenchTouchStart', 'handleBenchTouchMove', 'handleBenchTouchEnd', 'handleBenchTouchCancel']) c[name] = () => {};
   c.handleBenchClickForScope = (name, scope) => { c.clicked = [name, scope]; };
   c.restorePlayerFromLiberoForScope = (idx, scope) => { c.restored = [idx, scope]; };
-  load(c, roster, ['getTeamNumbers', 'getTeamPlayers', 'getTeamLiberos', 'renderLiberoChipsInline', 'renderOpponentLiberoChipsInline']);
+  load(c, roster, ['getTeamNumbers', 'getTeamPlayers', 'getTeamLiberos']);
   let publications = 0;
   const unsubscribe = c.__reactViews.liberoBenchStore.subscribe(() => publications++);
   for (const scope of ['our', 'opponent']) {
@@ -154,7 +156,7 @@ test("liberi e rientri usano le stesse interazioni per entrambe le squadre", () 
     c.state[prefix ? 'opponentPlayers' : 'players'].push('Libero');
     c.state[prefix ? 'opponentLiberos' : 'liberos'] = ['Libero'];
     const before = publications;
-    c.renderLiberoChipsInline();
+    c.renderLiberoBench();
     assert.equal(publications, before + 1);
     c.__flushReactViews();
     const chip = dom.window.document.querySelector(`.libero-tags [data-team-scope="${scope}"][data-player-name="Libero"]`);
@@ -163,7 +165,7 @@ test("liberi e rientri usano le stesse interazioni per entrambe le squadre", () 
     assert.ok(chip.draggable);
     const replacedName = c.getTeamCourt(scope)[4].main;
     c.getTeamCourt(scope)[4] = { main: 'Libero', replaced: replacedName };
-    c.renderLiberoChipsInline();
+    c.renderLiberoBench();
     c.__flushReactViews();
     const used = dom.window.document.querySelector(`.libero-tags [data-team-scope="${scope}"][data-player-name="Libero"]`);
     assert.equal(used.getAttribute('aria-disabled'), 'true');

@@ -5,29 +5,28 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { eventTableStore, eventLogSummaryStore } from "../state/event-table-store.mjs";
 import { events as appEvents } from "../app/actions.mjs";
 
-function Cell({ cell }) {
+function Cell({ cell, row, table }) {
   const [editor, setEditor] = useState(null),
     ref = useRef(null);
   const done = () => {
     setEditor(null);
-    cell.onDone?.();
+    appEvents.finishEventCellEdit(cell.field);
   };
   return (
     <td
       ref={ref}
       className={[
         ...(cell.classes || []),
-        ...(cell.onDoubleClick ? ["clickable-cell"] : []),
+        ...(cell.trajectory ? ["clickable-cell"] : []),
       ].join(" ")}
       data-editing={editor ? "true" : "false"}
       onDoubleClick={(event) => {
-        if (cell.onDoubleClick) {
-          cell.onDoubleClick(event);
+        if (cell.trajectory) {
+          appEvents.editEventTrajectory(row, cell.trajectory, table, event);
           return;
         }
-        if (!cell.onEdit) return;
         event.stopPropagation();
-        const model = cell.onEdit();
+        const model = appEvents.editEventCell(row, cell.field, table);
         if (model) setEditor(model);
       }}
     >
@@ -96,7 +95,7 @@ export function EventTable({ id, className }) {
                           ? "Ordina"
                           : undefined
                     }
-                    onClick={() => view.onHeader?.(header)}
+                    onClick={() => appEvents.handleEventTableHeader(view.interaction, header)}
                   >
                     {header.checkbox ? (
                       <input
@@ -107,7 +106,7 @@ export function EventTable({ id, className }) {
                           view.rows.length > 0 && count === view.rows.length
                         }
                         onChange={(event) =>
-                          view.onSelectAll(event.target.checked)
+                          appEvents.selectAllEventTableRows(view.interaction, event.target.checked)
                         }
                       />
                     ) : (
@@ -141,9 +140,9 @@ export function EventTable({ id, className }) {
                       )
                     )
                       return;
-                    row.onSelect(event);
+                    appEvents.selectEventTableRow(row, view.interaction, event);
                   }}
-                  onDoubleClick={row.onSeek}
+                  onDoubleClick={() => appEvents.seekEventTableRow(row, view.interaction)}
                 >
                   {view.showCheckbox && (
                     <td className="row-select">
@@ -151,12 +150,12 @@ export function EventTable({ id, className }) {
                         type="checkbox"
                         checked={view.selected.includes(row.key)}
                         onClick={(event) => event.stopPropagation()}
-                        onChange={row.onToggle}
+                        onChange={() => appEvents.toggleEventTableRow(row, view.interaction)}
                       />
                     </td>
                   )}
                   {row.cells.map((cell, index) => (
-                    <Cell key={index} cell={cell} />
+                    <Cell key={index} cell={cell} row={row} table={view.interaction} />
                   ))}
                   <td>
                     <button
@@ -165,7 +164,7 @@ export function EventTable({ id, className }) {
                       title="Elimina skill"
                       onClick={(event) => {
                         event.stopPropagation();
-                        row.onDelete();
+                        appEvents.deleteEventByKey(row.key);
                       }}
                     >
                       ✕

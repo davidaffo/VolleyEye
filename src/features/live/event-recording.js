@@ -1,31 +1,28 @@
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { getTeamScopeFromEvent, getOppositeScope, getPlayersForScope, isSkillEnabledForScope, isFarSideForScope } from "../teams/selectors.js";
 import { getPlayerIdForScope } from "../teams/player-identity.js";
-import { getAttackMetaForPlayer } from "./flow-model.js";
+import { getAttackMetaForPlayer, getFreeballStartSkill, getPredictedSkillIdForScope, getAutoFlowState, isPostServeLockForScope, getActiveServerName, canOverrideServeError, shouldInferServeFromPass, getServerPlayerForScope, getServeCodeFromPassCode, getSetterFromLastSetEventForScope, getSetterFromCourtForScope, computeTwoTeamFlowFromEvent, clearReceiveContext } from "./flow-model.js";
 import { session as teamManagementState } from "../state/live-team-management.js";
 import { session as browserEffectsState } from "../../app/browser-effects.js";
-import { cancelPartialSkillFlowForScope } from "./skill-selection.js";
-import { getServeBaseZoneForPlayer, applyAttackTrajectoryToEvent, clearAttackSelection } from "../scout/selection-state.js";
+import { cancelPartialSkillFlowForScope, getServeBaseZoneForPlayer, applyAttackTrajectoryToEvent, clearAttackSelection } from "../scout/selection-state.js";
 import { clearServeTypeInlineListener } from "../scout/serve-keyboard.js";
-import { getFreeballStartSkill, getPredictedSkillIdForScope, getAutoFlowState, isPostServeLockForScope, getActiveServerName, canOverrideServeError, shouldInferServeFromPass, getServerPlayerForScope, getServeCodeFromPassCode, getSetterFromLastSetEventForScope, getSetterFromCourtForScope, computeTwoTeamFlowFromEvent } from "./flow-model.js";
-import { updateNextSkillIndicator, applyBlockInference } from "./game-flow.js";
+import { updateNextSkillIndicator } from "../scout/flow-view.js";
+import { applyBlockInference } from "../events/block-inference-model.js";
 import { session as matchState } from "../../../js/globals.js";
 import { saveState } from "../storage/save-state.js";
 import { renderPlayers } from "./team-rendering.js";
 import { ensureSetStartSnapshot } from "../analysis/player-model.js";
-import { captureScoutActionSnapshot, attachScoutActionSnapshot } from "../core/app-lifecycle.js";
-import { buildBaseEventPayload, schedulePostEventUpdates } from "./live-entry.js";
+import { captureScoutActionSnapshot, attachScoutActionSnapshot } from "../events/history-model.js";
+import { buildBaseEventPayload } from "../events/recording-model.js";
+import { schedulePostEventUpdates } from "./live-entry.js";
 import { handleAutoRotationFromEvent } from "./live-score-and-set.js";
 import { getPointDirection } from "../analysis/scores.js";
-import { openAttackTrajectoryModal, captureServeTrajectory } from "./trajectories.js";
+import { openAttackTrajectoryModal } from "../scout/trajectory-dialog.js";
+import { captureServeTrajectory } from "./trajectories.js";
 import { mapBackRowZone } from "../../domain/trajectory-geometry.js";
-import { renderEventsLog } from "../video/video-events.js";
+import { renderEventsLog } from "../events/log-view.js";
 import { renderVideoAnalysis } from "../video/playback.js";
 import { renderTrajectoryAnalysis, renderServeTrajectoryAnalysis } from "../analysis/trajectory-rendering.js";
-
-export function clearReceiveContext(scope = "our") {
-  scoutUiState.lastReceiveContext[scope] = null;
-}
 
 export function animateFreeballButton() {
   if (!teamManagementState.elBtnFreeball) return;

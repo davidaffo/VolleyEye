@@ -1,7 +1,7 @@
 import { session as matchState } from "../../../js/globals.js";
 import { session as workspaceLayoutState } from "../state/live-workspace-layout.js";
-import { clearEventSelection } from "./video-events.js";
-import { clearCachedLocalVideo } from "./video-sources.js";
+import { clearEventSelection } from "../events/selection-view.js";
+import { clearCachedLocalVideo } from "./local-file-storage.js";
 
 export function resetMatchVideoPlayback({ includeScout = false } = {}) {
   clearEventSelection({ clearContexts: true });

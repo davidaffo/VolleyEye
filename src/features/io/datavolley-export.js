@@ -1,7 +1,6 @@
 import { session } from "../state/io-datavolley-export.js";
-import { DV_SKILL_CODES } from './datavolley-skills.js';
-import { RESULT_CODES } from "../../../js/globals.js";
-import { session as matchState, downloadBlob } from "../../../js/globals.js";
+import { DV_SKILL_CODES } from "./datavolley-skills.js";
+import { RESULT_CODES, session as matchState, downloadBlob } from "../../../js/globals.js";
 import { getCurrentOpponentPayload, getCurrentTeamPayload } from "../teams/current-payload.js";
 import { getTeamNameForScope, getPlayerNumbersForScope, getPlayersForScope, getTeamScopeFromEvent } from "../teams/selectors.js";
 import { session as rosterLineupState } from "../state/roster-lineup.js";
@@ -14,24 +13,12 @@ import { getDefaultSetStartForScope } from "../teams/set-start-model.js";
 import { computeSetWinScore } from "../analysis/set-results.js";
 import { getPointDirection, getEventPointValue, computePointsSummary } from "../analysis/scores.js";
 import { syncEventPlayerLinks } from "../events/player-links.js";
-import { safeMatchSlug } from "./exports.js";
-
-
+import { safeMatchSlug } from "../teams/match-details.js";
+import { padDv, sanitizeDvField } from "./datavolley-format.js";
 
 const datavolleyExportState = session;
 
-export function padDv(value, size = 2) {
-  const num = parseInt(value, 10);
-  if (!Number.isFinite(num)) return String(value || "").padStart(size, "0").slice(-size);
-  return String(Math.max(0, num)).padStart(size, "0").slice(-size);
-}
 
-export function sanitizeDvField(value) {
-  return String(value || "")
-    .replace(/[;\r\n]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 export function getStoredDvwSectionLines(sectionKey, fallback = []) {
   const raw = matchState.state && matchState.state.match ? matchState.state.match[sectionKey] : null;
@@ -363,94 +350,7 @@ export function buildDataVolleyZoneTail(ev, skill) {
   return "";
 }
 
-export function parseDvwZoneMeta(zonePair) {
-  const rawStart = String((zonePair && zonePair.startZone) || "").toUpperCase();
-  const rawEnd = String((zonePair && zonePair.endZone) || "").toUpperCase();
-  const startZone = /^\d$/.test(rawStart) ? rawStart : "";
-  const endZone = /^\d$/.test(rawEnd) ? rawEnd : "";
-  const endSubzone = !endZone && /^[A-Z]$/.test(rawEnd) ? rawEnd : "";
-  return {
-    startZone,
-    endZone,
-    endSubzone,
-    endCone: ""
-  };
-}
 
-export function parseDvwSuffixMeta(skillLetter, inlineCode = "", suffix = "") {
-  const skill = String(skillLetter || "").toUpperCase();
-  const inline = String(inlineCode || "").trim().toUpperCase();
-  const rawSuffix = String(suffix || "").trim().toUpperCase();
-  const cleanedSuffix = rawSuffix.replace(/^~+/, "");
-  const base = {
-    skillSubtype: "",
-    specialCode: "",
-    numPlayersNumeric: null
-  };
-  if (skill === "A") {
-    const match = cleanedSuffix.match(/^([A-Z])(\d*)(.*)$/);
-    if (match) {
-      return {
-        skillSubtype: match[1] || "",
-        numPlayersNumeric: match[2] !== "" ? parseInt(match[2], 10) : null,
-        specialCode: match[3] || ""
-      };
-    }
-    return {
-      skillSubtype: cleanedSuffix ? cleanedSuffix.charAt(0) : "",
-      specialCode: cleanedSuffix ? cleanedSuffix.slice(1) : "",
-      numPlayersNumeric: null
-    };
-  }
-  if (skill === "B") {
-    const match = cleanedSuffix.match(/^(\d*)(.*)$/);
-    if (match) {
-      return {
-        skillSubtype: "",
-        numPlayersNumeric: match[1] !== "" ? parseInt(match[1], 10) : null,
-        specialCode: match[2] || ""
-      };
-    }
-    return {
-      skillSubtype: "",
-      numPlayersNumeric: null,
-      specialCode: cleanedSuffix
-    };
-  }
-  if (skill === "E") {
-    return {
-      skillSubtype: inline || "",
-      specialCode: cleanedSuffix,
-      numPlayersNumeric: null
-    };
-  }
-  if (skill === "R") {
-    if (/^~~/.test(rawSuffix)) {
-      return Object.assign({}, base, {
-        specialCode: cleanedSuffix
-      });
-    }
-    if (/^[A-Z]/.test(cleanedSuffix)) {
-      return {
-        skillSubtype: cleanedSuffix.charAt(0),
-        specialCode: cleanedSuffix.slice(1),
-        numPlayersNumeric: null
-      };
-    }
-    return Object.assign({}, base, {
-      specialCode: cleanedSuffix
-    });
-  }
-  if (skill === "S" || skill === "D" || skill === "F") {
-    return Object.assign({}, base, {
-      specialCode: cleanedSuffix
-    });
-  }
-  return Object.assign({}, base, {
-    skillSubtype: inline || (cleanedSuffix ? cleanedSuffix.charAt(0) : ""),
-    specialCode: inline ? cleanedSuffix : cleanedSuffix.slice(1)
-  });
-}
 
 export function buildDataVolleyPostZoneTail(ev, skill) {
   if (!ev) return "";

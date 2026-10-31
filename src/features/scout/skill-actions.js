@@ -1,18 +1,19 @@
-import { selectScoutServeType, startScoutAttack } from "./selection-commands.js";
+import { restorePlayerFromLiberoForScope } from "../teams/court/court-engine.js";
+import { handleBenchClickForScope } from "../teams/court/court-ui-bootstrap.js";
+import { applyPointForPickedPlayer, openErrorModalForPickedPlayer, stopPointPickMode, stopErrorPickMode, openErrorModal, openSkillCodesModal, openSkillModal } from "../live/live-entry.js";
+import { handleTeamPoint } from "../live/live-score-and-set.js";
+import { selectScoutServeType, startScoutAttack } from "./skill-dialog.js";
 import { session as matchState } from "../../../js/globals.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { makePlayerKey } from "../teams/selectors.js";
-import { getAttackMetaForPlayer } from "../live/flow-model.js";
-import { setSelectedSkillForScope } from "../live/flow-model.js";
+import { getAttackMetaForPlayer, setSelectedSkillForScope } from "../live/flow-model.js";
 import { resetSkillSelectionForPlayer, clearAttackSelection } from "./selection-state.js";
 import { clearServeTypeInlineListener, setServeTypeFocusPlayer } from "./serve-keyboard.js";
-
-import { renderPlayers } from "../live/team-rendering.js";
+import { renderPlayers, scheduleRenderPlayers, setNextSetType } from "../live/team-rendering.js";
 import { handleEventClick } from "../live/event-recording.js";
 import { forceNextSkill } from "../live/trajectories.js";
 import { saveState } from "../storage/save-state.js";
-import { scheduleRenderPlayers, openSkillCodesModal, openSkillModal, closeSkillModal } from "../live/live-entry.js";
-import { setNextSetType } from "../live/scout-shortcuts.js";
+import { closeSkillModal } from "./skill-modal-state.js";
 
 export function cancelScoutSkillSelection({ playerIdx, scope }) {
   resetSkillSelectionForPlayer(playerIdx, scope);
@@ -99,7 +100,15 @@ export async function recordScoutSkill(
   if (inModal) closeSkillModal();
   else leaveScoutSkillEvaluation({ playerIdx, scope });
 }
+export function assignScoutTeamPoint(scope) {
+  handleTeamPoint(scope);
+  stopPointPickMode();
+}
+
 const scoutSkillCommands = Object.freeze({
+  restorePlayerFromLiberoForScope, handleBenchClickForScope,
+  applyPointForPickedPlayer, openErrorModalForPickedPlayer,
+  stopPointPickMode, stopErrorPickMode, openErrorModal, assignScoutTeamPoint,
   cancelScoutSkillSelection,
   leaveScoutSkillEvaluation,
   chooseScoutSkill,

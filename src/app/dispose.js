@@ -1,11 +1,12 @@
-import { session as applicationState } from './lifecycle.js';
-import { finishScoutWidgetDrag } from '../features/live/workspace-layout.js';
-import { stopViewPublications } from './view-publication.js';
-import { session as browserEffectsState } from './browser-effects.js';
-import { updateVideoPlaybackSnapshot } from '../features/live/live-entry.js';
-import { session as scoutUiState } from '../features/state/scout-ui.js';
-import { session as matchState } from '../../js/globals.js';
-import { session as workspaceLayoutState } from '../features/state/live-workspace-layout.js';
+import { session as applicationState } from "./lifecycle.js";
+import { finishScoutWidgetDrag } from "../features/live/workspace-layout.js";
+import { stopViewPublications } from "./view-publication.js";
+import { session as browserEffectsState } from "./browser-effects.js";
+import { updateVideoPlaybackSnapshot } from "../features/video/media-state.js";
+import { session as scoutUiState } from "../features/state/scout-ui.js";
+import { session as matchState } from "../../js/globals.js";
+import { session as workspaceLayoutState } from "../features/state/live-workspace-layout.js";
+
 export function stop() {
   if (browserEffectsState.runtimeDisposed) return;
   updateVideoPlaybackSnapshot(undefined, true);

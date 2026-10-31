@@ -1,5 +1,9 @@
 # Refactoring React: piano e criteri di accettazione
 
+## Stato attuale
+
+Il grafo applicativo non contiene più dipendenze circolari né import relativi mancanti. I confini di 50 moduli sono protetti da controlli transitivi; un test aggiuntivo verifica l’intero grafo. Le sezioni seguenti conservano le misure e i limiti dei passaggi precedenti come storico. I dettagli conclusivi sono nell’ultima sezione.
+
 ## Obiettivo e vincoli
 
 Ridurre codice applicativo e duplicazioni attraverso logica condivisa e componenti React riutilizzati, mantenendo comportamento, struttura dei dati e funzionalità. Il lavoro è accettato sulla base di misure riproducibili e regressioni, non del numero di file convertiti.
@@ -438,3 +442,193 @@ Build applicativa JS: **983,22 kB**, gzip **283,76 kB**, rispetto a 1.074,58 kB 
 Comandi riproducibili: `npm test`, `npm run build`, `npm run test:e2e`, `npm run audit:duplicates`, `node scripts/audit-source.mjs main`, `node scripts/audit-source.mjs de8c85075c6ef296cb7310c89ece9f0c4ae00c7a`, `git diff --check`.
 
 Verifica conclusiva sulla stessa build applicativa: **490 test unitari/integrati e 38 scenari browser superati**, inclusi i controlli sui 207 selettori dismessi dopo ogni scenario. Verificati limiti superabili, import/export e migrazioni, archivi e foto con selettore file nativo, filtri/preset e confronto giocatrici, video locale/YouTube, drag/touch/tastiera, GitHub Pages, PWA offline ed export HTML autonomo senza rete. Audit degli import e delle duplicazioni e `git diff --check` superati. I riferimenti AST a `document` scendono da 480 a 335 rispetto alla revisione precedente; restano necessari quelli per risorse del browser, focus, geometria e stampa. La sola aggiunta di questo resoconto è stata ricostruita verificando che JS, CSS ed entry dell’export siano identici agli asset della suite browser.
+
+### Separazione delle dipendenze dai controller dopo il commit 1637ed1
+
+Il commit `1637ed1` salva lo stato verificato del completamento precedente.
+Il lavoro successivo rimuove dai modelli e dai publisher le dipendenze verso i
+controller che li utilizzano:
+
+- formato, parser/import/export ed etichette DataVolley;
+- bozze di formazione del set corrente e successivo, con le rispettive viste;
+- modello della revisione CAMP3 e aggiornamenti locali dell'editor squadra;
+- publisher dei suggerimenti scout, selezione eventi, storage dei riferimenti
+  video e snapshot di annullamento;
+- aggiornamento del punteggio set tramite il publisher runtime condiviso,
+  eliminando il wrapper `updateSetScoreDisplays` e il suo calcolo inutilizzato.
+
+Non vengono introdotti bus di eventi, registri di callback o import ritardati
+per nascondere i collegamenti. I chiamanti importano direttamente il modulo
+che possiede la funzione. I controller conservano l'ordine degli effetti.
+
+L'audit passa da un componente ciclico di **50 moduli a uno di 37**. Non è
+l'eliminazione di tutti i cicli: restano collegamenti reciproci fra i controller
+di registrazione, campo, riproduzione e gestione della partita. Sono protetti
+**19 punti di ingresso** con controlli transitivi di assenza di cicli e di
+dipendenze dai controller, incluse riesportazioni e import dinamici letterali.
+Il test punteggio esegue il publisher nativo con accesso al DOM vietato.
+
+Rispetto al commit `1637ed1`, questa separazione aggiunge **38 righe fisiche,
+20 non vuote e 1.907 byte** al perimetro applicativo: il costo è negli import e
+nei confini espliciti. Questo intervento è strutturale e non viene presentato
+come una riduzione delle dimensioni. L'audit non rileva import relativi mancanti
+né duplicazioni alle soglie del piano.
+
+Verifica del trasferimento: i corpi di **49 funzioni spostate sono identici byte
+per byte** a quelli del commit `1637ed1`; il wrapper punteggio rimosso è escluso
+dal confronto. Superati **509 test unitari/integrati**, inclusi i 19 controlli
+transitivi delle dipendenze e la verifica nativa del punteggio.
+Superati anche tutti i **38 scenari browser** sulla build Pages, inclusi offline,
+export autonomo, limiti superabili, importazione CAMP3, editor squadra e formazione,
+selezione/modifica/annullamento degli eventi e video locale/YouTube. Build, audit
+delle duplicazioni e `git diff --check` superati. La ricostruzione della sola
+documentazione conserva identici gli asset JS, CSS e l'entry dell'export verificati.
+
+### Ulteriore separazione dei controller: da 37 a 27 moduli ciclici
+
+La continuazione separa responsabilità che ancora trascinavano i controller
+nelle viste e nei modelli:
+
+- ultimo codice DataVolley, inferenza del muro e indicatori del flusso;
+- disponibilità della squadra, stato partita, punteggio e comandi dei pulsanti;
+- predicati dell’archivio, pubblicazione delle liste e coordinamento della navigazione;
+- configurazione delle metriche e pubblicazione dell’editor;
+- ridimensionamento della pagina, geometria/canvas e ciclo di vita del dialogo traiettorie;
+- orologi, snapshot, ID/payload degli eventi, stato dei media e integrazione YouTube.
+
+Eliminati i moduli ormai svuotati `live/game-flow.js`,
+`teams/settings/scouting-config.js` e `teams/storage/match-repository.js`.
+Rimossi i cinque sincronizzatori vuoti/inefficaci dei vecchi controlli del campo,
+la scansione dei pulsanti senza aggiornamenti e i calcoli senza utilizzatori.
+Il publisher aggregato incorpora il wrapper del punteggio preservandone lo scope
+predefinito `our`. Nessuna modifica ai limiti superabili di cambi e tempi.
+
+Il componente ciclico residuo scende da **37 a 27 moduli** (**50 prima della
+separazione iniziata dopo 1637ed1**). Restano dipendenze reciproche fra comandi
+scout, registrazione, modifica degli eventi e riproduzione; non è dichiarata
+completa l’eliminazione dei cicli. Le nuove separazioni sono protette da
+**35 controlli transitivi** sulle dipendenze, contro i 19 del passaggio precedente.
+
+Il confronto dei trasferimenti con il commit `1637ed1` conferma **125 corpi di
+funzione identici byte per byte**. Le eccezioni riguardano i wrapper del punteggio,
+i calcoli senza utilizzatori e le scansioni prive di effetti descritti sopra.
+Superati **525 test unitari/integrati** e la build Pages. Audit senza import
+relativi mancanti e senza candidati di duplicazione alle soglie documentate.
+
+Il totale applicativo è ora **55.740 righe fisiche, 53.459 non vuote e
+1.959.785 byte**. Rispetto a `1637ed1`: **−85 righe fisiche, −64 non vuote,
++1.307 byte**. Rispetto al passaggio precedente: **−123 righe fisiche,
+−84 non vuote e −600 byte**. Gli import espliciti mantengono un costo di byte;
+la riduzione dei cicli non è presentata come una grande riduzione del bundle.
+Il JS distribuito misura **982,50 kB / 283,07 kB gzip**, il CSS resta invariato.
+
+Rispetto a `main` (`ffbe06536396ce2e90c14ab36ca8af289fb5e6f9`):
+**−972 righe fisiche e −2.500 non vuote** nel perimetro applicativo del piano.
+Escludendo la libreria QR inutilizzata rimossa nel commit, il codice applicativo
+ha **702 righe non vuote in meno**; le sue righe fisiche restano superiori a main.
+
+Verifica conclusiva di questa continuazione: **525 test unitari/integrati e
+38 scenari browser superati** sulla stessa build applicativa. Verificati percorso
+GitHub Pages, offline, export autonomo, limiti superabili, archivio, import CAMP3,
+formazioni, metriche, trascinamenti, canvas, eventi/annullamento e video locale/YouTube.
+La ricostruzione della documentazione conferma identici JS, CSS ed entry dell’export
+rispetto alla build eseguita nei test browser. `git diff --check` superato.
+
+### Snapshot, storico e archivio: da 27 a 20 moduli ciclici
+
+Gli snapshot atomici e la loro associazione non enumerabile agli eventi sono
+separati in `events/history-model.js`. Ripristino, annullamento, contesa ed
+eliminazione sono in `events/history-commands.js`, preservando la protezione
+dei cambi e passaggi set intermedi e l’ordine degli aggiornamenti.
+
+Il lifecycle non viene più importato per acquisire uno snapshot. Entrata e
+uscita dal match sono coordinate dai comandi dell’archivio; il reset condiviso
+con l’importazione ha un modulo dedicato. La rinomina dei riferimenti alle
+squadre e il parsing dei roster non importano i comandi di caricamento.
+Questo elimina anche il ciclo separato fra importazione e archivio.
+
+Le indicazioni della rotazione sono separate dai comandi del campo. Le
+formazioni predefinite e il recupero dei liberi conservano i propri effetti
+in `teams/lineup-commands.js`, mantenendo i modelli dell’analisi privi di queste
+dipendenze UI. Le operazioni della formazione nel dialogo sono riunite nel
+suo editor. Il semplice aggiornamento della bozza del prossimo set non importa
+più il controller che apre e conferma il dialogo.
+
+Eliminate quattro funzioni di inoltro per liberi e rientri: i chiamanti usano
+direttamente `renderLiberoBench`. Rimossi anche il sincronizzatore vuoto
+`syncAutoRotateToggle` e i suoi richiami. I callback pubblici dei modelli di
+roster mantengono i nomi previsti dal loro contratto.
+
+L’audit rileva ora **un componente ciclico di 20 moduli**, contro i 27 del
+passaggio precedente. Non è dichiarata conclusa l’eliminazione dei cicli: restano
+collegamenti fra registrazione, comandi del campo, modifica e riproduzione degli
+eventi. I confini protetti da controlli transitivi sono **41**. Superati
+**531 test unitari/integrati**, compreso il controllo che vieta chiamate a funzioni
+di progetto senza import o binding locale; build, audit import e duplicazioni
+e `git diff --check` superati.
+
+Totale applicativo: **55.740 righe fisiche, 53.446 non vuote, 1.960.289 byte**.
+Rispetto al passaggio precedente: righe fisiche invariate, **13 non vuote in meno
+e 504 byte in più**; le responsabilità esplicite hanno un costo negli import.
+Rispetto al main documentato: **972 righe fisiche e 2.513 non vuote in meno**.
+Escludendo la libreria QR rimossa: **715 righe non vuote in meno** nel codice
+applicativo, con righe fisiche ancora superiori a main. Bundle JS:
+**982,43 kB / 283,96 kB gzip**; CSS invariato. Questa separazione non viene
+presentata come un miglioramento delle dimensioni compresse del bundle.
+
+Verifica conclusiva: **531 test unitari/integrati e 38 scenari browser superati**,
+compresi annullamento/contesa, eventi strutturali, formazioni e liberi di entrambe
+le squadre, archivio, importazioni, offline ed export autonomo. La ricostruzione
+della sola documentazione conserva identici JS, CSS ed entry dell’export della
+build verificata nel browser. `git diff --check` superato.
+
+
+### Chiusura dei cicli applicativi: da 20 a zero
+
+La tabella eventi separa pubblicazione (`events/table-view.js`) e interazioni
+(`events/table-commands.js`). `EventTable` riusa gli handler condivisi per celle,
+intestazioni, selezione, ricerca video e traiettorie: le righe pubblicate non
+contengono callback per ogni cella. Restano i riferimenti DOM necessari allo
+scorrimento e le opzioni specifiche del chiamante, compresi i callback opzionali.
+La selezione e il log hanno moduli propri, senza importare i controller di modifica.
+
+Campo e panchina usano gli stessi descrittori di azione dei fondamentali.
+I componenti React invocano i comandi dal dispatcher esistente; il publisher
+non importa più motore del campo, registrazione o controller del punteggio.
+La preparazione dei controlli riceve callback espliciti dal coordinatore del
+campo per aggiornamento, pianificazione e attacco accodato. Questi callback
+agiscono negli stessi punti sincroni originali, senza introdurre registri
+intermedi o rinviare le transizioni agli effetti React.
+
+Stato del dialogo, selezioni asincrone, animazioni, spostamento video e chiusura
+dell’editor sono separati dai controller che compongono gli aggiornamenti.
+Eliminati i moduli svuotati `scout/selection-commands.js` e
+`live/skill-selection.js`; formazione, dialogo e attacco accodato appartengono
+ai rispettivi coordinatori. Conservati ordine selezione → editor, ordinamento
+prima della modifica multipla, gestione di Shift/modificatori e ambito squadra.
+
+L’audit non rileva più componenti ciclici né import relativi mancanti.
+I confini protetti transitivamente passano da **41 a 50**; un nuovo test
+verifica anche l’intero grafo applicativo, includendo riesportazioni e import
+dinamici letterali. La scansione delle duplicazioni non trova candidati alle
+soglie documentate: questo risultato non dimostra l’assenza di ogni possibile
+opportunità di semplificazione.
+
+Totale applicativo: **55.745 righe fisiche, 53.417 non vuote, 1.961.249 byte**.
+Rispetto al passaggio da 20 moduli ciclici: **5 righe fisiche in più, 29 non
+vuote in meno e 960 byte in più**. Rispetto a `main`
+(`ffbe06536396ce2e90c14ab36ca8af289fb5e6f9`): **967 righe fisiche e 2.542 non
+vuote in meno**. Escludendo la libreria QR inutilizzata rimossa, il codice
+applicativo ha **744 righe non vuote in meno**, ma ancora più righe fisiche di
+main. Il JS distribuito misura **983,59 kB / 284,17 kB gzip**, il CSS
+**188,06 kB / 33,25 kB gzip**. La chiusura dei cicli non è presentata come
+una riduzione del bundle rispetto al passaggio precedente.
+
+
+Verifica conclusiva: **546 test unitari/integrati e 38 scenari browser superati**.
+La suite completa ha usato la stessa build stabile e copre GitHub Pages, PWA
+offline, export autonomo, limiti superabili, file picker nativo, importazioni,
+formazioni, campo/dialogo, tabelle, annullamento e video locale/YouTube.
+La successiva ricostruzione della documentazione conserva identici JS, CSS
+ed entry dell’export rispetto agli asset verificati nel browser.
+Build e `git diff --check` superati.

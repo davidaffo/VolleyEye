@@ -1,28 +1,15 @@
-import { normalizeSetTypeValue } from "../../domain/skill-values.js";
-import { getSelectedVideoAttackEvents, applyAttackFieldToEvents } from "./team-management.js";
-import { publishReactSetTypeShortcuts } from "../archive/database-controls.js";
+import { getSelectedVideoAttackEvents } from "../events/selection-model.js";
+import { applyAttackFieldToEvents } from "../video/event-editor.js";
+import { publishReactSetTypeShortcuts } from "../scout/shortcut-view.js";
 import { session as matchState } from "../../../js/globals.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
-import { saveState } from "../storage/save-state.js";
-import { renderPlayers } from "./team-rendering.js";
 import { session as rosterLineupState } from "../state/roster-lineup.js";
 import { session as workspaceLayoutState } from "../state/live-workspace-layout.js";
-import { isYoutubePlayerPlaying } from "./live-entry.js";
-import { updateSetTypeVisibility } from "./game-flow.js";
+import { isYoutubePlayerPlaying } from "../video/media-state.js";
+import { updateSetTypeVisibility } from "../scout/flow-view.js";
 import { getPredictedSkillId } from "./flow-model.js";
 import { listenRuntime } from "../../app/browser-effects.js";
-
-export function setNextSetType(val) {
-  const normalized = normalizeSetTypeValue(val) || "";
-  if (!normalized) {
-    scoutUiState.queuedSetTypeChoice = null;
-  }
-  matchState.state.nextSetType = normalized;
-  saveState();
-  publishReactSetTypeShortcuts();
-  // Aggiorna subito le card/skill aperte per mostrare il nuovo tipo alzata
-  renderPlayers();
-}
+import { setNextSetType } from "./team-rendering.js";
 
 export function isTypingTarget(el) {
   if (!el) return false;

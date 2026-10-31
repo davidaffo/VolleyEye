@@ -4,7 +4,7 @@ import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs'
 import test from "node:test";
 
 const html = readAppHtml();
-const lifecycle = readFileSync(new URL("../src/features/core/app-lifecycle.js", import.meta.url), "utf8");
+const lifecycle = readFileSync(new URL("../src/features/core/app-lifecycle.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/teams/storage/archive-actions.js", import.meta.url), "utf8");
 const bindings = readFileSync(new URL("../src/features/core/bindings-roster.js", import.meta.url), "utf8");
 const stateStore = readFileSync(new URL("../src/features/storage/state-snapshot.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/teams/core/state-store.js", import.meta.url), "utf8");
 const archive = readFileSync(new URL("../src/features/teams/storage/archive-actions.js", import.meta.url), "utf8");

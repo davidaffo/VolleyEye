@@ -1,12 +1,12 @@
-import { rotateCourtState, prepareAutoRolePositioning, playersChanged, ensureCourtShape, cleanCourtPlayers, resetAutoRoleCache, getLockedMapForScope } from "../court-state-model.js";
+import { rotateCourtState, playersChanged, ensureCourtShape, cleanCourtPlayers, resetAutoRoleCache, getLockedMapForScope } from "../court-state-model.js";
+import { applyDefaultLineup } from "../lineup-commands.js";
 import { normalizePlayers } from "../../../domain/player-names.js";
 import { buildNumbersForNames, setTeamPreferredLibero, getTeamCourt, getTeamLiberos, formatNameWithNumberFor, formatNameWithNumber } from "../roster-data.js";
-import { applyDefaultLineup } from "../core/player-model.js";
 import { publishReactSettings, setReactSettingsOpen } from "../../settings/view.js";
-import { canPlaceInSlotForScope, setCourtPlayerForScope, commitCourtChangeForScope } from "./court-engine.js";
+import { canPlaceInSlotForScope, setCourtPlayerForScope, commitCourtChangeForScope, applyAutoRolePositioning } from "./court-engine.js";
 import { isLiberoForScope } from "../libero-model.js";
 import { ensureCourtShapeFor } from "../court-model.js";
-import { hasMatchDataForReset } from "../storage/match-repository.js";
+import { hasMatchDataForReset } from "../../storage/match-repository.js";
 import { publishTeamsManagerView } from "../manager-view.js";
 import { session as matchState } from "../../../../js/globals.js";
 import { sanitizeRosterIsolation } from "../core/state-store.js";
@@ -15,14 +15,15 @@ import { resetSetTypeState } from "../../live/flow-model.js";
 import { session as rosterLineupState } from "../../state/roster-lineup.js";
 import { ensureMetricsConfigDefaults } from "../../settings/rules.js";
 import { renderPlayers, renderOpponentPlayers } from "../../live/team-rendering.js";
-import { renderLiberoTags } from "../imports/camp3-import.js";
-import { renderMetricsConfig } from "../settings/metrics-editor.js";
-import { renderEventsLog } from "../../video/video-events.js";
-import { renderAggregatedTable } from "../../analysis/aggregated-table.js";
 import { renderLiberoBench } from "../../scout/court-commands.js";
-import { renderLiveScore } from "../../live/live-score-and-set.js";
+import { renderMetricsConfig } from "../../settings/metrics-view.js";
+import { renderEventsLog } from "../../events/log-view.js";
+import { renderAggregatedTable } from "../../analysis/aggregated-table.js";
+import { renderLiveScore } from "../../core/runtime-view.js";
 import { setGlobalModalState } from "../../layout/modals.js";
 import { listenRuntime } from "../../../app/browser-effects.js";
+import { updateRotationDisplay, updateOpponentRotationDisplay } from "../court-view.js";
+import { captureRects, animateFlip } from "../../layout/animation.js";
 
 export function updatePlayersList(newPlayers, options = {}) {
   const {
@@ -106,9 +107,9 @@ export function updatePlayersList(newPlayers, options = {}) {
   }
 
   renderPlayers();
-  renderLiberoChipsInline();
+  renderLiberoBench();
 
-  renderLiberoTags();
+  renderLiberoBench();
   renderMetricsConfig();
   publishTeamsManagerView();
   updateRotationDisplay();
@@ -360,32 +361,9 @@ export function handleBenchClickForScope(name, scope = "our") {
   setCourtPlayerForScope(targetPos, "main", name, scope);
 }
 
-export function renderLiberoChipsInline() {
-  renderLiberoBench();
-}
 
-export function renderOpponentLiberoChipsInline() {
-  renderLiberoBench();
-}
 
-export function updateRotationDisplay() {
-  const rotationLabel = rot => "P" + String(parseInt(rot, 10) || 1);
-  if (matchState.elRotationIndicator) {
-    matchState.elRotationIndicator.textContent = rotationLabel(matchState.state.rotation || 1);
-  }
 
-  syncAutoRotateToggle();
-  syncAutoRoleToggle();
-  syncAutoRoleP1AmericanToggle();
-  syncPredictiveSkillToggle();
-  if (typeof syncAttackTrajectoryToggle === "function") {
-    syncAttackTrajectoryToggle();
-  }
-}
-
-export function syncAutoRotateToggle() {
-
-}
 
 export function setAutoRotateEnabled(enabled) {
   matchState.state.autoRotate = !!enabled;
@@ -393,38 +371,17 @@ export function setAutoRotateEnabled(enabled) {
     matchState.state.autoRotatePending = false;
   }
   saveState();
-  syncAutoRotateToggle();
 }
 
-export function syncAutoRoleToggle() {
 
-}
 
-export function syncPredictiveSkillToggle() {
 
-}
 
-export function syncAttackTrajectoryToggle() {
 
-}
 
-export function syncSkillFlowButtons() {
-  const containers = [rosterLineupState.elSkillFlowButtons, rosterLineupState.elSkillFlowButtonsOpp].filter(Boolean);
-  if (containers.length === 0) return;
-  ;
-  ensureMetricsConfigDefaults();
-  containers.forEach(container => {
-    Array.from(container.querySelectorAll("[data-force-skill]")).forEach(btn => {
-      const skillId = btn.dataset.forceSkill;
 
-return;
-});
-  });
-}
 
-export function syncAutoRoleP1AmericanToggle() {
 
-}
 
 export function setCurrentSet(value, options = {}) {
   const setNum = Math.min(5, Math.max(1, parseInt(value, 10) || 1));
@@ -448,11 +405,6 @@ export function setRotation(value) {
   }
 }
 
-export function updateOpponentRotationDisplay() {
-  if (typeof matchState.elRotationSelectOpp !== "undefined" && matchState.elRotationSelectOpp) {
-    matchState.elRotationSelectOpp.value = String(matchState.state.opponentRotation || 1);
-  }
-}
 
 export function setOpponentRotation(value) {
   const rot = Math.min(6, Math.max(1, parseInt(value, 10) || 1));
@@ -469,46 +421,8 @@ export function rotateOpponentCourt(direction = "cw") {
   renderOpponentPlayers({ animate: true });
 }
 
-export function captureRects(selector, keyBuilder) {
-  const map = new Map();
-  document.querySelectorAll(selector).forEach(node => {
-    if (!(node instanceof HTMLElement)) return;
-    const key = keyBuilder(node);
-    if (!key) return;
-    map.set(key, node.getBoundingClientRect());
-  });
-  return map;
-}
 
-export function animateFlip(prevRects, selector, keyBuilder) {
-  if (!prevRects || prevRects.size === 0) return;
-  const nodes = document.querySelectorAll(selector);
-  nodes.forEach(node => {
-    if (!(node instanceof HTMLElement)) return;
-    const key = keyBuilder(node);
-    if (!key || !prevRects.has(key)) return;
-    const prev = prevRects.get(key);
-    const next = node.getBoundingClientRect();
-    const dx = prev.left - next.left;
-    const dy = prev.top - next.top;
-    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
-    node.style.transition = "none";
-    node.style.transform = `translate(${dx}px, ${dy}px)`;
-    requestAnimationFrame(() => {
-      node.style.transition = "transform 360ms ease, opacity 360ms ease";
-      node.style.transform = "translate(0px, 0px)";
-    });
-  });
-}
 
-export function applyAutoRolePositioning() {
- if (!prepareAutoRolePositioning()) return;
- saveState();
- renderPlayers();
- renderLiberoChipsInline();
-
- updateRotationDisplay();
-}
 
 export function rotateCourt(direction) {
   const prevCourtRects = captureRects(".court-card", el => {

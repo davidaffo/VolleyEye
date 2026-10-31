@@ -1,181 +1,147 @@
-import { buildEventTableModel } from "./table-model.js";
+import { publishReactEventTable } from "./table-view.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
-import {
-  setSelectionForContext,
-  removeEventTableContext,
-  updateSelectionStyles,
-  handleSeekForSelection,
-  renderEventsLog,
-  toggleSelectionForContext,
-  scrollRowIntoView,
-  selectRangeForContext,
-} from "../video/video-events.js";
+import { setSelectionForContext, handleSeekForSelection, toggleSelectionForContext, scrollRowIntoView, selectRangeForContext } from "./selection-commands.js";
+import { renderEventsLog } from "./log-view.js";
+import { updateSelectionStyles } from "./selection-view.js";
 import { getSelectedRows, getRowsForContext } from "./selection-model.js";
-import { openBulkEditModal, refreshAfterVideoEdit } from "../video/event-editor.js";
-
+import { openBulkEditModal, refreshAfterVideoEdit, closeCurrentEdit } from "../video/event-editor.js";
 import { eventTableStore } from "../../state/event-table-store.mjs";
-import { closeCurrentEdit } from "../live/game-flow.js";
-import { renderVideoAnalysis, seekVideoToTime } from "../video/playback.js";
+import { renderVideoAnalysis } from "../video/playback.js";
+import { seekVideoToTime } from "../video/media-state.js";
 import { buildEventEditControl } from "./edit-model.js";
-import { pushVideoUndoSnapshot } from "../video/video-sources.js";
-import { captureServeTrajectory, openAttackTrajectoryModal } from "../live/trajectories.js";
+import { pushVideoUndoSnapshot } from "../video/undo-model.js";
+import { captureServeTrajectory } from "../live/trajectories.js";
+import { openAttackTrajectoryModal } from "../scout/trajectory-dialog.js";
 import { getTeamScopeFromEvent } from "../teams/selectors.js";
 import { mapBackRowZone } from "../../domain/trajectory-geometry.js";
 import { saveState } from "../storage/save-state.js";
 import { renderTrajectoryAnalysis, renderServeTrajectoryAnalysis } from "../analysis/trajectory-rendering.js";
-import { deleteEventByKey } from "../core/app-lifecycle.js";
 
-export function buildEventTableRowCommands(
-  row,
-  record,
-  { contextKey, baseMs, showSeek, enableSelection, target, events, options },
-) {
-  const { key, ev, videoTime } = row;
+export function editEventTrajectory(row, kind, table, event) {
+  event.stopPropagation();
+  const { ev } = row;
+  if (kind === "serve") {
+    captureServeTrajectory(ev, { forcePopup: true }).then(() =>
+      publishReactEventTable(table.targetId, table.events, table.options),
+    );
+    return;
+  }
   const traj = ev.attackTrajectory || {};
-  const cells = row.cells.map((cell) => {
-    const { field } = cell;
-    if (cell.trajectory === "serve")
-      return Object.freeze({
-        ...cell,
-        onDoubleClick: (event) => {
-          event.stopPropagation();
-          captureServeTrajectory(ev, { forcePopup: true }).then(() =>
-            publishReactEventTable(target, events, options),
-          );
-        },
-      });
-    if (cell.trajectory === "attack")
-      return Object.freeze({
-        ...cell,
-        onDoubleClick: (e) => {
-          e.stopPropagation();
-          const dir = ev.attackDirection || traj || null;
-          const baseZonePrefill =
-            ev.originZone || ev.zone || ev.playerPosition || null;
-          const evScope = getTeamScopeFromEvent(ev);
-          const forceFar = false;
-          const source =
-            dir && typeof dir === "object" && dir.start && dir.end
-              ? dir
-              : traj && traj.start && traj.end
-                ? traj
-                : null;
-          const prefill = {
-            ...(source
-              ? {
-                  start: source.start,
-                  end: source.end,
-                  startZone: source.startZone,
-                  endZone: source.endZone,
-                }
-              : {}),
-            baseZone: baseZonePrefill,
-            setType: ev.setType || null,
-            forceFar,
-            scope: evScope,
-          };
-          openAttackTrajectoryModal(
-            Object.assign({ forcePopup: true }, prefill),
-          ).then((coords) => {
-            if (!coords || !coords.start || !coords.end) return;
-            const mapZone = (z) => mapBackRowZone(z, baseZonePrefill);
-            const trajectoryPayload = {
-              start: coords.start,
-              end: coords.end,
-              startZone: mapZone(coords.startZone || null),
-              endZone: mapZone(coords.endZone || null),
-              directionDeg: null,
-            };
-            ev.attackStart = coords.start;
-            ev.attackEnd = coords.end;
-            ev.attackStartZone = trajectoryPayload.startZone;
-            ev.attackEndZone = trajectoryPayload.endZone;
-            ev.attackDirection = trajectoryPayload;
-            ev.attackTrajectory = trajectoryPayload;
-            if (!ev.originZone) {
-              ev.originZone = baseZonePrefill;
-            }
-            if (trajectoryPayload.startZone) {
-              ev.zone = trajectoryPayload.startZone;
-              ev.playerPosition = trajectoryPayload.startZone;
-            }
-            saveState();
-            renderEventsLog({ suppressScroll: true });
-            renderVideoAnalysis();
-            renderTrajectoryAnalysis();
-            renderServeTrajectoryAnalysis();
-          });
-        },
-      });
-    return Object.freeze({
-      ...cell,
-      onEdit: () => {
-        if (!scoutUiState.selectedEventIds.has(key))
-          setSelectionForContext(contextKey, new Set([key]), key);
-        closeCurrentEdit();
-        return buildReactEventControl(ev, field, baseMs, videoTime);
-      },
-      onDone: () => {
-        scoutUiState.currentEditControl = null;
-        scoutUiState.currentEditCell = null;
-        renderVideoAnalysis();
-        if (
-          [
-            "eventId",
-            "homeScore",
-            "visitorScore",
-            "combination",
-            "attackType",
-            "relatedEvents",
-            "blockNumber",
-            "durationMs",
-          ].includes(field)
-        )
-          renderEventsLog();
-      },
-    });
+  const dir = ev.attackDirection || traj || null;
+  const baseZonePrefill =
+    ev.originZone || ev.zone || ev.playerPosition || null;
+  const evScope = getTeamScopeFromEvent(ev);
+  const forceFar = false;
+  const source =
+    dir && typeof dir === "object" && dir.start && dir.end
+      ? dir
+      : traj && traj.start && traj.end
+        ? traj
+        : null;
+  const prefill = {
+    ...(source
+      ? {
+          start: source.start,
+          end: source.end,
+          startZone: source.startZone,
+          endZone: source.endZone,
+        }
+      : {}),
+    baseZone: baseZonePrefill,
+    setType: ev.setType || null,
+    forceFar,
+    scope: evScope,
+  };
+  openAttackTrajectoryModal(
+    Object.assign({ forcePopup: true }, prefill),
+  ).then((coords) => {
+    if (!coords || !coords.start || !coords.end) return;
+    const mapZone = (z) => mapBackRowZone(z, baseZonePrefill);
+    const trajectoryPayload = {
+      start: coords.start,
+      end: coords.end,
+      startZone: mapZone(coords.startZone || null),
+      endZone: mapZone(coords.endZone || null),
+      directionDeg: null,
+    };
+    ev.attackStart = coords.start;
+    ev.attackEnd = coords.end;
+    ev.attackStartZone = trajectoryPayload.startZone;
+    ev.attackEndZone = trajectoryPayload.endZone;
+    ev.attackDirection = trajectoryPayload;
+    ev.attackTrajectory = trajectoryPayload;
+    if (!ev.originZone) {
+      ev.originZone = baseZonePrefill;
+    }
+    if (trajectoryPayload.startZone) {
+      ev.zone = trajectoryPayload.startZone;
+      ev.playerPosition = trajectoryPayload.startZone;
+    }
+    saveState();
+    renderEventsLog({ suppressScroll: true });
+    renderVideoAnalysis();
+    renderTrajectoryAnalysis();
+    renderServeTrajectoryAnalysis();
   });
-  return Object.freeze({
-    ...row,
-    cells: Object.freeze(cells),
-    onDelete: () => deleteEventByKey(key),
-    onSeek: () => {
-      if (showSeek) seekVideoToTime(videoTime);
-    },
-    onToggle: () => {
-      toggleSelectionForContext(contextKey, key, {
-        userAction: true,
-        preserveSelection: true,
-      });
-      scrollRowIntoView(record);
-    },
-    onSelect: (event) => {
-      if (!enableSelection) return;
-      if (
-        event.shiftKey &&
-        scoutUiState.lastSelectedEventId &&
-        scoutUiState.selectedEventIds.has(scoutUiState.lastSelectedEventId)
-      ) {
-        selectRangeForContext(
-          contextKey,
-          scoutUiState.lastSelectedEventId,
-          key,
-          {
-            userAction: true,
-          },
-        );
-        scrollRowIntoView(record);
-        return;
-      }
-      if (event.metaKey || event.ctrlKey)
-        toggleSelectionForContext(contextKey, key, { userAction: true });
-      else
-        setSelectionForContext(contextKey, new Set([key]), key, {
-          userAction: true,
-        });
-      scrollRowIntoView(record);
-    },
+}
+
+export function editEventCell(row, field, table) {
+  if (!scoutUiState.selectedEventIds.has(row.key))
+    setSelectionForContext(table.contextKey, new Set([row.key]), row.key);
+  closeCurrentEdit();
+  return buildReactEventControl(row.ev, field, table.baseMs, row.videoTime);
+}
+
+export function finishEventCellEdit(field) {
+  scoutUiState.currentEditControl = null;
+  scoutUiState.currentEditCell = null;
+  renderVideoAnalysis();
+  if (["eventId", "homeScore", "visitorScore", "combination", "attackType", "relatedEvents", "blockNumber", "durationMs"].includes(field))
+    renderEventsLog();
+}
+
+export function seekEventTableRow(row, table) {
+  if (table.showSeek) seekVideoToTime(row.videoTime);
+}
+
+function scrollEventTableRow(row, contextKey) {
+  scrollRowIntoView(getRowsForContext(contextKey).find(record => record.key === row.key));
+}
+
+export function toggleEventTableRow(row, table) {
+  toggleSelectionForContext(table.contextKey, row.key, {
+    userAction: true,
+    preserveSelection: true,
   });
+  scrollEventTableRow(row, table.contextKey);
+}
+
+export function selectEventTableRow(row, table, event) {
+  if (!table.enableSelection) return;
+  const { contextKey } = table;
+  if (event.shiftKey && scoutUiState.lastSelectedEventId && scoutUiState.selectedEventIds.has(scoutUiState.lastSelectedEventId)) {
+    selectRangeForContext(contextKey, scoutUiState.lastSelectedEventId, row.key, { userAction: true });
+    scrollEventTableRow(row, contextKey);
+    return;
+  }
+  if (event.metaKey || event.ctrlKey)
+    toggleSelectionForContext(contextKey, row.key, { userAction: true });
+  else
+    setSelectionForContext(contextKey, new Set([row.key]), row.key, { userAction: true });
+  scrollEventTableRow(row, contextKey);
+}
+
+export function selectAllEventTableRows(table, checked) {
+  const rows = getRowsForContext(table.contextKey);
+  setSelectionForContext(table.contextKey, new Set(checked ? rows.map(row => row.key) : []),
+    checked ? rows[0]?.key || null : null, { userAction: true });
+}
+
+export function handleEventTableHeader(table, header) {
+  if (header.sortKey && table.options.onSortChange)
+    table.options.onSortChange(header.sortKey);
+  if (header.bulkKey && getSelectedRows(table.contextKey).length >= 2)
+    openBulkEditModal(table.contextKey, header.bulkKey);
 }
 
 export function buildReactEventControl(ev, field, baseMs, videoTime) {
@@ -202,74 +168,6 @@ export function buildReactEventControl(ev, field, baseMs, videoTime) {
       );
     },
   };
-}
-
-export function publishReactEventTable(targetId, events, options = {}) {
-  if (!targetId) return;
-  const contextKey = options.contextKey || targetId || "events",
-    enableSelection = options.enableSelection !== false,
-    showCheckbox = enableSelection && options.showCheckbox !== false,
-    baseMs = options.baseMs || null,
-    showSeek = options.showSeek;
-  const model = buildEventTableModel(events, options);
-  const old = scoutUiState.eventTableContexts[contextKey],
-    records = [];
-  const oldRows = new Map();
-  for (const row of old?.rows || [])
-    if (!oldRows.has(row.key)) oldRows.set(row.key, row);
-  const viewRows = model.rows.map((row, index) => {
-    const record = {
-      key: row.key,
-      idx: index,
-      ev: row.ev,
-      videoTime: row.videoTime,
-      tr: oldRows.get(row.key)?.tr || null,
-    };
-    records.push(record);
-    return buildEventTableRowCommands(row, record, {
-      contextKey,
-      baseMs,
-      showSeek,
-      enableSelection,
-      target: targetId,
-      events,
-      options,
-    });
-  });
-  const ctx = {
-    rows: records,
-    onSelectionChange: options.onSelectionChange || null,
-    baseMs,
-    targetId,
-  };
-  if (enableSelection) scoutUiState.eventTableContexts[contextKey] = ctx;
-  else removeEventTableContext(contextKey);
-  eventTableStore.publish(targetId, {
-    contextKey: enableSelection ? contextKey : "",
-    tableClass: options.tableClass || "event-edit-table",
-    showCheckbox,
-    rows: Object.freeze(viewRows),
-    empty: options.empty || "",
-    selected: Object.freeze([...scoutUiState.selectedEventIds]),
-    headers: model.headers,
-    sortable: !!options.onSortChange,
-    onHeader: (header) => {
-      if (header.sortKey && options.onSortChange)
-        options.onSortChange(header.sortKey);
-      if (header.bulkKey && getSelectedRows(contextKey).length >= 2)
-        openBulkEditModal(contextKey, header.bulkKey);
-    },
-    onSelectAll: (checked) => {
-      const rows = getRowsForContext(contextKey);
-      setSelectionForContext(
-        contextKey,
-        new Set(checked ? rows.map((row) => row.key) : []),
-        checked ? rows[0]?.key || null : null,
-        { userAction: true },
-      );
-    },
-  });
-  updateSelectionStyles();
 }
 
 export function bindReactEventTable(id, root) {

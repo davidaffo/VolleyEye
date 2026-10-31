@@ -1,12 +1,10 @@
+import { sourceFunctions } from "./helpers/source-functions.mjs";
 import assert from "node:assert/strict";
 import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import vm from "node:vm";
 import test from "node:test";
 
-const repository = readFileSync(new URL("../src/features/storage/match-repository.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/teams/archive-labels.js", import.meta.url), "utf8") + readFileSync(
-  new URL("../src/features/teams/storage/match-repository.js", import.meta.url),
-  "utf8",
-);
+const repository = readFileSync(new URL("../src/features/storage/match-repository.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/teams/archive-labels.js", import.meta.url), "utf8") + sourceFunctions(readFileSync(new URL("../src/features/core/runtime-view.js", import.meta.url), "utf8"), ["selectArchivedMatch", "renderMatchesList", "renderMatchSummary"]);
 function setup() {
   let notifications = 0;
   const events = [{ skillId: "attack", code: "#" }];

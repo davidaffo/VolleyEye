@@ -18,7 +18,7 @@ function harness() {
     getScoreOverrideTotals: () => ({ for: 0, against: 0 }),
     normalizeScoreOverrides: value => value || {}
   };
-  for (const file of ['datavolley-skills', 'datavolley-export', 'datavolley-codec', 'datavolley-match-import']) {
+  for (const file of ['datavolley-skills', 'datavolley-format', 'datavolley-export', 'datavolley-codec', 'datavolley-match-import']) {
     vm.runInNewContext(readFileSync(`src/features/io/${file}.js`, 'utf8'), context);
   }
   context.computeDataVolleyEventSignature = () => '';

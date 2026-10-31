@@ -584,3 +584,7 @@ export function setSelectedSkillForScope(scope, playerIdx, skillId) {
 export function resetSetTypeState() {
   Object.keys(scoutUiState.selectedSkillPerPlayer).forEach(key => delete scoutUiState.selectedSkillPerPlayer[key]);
 }
+
+export function clearReceiveContext(scope = "our") {
+  scoutUiState.lastReceiveContext[scope] = null;
+}

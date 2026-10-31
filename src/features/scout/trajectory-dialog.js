@@ -1,12 +1,14 @@
 import { session } from "../state/scout-trajectory-dialog.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { getTrajectoryImageForZone } from "../analysis/trajectory-assets.js";
-import { drawTrajectory, getDefaultTrajectoryNetPointId, setTrajectoryNetPointId, applyTrajectoryStartFromNetPoint, getTrajectoryDisplayBox, normalizeTrajectoryPoint, closeAttackTrajectoryModal } from "../live/trajectories.js";
-import { mirrorTrajectoryPoint, mapBackRowZone, getAttackZone, computeAttackDirectionDeg } from "../../domain/trajectory-geometry.js";
+import { drawTrajectory, getDefaultTrajectoryNetPointId, setTrajectoryNetPointId, getTrajectoryDisplayBox, normalizeTrajectoryPoint, getTrajectoryNetPoint, resetTrajectoryState, resizeTrajectoryCanvas, denormalizeTrajectoryPoint, getNearestTrajectoryNetPointId } from "./trajectory-canvas.js";
+import { mirrorTrajectoryPoint, mapBackRowZone, getAttackZone, computeAttackDirectionDeg, clamp01 } from "../../domain/trajectory-geometry.js";
 import { session as matchState } from "../../../js/globals.js";
 import { trajectoryModalStore } from "../../state/roster-import-store.mjs";
-
-
+import { setAttackTrajectoryCourtSizing, updateCourtModalPlacement, restoreModalToPopup } from "../scout-ui.js";
+import { setModalOpenState, suppressTransientClicks, isDesktopCourtModalLayout, setCourtAreaLocked } from "../layout/modals.js";
+import { unlistenRuntime, listenRuntime, session as browserEffectsState } from "../../app/browser-effects.js";
+import { publishReactLogServeTrajectories } from "../analysis/trajectory-view.js";
 
 const trajectoryDialogState = session;
 
@@ -247,5 +249,226 @@ export function publishReactTrajectoryModal(open) {
         : simplified
           ? "Scegli il punto rete e poi clicca il punto di arrivo."
           : "Clicca (o trascina) per disegnare la traiettoria dal punto di partenza a quello di arrivo.",
+  });
+}
+
+export function updateTrajectoryImageFromStart() {
+  if (scoutUiState.trajectoryMode !== "attack") return;
+  if (!scoutUiState.trajectoryStart || !scoutUiState.elAttackTrajectoryImage) return;
+  const startNorm = normalizeTrajectoryPoint(scoutUiState.trajectoryStart);
+  if (!startNorm) return;
+  const mirrorX = scoutUiState.trajectoryMirror || scoutUiState.trajectoryForceFar;
+  const zoneNorm = mirrorX
+    ? { x: 1 - clamp01(startNorm.x), y: clamp01(startNorm.y) }
+    : startNorm;
+  const startZoneRaw = getAttackZone(zoneNorm, scoutUiState.trajectoryForceFar);
+  const imgSrc = getTrajectoryImageForZone(startZoneRaw, scoutUiState.trajectoryMirror || scoutUiState.trajectoryForceFar);
+  if (scoutUiState.elAttackTrajectoryImage.dataset.activeSrc !== imgSrc) {
+    scoutUiState.elAttackTrajectoryImage.dataset.activeSrc = imgSrc;
+    publishReactTrajectoryImage(imgSrc);
+  }
+}
+
+export function applyTrajectoryStartFromNetPoint() {
+  if (scoutUiState.trajectoryMode !== "attack") return;
+  const point = getTrajectoryNetPoint(scoutUiState.trajectoryNetPointId);
+  if (!point || !scoutUiState.elAttackTrajectoryCanvas) return;
+  const box = getTrajectoryDisplayBox();
+  const canvas = scoutUiState.elAttackTrajectoryCanvas;
+  const mirrorX = scoutUiState.trajectoryMirror || scoutUiState.trajectoryForceFar;
+  const normX = mirrorX ? 1 - point.x : point.x;
+  const x = box ? box.offsetX + normX * box.width : normX * canvas.width;
+  const startFromTop = scoutUiState.trajectoryMirror || scoutUiState.trajectoryForceFar;
+  const fixedY = box
+    ? box.offsetY + (startFromTop ? 0.5 : box.height - 0.5)
+    : startFromTop
+      ? 0.5
+      : canvas.height - 0.5;
+  scoutUiState.trajectoryStart = { x, y: fixedY };
+  updateTrajectoryImageFromStart();
+  drawTrajectory();
+}
+
+export function closeAttackTrajectoryModal(result = null) {
+  if (!scoutUiState.elAttackTrajectoryModal) return;
+  scoutUiState.elAttackTrajectoryModal.classList.add("hidden");
+  setModalOpenState(false, scoutUiState.attackTrajectoryForcePopup);
+  setAttackTrajectoryCourtSizing(false);
+  scoutUiState.elAttackTrajectoryModal.classList.remove("force-popup");
+  scoutUiState.attackTrajectoryForcePopup = false;
+  if (result) {
+    suppressTransientClicks();
+  }
+  scoutUiState.trajectoryMirror = false;
+  scoutUiState.trajectoryForceFar = false;
+  scoutUiState.trajectoryBaseZone = null;
+  scoutUiState.trajectorySetType = null;
+  scoutUiState.trajectoryMode = "attack";
+  scoutUiState.serveTrajectoryScope = null;
+  if (scoutUiState.serveTypeKeyHandler) {
+    unlistenRuntime(window, "keydown", scoutUiState.serveTypeKeyHandler);
+    scoutUiState.serveTypeKeyHandler = null;
+  }
+  if (scoutUiState.trajectoryEscapeHandler) {
+    unlistenRuntime(window, "keydown", scoutUiState.trajectoryEscapeHandler);
+    scoutUiState.trajectoryEscapeHandler = null;
+  }
+  if (scoutUiState.trajectoryResolver) {
+    scoutUiState.trajectoryResolver(result);
+    scoutUiState.trajectoryResolver = null;
+  }
+  publishReactTrajectoryModal(false);
+  publishReactLogServeTrajectories();
+}
+
+export function setServeTypeSelection(type) {
+  const t = (type || "").toUpperCase();
+  const normalized = t === "F" || t === "S" ? t : "JF";
+  scoutUiState.serveTrajectoryType = normalized;
+  if (!scoutUiState.elServeTypeButtons) return;
+  trajectoryModalStore.publish({serveType:normalized});return;
+
+}
+
+export function openAttackTrajectoryModal(prefill = null) {
+  return new Promise(resolve => {
+    if (!scoutUiState.elAttackTrajectoryModal || !scoutUiState.elAttackTrajectoryCanvas || !scoutUiState.elAttackTrajectoryImage) {
+      resolve(null);
+      return;
+    }
+    const forcePopup = !!(prefill && prefill.forcePopup);
+    scoutUiState.attackTrajectoryForcePopup = forcePopup;
+    if (!forcePopup) {
+      scoutUiState.elAttackTrajectoryModal.classList.remove("force-popup");
+      if (isDesktopCourtModalLayout()) {
+        setCourtAreaLocked(true);
+        setAttackTrajectoryCourtSizing(true);
+      }
+      updateCourtModalPlacement();
+    } else {
+      scoutUiState.elAttackTrajectoryModal.classList.add("force-popup");
+      setAttackTrajectoryCourtSizing(false);
+      restoreModalToPopup(scoutUiState.elAttackTrajectoryModal);
+    }
+    const scope = prefill && prefill.scope ? prefill.scope : "our";
+    const mirrorFlag = scope === "opponent" ? matchState.state.opponentCourtViewMirrored : matchState.state.courtViewMirrored;
+    scoutUiState.trajectoryForceFar = !!(prefill && prefill.forceFar);
+    scoutUiState.trajectoryMirror = !forcePopup && !!mirrorFlag && !scoutUiState.trajectoryForceFar;
+    const mode = (prefill && prefill.mode) || "attack";
+    scoutUiState.trajectoryMode = mode;
+    scoutUiState.serveTrajectoryScope = mode === "serve-start" || mode === "serve-end" ? scope : null;
+    scoutUiState.trajectoryBaseZone = prefill && prefill.baseZone ? prefill.baseZone : null;
+    scoutUiState.trajectorySetType = prefill && prefill.setType ? prefill.setType : null;
+    scoutUiState.trajectoryResolver = resolve;
+    resetTrajectoryState();
+    scoutUiState.trajectoryNetPointId = null;
+    const simplified = !!matchState.state.attackTrajectorySimplified;
+    if (scoutUiState.elAttackTrajectoryNetpoints) {
+      const shouldShowNet = mode === "attack" && simplified;
+
+    }
+    if (scoutUiState.elServeTypeButtons) {
+
+      if (mode === "serve-start") {
+        setServeTypeSelection("JF");
+      }
+    }
+
+    const getInitialImage = () => {
+      if (scoutUiState.trajectoryForceFar) {
+        if (mode === "serve-start") return scoutUiState.SERVE_START_IMG_FAR;
+        if (mode === "serve-end") return scoutUiState.SERVE_END_IMG_FAR;
+        return scoutUiState.TRAJECTORY_IMG_FAR;
+      }
+      if (mode === "serve-start") return scoutUiState.trajectoryMirror ? scoutUiState.SERVE_START_IMG_FAR : scoutUiState.SERVE_START_IMG_NEAR;
+      if (mode === "serve-end") return scoutUiState.trajectoryMirror ? scoutUiState.SERVE_END_IMG_FAR : scoutUiState.SERVE_END_IMG_NEAR;
+      return scoutUiState.trajectoryMirror ? scoutUiState.TRAJECTORY_IMG_FAR : scoutUiState.TRAJECTORY_IMG_NEAR;
+    };
+    scoutUiState.elAttackTrajectoryImage.dataset.activeSrc = getInitialImage();
+    publishReactTrajectoryImage(getInitialImage());
+    if (scoutUiState.serveTypeKeyHandler) {
+      unlistenRuntime(window, "keydown", scoutUiState.serveTypeKeyHandler);
+    }
+    if (scoutUiState.trajectoryEscapeHandler) {
+      unlistenRuntime(window, "keydown", scoutUiState.trajectoryEscapeHandler);
+      scoutUiState.trajectoryEscapeHandler = null;
+    }
+    if (mode === "serve-start") {
+      if (prefill && prefill.serveType) {
+        setServeTypeSelection(prefill.serveType);
+      }
+      scoutUiState.serveTypeKeyHandler = e => {
+        const key = (e.key || "").toUpperCase();
+        if (key === "F" || key === "J" || key === "S") {
+          setServeTypeSelection(key === "J" ? "JF" : key);
+        }
+      };
+      listenRuntime(window, "keydown", scoutUiState.serveTypeKeyHandler);
+    } else {
+      scoutUiState.serveTypeKeyHandler = null;
+    }
+    scoutUiState.trajectoryEscapeHandler = e => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      e.stopPropagation();
+      closeAttackTrajectoryModal(null);
+    };
+    listenRuntime(window, "keydown", scoutUiState.trajectoryEscapeHandler);
+    scoutUiState.elAttackTrajectoryModal.classList.remove("hidden");
+    publishReactTrajectoryModal(true);
+    setModalOpenState(true, forcePopup);
+    publishReactLogServeTrajectories();
+    const applyPrefill = () => {
+      if (!scoutUiState.elAttackTrajectoryCanvas || scoutUiState.elAttackTrajectoryCanvas.width === 0 || scoutUiState.elAttackTrajectoryCanvas.height === 0) {
+        return;
+      }
+      if (prefill && prefill.start && prefill.end) {
+        const mirrorForDisplay = scoutUiState.trajectoryMirror || scoutUiState.trajectoryForceFar;
+        const startNorm = mirrorForDisplay ? mirrorTrajectoryPoint(prefill.start) : prefill.start;
+        const endNorm = mirrorForDisplay ? mirrorTrajectoryPoint(prefill.end) : prefill.end;
+        const startPx = denormalizeTrajectoryPoint(startNorm);
+        const endPx = denormalizeTrajectoryPoint(endNorm);
+        if (!startPx || !endPx) return;
+        scoutUiState.trajectoryStart = startPx;
+        scoutUiState.trajectoryEnd = endPx;
+        if (simplified) {
+          const inferredNetPoint = getNearestTrajectoryNetPointId(startNorm);
+          setTrajectoryNetPointId(inferredNetPoint || getDefaultTrajectoryNetPointId(scoutUiState.trajectoryBaseZone, scoutUiState.trajectorySetType));
+        }
+        updateTrajectoryImageFromStart();
+        drawTrajectory();
+        return;
+      }
+      if (mode === "serve-start" && prefill && prefill.start) {
+        const mirrorForDisplay = scoutUiState.trajectoryMirror || scoutUiState.trajectoryForceFar;
+        const startNorm = mirrorForDisplay ? mirrorTrajectoryPoint(prefill.start) : prefill.start;
+        const startPx = denormalizeTrajectoryPoint(startNorm);
+        if (startPx) {
+          scoutUiState.trajectoryStart = startPx;
+          drawTrajectory();
+        }
+      }
+      if (mode === "serve-end" && prefill && prefill.end) {
+        const mirrorForDisplay = scoutUiState.trajectoryMirror || scoutUiState.trajectoryForceFar;
+        const endNorm = mirrorForDisplay ? mirrorTrajectoryPoint(prefill.end) : prefill.end;
+        const endPx = denormalizeTrajectoryPoint(endNorm);
+        if (endPx) {
+          scoutUiState.trajectoryEnd = endPx;
+          drawTrajectory();
+        }
+      }
+      if (simplified && mode === "attack") {
+        const defaultNetPoint = getDefaultTrajectoryNetPointId(scoutUiState.trajectoryBaseZone, scoutUiState.trajectorySetType);
+        setTrajectoryNetPointId(defaultNetPoint);
+        applyTrajectoryStartFromNetPoint();
+      }
+    };
+    requestAnimationFrame(() => {
+      resizeTrajectoryCanvas();
+      browserEffectsState.setTimeout(() => {
+        resizeTrajectoryCanvas();
+        applyPrefill();
+      }, 50);
+    });
   });
 }

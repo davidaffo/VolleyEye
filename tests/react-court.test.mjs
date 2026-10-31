@@ -1,3 +1,4 @@
+import { sourceFunctions } from "./helpers/source-functions.mjs";
 import {reference} from "./helpers/ui-reference.mjs";
 import assert from "node:assert/strict";
 import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
@@ -6,7 +7,7 @@ import test from "node:test";
 import { JSDOM } from "jsdom";
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
-const model = read("../src/features/scout/skill-control-model.js") + read("../src/features/scout/selection-commands.js") + read("../src/features/scout/skill-actions.js") + read("../src/features/scout/skill-preparation.js");
+const model = read("../src/features/scout/skill-control-model.js") + sourceFunctions(read("../src/features/scout/skill-dialog.js"), ["refreshScoutSkill", "selectScoutServeType", "startScoutAttack"]) + sourceFunctions(read("../src/features/live/team-rendering.js"), ["startQueuedSetterAttack"]) + read("../src/features/scout/skill-actions.js") + read("../src/features/scout/skill-preparation.js");
 const globals = read("../js/globals.js").split("const PERSISTENT_DB_NAME")[0];
 function setup(options) {
   const dom = new JSDOM('<div id="target"></div>');
@@ -77,7 +78,14 @@ function setup(options) {
     setServeTypeFocusPlayer: () => calls.push(["focus-serve"]),
     setNextSetType: (value) => calls.push(["set-type", value]),
   });
+  for (const name of ["restorePlayerFromLiberoForScope", "handleBenchClickForScope", "applyPointForPickedPlayer", "openErrorModalForPickedPlayer", "stopPointPickMode", "stopErrorPickMode", "openErrorModal", "handleTeamPoint"])
+    context[name] = () => {};
   vm.runInContext(globals + model, context);
+  const prepare = context.prepareScoutSkillControls;
+  context.prepareScoutSkillControls = (idx, name, options) => prepare(idx, name, options, {
+    onRender: context.renderPlayers, onScheduleRender: context.scheduleRenderPlayers,
+    onQueuedAttack: context.startQueuedSetterAttack,
+  });
   return { dom, context, calls };
 }
 function buttonInfo(button) {

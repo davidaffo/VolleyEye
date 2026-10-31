@@ -1,12 +1,9 @@
 import { session } from "../state/live-workspace-layout.js";
-import { workspaceStore } from '../../state/workspace-store.mjs';
+import { workspaceStore } from "../../state/workspace-store.mjs";
 import { session as matchState } from "../../../js/globals.js";
 import { session as trajectoriesState } from "../state/live-trajectories.js";
 import { saveState } from "../storage/save-state.js";
 import { unlistenRuntime, listenRuntime } from "../../app/browser-effects.js";
-import { renderEventsLog } from "../video/video-events.js";
-
-
 
 const workspaceLayoutState = session;
 
@@ -219,23 +216,4 @@ export function bindScoutWidgetLayout() { applyScoutWidgetLayout(); }
 
 export function relocateVideoScoutContainer() {
   applyScoutWidgetLayout();
-}
-
-export function updateVideoScoutModeLayout() {
-  if (!matchState.elVideoScoutContainer) return;
-  const useScout = !!matchState.state.videoScoutMode;
-  workspaceStore.publish({ videoVisible: useScout });
-  if (typeof matchState.elVideoScoutControls !== "undefined" && matchState.elVideoScoutControls) {
-    matchState.elVideoScoutControls.classList.toggle("hidden", !useScout);
-  }
-  relocateVideoScoutContainer();
-  renderEventsLog({ suppressScroll: true });
-  if (!useScout) {
-    if (matchState.elAnalysisVideoScout) {
-      matchState.elAnalysisVideoScout.pause();
-    }
-    if (workspaceLayoutState.ytPlayerScout && typeof workspaceLayoutState.ytPlayerScout.pauseVideo === "function") {
-      workspaceLayoutState.ytPlayerScout.pauseVideo();
-    }
-  }
 }

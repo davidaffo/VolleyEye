@@ -7,10 +7,14 @@ import {
   session as matchState,
 } from "../../../js/globals.js";
 
+export function createScoutAction(command, ...args) {
+  return Object.freeze({ command, args: Object.freeze(args) });
+}
+
 export function createScoutSkillView(player, hasSelection) {
   const context = Object.freeze({ ...player });
   const action = (command, ...args) =>
-    Object.freeze({ command, args: Object.freeze([context, ...args]) });
+    createScoutAction(command, context, ...args);
   const view = {
     cancel: hasSelection ? action("cancelScoutSkillSelection") : null,
     groups: [],

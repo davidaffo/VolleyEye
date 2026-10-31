@@ -1,12 +1,9 @@
 import { SKILLS, session as matchState } from "../../../js/globals.js";
 import { metricsStore } from "../../state/roster-import-store.mjs";
-import {
-  ensureMetricsConfigDefaults,
-  ensurePointRulesDefaults,
-  normalizePointRule,
-  getCodeTone,
-} from "./rules.js";
+import { ensureMetricsConfigDefaults, ensurePointRulesDefaults, normalizePointRule, getCodeTone } from "./rules.js";
 import { session as camp3ImportState } from "./rule-state.js";
+import { session as rosterLineupState } from "../state/roster-lineup.js";
+
 export function publishReactMetrics() {
   ensureMetricsConfigDefaults();
   ensurePointRulesDefaults();
@@ -78,4 +75,10 @@ export function publishReactMetrics() {
       };
     }),
   });
+}
+
+export function renderMetricsConfig() {
+  if (!rosterLineupState.elMetricsConfig) return;
+
+  publishReactMetrics();
 }

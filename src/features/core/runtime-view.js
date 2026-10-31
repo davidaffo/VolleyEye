@@ -1,6 +1,5 @@
+import { isTeamReadyForScout } from "../teams/selectors.js";
 import { session as applicationState } from "../../app/lifecycle.js";
-
-
 import { session as matchState, MAX_TIMEOUTS_PER_SET, MAX_SUBSTITUTIONS_PER_SET } from "../../../js/globals.js";
 import { buildMatchDisplayName } from "../teams/match-details.js";
 import { getMatchArchiveLabel } from "../teams/archive-labels.js";
@@ -8,6 +7,8 @@ import { computePointsSummary } from "../analysis/scores.js";
 import { computeSetWinScore } from "../analysis/set-results.js";
 import { runtimeStore } from "../../state/runtime-store.mjs";
 import { getTimeoutCountForSet, getTimeoutOppCountForSet, getSubstitutionCountForSet } from "../analysis/counters.js";
+import { session as rosterLineupState } from "../state/roster-lineup.js";
+import { session as scoutUiState } from "../state/scout-ui.js";
 
 export function publishScoutControlState(disabled) {
   applicationState.scoutControlsDisabled = !!disabled;
@@ -75,4 +76,53 @@ export function publishRuntimeView() {
       MAX_SUBSTITUTIONS_PER_SET - getSubstitutionCountForSet(set, "opponent"),
     ),
   });
+}
+
+export function renderLiveScore() {
+  publishRuntimeView();
+  updateMatchStatusUI();
+  publishRuntimeView();
+}
+
+export function updateMatchStatusUI() {
+  const finished = !!matchState.state.matchFinished;
+  const teamReady = isTeamReadyForScout();
+
+  if (!scoutUiState.nextSetModalOpen) {
+    setScoutControlsDisabled(finished || !teamReady);
+  }
+  document.body.dataset.teamReady = teamReady ? "true" : "false";
+  document.body.dataset.matchFinished = finished ? "true" : "false";
+}
+
+export function setScoutControlsDisabled(disabled) {
+  publishScoutControlState(disabled);
+}
+
+export function updateMatchButtonsState() {
+  if (!rosterLineupState.elSavedMatchesSelect && !rosterLineupState.elSavedMatchesList) return;
+  publishRuntimeView();
+
+}
+
+export function selectArchivedMatch(name) {
+  if (name && !Object.hasOwn(matchState.state.savedMatches || {}, name)) return;
+  matchState.state.selectedMatch = name || "";
+
+  renderMatchesList(Object.keys(matchState.state.savedMatches || {}), matchState.state.selectedMatch);
+  updateMatchButtonsState();
+}
+
+export function renderMatchesList(names, selected) {
+  if (!rosterLineupState.elSavedMatchesList) return;
+
+    publishRuntimeView();
+    return;
+
+}
+
+export function renderMatchSummary() {
+  if (!rosterLineupState.elMatchSummary) return;
+  const label = buildMatchDisplayName(matchState.state.match);
+  rosterLineupState.elMatchSummary.textContent = label || "—";
 }

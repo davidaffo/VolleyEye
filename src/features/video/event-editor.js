@@ -1,21 +1,22 @@
-
+import { clearCurrentEventEdit } from "./edit-view.js";
 import { session as matchState } from "../../../js/globals.js";
 import { session as workspaceLayoutState } from "../state/live-workspace-layout.js";
 import { saveState } from "../storage/save-state.js";
-import { shouldTrackVideoUndo, pushVideoUndoSnapshot } from "./video-sources.js";
+import { shouldTrackVideoUndo, pushVideoUndoSnapshot } from "./undo-model.js";
 import { syncEventPlayerLinks } from "../events/player-links.js";
 import { invalidateAnalysisCaches } from "../analysis/cache-model.js";
 import { recalculateMatchStats } from "../analysis/stats-model.js";
-import { renderLiveScore } from "../live/live-score-and-set.js";
-import { renderEventsLog } from "./video-events.js";
+import { renderLiveScore } from "../core/runtime-view.js";
+import { renderEventsLog } from "../events/log-view.js";
 import { getSelectedRows } from "../events/selection-model.js";
 import { renderAnalysisViews } from "../analysis/aggregated-table.js";
 import { renderVideoAnalysis } from "./playback.js";
 import { setModalOpenState } from "../layout/modals.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
-import { publishReactEventTable } from "../events/table-commands.js";
 import { closeReactBulkEditor, openReactBulkEditor } from "../events/dialog-view.js";
 import { session as teamManagementState } from "../state/live-team-management.js";
+import { publishReactVideoOverlay } from "./view.js";
+import { recalcAllStatsAndUpdateUI } from "../analysis/stats-update.js";
 
 export function refreshAfterVideoEdit(shouldRecalcStats) {
   if (workspaceLayoutState.bulkEditActive) return;
@@ -106,4 +107,37 @@ export function applyBulkEditSession() {
       closeBulkEditModal();
       refreshAfterVideoEdit(shouldRecalc);
       renderEventsLog({ suppressScroll: true });
+}
+
+export function closeCurrentEdit({ refresh = false } = {}) {
+  if (clearCurrentEventEdit() && refresh) {
+    renderEventsLog({ suppressScroll: true });
+    renderVideoAnalysis();
+  }
+}
+
+export function applyAttackFieldToEvents(events, updater, { shouldRecalc = true } = {}) {
+  const targetEvents = Array.isArray(events) ? events.filter(Boolean) : [];
+  if (!targetEvents.length || typeof updater !== "function") return false;
+  if (targetEvents.length > 1 || (document && document.body && document.body.dataset.activeTab === "video")) {
+    pushVideoUndoSnapshot(true);
+  }
+  targetEvents.forEach(ev => updater(ev));
+  if (document && document.body && document.body.dataset.activeTab === "video") {
+    refreshAfterVideoEdit(shouldRecalc);
+    renderEventsLog({ suppressScroll: true });
+    renderVideoAnalysis();
+    publishReactVideoOverlay();
+  } else {
+    saveState({ persistLocal: true });
+    if (shouldRecalc) {
+      invalidateAnalysisCaches();
+      recalcAllStatsAndUpdateUI();
+    }
+    renderEventsLog({ suppressScroll: true });
+    if (document && document.body && document.body.dataset.activeTab === "video") {
+      renderVideoAnalysis();
+    }
+  }
+  return true;
 }

@@ -35,3 +35,9 @@ export function getBenchEntriesForScope(scope) {
     (entry) => entry && entry.name && !inCourt.has(entry.name),
   );
 }
+
+export function clearErrorPickMode() {
+  if (!scoutUiState.errorPickModeState) return false;
+  scoutUiState.errorPickModeState = null;
+  return true;
+}

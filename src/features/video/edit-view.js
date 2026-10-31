@@ -1,3 +1,4 @@
+import { session as scoutUiState } from "../state/scout-ui.js";
 import { SKILLS, session as matchState } from "../../../js/globals.js";
 import { getDefaultSkillDurationMs } from "./playback-model.js";
 import { session as videoEventsState } from "../state/video-video-events.js";
@@ -54,4 +55,19 @@ export function readVideoEditInputs(kind) {
     value: row.value,
     checked: row.enabled,
   }));
+}
+
+export function clearCurrentEventEdit() {
+  if (scoutUiState.currentEditControl) {
+    try {
+      scoutUiState.currentEditControl.blur();
+    } catch (_) {
+      // ignore
+    }
+  }
+  if (!scoutUiState.currentEditCell) return false;
+  scoutUiState.currentEditCell.dataset.editing = "false";
+  scoutUiState.currentEditCell = null;
+  scoutUiState.currentEditControl = null;
+  return true;
 }

@@ -11,22 +11,22 @@ import { normalizePlayers, normalizeNumbersMap } from "../../domain/player-names
 import { buildNumbersForNames, syncOpponentPlayerNumbers, cleanOpponentLiberos } from "../teams/roster-data.js";
 import { normalizeScoreOverrides } from "../settings/rules.js";
 import { persistCurrentMatch } from "../storage/match-persistence.js";
-import { updateMatchButtonsState } from "../teams/settings/scouting-config.js";
+import { updateMatchButtonsState, renderMatchesList } from "../core/runtime-view.js";
 import { buildDvwScoreOverrides } from "./datavolley-match-import.js";
 import { resetAnalysisForMatch } from "../analysis/reset-model.js";
 import { publishReactSettings } from "../settings/view.js";
 import { cleanCourtPlayers, enforceAutoLiberoForState, initStats, updateAutoRoleBaseCourtCache, cleanLiberoAutoMap, cleanCourtLiberoReplacementsForScope } from "../teams/court-state-model.js";
-import { renderLiberoChipsInline, updateRotationDisplay } from "../teams/court/court-ui-bootstrap.js";
+import { renderLiberoBench } from "../scout/court-commands.js";
+import { updateRotationDisplay } from "../teams/court-view.js";
 import { syncTeamsFromStorage, syncOpponentTeamsFromStorage, loadTeamFromStorage, loadPlayersDbFromStorage, savePlayersDbToStorage, loadTeamsMapFromStorage, deleteTeamFromStorage, saveTeamToStorage } from "../teams/storage/team-repository.js";
-import { renderOpponentLiberoTags, renderLiberoTags } from "../teams/imports/camp3-import.js";
 import { renderPlayers } from "../live/team-rendering.js";
-import { renderMetricsConfig } from "../teams/settings/metrics-editor.js";
+import { renderMetricsConfig } from "../settings/metrics-view.js";
 import { recalcAllStatsAndUpdateUI } from "../analysis/stats-update.js";
-import { renderEventsLog } from "../video/video-events.js";
+import { renderEventsLog } from "../events/log-view.js";
 import { publishTeamsManagerView } from "../teams/manager-view.js";
-import { renderMatchesSelect, renderMatchesList } from "../teams/storage/match-repository.js";
+import { renderMatchesSelect } from "../core/app-lifecycle.js";
 import { loadMatchFromStorage, deleteMatchFromStorage, syncMatchesFromStorage, saveMatchToStorage } from "../storage/match-repository.js";
-import { resetMatchState } from "../teams/storage/archive-actions.js";
+import { resetMatchState } from "../core/match-reset.js";
 import { getCurrentMatchPayload } from "../teams/current-payload.js";
 import { session as rosterLineupState } from "../state/roster-lineup.js";
 import { demoActionStore, demoWelcomeStore } from "../../state/roster-import-store.mjs";
@@ -174,12 +174,12 @@ export function applyImportedMatch(nextState, options = {}) {
   applyTheme(preservedTheme);
   ensureMatchDefaults();
   publishReactSettings();
-  renderOpponentLiberoTags();
+  renderLiberoBench();
   publishReactSettings();
   renderPlayers();
-  renderLiberoChipsInline();
+  renderLiberoBench();
 
-  renderLiberoTags();
+  renderLiberoBench();
   renderMetricsConfig();
   updateRotationDisplay();
 

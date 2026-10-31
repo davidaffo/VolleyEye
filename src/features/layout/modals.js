@@ -1,7 +1,7 @@
-import { session as matchState } from '../../../js/globals.js';
-import { session as scoutUiState } from '../state/scout-ui.js';
-import { session as browserEffectsState } from '../../app/browser-effects.js';
-import { getMobileActiveScope } from '../live/flow-model.js';
+import { session as matchState } from "../../../js/globals.js";
+import { session as scoutUiState } from "../state/scout-ui.js";
+import { session as browserEffectsState } from "../../app/browser-effects.js";
+import { getMobileActiveScope } from "../live/flow-model.js";
 
 export function isDesktopCourtModalLayout() {
   if (matchState.state.forceMobileLayout) return false;
@@ -167,4 +167,19 @@ export function scrollToActiveCourtOnMobileAlways(tries = 3) {
   requestAnimationFrame(() => {
     target.scrollIntoView({ behavior: "smooth", block: "start" });
   });
+}
+
+export function suppressTransientClicks(ms = 350) {
+  scoutUiState.suppressClickUntil = Date.now() + ms;
+}
+
+export function shouldSuppressClick(e) {
+  if (Date.now() < scoutUiState.suppressClickUntil) {
+    if (e) {
+      if (e.cancelable) e.preventDefault();
+      if (typeof e.stopPropagation === "function") e.stopPropagation();
+    }
+    return true;
+  }
+  return false;
 }
