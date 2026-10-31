@@ -1,3 +1,4 @@
+import { SetWinScore } from "./ScoreControls.jsx";
 
 import { useViewStore } from "../hooks/useViewStore.js";
 
@@ -29,6 +30,24 @@ export function AggregatedSetCards() {
       ) : (
         <div className="score-set-chip">Nessun set</div>
       )}
+    </div>
+  );
+}
+
+export function AggregatedScoreSummary() {
+  return (
+    <div id="analysis-score-summary" className="score-summary score-summary--inline" role="group" aria-label="Riepilogo punteggio">
+      <div className="score-card">
+        <div className="score-summary__metric">
+          <span className="score-summary__label">Punteggio totale</span>
+          <AggregatedTotalScore />
+        </div>
+        <div className="score-summary__metric">
+          <span className="score-summary__label">Set vinti</span>
+          <SetWinScore as="div" id="agg-set-score" className="score-value small" />
+        </div>
+        <AggregatedSetCards />
+      </div>
     </div>
   );
 }

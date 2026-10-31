@@ -7,7 +7,7 @@ import { AnalysisFilterPanel } from "../AnalysisFilterPanel.jsx";
 import { TabPanel } from "../ui/TabPanel.jsx";
 import { FilterField } from "../ui/FilterField.jsx";
 import { AppActionButton } from "../AppActions.jsx";
-import { AggregatedTotalScore, AggregatedSetCards } from "../AggregatedScore.jsx";
+import { AggregatedScoreSummary } from "../AggregatedScore.jsx";
 import { AggTabButton } from "../RuntimeControls.jsx";
 import { PlayerAnalysisRegion, PlayerAnalysisHeader, PlayerAnalysisSelect, PlayerAnalysisToggle, PlayerAnalysisHero, PlayerAnalysisBody, PlayerComparison } from "../PlayerAnalysis.jsx";
 
@@ -19,7 +19,6 @@ import { MatchSheetControls, MatchSheetPage } from "../MatchSheet.jsx";
 import { MultiscoutButton } from "./MultiscoutModal.jsx";
 import { AnalysisFilter } from "../AnalysisFilter.jsx";
 import { SkillChartGrid } from "../SkillChart.jsx";
-import { SetWinScore } from "../ScoreControls.jsx";
 
 export function AggregatedPage() {
   return (
@@ -40,36 +39,23 @@ export function AggregatedPage() {
               [null,"Giocatrici",{"className":"agg-subtab-btn","data-agg-tab-target":"player"}],
             ]} />
           </div>
-          <div className="analysis-filters analysis-team-filter analysis-team-filter--summary">
-            <FilterField filterId="analysis-filter-teams" label="Squadra" row>
+          <div className="analysis-summary-toolbar">
+            <div className="analysis-filters analysis-team-filter analysis-team-filter--summary">
+              <FilterField filterId="analysis-filter-teams" label="Squadra" row>
                 <AnalysisFilter
                   id="analysis-filter-teams"
                   className="analysis-filter__options"
                 />
               </FilterField>
-            <FilterField filterId="analysis-filter-sets" label="Set" row>
+              <FilterField filterId="analysis-filter-sets" label="Set" className="analysis-filter analysis-set-filter" row>
                 <AnalysisFilter
                   id="analysis-filter-sets"
                   className="analysis-filter__options"
                 />
                 <MultiscoutButton />
-                <div
-                  id="analysis-score-summary"
-                  className="score-summary score-summary--inline"
-                >
-                  <div className="score-card">
-                    <label>{"Punteggio totale"}</label>
-                    <AggregatedTotalScore />
-                    <label className="score-set-label">{"Set vinti"}</label>
-                    <SetWinScore
-                      as="div"
-                      id="agg-set-score"
-                      className="score-value small"
-                    />
-                    <AggregatedSetCards />
-                  </div>
-                </div>
               </FilterField>
+            </div>
+            <AggregatedScoreSummary />
           </div>
         </div>
         <TabPanel className="agg-subpanel active" data-agg-tab="summary">
