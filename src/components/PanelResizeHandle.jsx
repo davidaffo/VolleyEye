@@ -6,8 +6,8 @@ import { events as appEvents } from "../app/actions.mjs";
 const panelHandles = {
   left: ['scout-resize-left', 'scout-column-resizer', 'Ridimensiona colonna partita'],
   right: ['scout-resize-right', 'scout-column-resizer', 'Ridimensiona colonna log'],
-  scoutHeight: ['video-scout-resize-handle', 'video-resize-handle', 'Allarga finestra video scout'],
-  analysisHeight: ['video-analysis-resize-handle', 'video-resize-handle', 'Allarga finestra video'],
+  scoutHeight: ['video-scout-resize-handle', 'video-resize-handle', 'Ridimensiona altezza video scout'],
+  analysisHeight: ['video-analysis-resize-handle', 'video-resize-handle', 'Ridimensiona altezza video'],
 };
 export function PanelResizeHandle({ panel, ...props }) {
   const view = useViewStore(runtimeStore);
@@ -17,7 +17,7 @@ export function PanelResizeHandle({ panel, ...props }) {
     <button
       type="button" id={id} className={className} aria-label={label}
       role={column ? 'separator' : undefined} aria-orientation={column ? 'vertical' : undefined}
-      title={column ? 'Trascina per ridimensionare. Doppio clic per ripristinare.' : 'Trascina per allargare. Doppio click per reset.'}
+      title={column ? 'Trascina per ridimensionare. Doppio clic per ripristinare.' : 'Trascina per ridimensionare. Doppio clic per ripristinare.'}
       {...props}
       disabled={panel !== "analysisHeight" && !!view.scoutControlsDisabled}
       onPointerDown={(event) =>

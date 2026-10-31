@@ -32,7 +32,10 @@ export function publishLineupView() {
         getLineupModalPlayers(),
         liberos,
         numbers,
-      ).map((name) => Object.freeze({ name, label: label(name) })),
+      ).map((name) => Object.freeze({
+        name, label: label(name),
+        replacedIndex: court.findIndex(slot => slot.replaced === name && liberos.includes(slot.main)),
+      })),
     ),
     liberos: Object.freeze(
       ordered.map((name) =>

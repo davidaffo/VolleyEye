@@ -197,8 +197,11 @@ test("export autonomo riusa React e conserva analisi funzionante senza rete", as
     "aggregated",
   );
   await expect(exported.locator("html")).toHaveAttribute("data-app-ready", "true");
-  await exported.locator('[data-agg-tab-target="match-sheet"]').click();
-  await expect(exported.locator("#match-sheet-page")).toBeVisible();
+  for (const target of ["trajectory", "serve", "second", "player", "set-trend", "play-by-play", "skill-charts", "match-sheet", "summary"]) {
+    await exported.locator(`[data-agg-tab-target="${target}"]`).click();
+    await expect(exported.locator("body")).toHaveAttribute("data-agg-tab", target);
+    await expect(exported.locator(`.agg-subpanel.active[data-agg-tab="${target}"]`)).toBeVisible();
+  }
   expect(exportErrors).toEqual([]);
   await offlineContext.close();
   expect(errors).toEqual([]);
@@ -443,8 +446,8 @@ test("punteggio React: correzioni, pausa, preparazione set e annulla", async ({
   await page.evaluate(() => window.VolleyEye.app.invoke("undoLastEvent"));
   await expect(page.locator("#current-set-display")).toHaveText("Set 1");
   await expect(page.locator("#live-score")).toHaveText("2 - 0");
-  // The existing undo snapshot retains the winner recorded before the transition.
-  await expect(page.locator("#live-set-score")).toHaveText("1 - 0");
+  // Main's persistent receipt restores the state before preparing the next set.
+  await expect(page.locator("#live-set-score")).toHaveText("0 - 0");
   await page.locator("#btn-next-set").click();
   await page.locator("#next-set-start").click();
   await page.locator("#btn-score-against-plus").click();
@@ -1475,7 +1478,7 @@ test("analisi giocatrici React: traiettorie, selezioni, distribuzione e confront
   expect(errors).toEqual([]);
 });
 
-test("dialoghi React: coordinate battuta, traiettoria attacco, encoder e sorgente mobile", async ({
+test("dialoghi React: coordinate battuta, traiettoria attacco e sorgente mobile", async ({
   page,
 }) => {
   const errors = await openApp(page);
@@ -1529,16 +1532,7 @@ test("dialoghi React: coordinate battuta, traiettoria attacco, encoder e sorgent
   expect(result.start).toBeTruthy();
   expect(result.end).toBeTruthy();
   expect(Number.isFinite(result.directionDeg)).toBe(true);
-  await page.evaluate(() => {
-    window.encoderResult = undefined;
-    window.VolleyEye.app
-      .invoke("chooseFfmpegEncoder")
-      .then((value) => (window.encoderResult = value));
-  });
-  await expect(page.locator("#ffmpeg-encoder-modal")).toBeVisible();
-  await page.locator("#ffmpeg-copy-gpu").click();
-  await expect(page.locator("#ffmpeg-encoder-modal")).toBeHidden();
-  expect(await page.evaluate(() => window.encoderResult)).toBe("gpu");
+  await expect(page.locator("#ffmpeg-encoder-modal")).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() =>
     window.VolleyEye.app.invoke("openVideoMobileSourceModal"),
@@ -2052,13 +2046,13 @@ test('widget React: tastiera conserva nodi, focus e ordine dopo il reload', asyn
   await expect(page.locator('[data-scout-widget-zone="center-top"] > [data-scout-widget="dvw"]')).toHaveCount(1);
   await expect(handle).toBeFocused();
   await handle.press('ArrowDown');
-  await expect(page.locator('[data-scout-widget-zone="center-bottom"] > [data-scout-widget="dvw"]')).toHaveCount(1);
+  await expect(page.locator('[data-scout-widget-zone="center-court"] > [data-scout-widget="dvw"]')).toHaveCount(1);
   expect(await page.evaluate(() => window.__widgetNode === document.querySelector('[data-scout-widget="dvw"]')
     && window.__widgetInput === window.__widgetNode.querySelector('input')
     && window.__videoNode === document.querySelector('#analysis-video-scout'))).toBe(true);
   await page.reload();
   await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true');
-  await expect(page.locator('[data-scout-widget-zone="center-bottom"] > [data-scout-widget="dvw"]')).toHaveCount(1);
+  await expect(page.locator('[data-scout-widget-zone="center-court"] > [data-scout-widget="dvw"]')).toHaveCount(1);
   expect(errors).toEqual([]);
 });
 
@@ -2193,5 +2187,142 @@ test('archivio giocatrici React: foto da gesto nativo, annullamento e rimozione'
   await page.locator('#players-db-close').click();
   await page.evaluate(() => window.VolleyEye.app.invoke('openPlayersDbModal'));
   await expect(preview).toHaveClass(/empty/);
+  expect(errors).toEqual([]);
+});
+
+test('integrazione main: nome in digitazione aggiorna panchina e formazione conservando input e focus', async ({ page }) => {
+  test.setTimeout(45000);
+  const errors = await openApp(page);
+  await page.evaluate(() => window.VolleyEye.app.invoke('openNewTeamManager'));
+  await page.locator('#team-manager-add').click();
+  const playerId = await page.locator('.team-manager-row').first().getAttribute('data-player-id');
+  const row = page.locator(`.team-manager-row[data-player-id="${playerId}"]`);
+  const last = row.getByPlaceholder('Cognome');
+  const first = row.getByPlaceholder('Nome', { exact: true });
+  await last.fill('Rossi');
+  await first.fill('Anna');
+  await expect(first).toBeFocused();
+  await expect(page.locator('#default-lineup-bench [data-player-name="Rossi Anna"]')).toHaveCount(1);
+  await page.evaluate(() => { window.__nameInput = document.querySelector('.team-manager-row input[placeholder="Nome"]'); });
+  await page.locator('#default-lineup-bench [data-player-name="Rossi Anna"]').click();
+  await first.fill('Ada');
+  await expect(first).toBeFocused();
+  await expect(page.locator('#default-lineup-grid [data-player-name="Rossi Ada"]')).toHaveCount(1);
+  expect(await first.evaluate(input => input === window.__nameInput)).toBe(true);
+  await last.fill('Verdi');
+  await expect(page.locator('#default-lineup-grid [data-player-name="Verdi Ada"]')).toHaveCount(1);
+  const number = row.locator('input[inputmode="numeric"]');
+  await number.fill('a1');
+  await expect(number).toHaveValue('1');
+  await number.fill('123');
+  await expect(number).toHaveValue('12');
+  await first.focus();
+  await number.click();
+  expect(await number.evaluate(input => [input.selectionStart, input.selectionEnd])).toEqual([0, 2]);
+  expect(errors).toEqual([]);
+});
+
+test('integrazione main: download clip originale e fotogramma JPEG dalla UI React', async ({ page }) => {
+  test.setTimeout(45000);
+  const errors = await openApp(page);
+  page.removeAllListeners('dialog');
+  page.on('dialog', dialog => dialog.accept(dialog.defaultValue()));
+  const demo = JSON.parse(readFileSync('match_demo.json', 'utf8'));
+  const match = demo.state || demo;
+  match.events = match.events.filter(event => event.skillId).slice(0, 2).map((event, index) => ({
+    ...event, eventId: index + 1, videoTime: index ? 4.4 : 0.7, durationMs: index ? 700 : 400,
+  }));
+  match.video = { offsetSeconds: 0, fileName: '', youtubeId: '', youtubeUrl: '', lastPlaybackSeconds: 0 };
+  match.videoPlayByPlay = false;
+  await page.evaluate(async match => {
+    const app = window.VolleyEye.app;
+    await app.invoke('enterSelectedMatch');
+    await app.invoke('applyImportedMatch', match, { silent: true });
+    await app.invoke('setActiveTab', 'video');
+  }, match);
+  await page.locator('#video-file-input').setInputFiles('tests/fixtures/clip-source.mp4');
+  await expect.poll(() => page.locator('#analysis-video').evaluate(video => video.readyState)).toBeGreaterThanOrEqual(2);
+  for (const checkbox of await page.locator('#video-skills-container tbody input[type=checkbox]').all()) await checkbox.check();
+  const clipPromise = page.waitForEvent('download', { timeout: 15000 });
+  await page.locator('#btn-download-video-clip').click();
+  const clip = await clipPromise;
+  expect(clip.suggestedFilename()).toBe('clip-source.mp4');
+  const bytes = readFileSync(await clip.path());
+  const { Input, ALL_FORMATS, BlobSource } = await import('../../js/vendor/mediabunny-1.62.1.min.mjs');
+  const input = new Input({ source: new BlobSource(new Blob([bytes])), formats: ALL_FORMATS });
+  try {
+    expect(await input.getPrimaryAudioTrack()).toBe(null);
+    expect(await input.computeDuration()).toBeCloseTo(4, 2);
+  } finally { input.dispose(); }
+  await expect(page.locator('#btn-download-video-clip')).toBeEnabled();
+  await expect(page.locator('#btn-download-video-clip')).toHaveText('Scarica taglio');
+  await page.locator('#analysis-video').evaluate(video => { video.pause(); video.currentTime = 1; });
+  await expect.poll(() => page.locator('#analysis-video').evaluate(video => video.seeking)).toBe(false);
+  const framePromise = page.waitForEvent('download', { timeout: 15000 });
+  await page.locator('#btn-save-video-frame').click();
+  const frame = await framePromise;
+  expect(frame.suggestedFilename()).toMatch(/_fotogramma_1-000s\.jpg$/);
+  expect([...readFileSync(await frame.path()).subarray(0, 3)]).toEqual([255, 216, 255]);
+  expect(errors).toEqual([]);
+});
+
+test('integrazione main: pannello avversaria singola, difesa dopo muro e annulla persistente', async ({ page }) => {
+  test.setTimeout(45000);
+  const errors = await openApp(page);
+  const demo = JSON.parse(readFileSync('match_demo.json', 'utf8'));
+  const match = demo.state || demo;
+  match.useOpponentTeam = false;
+  match.events = [];
+  match.currentSet = 1;
+  match.matchFinished = false;
+  match.setStarts = { 1: match.setStarts?.[1] || { our: { court: match.court, rotation: match.rotation }, isServing: true, swapCourt: false } };
+  match.setResults = {};
+  match.scoreOverrides = {};
+  match.isServing = true;
+  match.pendingServe = null;
+  await page.evaluate(async match => {
+    const app = window.VolleyEye.app;
+    await app.invoke('enterSelectedMatch');
+    await app.invoke('applyImportedMatch', match, { silent: true });
+    await app.invoke('setActiveTab', 'scout');
+  }, match);
+  await expect(page.locator('#single-team-opponent-panel')).toBeVisible();
+  await expect(page.locator('[data-team-panel="opponent"]')).toBeHidden();
+  await expect(page.locator('#single-team-opponent-panel #rotation-select-opp')).toHaveCount(1);
+  await page.locator('#evaluate-defense-after-block').check();
+  await page.locator('#btn-score-opp-point-single').click();
+  await page.evaluate(() => window.VolleyEye.app.invoke('recordTimeoutEvent'));
+  let snapshot = await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot());
+  expect(snapshot.events).toHaveLength(2);
+  expect(snapshot.events[1].undoState.version).toBe(1);
+  await page.reload();
+  await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true');
+  await expect(page.locator('#evaluate-defense-after-block')).toBeChecked();
+  await page.locator('#btn-undo').click();
+  snapshot = await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot());
+  expect(snapshot.events).toHaveLength(1);
+  expect(snapshot.events[0].value).toBe(1);
+  await page.locator('#btn-undo').click();
+  expect((await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot())).events).toHaveLength(0);
+  expect(errors).toEqual([]);
+});
+
+test('integrazione main: export partita da navigazione desktop e mobile chiude il menu', async ({ page }) => {
+  const errors = await openApp(page);
+  await page.locator('#btn-load-match').click();
+  let pending = page.waitForEvent('download');
+  await page.locator('.tabs-nav [data-export-match]').click();
+  let download = await pending;
+  expect(JSON.parse(readFileSync(await download.path(), 'utf8')).state.events.length).toBeGreaterThan(0);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator('#mobile-navigation > summary').click();
+  await expect(page.locator('#mobile-navigation')).toHaveAttribute('open', '');
+  const button = page.locator('#mobile-navigation .mobile-match-export');
+  expect(await button.evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
+  pending = page.waitForEvent('download');
+  await button.click();
+  download = await pending;
+  expect(JSON.parse(readFileSync(await download.path(), 'utf8')).state.events.length).toBeGreaterThan(0);
+  await expect(page.locator('#mobile-navigation')).not.toHaveAttribute('open', '');
   expect(errors).toEqual([]);
 });

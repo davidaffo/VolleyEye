@@ -76,6 +76,7 @@ export function renderEventsLog(options = {}) {
   if (rosterLineupState.elEventsLog && !suppressScroll) {
     requestAnimationFrame(() => {
       rosterLineupState.elEventsLog.scrollTop = rosterLineupState.elEventsLog.scrollHeight;
+      rosterLineupState.elEventsLog.querySelector("tbody tr:last-child")?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
     });
   }
   eventLogSummaryStore.publish({ text: summaryText });

@@ -1,3 +1,4 @@
+import { captureScoutActionSnapshot } from "../events/history-model.js";
 import { computeSetWinner } from "../teams/set-start-model.js";
 import { getCourtShape, cloneCourt } from "../teams/court-model.js";
 import { commitCourtChange, commitCourtChangeForScope, setIsServing } from "../teams/court/court-engine.js";
@@ -103,6 +104,7 @@ export function closeNextSetModal({ force = false } = {}) {
 
 export function applyNextSetDraft() {
   if (!scoutUiState.nextSetDraft) return;
+  const actionSnapshot = captureScoutActionSnapshot({ includeSetState: true });
   const prevSet = matchState.state.currentSet || 1;
   const nextSet = scoutUiState.nextSetDraft.setNum || prevSet;
   const prevSetResults = cloneSetMap(matchState.state.setResults);
@@ -150,6 +152,7 @@ export function applyNextSetDraft() {
   }
   if (nextSet !== prevSet) {
     applySetChange(nextSet, {
+      actionSnapshot,
       prevSet,
       nextSet,
       prevFinished: !!matchState.state.matchFinished,

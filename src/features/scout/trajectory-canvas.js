@@ -127,7 +127,7 @@ export function getDefaultTrajectoryNetPointId(baseZone, setType) {
 
 export function getNearestTrajectoryNetPointId(start) {
   if (!start) return null;
-  const x = clamp01(start.x);
+  const x = scoutUiState.trajectoryMirror || scoutUiState.trajectoryForceFar ? 1 - clamp01(start.x) : clamp01(start.x);
   let closest = scoutUiState.TRAJECTORY_NET_POINTS[0];
   let best = Math.abs(x - closest.x);
   for (let i = 1; i < scoutUiState.TRAJECTORY_NET_POINTS.length; i++) {

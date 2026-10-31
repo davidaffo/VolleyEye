@@ -894,32 +894,37 @@ body[data-theme="light"] .court-cell.best-eff {
 .video-resize-handle {
   position: relative;
   align-self: center;
-  width: min(220px, 55%);
-  height: 12px;
+  width: 48px;
+  height: 10px;
+  min-height: 10px;
+  flex-shrink: 0;
   border: 0;
-  margin: 0.15rem auto 0.2rem;
+  margin: 0 auto;
   padding: 0;
-  border-radius: 999px;
+  border-radius: 0.35rem;
   cursor: ns-resize;
-  background: linear-gradient(180deg, rgba(34, 197, 94, 0.92), rgba(16, 185, 129, 0.72));
-  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.35), 0 10px 24px rgba(15, 23, 42, 0.28);
+  touch-action: none;
+  background: transparent;
+  box-shadow: none;
 }
 .video-resize-handle::before {
   content: "";
   position: absolute;
-  inset: 4px 26px;
+  inset: 4px 8px;
   border-radius: 999px;
-  background: repeating-linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.94) 0 4px,
-    transparent 4px 9px
-  );
+  background: #64748b;
 }
-.video-resize-handle:hover {
-  filter: brightness(1.05);
+.video-resize-handle:hover,
+.video-resize-handle:focus-visible {
+  background: rgba(59, 130, 246, 0.14);
 }
-.video-resize-handle:active {
-  filter: brightness(0.96);
+.video-resize-handle:hover::before,
+.video-resize-handle:focus-visible::before {
+  background: #60a5fa;
+}
+.video-resize-handle:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
 }
 body.video-panel-resizing,
 body.video-panel-resizing * {

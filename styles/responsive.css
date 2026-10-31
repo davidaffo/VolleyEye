@@ -234,6 +234,7 @@ body.force-mobile .attack-trajectory-stage {
 }
 .mobile-navigation:not([open]) .mobile-navigation__options { display: none; }
 .mobile-navigation__options .tab-btn,
+.mobile-navigation__options .mobile-match-export,
 .mobile-navigation__options .mobile-match-exit {
   display: block;
   width: 100%;

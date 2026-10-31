@@ -29,6 +29,7 @@ export function AppNavigation() {
       >
         {"Modifica dati partita"}
       </MatchActionButton>
+      <MatchActionButton command="exportMatchFromNavigation" className="secondary match-session-only" type="button" data-export-match="">Esporta partita</MatchActionButton>
       <MatchActionButton
         command="exitCurrentMatch"
         id="btn-exit-match"

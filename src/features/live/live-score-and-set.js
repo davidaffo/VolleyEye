@@ -172,29 +172,24 @@ export function handleAutoRotationFromEvent(eventObj, scope = "our") {
 }
 
 export function recomputeServeFlagsFromHistory(options = {}) {
-  let servingScope = matchState.state.isServing ? "our" : "opponent";
-  if (!matchState.state || !matchState.state.autoRotate) {
-    matchState.state.isServing = servingScope === "our";
-    matchState.state.autoRotatePending = false;
-    return;
-  }
+  const currentSet = Number(matchState.state.currentSet || 1);
+  const start = matchState.state.setStarts && matchState.state.setStarts[currentSet];
+  let servingScope = (start ? start.isServing : matchState.state.isServing) ? "our" : "opponent";
   (matchState.state.events || []).forEach(ev => {
-    if (!ev) return;
+    if (!ev || Number(ev.set || 1) !== currentSet) return;
     const scope = getTeamScopeFromEvent(ev);
-    if (ev.skillId === "serve") {
-      servingScope = scope;
-      return;
-    }
     const dir = getPointDirection(ev);
     if (dir === "for") {
       servingScope = scope;
     } else if (dir === "against") {
       servingScope = getOppositeScope(scope);
+    } else if (ev.skillId === "serve") {
+      servingScope = scope;
     }
   });
   matchState.state.isServing = servingScope === "our";
-  matchState.state.autoRotatePending = !matchState.state.isServing;
-  matchState.state.opponentAutoRotatePending = matchState.state.isServing;
+  matchState.state.autoRotatePending = !!matchState.state.autoRotate && !matchState.state.isServing;
+  matchState.state.opponentAutoRotatePending = !!matchState.state.autoRotate && matchState.state.isServing;
   if (matchState.state.useOpponentTeam && matchState.state.predictiveSkillFlow) {
     const lastFlowEvent = getLastFlowEvent(matchState.state.events || []);
     if (lastFlowEvent) {
@@ -206,7 +201,7 @@ export function recomputeServeFlagsFromHistory(options = {}) {
   } else {
     matchState.state.flowTeamScope = servingScope;
   }
-  if (!options.skipAutoLibero) {
+  if (!options.skipAutoLibero && typeof enforceAutoLiberoForState === "function") {
     enforceAutoLiberoForState({ skipServerOnServe: true });
   }
 }
@@ -366,7 +361,7 @@ export function handleOpponentFreeballSingle() {
 
 
 export function applySetChange(nextSet, options = {}) {
-  const actionSnapshot = captureScoutActionSnapshot();
+  const actionSnapshot = options.actionSnapshot || captureScoutActionSnapshot({ includeSetState: true });
   const {
     prevSet = matchState.state.currentSet || 1,
     prevFinished = !!matchState.state.matchFinished,
@@ -442,6 +437,7 @@ export function endMatch() {
     updateMatchStatusUI();
     return;
   }
+  const actionSnapshot = captureScoutActionSnapshot({ includeSetState: true });
   const current = matchState.state.currentSet || 1;
   const winner = computeSetWinner(current);
   if (winner) {
@@ -454,6 +450,7 @@ export function endMatch() {
     matchState.state.matchEndSetRecorded = { set: current, winner: null };
   }
   applySetChange(current, {
+    actionSnapshot,
     prevSet: current,
     nextSet: current,
     prevFinished: !!matchState.state.matchFinished,

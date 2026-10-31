@@ -202,6 +202,7 @@ Per effettuare una **sostituzione**, premi il tasto Formazione/Sostituzione dell
 Tutti gli eventi inseriti sono visualizzati nel log della colonna di destra.
 
 - **Annulla**: annulla l'ultimo evento inserito; funziona su più eventi in catena, puoi annullarne quanti ne vuoi. Attenzione: per eliminare invece parzialmente un inserimento di un fondamentale (ad esempio hai inserito una traiettoria di attacco ma non volevi valutare l'attacco, puoi premere sul tasto x in corrispondenza del giocatore da valutare).
+- Arrivato all’inizio di un set, **Annulla** chiede conferma prima di tornare al set precedente e al suo punteggio. Per correggere la formazione del set appena iniziato, fermati a 0–0 e modifica la formazione. Per le nuove azioni, l’annullamento resta disponibile anche dopo aver riaperto o esportato la partita; battuta derivata e ricezione vengono annullate insieme.
 - **Modifica**: fai doppio clic su un campo nel log per correggere una valutazione, aggiungere una traiettoria mancante o modificare qualsiasi altro dato
 - **Elimina**: puoi eliminare direttamente un fondamentale dal log premendo il tasto x nell'ultima colonna.
 
@@ -455,9 +456,38 @@ Con **YouTube** puoi collegare il match a un link di YouTube.
 
 #### Video durante lo scout
 
-Quando lavori in **scout da video**, gli eventi vengono registrati mentre osservi il filmato. In questo caso l'app può salvare anche il tempo video associato all'evento nel momento in cui lo inserisci.
+Quando lavori in **scout da video**, l'app salva la posizione del filmato associata all'evento. Il momento in cui acquisisce questa posizione dipende dal fondamentale e dai passaggi di inserimento descritti sotto.
 
 Questo rende la sincronizzazione molto più immediata, perché il log nasce già con riferimenti temporali video.
+
+#### Quando viene acquisito il tempo di ogni fondamentale
+
+L'**orario di registrazione** indica quando l'evento viene creato nel log. Il **tempo video** indica il punto del filmato associato all'azione: può essere stato acquisito prima della conferma finale. In analisi video viene usato questo secondo valore, se presente.
+
+La tabella descrive l'inserimento tramite interfaccia e relative scorciatoie. Per lo scout da video si presuppone che il player sia disponibile; se il video è in pausa viene acquisita la posizione su cui è fermo.
+
+| Fondamentale | Scout dal vivo | Scout da video |
+| --- | --- | --- |
+| **Battuta** | Alla conferma della valutazione. Se viene generata automaticamente dalla ricezione, alla conferma della ricezione. | Senza traiettoria: quando scegli il tipo di battuta. Con traiettoria: quando confermi il punto di arrivo. Il tempo viene conservato fino alla registrazione della battuta. |
+| **Ricezione** | Alla conferma della valutazione. | Posizione del video alla conferma della valutazione. |
+| **Freeball** | Alla conferma della valutazione. | Posizione del video alla conferma della valutazione. Il pulsante che imposta il flusso freeball, da solo, non registra il fondamentale. |
+| **Alzata** | Alla conferma della valutazione. | Posizione del video alla conferma della valutazione. La sola scelta del tipo di alzata per il prossimo attacco non registra un evento di alzata. |
+| **Attacco** | Alla conferma della valutazione. | All'avvio della selezione dell'attacco, dopo l'eventuale scelta del tipo di alzata e prima dell'inserimento della traiettoria e della valutazione finale. Il tempo iniziale viene conservato. |
+| **Muro** | Alla conferma della valutazione. | Posizione del video alla conferma della valutazione. |
+| **Difesa** | Alla conferma della valutazione. | Posizione del video alla conferma della valutazione. |
+
+Per esempio, se avvii la selezione dell'attacco a **2:00**, completi la traiettoria a **2:05** e confermi la valutazione a **2:08**, il tempo video dell'attacco resta **2:00**. È il comportamento previsto: la conferma successiva completa l'evento senza spostarne il riferimento video.
+
+Nello **scout dal vivo**, il riferimento per la successiva sincronizzazione video viene dal cronometro interno al momento della registrazione, con la prima azione come origine. Non viene rilevato automaticamente l'istante del contatto con la palla: rimane quindi il ritardo umano di inserimento.
+
+Ci sono alcuni casi particolari:
+
+- **Battuta generata dalla ricezione**: nel flusso predittivo a doppia squadra, l'evento di battuta viene creato insieme alla ricezione. In scout video conserva il tempo acquisito durante la preparazione della battuta; se manca, usa la posizione del video al momento della registrazione.
+- **Attacco valutato tramite il muro**: la valutazione del muro può aggiornare quella dell'attacco già inserito. Il tempo dell'attacco resta quello originale.
+- **Traiettorie aggiunte dopo la registrazione**: completano i dati dell'evento senza modificarne il tempo.
+- **Inserimento con codici DataVolley**: l'orario del log è quello in cui chiudi il singolo codice e lo aggiungi alla coda, anche se applichi la coda più tardi. I codici generati da uno stesso codice composto condividono quell'orario. Il tempo video viene invece acquisito quando il codice viene applicato. Se per l'attacco esiste già una selezione preparata nell'interfaccia, viene riutilizzato il tempo di quella selezione; per la battuta generata dalla ricezione vale il caso descritto sopra.
+
+Queste regole descrivono l'acquisizione iniziale. Sincronizzazione, offset, unificazione dei tempi e modifiche manuali possono cambiare successivamente il tempo video. Per le partite importate valgono inizialmente i riferimenti temporali contenuti nel file.
 
 #### Analisi video dopo lo scout
 
@@ -542,6 +572,7 @@ La sezione video include alcuni strumenti aggiuntivi per correggere e rifinire i
 - **Offset skill**: applica uno spostamento temporale agli eventi filtrati, anche per fondamentale. Particolarmente utile in fase di sincronizzazione per applicare il ritardo di un determinato fondamentale in base al ritardo di inserimento dello scout man
 - **Unifica tempi**: copia il tempo video tra eventi collegati, ad esempio battuta e ricezione oppure attacco, muro e difesa
 - **Durata skill**: imposta il tempo di visualizzazione usato nel play by play video
+- **Salva fotogramma**: scarica il fotogramma corrente del video locale come JPEG ad alta qualità alla risoluzione originale, senza overlay. Il nome include il tempo del video. Non è disponibile per il player YouTube.
 - **Frame - / Frame +**: permette di spostarsi nel video frame by frame, usando anche le scorciatoie **Shift + freccia sinistra/destra**
 
 Puoi inoltre salvare **preset di filtri video**. In questo modo puoi richiamare rapidamente combinazioni ricorrenti, ad esempio gli attacchi di una giocatrice, le ricezioni negative, le azioni in una rotazione specifica o un certo tipo di servizio.
@@ -552,7 +583,7 @@ Una volta sincronizzato il match:
 
 - posso cliccare su un evento e il video si sposta a quell'evento
 - posso usare il tasto play by play per vedere uno dopo l'altro gli eventi filtrati (il tempo di visualizzazione può essere modificato dall'apposito campo)
-- posso creare dei tagli video. Questo non viene fatto direttamente dal programma a causa dei limiti delle PWA, ma viene copiato un codice da usare con ffmpeg sul video originale per creare il taglio.
+- posso selezionare gli eventi e usare **Scarica taglio** per ottenere un unico file video direttamente dal browser, anche offline dopo il caricamento dell’app. Serve un video locale: i link YouTube non sono esportabili. Il video mantiene la qualità originale senza ricodifica, audio o overlay. I confini dei segmenti si adattano ai fotogrammi chiave: l’inizio può essere anticipato e la fine posticipata. Il nome proposto usa il preset video attivo; il formato di uscita è MP4 o MKV in base al codec originale.
 
 ---
 

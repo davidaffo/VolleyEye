@@ -131,11 +131,12 @@ test("la difesa slash viene rimossa anche dalle regole già salvate", () => {
   assert.deepEqual(Array.from(state.pointRules.defense.against), ["="]);
 });
 
-test("annulla usa uno snapshot atomico non serializzato e non lo ricalcola", () => {
+test("annulla usa una ricevuta persistente senza ricalcolare il servizio", () => {
   const lifecycle = readFileSync(new URL("../src/features/events/history-model.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/events/history-commands.js", import.meta.url), "utf8");
   const snapshotCode = extract(lifecycle, "function captureScoutActionSnapshot", "function undoLastEvent");
   assert.match(snapshotCode, /Object\.defineProperty\(event, "__undoSnapshot"/);
   assert.match(snapshotCode, /enumerable:\s*false/);
+  assert.match(snapshotCode, /event\.undoState = snapshot/);
   const restore = lifecycle.slice(
     lifecycle.indexOf("function restoreScoutActionSnapshot"),
     lifecycle.indexOf("function undoLastEvent")
@@ -216,37 +217,16 @@ test("la correzione punteggio video segue l'ordine reale degli eventi e viene sa
   assert.match(correction, /saveState\(\{ persistLocal: true \}\)/);
 });
 
-test("il taglia e cuci ffmpeg offre CPU e GPU conservando gli overlay", () => {
-  const events = readFileSync(new URL("../src/features/video/video-events.js", import.meta.url), "utf8");
-  const command = extract(events, "function buildFfmpegConcatCommand", "async function copyFfmpegFromSelection");
-  assert.match(command, /filter_complex/);
-  assert.match(command, /buildFfmpegOverlayFilter/);
-  assert.match(command, /-c:v libx264 -preset ultrafast -crf 24/);
-  assert.match(command, /-vaapi_device \/dev\/dri\/renderD128/);
-  assert.match(command, /format=nv12,hwupload/);
-  assert.match(command, /-c:v h264_vaapi/);
-  assert.match(command, /-rc_mode CQP -qp 24/);
-  assert.match(command, /concat=n=\$\{segments\.length\}:v=1:a=0/);
-  assert.match(command, /-map "\[outv\]" -an/);
-  assert.doesNotMatch(command, /atrim|-c:a|\[outa\]/);
-  assert.doesNotMatch(command, /-c copy|mktemp -d/);
-});
-
-test("il dialogo ffmpeg permette di copiare il comando CPU o GPU", () => {
-  const index = readAppHtml();
-  assert.match(index, /id="ffmpeg-encoder-modal"/);
-  assert.match(index, /id="ffmpeg-copy-gpu"/);
-  assert.match(index, /id="ffmpeg-copy-cpu"/);
-});
-
-test("il nome output ffmpeg usa il preset video attivo", () => {
-  const events = readFileSync(new URL("../src/features/video/video-events.js", import.meta.url), "utf8");
-  const filters = readFileSync(new URL("../src/features/analysis/video-filter-model.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/video/view-commands.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/analysis/analysis-filters.js", import.meta.url), "utf8") + readFileSync(new URL("../src/features/video/view.js", import.meta.url), "utf8");
-  const copy = sourceFunctions(events, ["copyFfmpegFromSelection"]);
-  assert.match(copy, /getActiveVideoFilterPresetName\(\)/);
-  assert.match(copy, /sanitizeVideoOutputBase\(presetName\)/);
-  assert.match(readFileSync(new URL("../src/features/analysis/video-preset-commands.js", import.meta.url), "utf8"), /activeVideoFilterPresetId = id/);
-  assert.match(filters, /function getActiveVideoFilterPresetName\(\)/);
+test("il taglio video riusa i pacchetti originali e il preset suggerisce il nome", () => {
+  const command = readFileSync(new URL("../src/features/video/clip-commands.js", import.meta.url), "utf8");
+  const exporter = readFileSync(new URL("../src/features/video/clip-export.js", import.meta.url), "utf8");
+  assert.match(command, /getActiveVideoFilterPresetName\(\)/);
+  assert.match(command, /sanitizeVideoOutputBase/);
+  assert.match(exporter, /EncodedVideoPacketSource/);
+  assert.doesNotMatch(exporter, /drawtext|VideoEncoder|AudioEncoder/);
+  assert.match(index, /id="btn-download-video-clip"/);
+  assert.match(index, /id="btn-save-video-frame"/);
+  assert.doesNotMatch(index, /id="ffmpeg-encoder-modal"/);
 });
 
 test("una partita in pausa o conclusa non blocca più la modifica squadra", () => {
@@ -346,13 +326,13 @@ test("il conteggio damp mantiene rotazioni e totale separati dalle percentuali",
 });
 
 test("campi squadra, foto e ruoli hanno gli stili richiesti", () => {
-  assert.match(css, /\.team-manager-table th:nth-child\(2\)[\s\S]*?min-width:\s*190px/);
+  assert.match(css, /\.team-manager-table th:nth-child\(2\)[\s\S]*?min-width:\s*140px/);
   assert.match(css, /\.court-card\.setter-card/);
   assert.match(css, /\.court-setter-pill/);
   assert.match(css, /\.base-modal-btn\.player-role-setter/);
   assert.match(css, /\.base-modal-btn\.player-role-libero/);
   assert.match(css, /background-size:\s*contain/);
-  assert.match(css, /\.court-card \.event-btn,[\s\S]*?background:\s*rgba\(15, 23, 42, 0\.32\)/);
+  assert.match(css, /\.court-card \.event-btn[\s\S]*?background:\s*rgba\(15, 23, 42, 0\.32\)/);
   assert.match(css, /\.court-card \.skill-picker-btn\.skill-attack\s*\{[\s\S]*?38%, transparent/);
   assert.match(css, /\.player-analysis-identity__avatar\s*\{[\s\S]*?border-radius:\s*50%/);
 });

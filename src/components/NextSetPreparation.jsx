@@ -3,7 +3,8 @@ import { useLineupInteractions } from "../hooks/useLineupInteractions.js";
 import { LineupSlot, LineupChip } from "./ui/LineupPlayer.jsx";
 
 import { useViewStore } from "../hooks/useViewStore.js";
-import { useRef } from "react";
+import { useRef, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { nextSetStore } from "../state/next-set-store.mjs";
 import { actions as appActions } from "../app/actions.mjs";
 function run(command, ...args) {
@@ -83,12 +84,13 @@ function NextSetTeam({ scope, team, visible, drag }) {
                 key={player.name}
                 interactions={interactions}
                 name={player.name}
+                className={player.replacedIndex >= 0 ? " replaced-chip" : ""}
                 onClick={() => {
                   const index = team.court.findIndex((slot) => !slot.main);
                   run(
                     "changeNextSetPlayer",
                     scope,
-                    index === -1 ? 0 : index,
+                    player.replacedIndex >= 0 ? player.replacedIndex : index === -1 ? 0 : index,
                     player.name,
                   );
                 }}
@@ -128,18 +130,21 @@ function NextSetTeam({ scope, team, visible, drag }) {
 export function NextSetPreparation() {
   const view = useViewStore(nextSetStore);
   const drag = useRef(null);
+  const card = useRef(null);
+  useLayoutEffect(() => { if (view.open) card.current?.focus(); }, [view.open]);
   const first = view.setNum === 1;
   const names = {
     our: view.teams.our?.name || "Noi",
     opp: view.teams.opponent?.name || "Avversarie",
   };
-  return (
+  const content = (
     <div
+      role="dialog" aria-modal="true" aria-labelledby="next-set-title"
       id="next-set-inline"
       className={"next-set-inline" + (view.open ? "" : " hidden")}
       aria-hidden={!view.open}
     >
-      <div className="next-set-inline__card">
+      <div className="next-set-inline__card" ref={card} tabIndex={-1}>
         <div className="next-set-inline__head">
           <h3 id="next-set-title">Preparazione set {view.setNum}</h3>
           <button
@@ -180,9 +185,9 @@ export function NextSetPreparation() {
             <input
               type="checkbox"
               id="next-set-swap-court"
-              checked={view.swapCourt}
+              checked={view.swapCourt !== view.currentCourtSwapped}
               onChange={(event) =>
-                run("changeNextSetOption", "swapCourt", event.target.checked)
+                run("changeNextSetOption", "swapCourt", event.target.checked, true)
               }
             />{" "}
             Cambia campo
@@ -244,4 +249,5 @@ export function NextSetPreparation() {
       </div>
     </div>
   );
+  return typeof document === "undefined" ? content : createPortal(content, document.body);
 }

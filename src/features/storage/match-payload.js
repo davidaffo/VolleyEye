@@ -32,6 +32,8 @@ export function buildMatchExportPayload() {
       opponentCourtViewMirrored: !!matchState.state.opponentCourtViewMirrored,
       opponentAutoRoleP1American: !!matchState.state.opponentAutoRoleP1American,
       opponentAttackTrajectoryEnabled: matchState.state.opponentAttackTrajectoryEnabled !== false,
+    evaluateDefenseAfterBlock: !!matchState.state.evaluateDefenseAfterBlock,
+    opponentEvaluateDefenseAfterBlock: !!matchState.state.opponentEvaluateDefenseAfterBlock,
       opponentServeTrajectoryEnabled: matchState.state.opponentServeTrajectoryEnabled !== false,
       opponentSetTypePromptEnabled: matchState.state.opponentSetTypePromptEnabled !== false,
       opponentAutoLiberoBackline: matchState.state.opponentAutoLiberoBackline !== false,

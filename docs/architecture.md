@@ -213,8 +213,9 @@ condivisa da formazione e traiettorie. `scout-ui.js` conserva layout, dimensioni
 e reset senza importare i controller del campo.
 
 
-`events/history-model.js` acquisisce gli snapshot dello scout e li associa agli
-eventi come proprietà non enumerabili. `events/history-commands.js` possiede
+`events/history-model.js` acquisisce ricevute versionate dello stato di gioco e
+le associa agli eventi nella proprietà persistente `undoState`; il riferimento
+non enumerabile `__undoSnapshot` conserva la compatibilità durante la sessione. `events/history-commands.js` possiede
 ripristino, annullamento della contesa ed eliminazione degli eventi, mantenendo
 la protezione contro la rimozione di un cambio o passaggio set nel mezzo dello
 storico. Questi comandi non richiedono il lifecycle generale per acquisire uno
@@ -235,3 +236,18 @@ utilizzati dall’analisi. Le operazioni del dialogo formazione appartengono a
 `live/lineup-editor.js`; il semplice aggiornamento della bozza del set successivo
 appartiene alla sua vista. Tutti i percorsi di aggiornamento dei liberi usano
 `scout/court-commands.js:renderLiberoBench`, senza quattro funzioni di inoltro.
+
+
+## Aggiornamenti integrati da main
+
+Vedi [revisione dei sette commit](main-integration.md). Le ricevute di annullamento
+versionate sono dati enumerabili degli eventi: sopravvivono a JSON, IndexedDB e
+archivio senza copiare tutto lo storico. Il modello conserva solo lo stato di
+gioco necessario; i comandi ripristinano il gruppo dell'azione e ricostruiscono
+statistiche e viste, mantenendo correzioni precedenti e impostazioni utente.
+
+Il download delle clip è in `video/clip-commands.js`; `clip-export.js` copia i
+pacchetti originali tramite MediaBunny, caricato da un import dinamico Vite.
+`videoClipStore` pubblica avanzamento e stato occupato al pulsante React. Le
+primitive dei nomi sono condivise con il salvataggio JPEG in `export-model.js`.
+Il vecchio dialogo FFmpeg e il suo store sono rimossi.

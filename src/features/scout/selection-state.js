@@ -64,6 +64,14 @@ export function getServeBaseZoneForPlayer(playerIdx, scope = "our") {
 
 export function cancelPartialSkillFlowForScope(scope = "our") {
   const targetScope = scope || "our";
+  scoutUiState.partialSkillFlowVersions[targetScope] += 1;
+  if (matchState.state.pendingServe && matchState.state.pendingServe.scope === targetScope) matchState.state.pendingServe = null;
+  if (targetScope === "opponent") matchState.state.opponentSkillFlowOverride = null;
+  else matchState.state.skillFlowOverride = null;
+  if (matchState.state.forceSkillScope === targetScope) {
+    matchState.state.forceSkillActive = false;
+    matchState.state.forceSkillScope = null;
+  }
   const prefix = targetScope + ":";
   const playerIdxs = new Set();
   const collectFromKey = key => {

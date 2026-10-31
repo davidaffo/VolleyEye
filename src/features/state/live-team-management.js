@@ -33,7 +33,6 @@ export const session = createDomainState({
 "dvwScoutPendingTokens": () => ([])
 }, {
 "elBtnFreeball": () => (document.getElementById("btn-freeball")),
-"elBtnFreeballOppSingle": () => (document.getElementById("btn-freeball-opp-single")),
 "elNetActionsDefault": () => (document.getElementById("net-actions-default")),
 "elBtnNetBlockPrompt": () => (document.getElementById("btn-net-block-prompt")),
 "elNextSkillIndicator": () => (document.getElementById("next-skill-indicator")),

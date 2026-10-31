@@ -54,6 +54,7 @@ export function staticAssetsPlugin() {
           "version.json",
           "match_demo.json",
           "js/vendor/marked.umd.js",
+          "js/vendor/mediabunny-LICENSE.txt",
         ])
           addAsset(path, readFileSync(resolve(config.root, path)));
         addAsset(

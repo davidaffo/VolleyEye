@@ -144,7 +144,7 @@ body[data-theme="light"] .default-lineup-slot::before {
 }
 .team-manager-table {
   width: 100%;
-  min-width: 1120px;
+  min-width: 960px;
   border-collapse: collapse;
 }
 .team-manager-table th,
@@ -161,13 +161,14 @@ body[data-theme="light"] .default-lineup-slot::before {
 .team-manager-table td:nth-child(2),
 .team-manager-table th:nth-child(3),
 .team-manager-table td:nth-child(3) {
-  min-width: 190px;
-  width: 22%;
+  min-width: 140px;
+  width: 140px;
 }
 .team-manager-table td:nth-child(2) input,
 .team-manager-table td:nth-child(3) input {
   width: 100%;
-  min-width: 170px;
+  min-width: 120px;
+  max-width: 140px;
   box-sizing: border-box;
 }
 .team-manager-table td:nth-child(4) {

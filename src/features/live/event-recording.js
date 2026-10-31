@@ -1,3 +1,4 @@
+import { rememberReceiveContext } from "./flow-model.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { getTeamScopeFromEvent, getOppositeScope, getPlayersForScope, isSkillEnabledForScope, isFarSideForScope } from "../teams/selectors.js";
 import { getPlayerIdForScope } from "../teams/player-identity.js";
@@ -58,17 +59,7 @@ export function triggerFreeballFlow({ persist = true, rerender = true, startSkil
   }
 }
 
-export function rememberReceiveContext(ev) {
-  if (!ev) return;
-  const scope = getTeamScopeFromEvent(ev);
-  const zone = ev.zone || ev.playerPosition || null;
-  scoutUiState.lastReceiveContext[scope] = {
-    zone,
-    evaluation: ev.code || ev.receiveEvaluation || null,
-    set: ev.set || null,
-    eventId: ev.eventId || null
-  };
-}
+
 
 export function applyReceiveContextToEvent(ev) {
   if (!ev) return;
@@ -137,7 +128,7 @@ export function findLastEventBySkills(events, { scope = null, skillIds = [] } = 
   const ids = Array.isArray(skillIds) ? skillIds : [skillIds];
   for (let i = list.length - 1; i >= 0; i -= 1) {
     const ev = list[i];
-    if (!ev || !ids.includes(ev.skillId)) continue;
+    if (!ev || Number(ev.set || 1) !== Number(matchState.state.currentSet || 1) || !ids.includes(ev.skillId)) continue;
     if (scope && getTeamScopeFromEvent(ev) !== scope) continue;
     return ev;
   }

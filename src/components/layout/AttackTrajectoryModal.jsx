@@ -57,7 +57,7 @@ export function AttackTrajectoryModal() {
         <div
           id="attack-trajectory-netpoints"
           className={
-            "attack-trajectory-netpoints" + (view.showNet ? "" : " hidden")
+            "attack-trajectory-netpoints" + (view.netFar ? " attack-trajectory-netpoints--far" : "") + (view.showNet ? "" : " hidden")
           }
           aria-label="Punti rete attacco"
         >

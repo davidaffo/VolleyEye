@@ -93,6 +93,19 @@ export function ScoutCourt({ scope }) {
   const view = courts[scope];
   const disabled = !!controls.scoutControlsDisabled;
   useLayoutEffect(() => {
+    const root = document.getElementById(scope === "opponent" ? "opponent-players-container" : "players-container");
+    const headers = [...(root?.querySelectorAll(".has-player-photo .court-header") || [])];
+    const update = header => {
+      if (header.offsetHeight > 0) header.parentElement.style.setProperty("--court-photo-top", `${header.offsetTop + header.offsetHeight}px`);
+    };
+    headers.forEach(update);
+    if (!headers.length || typeof ResizeObserver !== "function") return;
+    const observer = new ResizeObserver(entries => entries.forEach(entry => update(entry.target)));
+    headers.forEach(header => observer.observe(header));
+    return () => observer.disconnect();
+  }, [view, scope]);
+
+  useLayoutEffect(() => {
     if (!view.previousRects) return;
     appEvents.animateFlip(view.previousRects,
       `.court-card[data-team-scope="${scope}"]`,
@@ -230,6 +243,26 @@ export function ScoutCourt({ scope }) {
                   )
                 }
               >
+                    {card.restoreAction && (
+                      <button
+                        type="button"
+                        className="libero-return-btn"
+                        title={card.restoreLabel}
+                        disabled={disabled}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          actSkill(card.restoreAction, event);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.stopPropagation();
+                            actSkill(card.restoreAction, event);
+                          }
+                        }}
+                      >
+                        ↩
+                      </button>
+                    )}
                 <div
                   className={
                     "court-header" +
@@ -264,26 +297,7 @@ export function ScoutCourt({ scope }) {
                     >
                       {card.libero ? "L" : "P"}
                     </span>
-                    {card.restoreAction && (
-                      <button
-                        type="button"
-                        className="libero-return-btn"
-                        title={card.restoreLabel}
-                        disabled={disabled}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          actSkill(card.restoreAction, event);
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.stopPropagation();
-                            actSkill(card.restoreAction, event);
-                          }
-                        }}
-                      >
-                        ↩
-                      </button>
-                    )}
+
                   </div>
                   <div className="court-name-block inline">
                     <div

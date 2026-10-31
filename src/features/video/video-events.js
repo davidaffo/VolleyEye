@@ -1,3 +1,4 @@
+import { attachScoutActionSnapshot } from "../events/history-model.js";
 import { getDefaultSkillDurationMs } from "./playback-model.js";
 import { getSelectedRows, getActiveEventContextKey, getSelectedVideoRowForInsert } from "../events/selection-model.js";
 import { buildVideoOverlayLinesForEvent } from "./overlay-model.js";
@@ -14,7 +15,7 @@ import { computeEventVideoTime } from "./timing.js";
 import { saveState } from "../storage/save-state.js";
 import { formatNameWithNumberFor } from "../teams/roster-data.js";
 import { publishReactVideoOverlay } from "./view.js";
-import { openReactVideoScore, closeReactVideoScore, chooseReactFfmpegEncoder } from "../events/dialog-view.js";
+import { openReactVideoScore, closeReactVideoScore } from "../events/dialog-view.js";
 import { openReactVideoEdit, closeReactVideoEdit, readVideoEditInputs } from "./edit-view.js";
 import { getPointDirectionForScope, getEventPointValue } from "../analysis/scores.js";
 import { getNextEventId, recordSetAction } from "../events/recording-model.js";
@@ -118,8 +119,7 @@ export function buildSelectedSegments() {
           " " +
           (ev.skillId || "") +
           " " +
-          (ev.code || ""),
-        overlayLines: buildVideoOverlayLinesForEvent(ev)
+          (ev.code || "")
       };
     })
     .filter(seg => isFinite(seg.start) && isFinite(seg.end))
@@ -127,27 +127,9 @@ export function buildSelectedSegments() {
   return segments;
 }
 
-export function escapeFfmpegText(text) {
-  return String(text)
-    .replace(/\\/g, "\\\\")
-    .replace(/:/g, "\\:")
-    .replace(/'/g, "\\'")
-    .replace(/\n/g, "\\n");
-}
 
-export function buildFfmpegOverlayFilter(lines) {
-  if (!lines || !lines.length) return "";
-  const x = 24;
-  const yStart = 24;
-  const step = 28;
-  return lines
-    .map((line, idx) => {
-      const safe = escapeFfmpegText(line || "");
-      const y = yStart + step * idx;
-      return `,drawtext=text='${safe}':x=${x}:y=${y}:fontcolor=white:fontsize=24:box=1:boxcolor=black@0.55:boxborderw=8`;
-    })
-    .join("");
-}
+
+
 
 export function openVideoScoreModal() {
   if (!scoutUiState.elVideoScoreModal) return;
@@ -262,108 +244,19 @@ export function addEmptyVideoEventAfterSelection() {
   renderServeTrajectoryAnalysis();
 }
 
-export function getFileBasename(name) {
-  if (!name) return "";
-  const cleaned = String(name).split(/[\\/]/).pop();
-  return cleaned || "";
-}
 
-export function getFileExtension(name) {
-  const base = getFileBasename(name);
-  const idx = base.lastIndexOf(".");
-  if (idx > 0 && idx < base.length - 1) return base.slice(idx);
-  return "";
-}
 
-export function stripFileExtension(name) {
-  const base = getFileBasename(name);
-  const idx = base.lastIndexOf(".");
-  if (idx > 0) return base.slice(0, idx);
-  return base;
-}
 
-export function sanitizeVideoOutputBase(name) {
-  return String(name || "")
-    .trim()
-    .replace(/[\\/:*?"<>|]+/g, "-")
-    .replace(/\s+/g, " ")
-    .replace(/^\.+|\.+$/g, "")
-    .slice(0, 120);
-}
 
-export function buildFfmpegConcatCommand(segments, inputName, outputName, encoder = "cpu") {
-  if (!segments || !segments.length) return "";
-  const useGpu = encoder === "gpu";
-  const trims = segments
-    .map((seg, idx) => {
-      const start = seg.start.toFixed(3);
-      const end = seg.end.toFixed(3);
-      const overlay = buildFfmpegOverlayFilter(seg.overlayLines || []);
-      return `[0:v]trim=start=${start}:end=${end},setpts=PTS-STARTPTS${overlay}[v${idx}]`;
-    })
-    .join(";");
-  const concatOutput = useGpu
-    ? "[outv_raw];[outv_raw]format=nv12,hwupload[outv]"
-    : "[outv]";
-  const concat = segments.map((_, idx) => `[v${idx}]`).join("") +
-    `concat=n=${segments.length}:v=1:a=0${concatOutput}`;
-  const input = inputName || "input.mp4";
-  const output = outputName || "output.mp4";
-  const deviceArgs = useGpu ? " -vaapi_device /dev/dri/renderD128" : "";
-  const videoEncoder = useGpu
-    ? "-c:v h264_vaapi -rc_mode CQP -qp 24 -quality 8 -profile:v high"
-    : "-c:v libx264 -preset ultrafast -crf 24 -pix_fmt yuv420p";
-  return `ffmpeg -hide_banner${deviceArgs} -i "${input}" -filter_complex "${trims};${concat}" ` +
-    `-map "[outv]" -an ${videoEncoder} "${output}"`;
-}
 
-export function chooseFfmpegEncoder() {
-  const modal = document.getElementById("ffmpeg-encoder-modal");
-  const gpuButton = document.getElementById("ffmpeg-copy-gpu");
-  const cpuButton = document.getElementById("ffmpeg-copy-cpu");
-  if (!modal || !gpuButton || !cpuButton) return Promise.resolve("cpu");
 
-return chooseReactFfmpegEncoder();
-}
 
-export async function copyFfmpegFromSelection() {
-  const segments = buildSelectedSegments();
-  if (!segments.length) {
-    alert("Seleziona uno o più eventi per generare il comando ffmpeg.");
-    return;
-  }
-  const inputName = matchState.state.video && matchState.state.video.youtubeId ? "" : getFileBasename(matchState.state.video && matchState.state.video.fileName);
-  if (!inputName) {
-    alert("Carica un file video locale per usare il comando ffmpeg.");
-    return;
-  }
-  const ext = getFileExtension(inputName);
-  const defaultBase = stripFileExtension(inputName) || "output";
-  const presetName = (getActiveVideoFilterPresetName());
-  const suggestedBase = sanitizeVideoOutputBase(presetName) || (defaultBase + "_clip");
-  const outputBase = prompt("Nome file output (senza estensione):", suggestedBase);
-  if (!outputBase) return;
-  const sanitizedBase = sanitizeVideoOutputBase(stripFileExtension(outputBase.trim())) || "output";
-  const outputName = sanitizedBase + ext;
-  const encoder = await chooseFfmpegEncoder();
-  if (!encoder) return;
-  const cmd = buildFfmpegConcatCommand(segments, inputName, outputName, encoder);
-  try {
-    await navigator.clipboard.writeText(cmd);
-  } catch (_) {
-    const ta = document.createElement("textarea");
-    ta.value = cmd;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand("copy");
-    ta.remove();
-  }
-  alert(
-    encoder === "gpu"
-      ? "Comando ffmpeg GPU con overlay copiato. La codifica userà VAAPI."
-      : "Comando ffmpeg CPU con overlay copiato. La codifica userà il preset ultrafast."
-  );
-}
+
+
+
+
+
+
 
 
 export function recordTimeoutEvent() {
@@ -386,15 +279,16 @@ export function recordOpponentTimeoutEvent() {
   updateRotationDisplay();
 }
 
-export function recordSubstitutionEvent({ playerIn, playerOut, teamScope = "our" }) {
+export function recordSubstitutionEvent({ playerIn, playerOut, teamScope = "our", actionSnapshot = null }) {
   const label = playerIn || "Cambio";
-  recordSetAction("substitution", {
+  const event = recordSetAction("substitution", {
     playerName: label,
     playerIn: playerIn || null,
     playerOut: playerOut || null,
     code: "SUB",
     teamScope
   });
+  if (actionSnapshot) attachScoutActionSnapshot(event, actionSnapshot);
   saveState({ persistLocal: true });
   renderEventsLog();
   renderPlayers();

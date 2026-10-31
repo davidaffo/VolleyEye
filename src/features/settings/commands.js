@@ -32,6 +32,8 @@ export function changeReactSetting(field, value) {
       "predictiveSkillFlow",
       "opponentAutoRoleP1American",
       "opponentAttackTrajectoryEnabled",
+    "evaluateDefenseAfterBlock",
+    "opponentEvaluateDefenseAfterBlock",
       "setTypePromptEnabled",
       "opponentSetTypePromptEnabled",
       "serveTrajectoryEnabled",
@@ -44,7 +46,7 @@ export function changeReactSetting(field, value) {
     if (field === "predictiveSkillFlow" && !value)
       matchState.state.skillFlowOverride = null;
     saveState();
-    if (field === "predictiveSkillFlow" || field === "setTypePromptEnabled")
+    if (["predictiveSkillFlow", "setTypePromptEnabled", "evaluateDefenseAfterBlock", "opponentEvaluateDefenseAfterBlock"].includes(field))
       renderPlayers();
     if (
       field === "showServeTrajectoryLogOur" ||

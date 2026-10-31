@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useViewStore } from '../hooks/useViewStore.js';
 import { workspaceStore } from '../state/workspace-store.mjs';
 
-const initialLayout = { 'center-top': ['video'], 'center-bottom': [], right: ['dvw', 'serve-trajectories', 'events'] };
+const initialLayout = { 'center-top': ['video'], 'center-court': ['court'], 'center-bottom': [], right: ['dvw', 'serve-trajectories', 'events'] };
 
 // The portal owns its children; React's effect owns the stable host and its placement.
 // Moving a widget never changes its portal target or remounts media/canvas controls.
@@ -11,7 +11,7 @@ export function ScoutWidgetPortal({ id, className, 'data-scout-widget': widget, 
   const view = useViewStore(workspaceStore);
   const [host] = useState(() => typeof document === 'undefined' ? null : document.createElement('div'));
   const layout = view.layout || initialLayout;
-  const zone = Object.keys(initialLayout).find(zone => layout[zone].includes(widget));
+  const zone = Object.keys(initialLayout).find(zone => layout[zone]?.includes(widget));
   const dragging = view.drag?.widget === widget;
   const rootClass = (widget === 'video' ? className.replace(/\s*\bhidden\b/g, '') + (view.videoVisible ? '' : ' hidden') : className)
     + (dragging ? ' is-dragging' : '');

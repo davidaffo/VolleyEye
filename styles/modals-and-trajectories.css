@@ -55,6 +55,9 @@
   font-size: 0.78rem;
   font-weight: 700;
 }
+.attack-trajectory-netpoints--far button[data-net-point] {
+  left: calc(100% - var(--net-x, 0.5) * 100%);
+}
 .attack-trajectory-netpoints button[data-net-point].active {
   background: #2d6cdf;
   border-color: #2d6cdf;
@@ -333,7 +336,7 @@ body[data-theme="light"] .error-choice-btn.danger {
   border: 1px solid #1f2937;
   border-radius: 8px;
   padding: 1rem;
-  width: min(1200px, 96vw);
+  width: min(1600px, 96vw);
   max-height: 92vh;
   overflow: hidden;
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
@@ -378,7 +381,7 @@ body[data-theme="light"] .error-choice-btn.danger {
   -webkit-overflow-scrolling: touch;
 }
 .team-modal__dialog.team-modal__dialog--live-edit {
-  width: min(980px, 96vw);
+  width: min(1400px, 96vw);
 }
 .team-modal__dialog.team-modal__dialog--live-edit .team-manager-default,
 .team-modal__dialog.team-modal__dialog--live-edit #btn-export-team {
@@ -412,6 +415,6 @@ body[data-theme="light"] .error-choice-btn.danger {
   align-items: center;
 }
 .team-manager-tablewrap {
-  max-height: 45vh;
+  max-height: 55vh;
   overflow: auto;
 }

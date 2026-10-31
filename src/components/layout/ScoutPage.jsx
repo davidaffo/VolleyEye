@@ -2,7 +2,7 @@ import { ScoutWidgetPortal, ScoutWidgetZone, ScoutWidgetDragFeedback } from '../
 import { ManualScoreControls } from '../ScoreControls.jsx';
 import { YouTubeFrame } from '../VideoControls.jsx';
 import { ButtonList } from "../ui/ButtonList.jsx";
-import { ScoutTeamPanel } from '../ScoutTeamPanel.jsx';
+import { ScoutTeamPanel, SingleTeamOpponentPanel } from '../ScoutTeamPanel.jsx';
 import { EventLogSummary } from '../EventTable.jsx';
 import { TabPanel } from "../ui/TabPanel.jsx";
 import { ScoutWidgetHandle } from "../ScoutWidgetHandle.jsx";
@@ -162,20 +162,6 @@ export function ScoutPage() {
         </div>
         <PanelResizeHandle panel="left" />
         <div className="section scout-col-center" data-scout-panel="team">
-          <div className="set-type-wrapper">
-            <div
-              className="set-type-shortcuts set-type-inline"
-              id="set-type-shortcuts"
-              style={{ display: "none" }}
-            >
-              <div className="set-type-shortcuts__head">
-                <span className="set-type-shortcuts__label">
-                  {"Tipo alzata"}
-                </span>
-              </div>
-              <SetTypeShortcuts />
-            </div>
-          </div>
           <ScoutWidgetZone
             id="scout-widgets-center-top"
             className="scout-widget-zone scout-widget-zone--center"
@@ -198,8 +184,25 @@ export function ScoutPage() {
               </div>
             </ScoutWidgetPortal>
           </ScoutWidgetZone>
+          <ScoutWidgetZone className="scout-widget-zone scout-widget-zone--center" data-scout-widget-zone="center-court">
+            <ScoutWidgetPortal className="scout-widget scout-court-widget" data-scout-widget="court">
+          <div className="set-type-wrapper">
+            <div
+              className="set-type-shortcuts set-type-inline"
+              id="set-type-shortcuts"
+              style={{ display: "none" }}
+            >
+              <div className="set-type-shortcuts__head">
+                <span className="set-type-shortcuts__label">
+                  {"Tipo alzata"}
+                </span>
+              </div>
+              <SetTypeShortcuts />
+            </div>
+          </div>
           <div className="players-area" id="court-area">
             <div id="court-overlay" />
+            <SingleTeamOpponentPanel />
             <ScoutTeamPanel scope="opponent" />
             <div className="court-net-divider">
               <span>{"Rete"}</span>
@@ -222,8 +225,10 @@ export function ScoutPage() {
               />
             </div>
             <ScoutTeamPanel scope="our" />
-            <NextSetPreparation />
           </div>
+            </ScoutWidgetPortal>
+          </ScoutWidgetZone>
+          <NextSetPreparation />
           <ScoutWidgetZone
             id="scout-widgets-center-bottom"
             className="scout-widget-zone scout-widget-zone--center"

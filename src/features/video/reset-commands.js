@@ -6,6 +6,7 @@ import { clearCachedLocalVideo } from "./local-file-storage.js";
 export function resetMatchVideoPlayback({ includeScout = false } = {}) {
   clearEventSelection({ clearContexts: true });
   clearCachedLocalVideo();
+  workspaceLayoutState.videoLocalFile = null;
   stopYoutube(workspaceLayoutState.ytPlayer);
   if (includeScout) stopYoutube(workspaceLayoutState.ytPlayerScout);
   resetLocalVideo(matchState.elAnalysisVideo);

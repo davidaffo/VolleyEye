@@ -1,3 +1,5 @@
+import { downloadBlob } from "../../../js/globals.js";
+import { sanitizeVideoOutputBase, stripFileExtension } from "./export-model.js";
 import { getPlayByPlayStartTime, getPlayByPlayDurationSeconds } from "./playback-model.js";
 import { getVideoPlayByPlayRows, getPlayByPlayStartIndex, getVideoMobileCurrentRow, getSelectedRows } from "../events/selection-model.js";
 import { session } from "../state/video-playback.js";
@@ -345,6 +347,7 @@ export function handleVideoFileChange(file, options = {}) {
   }
   const url = URL.createObjectURL(file);
   workspaceLayoutState.videoObjectUrl = url;
+  workspaceLayoutState.videoLocalFile = file;
 
   if (!restoring) persistLocalVideoReference(fileHandle);
   matchState.state.video = matchState.state.video || {
@@ -422,5 +425,33 @@ export function syncFirstSkillToVideo() {
   renderVideoAnalysis();
   if (typeof window !== "undefined" && window.trackVolleyEyeEventOnce) {
     window.trackVolleyEyeEventOnce("video_sync_used");
+  }
+}
+
+export async function saveCurrentVideoFrame() {
+  if (matchState.state.video && matchState.state.video.youtubeId) {
+    alert("Per salvare un fotogramma carica il file video locale. Il player YouTube non consente di estrarre immagini dal browser.");
+    return;
+  }
+  const video = matchState.elAnalysisVideo;
+  if (!video || video.readyState < 2 || !video.videoWidth || !video.videoHeight || video.seeking) {
+    alert("Carica un video locale e attendi che il fotogramma sia visibile prima di salvarlo.");
+    return;
+  }
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("canvas-unavailable");
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const base = sanitizeVideoOutputBase(stripFileExtension(matchState.state.video && matchState.state.video.fileName)) || "video";
+    const timestamp = video.currentTime.toFixed(3).replace(".", "-");
+    const fileName = `${base}_fotogramma_${timestamp}s.jpg`;
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.9));
+    if (!blob) throw new Error("frame-export-failed");
+    downloadBlob(blob, fileName);
+  } catch (_) {
+    alert("Impossibile salvare il fotogramma. Riprova caricando il file video locale.");
   }
 }

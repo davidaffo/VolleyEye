@@ -25,6 +25,7 @@ export function handleYoutubeUrlLoad(url) {
     }
     workspaceLayoutState.videoObjectUrl = "";
   }
+  workspaceLayoutState.videoLocalFile = null;
   clearCachedLocalVideo();
   if (matchState.elAnalysisVideo) {
     matchState.elAnalysisVideo.pause();
@@ -74,6 +75,7 @@ export function clearLoadedVideo() {
     }
     workspaceLayoutState.videoObjectUrl = "";
   }
+  workspaceLayoutState.videoLocalFile = null;
   clearCachedLocalVideo();
   clearYoutubeSource();
   if (matchState.elAnalysisVideo) {

@@ -37,6 +37,9 @@ export function replaceTeamPlayerNameReferences(
   idx,
   playerId = "",
 ) {
+  renamePlayerInScoutUndoStates(oldName, newName, scope);
+  const preferredKey = scope === "opponent" ? "opponentPreferredLibero" : "preferredLibero";
+  if (matchState.state[preferredKey] === oldName) matchState.state[preferredKey] = newName;
   const fields = referenceFields[scope];
   if (scope === "our") ensureCourtShape();
   else
@@ -225,4 +228,35 @@ export function getRemovedLiveTeamPlayers(
       ? getCurrentOpponentPayload()
       : getCurrentTeamPayload());
   return getLiveRosterChange(currentPayload, payload).removed;
+}
+
+export function renamePlayerInScoutUndoStates(oldName, newName, scope = "our") {
+  const opponent = scope === "opponent";
+  const courtKeys = opponent ? ["opponentCourt", "opponentAutoRoleBaseCourt"] : ["court", "autoRoleBaseCourt"];
+  const mapKey = opponent ? "opponentLiberoAutoMap" : "liberoAutoMap";
+  const preferredKey = opponent ? "opponentPreferredLibero" : "preferredLibero";
+  const renameStarts = starts => Object.values(starts || {}).forEach(start => {
+    const side = start && start[opponent ? "opponent" : "our"];
+    if (side) side.court = replacePlayerNameInLineup(side.court, oldName, newName);
+  });
+  (matchState.state.events || []).forEach(event => {
+    if (!event) return;
+    const receipt = event.undoState || event.__undoSnapshot;
+    const before = receipt && receipt.before;
+    if (before) {
+      courtKeys.forEach(key => {
+        if (Array.isArray(before[key])) before[key] = replacePlayerNameInLineup(before[key], oldName, newName);
+      });
+      if (before[mapKey]) before[mapKey] = Object.fromEntries(Object.entries(before[mapKey]).map(([replaced, libero]) => [
+        replaced === oldName ? newName : replaced, libero === oldName ? newName : libero
+      ]));
+      if (before[preferredKey] === oldName) before[preferredKey] = newName;
+      if (before.pendingServe && before.pendingServe.scope === scope && before.pendingServe.playerName === oldName) {
+        before.pendingServe.playerName = newName;
+      }
+      renameStarts(before.setStarts);
+    }
+    renameStarts(event.prevSetStarts);
+    renameStarts(event.nextSetStarts);
+  });
 }

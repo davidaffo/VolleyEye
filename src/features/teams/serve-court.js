@@ -26,7 +26,8 @@ export function getServeDisplayCourt(scope = "our") {
   if (!Array.isArray(baseCourt) || baseCourt.length === 0) return [];
   const shaped = (ensureCourtShapeFor(baseCourt));
   if (isServingForScope(scope)) {
-    return removeLiberosAndRestoreForScope(shaped, scope);
+    const restored = removeLiberosAndRestoreForScope(shaped, scope);
+    return shaped.map((slot, idx) => idx === 0 ? restored[idx] : slot);
   }
   return shaped;
 }

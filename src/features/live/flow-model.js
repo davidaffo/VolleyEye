@@ -146,6 +146,8 @@ export function getPredictedSkillIdSingle() {
   const dir = (getPointDirection(last));
   if (dir === "for") return resolveEnabledSkill("serve") || fallback;
   if (dir === "against") return resolveEnabledSkill("pass") || fallback;
+  if (last.skillId === "block" && last.code === "+" && !matchState.state.evaluateDefenseAfterBlock)
+    return resolveEnabledSkill("second") || fallback;
   return resolveEnabledSkill(flowNext(last.skillId)) || fallback;
 }
 
@@ -169,8 +171,9 @@ export function computeTwoTeamFlowFromEvent(ev) {
   if (ev.skillId === "defense" && ev.code === "-") {
     return { teamScope: other, skillId: "defense" };
   }
-  if (ev.skillId === "block" && ev.code === "-") {
-    return { teamScope: other, skillId: "defense" };
+  if (ev.skillId === "block" && (ev.code === "+" || ev.code === "-")) {
+    const evaluateDefense = scope === "opponent" ? matchState.state.opponentEvaluateDefenseAfterBlock : matchState.state.evaluateDefenseAfterBlock;
+    return { teamScope: ev.code === "+" ? scope : other, skillId: evaluateDefense ? "defense" : "second" };
   }
   switch (ev.skillId) {
     case "serve":
@@ -210,6 +213,8 @@ export function getLastFlowEvent(events) {
   for (let i = list.length - 1; i >= 0; i -= 1) {
     const ev = list[i];
     if (!ev) continue;
+    if (ev.actionType === "set-change" || ev.actionType === "match-end") break;
+    if (Number(ev.set || 1) !== Number(matchState.state.currentSet || 1)) continue;
     if (skillIds.has(ev.skillId)) return ev;
     if (ev.skillId === "manual") {
       const dir = (getPointDirection(ev));
@@ -587,4 +592,16 @@ export function resetSetTypeState() {
 
 export function clearReceiveContext(scope = "our") {
   scoutUiState.lastReceiveContext[scope] = null;
+}
+
+export function rememberReceiveContext(ev) {
+  if (!ev) return;
+  const scope = getTeamScopeFromEvent(ev);
+  const zone = ev.zone || ev.playerPosition || null;
+  scoutUiState.lastReceiveContext[scope] = {
+    zone,
+    evaluation: ev.code || ev.receiveEvaluation || null,
+    set: ev.set || null,
+    eventId: ev.eventId || null
+  };
 }

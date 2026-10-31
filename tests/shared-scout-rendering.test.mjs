@@ -168,7 +168,7 @@ test("liberi e rientri usano le stesse interazioni per entrambe le squadre", () 
     c.renderLiberoBench();
     c.__flushReactViews();
     const used = dom.window.document.querySelector(`.libero-tags [data-team-scope="${scope}"][data-player-name="Libero"]`);
-    assert.equal(used.getAttribute('aria-disabled'), 'true');
+    assert.equal(used, null);
     const replaced = dom.window.document.querySelector(`.libero-tags [data-team-scope="${scope}"][data-player-name="${replacedName}"]`);
     replaced.click();
     assert.deepEqual(c.restored, [4, scope]);
@@ -213,6 +213,7 @@ test("cambi, ingresso libero e rientro usano la stessa logica e modificano solta
   c.registerLiberoPairForScope = (replaced, libero, scope) => { c.pair = [replaced, libero, scope]; };
   const substitutions = [];
   c.recordSubstitutionEvent = event => substitutions.push(event);
+  c.captureScoutActionSnapshot = () => ({ version: 1 });
   load(c, roster, [
     'getTeamPlayers', 'getTeamLiberos', 'setTeamPreferredLibero', 'getTeamPreferredLibero',
     'setTeamAutoLiberoRole', 'setTeamAutoLiberoBackline', 'isLiberoForScope',

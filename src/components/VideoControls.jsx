@@ -1,3 +1,4 @@
+import { videoClipStore } from "../state/video-clip-store.mjs";
 import { CommandButton } from "./ui/CommandButton.jsx";
 import { FileImportInput } from "./ui/FileImportInput.jsx";
 
@@ -12,7 +13,8 @@ const useVideoView = () => useViewStore(videoViewStore);
 const actions = {
   "btn-clear-video": ["clearLoadedVideo"],
   "btn-sync-first-skill": ["syncFirstSkillToVideo"],
-  "btn-copy-ffmpeg": ["copyFfmpegFromSelection"],
+  "btn-download-video-clip": ["downloadVideoFromSelection"],
+  "btn-save-video-frame": ["saveCurrentVideoFrame"],
   "btn-fix-video-score": ["openVideoScoreModal"],
   "btn-video-add-event": ["addEmptyVideoEventAfterSelection"],
   "btn-offset-skills": ["openOffsetModal"],
@@ -27,14 +29,16 @@ const actions = {
   "video-mobile-filter-apply": ["applyReactVideoMobileFilters"],
 };
 export function VideoActionButton({ id, children, ...props }) {
+  const clip = useViewStore(videoClipStore);
   return (
     <CommandButton
       {...props}
+      disabled={id === "btn-download-video-clip" ? clip.busy : props.disabled}
       id={id}
       command={actions[id][0]}
       args={actions[id].slice(1)}
     >
-      {children}
+      {id === "btn-download-video-clip" ? clip.label : children}
     </CommandButton>
   );
 }
@@ -79,8 +83,8 @@ export function VideoSourceControls({ scout = false }) {
           <VideoActionButton id="btn-sync-first-skill" className="secondary">
             Sincronizza prima skill
           </VideoActionButton>
-          <VideoActionButton id="btn-copy-ffmpeg" className="secondary">
-            Copia ffmpeg veloce + overlay
+          <VideoActionButton id="btn-download-video-clip" className="secondary" title="Scarica gli eventi selezionati senza ricodifica, audio o overlay. I confini si adattano ai fotogrammi chiave.">
+            Scarica taglio
           </VideoActionButton>
           <label className="auto-rotate-toggle">
             <input

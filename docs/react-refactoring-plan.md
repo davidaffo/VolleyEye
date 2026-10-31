@@ -10,6 +10,8 @@ Ridurre codice applicativo e duplicazioni attraverso logica condivisa e componen
 
 Restano 8 cambi e 2 timeout, definiti in `js/globals.js`, con superamento consentito. Restano import/export DataVolley, archivio e migrazioni dei dati, scout singolo/doppio, video locale/YouTube, touch e tastiera, stampa, export HTML autonomo e PWA offline. GitHub Pages continua a ricevere la build Vite dal workflow; il refactoring non pubblica o cambia la configurazione remota.
 
+Gli aggiornamenti successivi di main sono documentati nella [revisione dei sette commit integrati](main-integration.md), con le verifiche sulla versione risultante.
+
 ## Misurazione iniziale
 
 Riferimento: `main` a `de8c85075c6ef296cb7310c89ece9f0c4ae00c7a`.

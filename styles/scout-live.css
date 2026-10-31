@@ -106,6 +106,48 @@
 .scout-live .court-net-divider {
   gap: 0.35rem;
 }
+.single-team-opponent-panel {
+  order: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.55rem;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 0.6rem;
+}
+.single-team-opponent-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.single-team-opponent-panel [data-single-opponent-rotation] {
+  flex: 0 1 10rem;
+  min-width: 0;
+}
+.single-team-opponent-panel .rotation-controls {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) 2rem;
+}
+.single-team-opponent-panel .rotation-select {
+  margin: 0;
+  width: 100%;
+}
+.single-team-opponent-actions {
+  flex: 1 1 16rem;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+}
+.single-team-opponent-actions #single-team-score-actions {
+  display: contents;
+}
+.single-team-opponent-actions button {
+  flex: 1 1 0;
+  min-width: 0;
+}
 .scout-live .net-actions-default {
   gap: 0.25rem;
 }
@@ -128,6 +170,31 @@
 }
 .scout-live button {
   overflow-wrap: anywhere;
+}
+/* Un'unica altezza per i comandi, anche quando gli stili del componente
+   prevedono dimensioni maggiori. Le maniglie mantengono la loro geometria. */
+.scout-live button:not(:where([role="separator"], .scout-widget-handle, .video-resize-handle, .libero-return-btn)),
+.scout-live .file-btn {
+  box-sizing: border-box;
+  height: var(--sl-btn-h) !important;
+  min-height: var(--sl-btn-h) !important;
+  max-height: var(--sl-btn-h) !important;
+  padding-block: 0 !important;
+  font-size: var(--sl-btn-fs) !important;
+  line-height: 1.1 !important;
+  align-items: center;
+  justify-content: center;
+}
+.scout-live .rotation-controls,
+.scout-live .rotation-controls .rotation-select {
+  box-sizing: border-box;
+  height: var(--sl-btn-h) !important;
+  min-height: var(--sl-btn-h) !important;
+  max-height: var(--sl-btn-h) !important;
+}
+.scout-live :is(#btn-swap-libero, #btn-swap-libero-opp) {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 @media (max-width: 1350px) {
   .scout-live .sl-toolbar {
@@ -186,4 +253,3 @@
     grid-column: 1 / -1;
   }
 }
-

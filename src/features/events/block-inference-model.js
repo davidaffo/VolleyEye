@@ -24,7 +24,7 @@ export function applyBlockInference(blockEvent, blockScope, blockCode) {
   let attackEvent = null;
   for (let i = events.length - 1; i >= 0; i -= 1) {
     const ev = events[i];
-    if (!ev || ev.skillId !== "attack") continue;
+    if (!ev || Number(ev.set || 1) !== Number(matchState.state.currentSet || 1) || ev.skillId !== "attack") continue;
     if (getTeamScopeFromEvent(ev) !== attackScope) continue;
     if (ev.pendingBlockEval || ev.code === "/") {
       attackEvent = ev;
@@ -32,6 +32,15 @@ export function applyBlockInference(blockEvent, blockScope, blockCode) {
     }
   }
   if (!attackEvent) return null;
+  const undo = blockEvent.undoState;
+  const keys = ["code", "pendingBlockEval", "derivedFromBlock"];
+  const patch = { eventId: attackEvent.eventId, before: {}, after: {} };
+  keys.forEach(key => { patch.before[key] = attackEvent[key] ?? null; });
+  const finish = () => {
+    keys.forEach(key => { patch.after[key] = attackEvent[key]; });
+    if (undo) (undo.eventPatches || (undo.eventPatches = [])).push(patch);
+    return attackEvent;
+  };
   if (blockCode === "/") {
     const prevCode = attackEvent.code;
     attackEvent.code = "";
@@ -39,7 +48,7 @@ export function applyBlockInference(blockEvent, blockScope, blockCode) {
     attackEvent.derivedFromBlock = true;
     const attackIdx = resolvePlayerIdx(attackEvent);
     updateSkillStatsForEvent(attackScope, attackIdx, "attack", prevCode, "");
-    return attackEvent;
+    return finish();
   }
   const prevCode = attackEvent.code;
   const nextCode = getAttackCodeFromBlockCode(blockCode);
@@ -48,5 +57,5 @@ export function applyBlockInference(blockEvent, blockScope, blockCode) {
   attackEvent.derivedFromBlock = true;
   const attackIdx = resolvePlayerIdx(attackEvent);
   updateSkillStatsForEvent(attackScope, attackIdx, "attack", prevCode, attackEvent.code);
-  return attackEvent;
+  return finish();
 }

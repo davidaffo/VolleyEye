@@ -10,6 +10,7 @@ const workspaceLayoutState = session;
 export function getDefaultScoutWidgetLayout() {
   return {
     customized: false,
+    "center-court": ["court"],
     "center-top": matchState.state.useOpponentTeam ? [] : ["video"],
     "center-bottom": [],
     right: matchState.state.useOpponentTeam
@@ -26,7 +27,7 @@ export function normalizeScoutWidgetLayout() {
     matchState.state.uiScoutWidgetLayout = getDefaultScoutWidgetLayout();
     return matchState.state.uiScoutWidgetLayout;
   }
-  const normalized = { customized: true, "center-top": [], "center-bottom": [], right: [] };
+  const normalized = { customized: true, "center-top": [], "center-court": [], "center-bottom": [], right: [] };
   const used = new Set();
   trajectoriesState.SCOUT_WIDGET_ZONE_IDS.forEach(zoneId => {
     const entries = Array.isArray(raw[zoneId]) ? raw[zoneId] : [];
@@ -37,7 +38,7 @@ export function normalizeScoutWidgetLayout() {
     });
   });
   trajectoriesState.SCOUT_WIDGET_IDS.forEach(widgetId => {
-    if (!used.has(widgetId)) normalized.right.push(widgetId);
+    if (!used.has(widgetId)) normalized[widgetId === "court" ? "center-court" : "right"].push(widgetId);
   });
   matchState.state.uiScoutWidgetLayout = normalized;
   return normalized;
@@ -189,11 +190,13 @@ export function moveScoutWidgetWithKeyboard(event, widget) {
   let before = null;
   if (event.key === "ArrowUp") {
     if (index > 0) before = siblings[index - 1];
-    else if (zoneId === "center-bottom") destination = getScoutWidgetZone("center-top");
+    else if (zoneId === "center-bottom") destination = getScoutWidgetZone("center-court");
+    else if (zoneId === "center-court") destination = getScoutWidgetZone("center-top");
     else return;
   } else if (event.key === "ArrowDown") {
     if (index < siblings.length - 1) before = siblings[index + 1].nextElementSibling;
-    else if (zoneId === "center-top") destination = getScoutWidgetZone("center-bottom");
+    else if (zoneId === "center-top") destination = getScoutWidgetZone("center-court");
+    else if (zoneId === "center-court") destination = getScoutWidgetZone("center-bottom");
     else return;
   } else if (event.key === "ArrowLeft") {
     if (zoneId === "center-top") return;

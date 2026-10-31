@@ -9,6 +9,7 @@ import { getActiveVideoPlaybackSeconds } from "../video/media-state.js";
 import { openAttackTrajectoryModal } from "./trajectory-dialog.js";
 
 export async function startAttackSelection(playerIdx, setTypeChoice, onDone, scope = "our") {
+  const flowVersion = scoutUiState.partialSkillFlowVersions[scope];
   const key = makePlayerKey(scope, playerIdx);
   if (
     scoutUiState.attackInlinePlayer !== null &&
@@ -34,6 +35,7 @@ export async function startAttackSelection(playerIdx, setTypeChoice, onDone, sco
       forceFar,
       scope
     });
+    if (flowVersion !== scoutUiState.partialSkillFlowVersions[scope]) return;
     if (coords) {
       meta.trajectory = coords;
       meta.trajectorySkipped = false;
@@ -55,6 +57,7 @@ export async function startAttackSelection(playerIdx, setTypeChoice, onDone, sco
 }
 
 export async function startServeTypeSelection(playerIdx, type, onDone, scope = "our") {
+  const flowVersion = scoutUiState.partialSkillFlowVersions[scope];
   const key = makePlayerKey(scope, playerIdx);
   if (scoutUiState.serveTypeInlinePlayer !== null && scoutUiState.serveTypeInlinePlayer !== key) return;
   scoutUiState.serveTypeInlinePlayer = key;
@@ -71,6 +74,7 @@ export async function startServeTypeSelection(playerIdx, type, onDone, scope = "
   if (serveTrajEnabled) {
     const forceFar = isFarSideForScope(scope);
     const traj = await collectServeTrajectory(Object.assign({}, meta, { forceFar, scope }));
+    if (flowVersion !== scoutUiState.partialSkillFlowVersions[scope]) return;
     meta.serveType = traj.serveType || type;
     meta.serveStart = traj.serveStart || null;
     meta.serveEnd = traj.serveEnd || null;
@@ -113,6 +117,7 @@ export async function startServeTypeSelection(playerIdx, type, onDone, scope = "
 }
 
 export async function collectServeTrajectory(prefill = {}) {
+  const flowVersion = scoutUiState.partialSkillFlowVersions[prefill.scope || "our"];
   const startRes = await openAttackTrajectoryModal({
     mode: "serve-start",
     start: prefill.serveStart || null,
@@ -120,6 +125,7 @@ export async function collectServeTrajectory(prefill = {}) {
     forceFar: prefill.forceFar,
     scope: prefill.scope
   });
+  if (flowVersion !== scoutUiState.partialSkillFlowVersions[prefill.scope || "our"]) return null;
   const serveType = (startRes && startRes.serveType) || prefill.serveType || "JF";
   const serveStart = startRes && startRes.point ? startRes.point : prefill.serveStart || null;
   const endRes = await openAttackTrajectoryModal({
@@ -128,6 +134,7 @@ export async function collectServeTrajectory(prefill = {}) {
     forceFar: prefill.forceFar,
     scope: prefill.scope
   });
+  if (flowVersion !== scoutUiState.partialSkillFlowVersions[prefill.scope || "our"]) return null;
   const serveEnd = endRes && endRes.point ? endRes.point : prefill.serveEnd || null;
   let videoTime = null;
   if (matchState.state.videoScoutMode && endRes && endRes.point) {

@@ -97,6 +97,45 @@ test("in doppia squadra lo slash d'attacco apre direttamente il muro avversario"
   );
 });
 
+test("il flag della squadra che mura sceglie difesa oppure alzata dopo + e -", () => {
+  for (const teamScope of ["our", "opponent"]) {
+    for (const enabled of [false, true]) {
+      for (const code of ["+", "-"]) {
+        const context = makeContext(true, "opponent");
+        const block = { teamScope, skillId: "block", code };
+        context.state.evaluateDefenseAfterBlock = teamScope === "our" ? enabled : !enabled;
+        context.state.opponentEvaluateDefenseAfterBlock = teamScope === "opponent" ? enabled : !enabled;
+        context.getTeamScopeFromEvent = event => event.teamScope;
+        context.getLastFlowEvent = () => block;
+        context.getPointDirection = () => null;
+        vm.runInNewContext(twoTeamFlowSource, context);
+        const expectedScope = code === "+" ? teamScope : context.getOppositeScope(teamScope);
+        const skillId = enabled ? "defense" : "second";
+        assert.deepEqual(JSON.parse(JSON.stringify(context.getAutoFlowState())), {
+          teamScope: expectedScope, skillId
+        });
+        assert.equal(context.getPredictedSkillIdForScope(expectedScope), skillId);
+        assert.equal(context.getPredictedSkillIdForScope(context.getOppositeScope(expectedScope)), null);
+      }
+    }
+  }
+});
+
+test("in singola il muro + passa ad alzata soltanto con il flag spento", () => {
+  const singleSource = source.slice(source.indexOf("function getPredictedSkillIdSingle"), source.indexOf("function computeTwoTeamFlowFromEvent"));
+  for (const enabled of [false, true]) {
+    const context = {
+      state: { predictiveSkillFlow: true, evaluateDefenseAfterBlock: enabled, events: [] },
+      getEnabledSkills: () => [{ id: "defense" }, { id: "second" }],
+      isSkillEnabled: () => true,
+      getLastFlowEvent: () => ({ skillId: "block", code: "+" }),
+      getPointDirection: () => null
+    };
+    vm.runInNewContext(singleSource, context);
+    assert.equal(context.getPredictedSkillIdSingle(), enabled ? "defense" : "second");
+  }
+});
+
 test("il muro previsto in doppia squadra non viene degradato a prompt sopra la difesa", () => {
   const context = {
     state: { useOpponentTeam: true, predictiveSkillFlow: true },

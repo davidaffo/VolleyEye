@@ -44,19 +44,18 @@ function PlayerRow({ player, liveEdit }) {
       }
       data-player-id={player.id}
     >
-      <RosterInputCell type="number"
-min="0"
-max="99"
+      <RosterInputCell type="text" inputMode="numeric" pattern="[0-9]{0,2}" maxLength={2}
+onFocus={event => event.target.select()} onClick={event => event.target.select()}
 value={number}
 onBlur={() => {
             if (number !== (player.number || "")) act(player.onNumber, number);
-          }} onChange={setNumber} />
+          }} onChange={value => setNumber(value.replace(/\D/g, "").slice(0, 2))} />
       <RosterInputCell placeholder="Cognome"
 value={last}
-onBlur={nameChanged} onChange={setLast} />
+onBlur={nameChanged} onChange={value => { setLast(value); act(player.onName, first, value, { matchDatabase: false }); }} />
       <RosterInputCell placeholder="Nome"
 value={first}
-onBlur={nameChanged} onChange={setFirst} />
+onBlur={nameChanged} onChange={value => { setFirst(value); act(player.onName, value, last, { matchDatabase: false }); }} />
       <td>
         <div className="team-manager-photo-cell">
           <button

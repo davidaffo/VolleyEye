@@ -97,10 +97,7 @@ test("court card data stays cloneable and resolves homonymous players, numbers a
     assert.equal(replaced.restorePosition, 4);
     assert.equal(replaced.replaced, true);
     assert.equal(replaced.used, false);
-    assert.equal(
-      bench.our.find((player) => player.name === "Libero").used,
-      true,
-    );
+    assert.equal(bench.our.find(player => player.name === "Libero"), undefined);
   }));
 test("point and error choices use the active scope and retain the replaced player among error bench choices", () =>
   setup((state) => {

@@ -1,3 +1,4 @@
+import { captureScoutActionSnapshot, attachScoutActionSnapshot } from "../events/history-model.js";
 import { getLineupModalLiberos, formatLineupModalName, getLineupModalPlayers, getLineupModalNumbers } from "../teams/lineup-selectors.js";
 import { publishLineupView, setLineupOpen } from "./lineup-view.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
@@ -405,6 +406,7 @@ export function closeSetStartModal() {
 }
 
 export function saveLineupModal({ countSubstitutions = false } = {}) {
+  const actionSnapshot = countSubstitutions ? captureScoutActionSnapshot() : null;
   const prevCourt = countSubstitutions ? getLineupBaseCourtFromState() : null;
   const nextCourt = getCourtShape(scoutUiState.lineupModalCourt);
   const applyDefaultRotation = scoutUiState.lineupModalDefaultRotation;
@@ -448,6 +450,10 @@ export function saveLineupModal({ countSubstitutions = false } = {}) {
     const scope = scoutUiState.lineupModalScope === "opponent" ? "opponent" : "our";
     const subs = getLineupSubstitutions(prevCourt || [], nextCourt, scope);
     subs.forEach(sub => recordSubstitutionEvent(Object.assign({}, sub, { teamScope: scope })));
+    if (subs.length) {
+      attachScoutActionSnapshot(matchState.state.events[matchState.state.events.length - 1], actionSnapshot);
+      saveState({ persistLocal: true });
+    }
   }
   scoutUiState.lineupModalDefaultRotation = null;
   closeLineupModal();

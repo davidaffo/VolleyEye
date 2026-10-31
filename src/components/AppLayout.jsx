@@ -32,7 +32,6 @@ import { PlayersDbModal } from "./layout/PlayersDbModal.jsx";
 import { PlayerPhotoModal } from "./layout/PlayerPhotoModal.jsx";
 import { SettingsModal } from "./layout/SettingsModal.jsx";
 import { MultiscoutModal } from "./layout/MultiscoutModal.jsx";
-import { FfmpegEncoderModal } from "./layout/FfmpegEncoderModal.jsx";
 import { FloatingServeErrorBtn } from "./layout/FloatingServeErrorBtn.jsx";
 import { AppFooter } from "./layout/AppFooter.jsx";
 
@@ -89,7 +88,6 @@ export const AppLayout = memo(function AppLayout() {
       <VideoEditModal kind="unify" />
       <MultiscoutModal />
       <VideoEditModal kind="duration" />
-      <FfmpegEncoderModal />
       <FloatingServeErrorBtn />
       <AppFooter />
       <AppDialogs />

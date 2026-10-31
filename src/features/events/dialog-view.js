@@ -1,4 +1,4 @@
-import { bulkEditStore, videoScoreStore, ffmpegEncoderStore } from "../../state/roster-import-store.mjs";
+import { bulkEditStore, videoScoreStore } from "../../state/roster-import-store.mjs";
 import { buildReactBulkControl } from "./editor-controls.js";
 import { setModalOpenState } from "../layout/modals.js";
 
@@ -27,21 +27,4 @@ export function openReactVideoScore(home, away) {
 
 export function closeReactVideoScore() {
   videoScoreStore.publish({ open: false });
-}
-
-export function chooseReactFfmpegEncoder() {
-  return new Promise((resolve) => {
-    let settled = false;
-    ffmpegEncoderStore.publish({
-      open: true,
-      choose: (choice) => {
-        if (settled) return;
-        settled = true;
-        ffmpegEncoderStore.publish({ open: false, choose: null });
-        setModalOpenState(false);
-        resolve(choice);
-      },
-    });
-    setModalOpenState(true);
-  });
 }

@@ -4,6 +4,7 @@ import { normalizeMetricConfig } from "./rules.js";
 import { settingsStore } from "../../state/roster-import-store.mjs";
 
 const settingsFields = [
+    "useOpponentTeam",
     "autoRotate",
     "autoRolePositioning",
     "autoRoleP1American",
@@ -13,6 +14,8 @@ const settingsFields = [
     "autoLiberoRole",
     "opponentAutoRoleP1American",
     "opponentAttackTrajectoryEnabled",
+    "evaluateDefenseAfterBlock",
+    "opponentEvaluateDefenseAfterBlock",
     "forceMobileLayout",
     "videoScoutMode",
     "setTypePromptEnabled",

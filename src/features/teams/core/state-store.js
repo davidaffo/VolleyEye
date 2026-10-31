@@ -167,6 +167,7 @@ export function applyStateSnapshot(parsed, options = {}) {
   matchState.state.opponentRotation = Math.min(6, Math.max(1, parseInt(parsed.opponentRotation, 10) || 1));
   matchState.state.opponentCourtViewMirrored = !!parsed.opponentCourtViewMirrored;
   matchState.state.opponentAutoRoleP1American = !!parsed.opponentAutoRoleP1American;
+  matchState.state.opponentEvaluateDefenseAfterBlock = !!parsed.opponentEvaluateDefenseAfterBlock;
   matchState.state.opponentAttackTrajectoryEnabled = parsed.opponentAttackTrajectoryEnabled !== false;
   matchState.state.opponentServeTrajectoryEnabled = parsed.opponentServeTrajectoryEnabled !== false;
   matchState.state.opponentSetTypePromptEnabled = parsed.opponentSetTypePromptEnabled !== false;
@@ -240,6 +241,7 @@ export function applyStateSnapshot(parsed, options = {}) {
   matchState.state.autoLiberoRoleDefaultVersion = AUTO_LIBERO_ROLE_DEFAULT_VERSION;
   matchState.state.preferredLibero = typeof parsed.preferredLibero === "string" ? parsed.preferredLibero : "";
   matchState.state.autoRoleP1American = !!parsed.autoRoleP1American;
+  matchState.state.evaluateDefenseAfterBlock = !!parsed.evaluateDefenseAfterBlock;
   matchState.state.courtViewMirrored = !!parsed.courtViewMirrored;
   matchState.state.courtSideSwapped = !!parsed.courtSideSwapped;
   matchState.state.courtViewMirrored = !!matchState.state.courtSideSwapped;

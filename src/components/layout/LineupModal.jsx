@@ -18,10 +18,13 @@ function NumberInput({ slot, index, focus }) {
     <input
       type="text"
       inputMode="numeric"
+      pattern="[0-9]{0,3}"
+      maxLength={3}
+      onClick={event => event.target.select()}
       className="lineup-number-input"
       data-slot-index={index}
       value={value}
-      onChange={(event) => setValue(event.target.value)}
+      onChange={(event) => setValue(event.target.value.replace(/\D/g, "").slice(0, 3))}
       onFocus={(event) => event.target.select()}
       onClick={(event) => {
         event.stopPropagation();
@@ -180,9 +183,9 @@ export function LineupModal() {
                 name={player.name}
                 onClick={() => {
                   const index = view.court.findIndex((slot) => !slot.main);
-                  run("placeManagedLineupPlayer", player.name, index === -1 ? 0 : index);
+                  run("placeManagedLineupPlayer", player.name, player.replacedIndex >= 0 ? player.replacedIndex : index === -1 ? 0 : index);
                 }}
-                className={view.selectedName === player.name ? " selected" : ""}
+                className={(player.replacedIndex >= 0 ? " replaced-chip" : "") + (view.selectedName === player.name ? " selected" : "")}
               >
                 <span>{player.label}</span>
               </LineupChip>

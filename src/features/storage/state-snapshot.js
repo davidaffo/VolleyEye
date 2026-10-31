@@ -76,6 +76,8 @@ export function buildCompactLocalStateSnapshot(snapshot) {
     attackTrajectorySimplified: snapshot.attackTrajectorySimplified !== false,
     serveTrajectoryEnabled: snapshot.serveTrajectoryEnabled !== false,
     opponentAttackTrajectoryEnabled: snapshot.opponentAttackTrajectoryEnabled !== false,
+    evaluateDefenseAfterBlock: !!snapshot.evaluateDefenseAfterBlock,
+    opponentEvaluateDefenseAfterBlock: !!snapshot.opponentEvaluateDefenseAfterBlock,
     opponentServeTrajectoryEnabled: snapshot.opponentServeTrajectoryEnabled !== false,
     setTypePromptEnabled: snapshot.setTypePromptEnabled !== false,
     opponentSetTypePromptEnabled: snapshot.opponentSetTypePromptEnabled !== false,

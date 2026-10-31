@@ -78,7 +78,6 @@ export const session = createDomainState({
 "elSkillFlowButtonsOpp": () => (document.getElementById("skill-flow-buttons-opp")),
 "elTrajectoryGrid": () => (document.getElementById("trajectory-grid")),
 "elPlayerTrajectoryGrid": () => (document.getElementById("player-trajectory-grid")),
-"elSingleTeamScoreActions": () => (document.getElementById("single-team-score-actions")),
 "elBtnEndMatch": () => (document.getElementById("btn-end-match")),
 "elBtnEndMatchModal": () => (document.getElementById("btn-end-match-modal")),
 "tabButtons": () => (document.querySelectorAll(".tab-btn")),

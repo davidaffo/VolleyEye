@@ -4,6 +4,7 @@ import { TeamCounter } from "./TeamCounter.jsx";
 
 const toggles = [
   ["auto-role-p1american-toggle", "P1 americana"],
+  ["evaluate-defense-after-block", "Valuta difesa dopo muro"],
   ["attack-trajectory-toggle", "Traiettoria attacco"],
   ["settype-prompt-toggle-inline", "Tipo alzata"],
   ["serve-trajectory-toggle-inline", "Traiettoria servizio"],

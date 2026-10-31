@@ -1,3 +1,6 @@
+import { updateNextSetOption } from "../features/live/next-set-model.js";
+import { saveCurrentVideoFrame } from "../features/video/playback.js";
+import { downloadVideoFromSelection } from "../features/video/clip-commands.js";
 import { deleteEventByKey, undoLastEvent } from "../features/events/history-commands.js";
 import { runAnalysisFilterAction } from "../features/analysis/analysis-filters.js";
 import { runScoutSkillAction } from "../features/scout/skill-actions.js";
@@ -34,7 +37,7 @@ import { applyTheme } from "../features/teams/core/state-store.js";
 import { syncCourtSideLayout, renderPlayers } from "../features/live/team-rendering.js";
 import { handleVideoFileChange, syncFirstSkillToVideo, openVideoMobileFilters, closeVideoMobileFilters, selectVideoMobileEvent, closeVideoMobileSourceModal, openVideoMobileSourceModal } from "../features/video/playback.js";
 import { handleYoutubeUrlLoad, clearLoadedVideo, undoLastVideoEdit } from "../features/video/video-sources.js";
-import { copyFfmpegFromSelection, addEmptyVideoEventAfterSelection, chooseFfmpegEncoder, openVideoScoreModal, closeVideoScoreModal, correctVideoScoresFromSelection, openOffsetModal, closeOffsetModal, applyOffsetsToSelectedSkills, openSkillDurationModal, closeSkillDurationModal, applySkillDurationDefaults, openUnifyTimesModal, closeUnifyTimesModal, applyUnifyTimes, recordTimeoutEvent, recordOpponentTimeoutEvent, recordSubstitutionEvent } from "../features/video/video-events.js";
+import { addEmptyVideoEventAfterSelection, openVideoScoreModal, closeVideoScoreModal, correctVideoScoresFromSelection, openOffsetModal, closeOffsetModal, applyOffsetsToSelectedSkills, openSkillDurationModal, closeSkillDurationModal, applySkillDurationDefaults, openUnifyTimesModal, closeUnifyTimesModal, applyUnifyTimes, recordTimeoutEvent, recordOpponentTimeoutEvent, recordSubstitutionEvent } from "../features/video/video-events.js";
 import { stepActiveVideoByFrame } from "../features/live/scout-shortcuts.js";
 import { applyReactVideoMobileFilters, changeReactVideoPlayByPlay, openReactVideoPicker } from "../features/video/view-commands.js";
 import { openDebugModal, closeDebugModal, closePlayersDbModal, removeOrphanPlayersFromDb, openBaseModal, openAttackSetterModal, openAttackTypeModal, openBlockNumberModal, resetAttackShortcutModals, applyBaseToTarget, applySetterToTarget, applyAttackTypeToTarget, applyBlockNumberToTarget, openTeamsManagerModal, closeTeamsManagerModal, openPlayersDbModal, importTeamToStorageOnly, renderTeamsManagerList } from "../features/live/team-management.js";
@@ -106,7 +109,8 @@ export const actions = createCommands({
   handleYoutubeUrlLoad,
   clearLoadedVideo,
   syncFirstSkillToVideo,
-  copyFfmpegFromSelection,
+  downloadVideoFromSelection,
+  saveCurrentVideoFrame,
   stepActiveVideoByFrame,
   addEmptyVideoEventAfterSelection,
   openVideoMobileFilters,
@@ -124,7 +128,6 @@ export const actions = createCommands({
   closeAttackTrajectoryModal,
   setServeTypeSelection,
   chooseReactTrajectoryNetPoint,
-  chooseFfmpegEncoder,
   closeVideoMobileSourceModal,
   openVideoMobileSourceModal,
   loadReactMobileYoutube,
@@ -290,10 +293,8 @@ export const actions = createCommands({
     swapNextSetSlots(scope, from, to);
     renderNextSetLineups();
   },
-  changeNextSetOption: (key, value) => {
-    if (!scoutUiState.nextSetDraft || !["swapCourt", "isServing"].includes(key)) return;
-    scoutUiState.nextSetDraft[key] = !!value;
-    publishNextSetView();
+  changeNextSetOption: (key, value, relative = false) => {
+    if (updateNextSetOption(key, value, relative)) publishNextSetView();
   },
   restoreNextSetDefaults: (scope) => {
     const defaults = getRawDefaultStartForScope(scope);
@@ -348,6 +349,11 @@ export const actions = createCommands({
   enterSelectedMatch,
   exitCurrentMatch,
   exportMatchToFile,
+  exportMatchFromNavigation: () => {
+    const navigation = document.getElementById("mobile-navigation");
+    if (navigation) navigation.open = false;
+    exportMatchToFile();
+  },
   exportDataVolleyToFile,
   exportAnalysisHtml,
   flushStorage: () => persistentStorageState.archiveStorage.flush(),

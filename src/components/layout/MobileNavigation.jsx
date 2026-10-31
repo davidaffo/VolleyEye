@@ -10,6 +10,7 @@ export function MobileNavigation() {
         aria-label="Navigazione pagine"
       >
         <NavigationLinks mobile />
+      <MatchActionButton command="exportMatchFromNavigation" className="secondary mobile-match-export match-session-only" type="button" data-export-match="">Esporta partita</MatchActionButton>
         <MatchActionButton
           command="exitCurrentMatch"
           className="mobile-match-exit match-session-only"

@@ -97,7 +97,6 @@ export const playerAnalysisStore = createStore({
   scope: "our",
 });
 
-export const ffmpegEncoderStore = createStore({ open: false, choose: null });
 export const mobileVideoSourceStore = createStore({ open: false, url: "" });
 
 export const trajectoryModalStore = createStore({

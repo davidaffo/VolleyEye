@@ -9,6 +9,8 @@ import {
 } from "../state/roster-import-store.mjs";
 import { actions as appActions } from "../app/actions.mjs";
 const fields = {
+  "evaluate-defense-after-block": "evaluateDefenseAfterBlock",
+  "evaluate-defense-after-block-opp": "opponentEvaluateDefenseAfterBlock",
   "auto-rotate-toggle": "autoRotate",
   "auto-role-toggle": "autoRolePositioning",
   "auto-role-p1american-toggle": "autoRoleP1American",

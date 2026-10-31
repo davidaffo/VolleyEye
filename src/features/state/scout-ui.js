@@ -10,6 +10,7 @@ export const session = createDomainState({
   our: { teamName: null, playersKey: null, map: null },
   opponent: { teamName: null, playersKey: null, map: null }
 }),
+"partialSkillFlowVersions": () => ({ our: 0, opponent: 0 }),
 "selectedSkillPerPlayer": () => ({}),
 "serveMetaByPlayer": () => ({}),
 "attackMetaByPlayer": () => ({}),

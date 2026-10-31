@@ -1,8 +1,11 @@
+import { featureSource } from "./helpers/feature-source.mjs";
+import { readRuntimeSource } from "./helpers/react-runtime.mjs";
 import { readAppHtml } from './helpers/app-html.mjs';
 import assert from "node:assert/strict";
 import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import test from "node:test";
 import vm from "node:vm";
+import { JSDOM } from "jsdom";
 import { readScoutSource } from "./helpers/scout-source.mjs";
 import { readStyleSource } from "./helpers/style-source.mjs";
 import { readRosterSource } from "./helpers/roster-source.mjs";
@@ -42,7 +45,7 @@ test("un ordinamento personalizzato non viene sovrascritto dal cambio modalità"
     right: ["video", "dvw"]
   };
   const layout = loadLayoutState({ useOpponentTeam: true, uiScoutWidgetLayout: custom });
-  assert.deepEqual(layout, custom);
+  assert.deepEqual(layout, { ...custom, "center-court": ["court"] });
 });
 
 test("una disposizione incompleta o duplicata viene riparata senza perdere widget", () => {
@@ -55,8 +58,8 @@ test("una disposizione incompleta o duplicata viene riparata senza perdere widge
       right: ["video"]
     }
   });
-  const widgets = [...layout["center-top"], ...layout["center-bottom"], ...layout.right];
-  assert.deepEqual(widgets.sort(), ["dvw", "events", "serve-trajectories", "video"].sort());
+  const widgets = [...layout["center-top"], ...layout["center-court"], ...layout["center-bottom"], ...layout.right];
+  assert.deepEqual(widgets.sort(), ["court", "dvw", "events", "serve-trajectories", "video"].sort());
 });
 
 test("i widget possono essere rilasciati sopra, sotto o a destra del campo", () => {
@@ -89,4 +92,48 @@ test("l'ultimo codice appartiene soltanto al pannello di inserimento DataVolley"
 
 test("la disposizione personalizzata è inclusa nello snapshot locale", () => {
   assert.match(rosterSource, /uiScoutWidgetLayout:\s*snapshot\.uiScoutWidgetLayout/);
+});
+
+test("il campo scout non ha la maniglia, gli altri pannelli restano spostabili", () => {
+  const dom = new JSDOM(html, { runScripts: "outside-only" });
+  const w = dom.window;
+  const saved = [];
+  w.state = { useOpponentTeam: true, uiScoutWidgetLayout: { customized: true, "center-court": ["court"], courtHeight: 300 } };
+  w.saveState = () => saved.push(JSON.parse(JSON.stringify(w.state.uiScoutWidgetLayout)));
+  w.matchMedia = () => ({ matches: false });
+  vm.runInContext(readRuntimeSource("react-views"), dom.getInternalVMContext());
+  w.eval(readFileSync(new URL("../src/features/state/live-trajectories.js", import.meta.url), "utf8") + featureSource("src/features/live/workspace-layout.js"));
+  w.workspaceStore = w.__reactViews.workspaceStore;
+  w.__reactEvents.moveScoutWidgetWithKeyboard = (event, widget) => w.moveScoutWidgetWithKeyboard(event, widget);
+  try {
+    w.bindScoutWidgetLayout();
+    w.__flushReactViews();
+    const widget = w.document.querySelector('[data-scout-widget="court"]');
+    const court = w.document.getElementById("court-area");
+    const home = court.querySelector('[data-team-panel="home"]');
+    const handle = widget.querySelector(":scope > .scout-widget-handle");
+    assert.equal(widget.parentElement.dataset.scoutWidgetZone, "center-court");
+    assert.equal(handle, null);
+    const events = w.document.querySelector('[data-scout-widget="events"]');
+    w.moveScoutWidgetWithKeyboard(new w.KeyboardEvent("keydown", { key: "ArrowLeft", cancelable: true }), events);
+    w.__flushReactViews();
+    assert.equal(events.parentElement.dataset.scoutWidgetZone, "center-top");
+    assert.ok(saved.at(-1)["center-top"].includes("events"));
+    assert.equal(court.querySelector('[data-team-panel="home"]'), home);
+    assert.equal(court.parentElement, widget);
+    assert.equal(w.document.getElementById("scout-court-resize"), null);
+    assert.equal(saved.at(-1).courtHeight, undefined);
+    w.applyScoutWidgetLayout();
+    w.__flushReactViews();
+    assert.equal(widget.parentElement.dataset.scoutWidgetZone, "center-court");
+    assert.equal(court.style.transform, "");
+    assert.equal(court.style.height, "");
+    w.state.uiScoutWidgetLayout = null;
+    w.applyScoutWidgetLayout();
+    w.__flushReactViews();
+    assert.equal(widget.parentElement.dataset.scoutWidgetZone, "center-court");
+    assert.equal(saved.at(-1).courtHeight, undefined);
+  } finally {
+    w.close();
+  }
 });

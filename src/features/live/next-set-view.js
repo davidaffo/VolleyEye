@@ -42,7 +42,10 @@ export function publishNextSetView() {
           getPlayersForScope(scope),
           liberos,
           numbers,
-        ).map((name) => Object.freeze({ name, label: label(name) })),
+        ).map((name) => Object.freeze({
+        name, label: label(name),
+        replacedIndex: court.findIndex(slot => slot.replaced === name && liberos.includes(slot.main)),
+      })),
       ),
       liberos: Object.freeze(
         ordered.map((name) =>
@@ -63,6 +66,7 @@ export function publishNextSetView() {
     setNum: scoutUiState.nextSetDraft.setNum,
     double: !!matchState.state.useOpponentTeam,
     swapCourt: !!scoutUiState.nextSetDraft.swapCourt,
+    currentCourtSwapped: !!matchState.state.courtSideSwapped,
     isServing: !!scoutUiState.nextSetDraft.isServing,
     teams: Object.freeze(teams),
   });

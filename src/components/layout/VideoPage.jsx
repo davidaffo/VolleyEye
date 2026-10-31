@@ -106,6 +106,7 @@ export function VideoPage() {
                 >
                   {"Frame + (Shift + →)"}
                 </VideoActionButton>
+              <VideoActionButton id="btn-save-video-frame" className="secondary">Salva fotogramma</VideoActionButton>
               </div>
               <p className="section-note">
                 {

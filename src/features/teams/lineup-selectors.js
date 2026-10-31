@@ -39,7 +39,7 @@ export function getBenchForLineupWithRoster(court, rosterNames, liberos, numbers
   getCourtShape(court).forEach(slot => {
     const name = slot.main || "";
     if (name) used.add(name);
-    if (slot.replaced) used.add(slot.replaced);
+    if (slot.replaced && !libSet.has(name)) used.add(slot.replaced);
   });
   const bench = (rosterNames || []).filter(name => name && !libSet.has(name) && !used.has(name));
   return sortNamesByNumber(bench, numbersMap || {});

@@ -385,6 +385,7 @@ export function openAttackTrajectoryModal(prefill = null) {
       return scoutUiState.trajectoryMirror ? scoutUiState.TRAJECTORY_IMG_FAR : scoutUiState.TRAJECTORY_IMG_NEAR;
     };
     scoutUiState.elAttackTrajectoryImage.dataset.activeSrc = getInitialImage();
+    trajectoryModalStore.publish({ netFar: scoutUiState.trajectoryMirror || scoutUiState.trajectoryForceFar });
     publishReactTrajectoryImage(getInitialImage());
     if (scoutUiState.serveTypeKeyHandler) {
       unlistenRuntime(window, "keydown", scoutUiState.serveTypeKeyHandler);

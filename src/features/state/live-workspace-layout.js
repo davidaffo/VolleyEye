@@ -2,6 +2,7 @@ import { createDomainState } from "../../app/domain-state.mjs";
 
 export const session = createDomainState({
 "videoObjectUrl": () => (""),
+"videoLocalFile": () => (null),
 "ytPlayer": () => (null),
 "ytApiPromise": () => (null),
 "ytPlayerReady": () => (false),

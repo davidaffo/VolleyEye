@@ -1,3 +1,4 @@
+import { captureScoutActionSnapshot, attachScoutActionSnapshot } from "./history-model.js";
 import { session as matchState } from "../../../js/globals.js";
 import { getCurrentZoneForPlayer } from "../teams/court-state-model.js";
 import { getTeamOfficialMetaForScope, sanitizeOfficialString, getPlayerOfficialCodeForScope, normalizeDataVolleyEventMeta } from "../teams/player-identity.js";
@@ -171,6 +172,10 @@ export function buildBaseEventPayload(base) {
     homeScore: scoreSnapshot.totalFor || 0,
     visitorScore: scoreSnapshot.totalAgainst || 0,
     actionType: base.actionType || null,
+    prevSetResults: base.prevSetResults || null,
+    nextSetResults: base.nextSetResults || null,
+    prevSetStarts: base.prevSetStarts || null,
+    nextSetStarts: base.nextSetStarts || null,
     prevSet: base.prevSet || null,
     nextSet: base.nextSet || null,
     prevMatchFinished: base.prevMatchFinished || null,
@@ -195,5 +200,7 @@ export function recordSetAction(actionType, payload) {
     })
   );
   clearReceiveContext();
+  if (actionType === "timeout") attachScoutActionSnapshot(event, captureScoutActionSnapshot());
   matchState.state.events.push(event);
+  return event;
 }

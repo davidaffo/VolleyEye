@@ -43,7 +43,7 @@ export function publishTeamEditorView() {
         p.number = value;
         renderTeamManagerTable();
       },
-      onName: (first, last) => changeTeamEditorPlayerName(p, first, last),
+      onName: (first, last, options) => changeTeamEditorPlayerName(p, first, last, options),
       onCaptain: (checked) => {
         p.isCaptain = checked;
         enforceSingleCaptainFlag(
@@ -176,10 +176,18 @@ export function publishTeamEditorView() {
   
 }
 
-export function changeTeamEditorPlayerName(player, first, last) {
+export function changeTeamEditorPlayerName(player, first, last, { matchDatabase = true } = {}) {
+  const previousName = player.name;
   player.firstName = first.trim();
   player.lastName = last.trim();
   player.name = buildFullName(player.lastName, player.firstName);
+  if (previousName && previousName !== player.name) {
+    const draft = rosterLineupState.teamManagerState;
+    draft.defaultLineup = (draft.defaultLineup || []).map(name => name === previousName ? player.name : name);
+    if (draft.preferredLibero === previousName) draft.preferredLibero = player.name;
+  }
+  publishTeamEditorView();
+  if (!matchDatabase) return;
   const key = (player.lastName + "|" + player.firstName).toLowerCase().trim();
   if (!player.firstName || !player.lastName) {
     player.__dbPromptKey = "";

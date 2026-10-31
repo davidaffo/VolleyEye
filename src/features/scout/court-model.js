@@ -46,7 +46,7 @@ export function buildLiberoBenchModel() {
           ...getTeamPlayers(scope).filter((name) => liberos.has(name)),
           ...getReplacedByLiberosForScope(scope),
         ]),
-      ],
+      ].filter(name => !used.has(name)),
       scope,
       numbers,
     );

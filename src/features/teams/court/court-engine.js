@@ -1,3 +1,7 @@
+import { session as scoutUiState } from "../../state/scout-ui.js";
+import { closeAttackTrajectoryModal } from "../../scout/trajectory-dialog.js";
+import { cancelPartialSkillFlowForScope } from "../../scout/selection-state.js";
+import { captureScoutActionSnapshot } from "../../events/history-model.js";
 import { getCourtPlacementError, cacheAutoRoleBaseCourt, restoreAutoRoleBaseCourt, cleanCourtPlayers, registerLiberoPairForScope, roleToAutoCategory, enforceAutoLiberoForState, enforceAutoLiberoForScope, getUsedNamesForScope, resetAutoRoleCache, updateAutoRoleBaseCourtCache, setTeamCourt, prepareAutoRolePositioning } from "../court-state-model.js";
 import { isLiberoForScope } from "../libero-model.js";
 import { ensureCourtShapeFor, cloneCourtLineup } from "../court-model.js";
@@ -159,6 +163,7 @@ export function canPlaceInSlotForScope(name, posIdx, showAlert = true, scope = '
 export function commitCourtChange(baseCourt, options = {}) {
   const { clean = true } = options;
   if (clean) cleanCourtPlayers(baseCourt);
+  cancelPartialSkillFlowForCourtChange(baseCourt, "our");
   resetAutoRoleCache();
   if (matchState.state.autoRolePositioning) {
     updateAutoRoleBaseCourtCache(baseCourt);
@@ -181,6 +186,7 @@ export function commitCourtChangeForScope(baseCourt, scope = "our") {
     commitCourtChange(baseCourt);
     return;
   }
+  cancelPartialSkillFlowForCourtChange(baseCourt, scope);
   matchState.state.opponentCourt = ensureCourtShapeFor(baseCourt);
   if (matchState.state.autoRolePositioning) {
     updateAutoRoleBaseCourtCache(matchState.state.opponentCourt, "opponent");
@@ -224,6 +230,7 @@ export function setCourtPlayerForScope(
     commitCourtChangeForScope(next, scope);
     return;
   }
+  const actionSnapshot = shouldRecordSub ? captureScoutActionSnapshot() : null;
   let nextCourt = null;
   const liberos = getTeamLiberos(scope);
 
@@ -260,6 +267,7 @@ export function setCourtPlayerForScope(
       playerIn: name,
       playerOut: prevMain,
       teamScope: scope,
+      actionSnapshot,
     });
   }
 }
@@ -271,4 +279,14 @@ export function applyAutoRolePositioning() {
  renderLiberoBench();
 
  updateRotationDisplay();
+}
+
+export function cancelPartialSkillFlowForCourtChange(baseCourt, scope = "our") {
+  const names = court => Array.from(new Set((court || []).flatMap(slot => [slot.main, slot.replaced]).filter(Boolean))).sort();
+  const previous = names(getTeamCourt(scope));
+  const next = names(baseCourt);
+  if (previous.length === next.length && previous.every((name, idx) => name === next[idx])) return;
+  cancelPartialSkillFlowForScope("our");
+  cancelPartialSkillFlowForScope("opponent");
+  if (scoutUiState.trajectoryResolver) closeAttackTrajectoryModal(null);
 }

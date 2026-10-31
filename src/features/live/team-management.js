@@ -293,18 +293,9 @@ export function syncOpponentSettingsUI() {
   if (scoutUiState.elOpponentTeamSettings) {
     scoutUiState.elOpponentTeamSettings.classList.toggle("hidden", !enabled);
   }
-  if (rosterLineupState.elSingleTeamScoreActions) {
-    rosterLineupState.elSingleTeamScoreActions.classList.toggle("hidden", enabled);
-  }
-  if (teamManagementState.elBtnFreeballOppSingle) {
-    teamManagementState.elBtnFreeballOppSingle.classList.toggle("hidden", enabled);
-  }
   const opponentPanel = document.querySelector('[data-team-panel="opponent"]');
   if (opponentPanel) {
-    opponentPanel.classList.remove("hidden");
-    opponentPanel
-      .querySelectorAll(".score-actions, .team-controls-panel")
-      .forEach(node => node.classList.toggle("hidden", !enabled));
+    opponentPanel.classList.toggle("hidden", !enabled);
   }
   const opponentSettingsPanel = document.querySelector('[data-team-panel="opponent-settings"]');
   if (opponentSettingsPanel) {
@@ -335,11 +326,7 @@ export function syncOpponentSettingsUI() {
   relocateVideoScoutContainer();
   renderPlayers();
   ensureMatchDefaults();
-  // Fallback hard sync to avoid stale UI when toggling teams.
-  const singleFreeballBtn = document.getElementById("btn-freeball-opp-single");
-  if (singleFreeballBtn) {
-    singleFreeballBtn.classList.toggle("hidden", enabled);
-  }
+
 }
 
 export function renderTeamsManagerList() {

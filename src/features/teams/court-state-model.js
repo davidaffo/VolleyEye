@@ -568,6 +568,9 @@ export function getCourtPlacementError(name, posIdx, scope = "our") {
   ) {
     return "Non puoi mettere il libero in prima linea.";
   }
+  const isServing = scope === "opponent" ? !matchState.state.isServing : !!matchState.state.isServing;
+  if (isLiberoForScope(name, scope) && isServing && posIdx === 0)
+    return "Non puoi mettere il libero in zona 1 quando la squadra è in battuta.";
   if (isLiberoForScope(name, scope)) {
     const anotherLiberoIdx = court.findIndex(
       (slot) =>

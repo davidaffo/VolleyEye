@@ -5,10 +5,47 @@ import { readRosterSource } from "./helpers/roster-source.mjs";
 import { readScoutSource } from "./helpers/scout-source.mjs";
 import test from "node:test";
 import vm from "node:vm";
+import { JSDOM } from "jsdom";
 
 const roster = readRosterSource();
 const scout = readScoutSource();
 const plain = value => JSON.parse(JSON.stringify(value));
+test("in battuta il libero resta visibile in zona 5 e 6, con esclusione della sola zona 1", () => {
+  for (const scope of ["our", "opponent"]) {
+    for (const serving of [true, false]) {
+      for (const idx of [0, 4, 5]) {
+        const court = Array.from({ length: 6 }, (_, i) => ({ main: `T${i}`, replaced: "" }));
+        court[idx] = { main: "Libero", replaced: "Centrale" };
+        const c = load({
+          state: { court, opponentCourt: court, isServing: scope === "our" ? serving : !serving },
+          getCourtShape: value => value, ensureCourtShapeFor: value => value,
+          removeLiberosAndRestoreForScope: value => value.map(slot => slot.main === "Libero" ? { main: slot.replaced, replaced: "" } : slot)
+        }, scout, ["isServingForScope", "getServeDisplayCourt"]);
+        const display = c.getServeDisplayCourt(scope);
+        assert.equal(display[idx].main, serving && idx === 0 ? "Centrale" : "Libero");
+        assert.equal(court[idx].main, "Libero", "il renderer non modifica lo stato");
+      }
+    }
+  }
+});
+test("l'ingresso manuale del libero in battuta è consentito in zona 5 e 6, non in zona 1", () => {
+  for (const scope of ["our", "opponent"]) {
+    for (const serving of [true, false]) {
+      const court = Array.from({ length: 6 }, (_, i) => ({ main: `T${i}`, replaced: "" }));
+      const c = load({
+        state: { isServing: scope === "our" ? serving : !serving },
+        ensureCourtShapeFor: value => value,
+        getTeamCourt: () => court,
+        isLiberoForScope: name => name === "Libero",
+        FRONT_ROW_INDEXES: new Set([1, 2, 3]),
+        getLockedMapForScope: () => ({})
+      }, roster, ["getCourtPlacementError", "canPlaceInSlotForScope"]);
+      for (let idx = 0; idx < 6; idx++) {
+        assert.equal(c.canPlaceInSlotForScope("Libero", idx, false, scope), idx >= 4 || (idx === 0 && !serving));
+      }
+    }
+  }
+});
 function load(context, source, names) {
   context.getPlayerNumbersForScope ??= scope => scope === "opponent" ? context.state.opponentPlayerNumbers || {} : context.state.playerNumbers || {};
   const code = sourceFunctions(source, names);
@@ -83,7 +120,42 @@ test("le riserve avversarie restano disponibili nella formazione, usando soltant
     ["Libero"],
     { Riserva: "12" }
   );
-  assert.deepEqual(plain(bench), ["Riserva"]);
+  assert.deepEqual(plain(bench), ["Riserva", "Sostituita"]);
+});
+test("in preparazione set il centrale sostituito compare in verde e rientra al posto del libero per entrambe le squadre", () => {
+  for (const scope of ["our", "opponent"]) {
+    const dom = new JSDOM('<div id="court"></div><div id="bench"></div>');
+    const court = Array.from({ length: 6 }, (_, idx) => ({ main: `T${idx}`, replaced: "" }));
+    court[4] = { main: "Libero", replaced: "Centrale" };
+    const entry = { court };
+    const c = load({
+      document: dom.window.document, window: {},
+      nextSetDraft: { [scope === "our" ? "our" : "opponent"]: entry },
+      getPlayerNumbersForScope: () => ({}),
+      getPlayersForScope: () => ["T0", "T1", "T2", "T3", "T5", "Centrale", "Libero", "Riserva"],
+      getLiberosForScope: () => ["Libero"],
+      formatLineupModalName: name => name,
+      renderNextSetLineups: () => {},
+      handleLineupTouchStart: () => {}
+    }, scout, ["getCourtShape", "getNextSetEntry", "updateNextSetEntry", "setNextSetPlayer", "clearNextSetSlot", "getBenchForLineupWithRoster", "renderNextSetLineup"]);
+    const courtEl = dom.window.document.getElementById("court");
+    const benchEl = dom.window.document.getElementById("bench");
+    c.sortNamesByNumber = names => names;
+    c.getCourtShape = value => value.map(slot => ({ ...slot }));
+    const names = c.getBenchForLineupWithRoster(court, c.getPlayersForScope(), c.getLiberosForScope(), {});
+    assert.ok(names.includes("Centrale"));
+    assert.ok(names.includes("Riserva"));
+    assert.ok(!names.includes("Libero"));
+    const replacedIndex = court.findIndex(slot => slot.replaced === "Centrale" && c.getLiberosForScope().includes(slot.main));
+    c.setNextSetPlayer(scope, replacedIndex, "Centrale");
+    assert.equal(c.getNextSetEntry(scope).court[4].main, "Centrale");
+    assert.equal(c.getNextSetEntry(scope).court[4].replaced, "");
+    assert.equal(c.getNextSetEntry(scope).court[0].main, "T0");
+    c.updateNextSetEntry(scope, entry);
+    c.clearNextSetSlot(scope, 4);
+    assert.equal(c.getNextSetEntry(scope).court[4].main, "Centrale");
+    dom.window.close();
+  }
 });
 test("la formazione avversaria usa i propri numeri e capitano anche con nomi omonimi", () => {
   const c = load({

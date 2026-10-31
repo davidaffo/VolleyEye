@@ -59,6 +59,7 @@ export function syncCourtSideLayout() {
   const courtArea = document.getElementById("court-area");
   const opponentPanel = document.querySelector('[data-team-panel="opponent"]');
   const homePanel = document.querySelector('[data-team-panel="home"]');
+  if (opponentPanel) opponentPanel.classList.toggle("hidden", !matchState.state.useOpponentTeam);
   const swapped = !!matchState.state.courtSideSwapped;
   const homeIsFar = swapped;
   const opponentIsFar = !swapped;

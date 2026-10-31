@@ -72,8 +72,10 @@ export function swapNextSetSlots(scope, fromIdx, toIdx) {
 export function clearNextSetSlot(scope, posIdx) {
   const entry = getNextSetEntry(scope);
   if (!entry) return;
+  const liberos = new Set(getLiberosForScope(scope));
   const nextCourt = getCourtShape(entry.court || []).map((slot, idx) => {
     if (idx !== posIdx) return slot;
+    if (liberos.has(slot.main) && slot.replaced) return { main: slot.replaced, replaced: "" };
     return { main: "", replaced: "" };
   });
   updateNextSetEntry(scope, Object.assign({}, entry, { court: nextCourt }));
@@ -134,4 +136,11 @@ export function buildNextSetDraft(setNum) {
     swapCourt: savedStart ? !!savedStart.swapCourt : nextSet > 1 ? !matchState.state.courtSideSwapped : false,
     isServing: serveDefault
   };
+}
+
+export function updateNextSetOption(key, value, relative = false) {
+  if (!scoutUiState.nextSetDraft || !["swapCourt", "isServing"].includes(key)) return false;
+  scoutUiState.nextSetDraft[key] = key === "swapCourt" && relative
+    ? !!value !== !!matchState.state.courtSideSwapped : !!value;
+  return true;
 }
