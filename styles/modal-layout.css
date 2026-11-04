@@ -1,0 +1,51 @@
+/* Shared viewport bounds for every ModalFrame, including custom dialog skins. */
+[data-modal-frame]:not(.court-modal) {
+  padding: 0.35rem;
+  height: 100dvh;
+  max-height: 100%;
+  overflow: hidden;
+}
+[data-modal-frame] > [data-modal-content] {
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+[data-modal-content] > :is(.skill-modal__head, .settings-modal__head, .team-modal__head) {
+  flex: 0 0 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+[data-modal-content] > :is(.skill-modal__body, .settings-modal__body, .team-modal__content, .lineup-modal__body) {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  max-height: none;
+  overflow: auto;
+}
+/* The canvas fills the space left by trajectory controls at every resolution. */
+[data-modal-content].attack-trajectory-content {
+  overflow: hidden;
+}
+body.desktop-court-modal .court-modal .attack-trajectory-content {
+  display: flex;
+}
+.attack-trajectory-actions > #attack-trajectory-close-btn {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 900px) {
+  [data-modal-frame]:not(.court-modal) > .attack-trajectory-content {
+    width: 100%;
+    height: 100%;
+  }
+}
+body.force-mobile [data-modal-frame]:not(.court-modal) > .attack-trajectory-content {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}

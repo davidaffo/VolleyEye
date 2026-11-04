@@ -5,7 +5,7 @@ import { drawTrajectory, getDefaultTrajectoryNetPointId, setTrajectoryNetPointId
 import { mirrorTrajectoryPoint, mapBackRowZone, getAttackZone, computeAttackDirectionDeg, clamp01 } from "../../domain/trajectory-geometry.js";
 import { session as matchState } from "../../../js/globals.js";
 import { trajectoryModalStore } from "../../state/roster-import-store.mjs";
-import { setAttackTrajectoryCourtSizing, updateCourtModalPlacement, restoreModalToPopup } from "../scout-ui.js";
+import { updateCourtModalPlacement, restoreModalToPopup } from "../scout-ui.js";
 import { setModalOpenState, suppressTransientClicks, isDesktopCourtModalLayout, setCourtAreaLocked } from "../layout/modals.js";
 import { unlistenRuntime, listenRuntime, session as browserEffectsState } from "../../app/browser-effects.js";
 import { publishReactLogServeTrajectories } from "../analysis/trajectory-view.js";
@@ -293,7 +293,6 @@ export function closeAttackTrajectoryModal(result = null) {
   if (!scoutUiState.elAttackTrajectoryModal) return;
   scoutUiState.elAttackTrajectoryModal.classList.add("hidden");
   setModalOpenState(false, scoutUiState.attackTrajectoryForcePopup);
-  setAttackTrajectoryCourtSizing(false);
   scoutUiState.elAttackTrajectoryModal.classList.remove("force-popup");
   scoutUiState.attackTrajectoryForcePopup = false;
   if (result) {
@@ -342,12 +341,10 @@ export function openAttackTrajectoryModal(prefill = null) {
       scoutUiState.elAttackTrajectoryModal.classList.remove("force-popup");
       if (isDesktopCourtModalLayout()) {
         setCourtAreaLocked(true);
-        setAttackTrajectoryCourtSizing(true);
       }
       updateCourtModalPlacement();
     } else {
       scoutUiState.elAttackTrajectoryModal.classList.add("force-popup");
-      setAttackTrajectoryCourtSizing(false);
       restoreModalToPopup(scoutUiState.elAttackTrajectoryModal);
     }
     const scope = prefill && prefill.scope ? prefill.scope : "our";

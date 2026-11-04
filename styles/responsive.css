@@ -40,14 +40,6 @@
   body.top-bar-hidden .tabs-dots {
     display: inline-flex !important;
   }
-  .attack-trajectory-content {
-    width: 100vw;
-    height: 100svh;
-    max-height: 100svh;
-  }
-  .attack-trajectory-stage {
-    min-height: 0;
-  }
   .scout-grid {
     display: block;
   }
@@ -196,14 +188,6 @@ body.force-mobile #players-container,
 body.force-mobile #opponent-players-container {
   min-height: 0;
   align-items: start;
-}
-body.force-mobile .attack-trajectory-content {
-  width: 100vw;
-  height: 100svh;
-  max-height: 100svh;
-}
-body.force-mobile .attack-trajectory-stage {
-  min-height: 0;
 }
 
 /* Compact disclosure: destinations occupy space only while navigation is open. */

@@ -14,6 +14,7 @@ export const STYLE_SOURCE_FILES = [
   "styles/scout-live.css",
   "styles/light-theme.css",
   "styles/skill-palette.css",
+  "styles/modal-layout.css",
   "styles/print.css"
 ];
 

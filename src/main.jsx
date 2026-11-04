@@ -24,6 +24,7 @@ import "../styles/responsive.css";
 import "../styles/scout-live.css";
 import "../styles/light-theme.css";
 import "../styles/skill-palette.css";
+import "../styles/modal-layout.css";
 import "../styles/print.css";
 import "./root.css";
 

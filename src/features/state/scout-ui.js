@@ -94,11 +94,6 @@ export const session = createDomainState({
 "trajectoryMirror": () => (false),
 "trajectoryForceFar": () => (false),
 "trajectoryEscapeHandler": () => (null),
-"attackTrajectoryCourtSizingEls": () => ({
-  content: null,
-  body: null,
-  stage: null
-}),
 "serveTrajectoryType": () => ("JF"),
 "serveTypeKeyHandler": () => (null),
 "lineupModalCourt": () => ([]),

@@ -1,12 +1,13 @@
 import { ModalFrame, ModalCloseButton } from "../ui/Modal.jsx";
 
 import { useViewStore } from "../../hooks/useViewStore.js";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { trajectoryModalStore } from "../../state/roster-import-store.mjs";
 import { actions as appActions, events as appEvents } from "../../app/actions.mjs";
 const run = (command, ...args) =>
   appActions[command]( ...args).catch(console.error);
 export function AttackTrajectoryModal() {
+  const stage = useRef(null);
   const view = useViewStore(trajectoryModalStore),
     close = () => run("closeAttackTrajectoryModal", null),
     pointer = (kind, event) =>
@@ -18,6 +19,12 @@ export function AttackTrajectoryModal() {
     const up = (event) => pointer("up", event);
     window.addEventListener("pointerup", up);
     return () => window.removeEventListener("pointerup", up);
+  }, [view.open]);
+  useEffect(() => {
+    if (!view.open || !stage.current) return;
+    const observer = new ResizeObserver(() => appEvents.resizeTrajectoryCanvas());
+    observer.observe(stage.current);
+    return () => observer.disconnect();
   }, [view.open]);
   const cancel = (event) => {
     if (event.cancelable) event.preventDefault();
@@ -39,7 +46,7 @@ export function AttackTrajectoryModal() {
       }}
     >
       <div className="attack-trajectory-body">
-        <div className="attack-trajectory-stage">
+        <div ref={stage} className="attack-trajectory-stage">
           <img
             id="attack-trajectory-image"
             alt="Campo per traiettoria"

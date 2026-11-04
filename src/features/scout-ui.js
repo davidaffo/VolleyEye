@@ -457,60 +457,6 @@ return;
 
 
 
-export function setAttackTrajectoryCourtSizing(isCourt) {
-  if (!scoutUiState.attackTrajectoryCourtSizingEls.content) {
-    scoutUiState.attackTrajectoryCourtSizingEls.content = scoutUiState.elAttackTrajectoryModal?.querySelector(".attack-trajectory-content") || null;
-    scoutUiState.attackTrajectoryCourtSizingEls.body = scoutUiState.elAttackTrajectoryModal?.querySelector(".attack-trajectory-body") || null;
-    scoutUiState.attackTrajectoryCourtSizingEls.stage = scoutUiState.elAttackTrajectoryModal?.querySelector(".attack-trajectory-stage") || null;
-  }
-  const { content, body, stage } = scoutUiState.attackTrajectoryCourtSizingEls;
-  if (isCourt) {
-    if (content) {
-      content.style.width = "100%";
-      content.style.height = "100%";
-      content.style.maxHeight = "100%";
-      content.style.minHeight = "0";
-      content.style.display = "grid";
-      content.style.gridTemplateRows = "1fr auto";
-      content.style.overflow = "hidden";
-    }
-    if (body) {
-      body.style.flex = "1 1 auto";
-      body.style.height = "100%";
-      body.style.minHeight = "0";
-    }
-    if (stage) {
-      stage.style.flex = "1 1 auto";
-      stage.style.height = "100%";
-      stage.style.minHeight = "0";
-      stage.style.maxHeight = "100%";
-    }
-  } else {
-    if (content) {
-      content.style.width = "";
-      content.style.height = "";
-      content.style.maxHeight = "";
-      content.style.minHeight = "";
-      content.style.display = "";
-      content.style.gridTemplateRows = "";
-      content.style.overflow = "";
-    }
-    if (body) {
-      body.style.flex = "";
-      body.style.height = "";
-      body.style.minHeight = "";
-    }
-    if (stage) {
-      stage.style.flex = "";
-      stage.style.height = "";
-      stage.style.minHeight = "";
-      stage.style.maxHeight = "";
-    }
-  }
-}
-
-
-
 export function updateCourtModalPlacement() {
   const useCourt = isDesktopCourtModalLayout();
   document.body.classList.toggle("desktop-court-modal", useCourt);

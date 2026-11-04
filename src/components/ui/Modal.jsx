@@ -16,6 +16,7 @@ export function ModalFrame({
   return (
     <div
       {...props}
+      data-modal-frame=""
       id={id}
       className={className + (open ? "" : " hidden")}
       role="dialog"
@@ -35,7 +36,8 @@ export function ModalFrame({
           onClick={onClose}
         />
       )}
-      <div className={`${variant}-modal__content`} {...contentProps}>
+      <div {...contentProps} data-modal-content=""
+        className={contentProps.className || `${variant}-modal__content`}>
         {children}
       </div>
     </div>

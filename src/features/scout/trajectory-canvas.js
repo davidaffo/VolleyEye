@@ -2,6 +2,8 @@ import { clamp01 } from "../../domain/trajectory-geometry.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { trajectoryModalStore } from "../../state/roster-import-store.mjs";
 
+const canvasDisplayBoxes = new WeakMap();
+
 export function resetTrajectoryState() {
   scoutUiState.trajectoryStart = null;
   scoutUiState.trajectoryEnd = null;
@@ -14,17 +16,18 @@ export function resetTrajectoryState() {
 
 export function resizeTrajectoryCanvas() {
   if (!scoutUiState.elAttackTrajectoryCanvas || !scoutUiState.elAttackTrajectoryImage) return;
-  const rect = scoutUiState.elAttackTrajectoryImage.getBoundingClientRect();
   const canvas = scoutUiState.elAttackTrajectoryCanvas;
-  const height = rect.height;
-  canvas.width = rect.width;
-  canvas.height = height;
-  canvas.style.width = rect.width + "px";
-  canvas.style.height = height + "px";
-  if (canvas.parentElement) {
-    const inCourtModal = !!(scoutUiState.elAttackTrajectoryModal && scoutUiState.elAttackTrajectoryModal.classList.contains("court-modal"));
-    canvas.parentElement.style.height = inCourtModal ? "" : height + "px";
-  }
+  const rect = canvas.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+  // Preserve court coordinates while CSS resizes the stage or moves the portal.
+  const previousBox = canvasDisplayBoxes.get(canvas) || getTrajectoryDisplayBox();
+  const start = scoutUiState.trajectoryStart && normalizeTrajectoryPoint(scoutUiState.trajectoryStart, previousBox);
+  const end = scoutUiState.trajectoryEnd && normalizeTrajectoryPoint(scoutUiState.trajectoryEnd, previousBox);
+  canvas.width = Math.round(rect.width);
+  canvas.height = Math.round(rect.height);
+  if (start) scoutUiState.trajectoryStart = denormalizeTrajectoryPoint(start);
+  if (end) scoutUiState.trajectoryEnd = denormalizeTrajectoryPoint(end);
+  canvasDisplayBoxes.set(canvas, getTrajectoryDisplayBox());
   drawTrajectory();
 }
 
@@ -99,9 +102,8 @@ export function denormalizeTrajectoryPoint(norm) {
   };
 }
 
-export function normalizeTrajectoryPoint(pt) {
+export function normalizeTrajectoryPoint(pt, box = getTrajectoryDisplayBox()) {
   if (!scoutUiState.elAttackTrajectoryCanvas || !pt) return null;
-  const box = getTrajectoryDisplayBox();
   if (!box) return { x: 0, y: 0 };
   const relX = (pt.x - box.offsetX) / (box.width || 1);
   const relY = (pt.y - box.offsetY) / (box.height || 1);

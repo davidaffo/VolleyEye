@@ -2326,3 +2326,59 @@ test('integrazione main: export partita da navigazione desktop e mobile chiude i
   await expect(page.locator('#mobile-navigation')).not.toHaveAttribute('open', '');
   expect(errors).toEqual([]);
 });
+
+test('popup responsive: campi e controlli restano visibili con poca altezza', async ({ page }) => {
+  const errors = await openApp(page);
+  await page.locator('#btn-load-match').click();
+  const assertBounds = async (locator) => {
+    await expect(locator).toBeVisible();
+    await expect.poll(() => locator.evaluate(element => {
+      const box = element.getBoundingClientRect();
+      return {
+        fits: box.left >= -1 && box.top >= -1 &&
+          box.right <= innerWidth + 1 && box.bottom <= innerHeight + 1,
+        element: element.className, box: box.toJSON(),
+        viewport: { width: innerWidth, height: innerHeight },
+      };
+    })).toMatchObject({ fits: true });
+  };
+  for (const size of [
+    { width: 1024, height: 600 },
+    { width: 800, height: 400 },
+    { width: 568, height: 320 },
+    { width: 320, height: 568 },
+  ]) {
+    await page.setViewportSize(size);
+    for (const mode of ['attack', 'serve-start', 'serve-end']) {
+      await page.evaluate(mode => {
+        window.VolleyEye.app.invoke('openAttackTrajectoryModal', { mode, forcePopup: true });
+      }, mode);
+      const modal = page.locator('#attack-trajectory-modal');
+      await assertBounds(modal.locator('[data-modal-content]'));
+      await assertBounds(modal.locator('.attack-trajectory-stage'));
+      await assertBounds(modal.locator('.attack-trajectory-actions'));
+      const canvas = modal.locator('canvas');
+      await expect.poll(() => canvas.evaluate(el =>
+        Math.abs(el.width - el.getBoundingClientRect().width) < 1 &&
+        Math.abs(el.height - el.getBoundingClientRect().height) < 1
+      )).toBe(true);
+      expect((await canvas.boundingBox()).height).toBeGreaterThan(40);
+      await modal.locator('#attack-trajectory-close-btn').click();
+      await expect(modal).toBeHidden();
+    }
+    // Lineup dialogs normally use the embedded court on desktop.
+    await page.evaluate(() => window.VolleyEye.app.invoke('changeReactSetting', 'forceMobileLayout', true));
+    for (const [open, close, selector] of [
+      ['openSettingsModal', 'closeSettingsModal', '#settings-modal'],
+      ['openMobileLineupModal', 'closeLineupModal', '#lineup-modal'],
+      ['openTeamManagerModal', 'closeTeamManagerModal', '#team-manager-modal'],
+    ]) {
+      await page.evaluate(command => window.VolleyEye.app.invoke(command, 'our'), open);
+      await assertBounds(page.locator(selector).locator('[data-modal-content]'));
+      await page.evaluate(command => window.VolleyEye.app.invoke(command), close);
+      await expect(page.locator(selector)).toBeHidden();
+    }
+    await page.evaluate(() => window.VolleyEye.app.invoke('changeReactSetting', 'forceMobileLayout', false));
+  }
+  expect(errors).toEqual([]);
+});
