@@ -10,9 +10,9 @@
     "test": "node --test --test-isolation=none tests/*.test.mjs",
     "version:sync": "node scripts/sync-version.mjs",
     "dev": "vite --host 0.0.0.0",
-    "serve": "vite --host 0.0.0.0",
+    "serve": "npm run build && npm run preview",
     "tunnel": "PORT=${PORT:-3000} bash serve-tunnel.sh",
-    "build": "vite build",
+    "build": "vite build --mode production",
     "preview": "vite preview --host 0.0.0.0",
     "test:e2e": "playwright test"
   },

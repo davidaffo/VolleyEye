@@ -7,5 +7,6 @@ export default defineConfig(({ command, isPreview }) => ({
   publicDir: false,
   plugins: [react(), staticAssetsPlugin()],
   build: { target: 'es2022', chunkSizeWarningLimit: 1200 },
-  server: { port: 3000 }
+  server: { port: 3000, strictPort: true },
+  preview: { port: 4173, strictPort: true }
 }));

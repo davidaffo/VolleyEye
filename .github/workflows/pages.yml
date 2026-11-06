@@ -22,7 +22,8 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run version:sync
-      - run: npm run build
+      - name: Build production site
+        run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - uses: actions/upload-pages-artifact@v3
