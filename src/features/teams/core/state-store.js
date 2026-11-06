@@ -1,3 +1,4 @@
+import { normalizeMatchNotes } from "../../../domain/match-notes.js";
 
 
 import { normalizeThemePreference, normalizeVideoFilterPresets, getSnapshotTimestamp } from "../../storage/ui-preferences.js";
@@ -113,6 +114,7 @@ export function applyStateSnapshot(parsed, options = {}) {
   matchState.state.currentSet = Math.min(5, Math.max(1, parseInt(parsed.currentSet, 10) || 1));
   matchState.state.rotation = Math.min(6, Math.max(1, parseInt(parsed.rotation, 10) || 1));
   matchState.state.events = Array.isArray(parsed.events) ? parsed.events : [];
+  matchState.state.notes = normalizeMatchNotes(parsed.notes);
   matchState.state.stats = asRecord(parsed.stats);
   matchState.state.setResults = asRecord(parsed.setResults);
   matchState.state.setStarts = asRecord(parsed.setStarts);

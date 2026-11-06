@@ -114,6 +114,7 @@ export const session = createDomainState({
   captains: [],
   playerNumbers: {},
   events: [],
+  notes: [],
   stats: {},
   court: [{ main: "" }, { main: "" }, { main: "" }, { main: "" }, { main: "" }, { main: "" }],
   rotation: 1,

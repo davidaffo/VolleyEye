@@ -374,3 +374,45 @@ test("modelli statistici condivisi conservano regole personalizzate, percentuali
   assert.equal(grouped.size, 1);
   assert.equal(context.totalFromCounts(grouped.get('A').counts), 2);
 });
+
+test("annotazioni salvate a parte sopravvivono a export, archivio e riapertura senza contaminare altri match", async () => {
+  const context = buildBrowserContext();
+  context.alert = message => assert.fail(message);
+  runtimeFiles.forEach(path => vm.runInContext(readRuntimeSource(path), context, { filename: path }));
+  await context.initializePersistentStorage();
+  vm.runInContext(`
+    applyImportedMatch({ players: [], events: [
+      { eventId: 4, set: 2, skillId: "serve", code: "+", t: "2026-11-06T12:00:00Z" }
+    ], currentSet: 2, match: { teamName: "Casa", opponent: "Ospiti" } }, { silent: true });
+    addMatchNote("Rivedere il muro");
+    state.events.push({ eventId: 5, set: 2, skillId: "attack", code: "+", t: "2026-11-06T12:00:10Z" });
+    renderEventsLog();
+    const notePayload = buildMatchExportPayload();
+    const noteSnapshot = buildCompactLocalStateSnapshot(state);
+    const archivedNotes = decodeMatchStoragePayload(encodeMatchStoragePayload(notePayload));
+    applyImportedMatch({ players: [], events: [], match: { teamName: "Altra" } }, { silent: true });
+    globalThis.notesOtherMatch = state.notes.length;
+    applyImportedMatch(archivedNotes.state, { silent: true });
+    globalThis.noteIntegration = {
+      exported: notePayload.state.notes,
+      snapshot: noteSnapshot.notes,
+      reopened: state.notes,
+      events: state.events,
+      view: matchNotesStore.getSnapshot(),
+      rows: eventTableStore.getView("events-log").rows.map(row => row.key)
+    };
+    resetMatchState();
+    globalThis.notesAfterReset = state.notes.length;
+  `, context);
+  const result = JSON.parse(JSON.stringify(context.noteIntegration));
+  assert.equal(result.exported.length, 1);
+  assert.deepEqual(result.reopened, result.exported);
+  assert.deepEqual(result.snapshot, result.exported);
+  assert.deepEqual(result.rows, [4, 5]);
+  assert.equal(result.events.length, 2);
+  assert.ok(result.events.every(event => !('text' in event) && !('resolved' in event)));
+  assert.equal(result.view.notes[0].anchorKey, "4");
+  assert.equal(result.view.unresolved, 1);
+  assert.equal(context.notesOtherMatch, 0);
+  assert.equal(context.notesAfterReset, 0);
+});

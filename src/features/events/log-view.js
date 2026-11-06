@@ -1,3 +1,4 @@
+import { publishMatchNotes } from "../notes/view.js";
 import { eventLogSummaryStore } from "../../state/event-table-store.mjs";
 import { SKILLS, session as matchState } from "../../../js/globals.js";
 import { getPlayerNumbersForScope, getTeamScopeFromEvent } from "../teams/selectors.js";
@@ -12,6 +13,7 @@ import { getErrorTypeLabel } from "../analysis/player-model.js";
 import { handleSeekForSelection } from "./selection-commands.js";
 
 export function renderEventsLog(options = {}) {
+  publishMatchNotes();
   let summaryText = "Nessun evento";
   const suppressScroll = !!options.suppressScroll;
   if (!matchState.state.events || matchState.state.events.length === 0) {

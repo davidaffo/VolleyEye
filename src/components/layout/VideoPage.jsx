@@ -1,3 +1,4 @@
+import { VideoMatchNotes } from "../MatchNotes.jsx";
 import { FilterVisibility } from "../ui/FilterField.jsx";
 import { YouTubeFrame } from "../VideoControls.jsx";
 import { AnalysisFilterFields } from "../AnalysisFilter.jsx";
@@ -25,6 +26,7 @@ export function VideoPage() {
             </div>
             <div className="video-mobile-head-actions video-mobile-only">
               <VideoMobileSourceButton />
+              <VideoMatchNotes />
               <VideoActionButton
                 id="video-mobile-filter-open"
                 className="secondary video-mobile-filter-open"
@@ -37,6 +39,7 @@ export function VideoPage() {
           </div>
           <div className="video-analysis__actions">
             <VideoSourceControls />
+            <VideoMatchNotes />
           </div>
           <div className="video-analysis__grid">
             <div className="video-skills">

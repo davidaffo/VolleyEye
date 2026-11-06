@@ -1,3 +1,4 @@
+import { addMatchNote, resolveMatchNote, deleteMatchNote, seekMatchNote } from "../features/notes/commands.js";
 import { updateNextSetOption } from "../features/live/next-set-model.js";
 import { saveCurrentVideoFrame } from "../features/video/playback.js";
 import { downloadVideoFromSelection } from "../features/video/clip-commands.js";
@@ -359,6 +360,7 @@ export const actions = createCommands({
   flushStorage: () => persistentStorageState.archiveStorage.flush(),
 }, publishApplicationViews);
 export const events = createReadyEvents({
+  addMatchNote, resolveMatchNote, deleteMatchNote, seekMatchNote,
   deleteEventByKey,
   editEventTrajectory, editEventCell, finishEventCellEdit, seekEventTableRow, toggleEventTableRow, selectEventTableRow, selectAllEventTableRows, handleEventTableHeader,
   editPlayersDbPhoto,

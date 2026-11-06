@@ -39,6 +39,7 @@ export function resetMatchState(options = {}) {
     matchType: "amichevole"
   };
   matchState.state.events = [];
+  matchState.state.notes = [];
   matchState.state.stats = {};
   const defaults = getSelectedTeamDefaultSettings();
   if (defaults && defaults.defaultLineup && defaults.defaultLineup.length > 0) {

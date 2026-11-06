@@ -1,8 +1,14 @@
+import { Fragment } from "react";
+import { MatchNoteMarker } from "./MatchNotes.jsx";
+import { matchNotesStore } from "../state/match-notes-store.mjs";
 
 import { EventControl } from "./EventControl.jsx";
 import { useViewStore } from "../hooks/useViewStore.js";
 import { useLayoutEffect, useRef, useState } from "react";
-import { eventTableStore, eventLogSummaryStore } from "../state/event-table-store.mjs";
+import {
+  eventTableStore,
+  eventLogSummaryStore,
+} from "../state/event-table-store.mjs";
 import { events as appEvents } from "../app/actions.mjs";
 
 function Cell({ cell, row, table }) {
@@ -47,6 +53,8 @@ function Cell({ cell, row, table }) {
 }
 export function EventTable({ id, className }) {
   useViewStore(eventTableStore);
+  const notesView = useViewStore(matchNotesStore);
+  const notes = id === "events-log" ? notesView.notes : [];
   const view = eventTableStore.getView(id),
     root = useRef(null),
     all = useRef(null);
@@ -54,13 +62,17 @@ export function EventTable({ id, className }) {
     view.selected.includes(row.key),
   ).length;
   useLayoutEffect(() => {
-    if (view.contextKey)
-      appEvents.bindReactEventTable(id, root.current);
+    if (view.contextKey) appEvents.bindReactEventTable(id, root.current);
     if (all.current)
       all.current.indeterminate = count > 0 && count < view.rows.length;
   }, [id, view, count]);
   return (
     <div id={id} ref={root} className={className}>
+      {notes
+        .filter((note) => note.anchorKey === null)
+        .map((note) => (
+          <MatchNoteMarker key={note.id} note={note} />
+        ))}
       {view.empty ? (
         <table className={view.tableClass || "event-edit-table"}>
           <tbody>
@@ -95,7 +107,9 @@ export function EventTable({ id, className }) {
                           ? "Ordina"
                           : undefined
                     }
-                    onClick={() => appEvents.handleEventTableHeader(view.interaction, header)}
+                    onClick={() =>
+                      appEvents.handleEventTableHeader(view.interaction, header)
+                    }
                   >
                     {header.checkbox ? (
                       <input
@@ -106,7 +120,10 @@ export function EventTable({ id, className }) {
                           view.rows.length > 0 && count === view.rows.length
                         }
                         onChange={(event) =>
-                          appEvents.selectAllEventTableRows(view.interaction, event.target.checked)
+                          appEvents.selectAllEventTableRows(
+                            view.interaction,
+                            event.target.checked,
+                          )
                         }
                       />
                     ) : (
@@ -123,54 +140,78 @@ export function EventTable({ id, className }) {
             </thead>
             <tbody>
               {view.rows.map((row) => (
-                <tr
-                  key={row.key}
-                  className={
-                    "event-row" +
-                    (view.selected.includes(row.key) ? " selected" : "")
-                  }
-                  data-event-key={row.key}
-                  data-selected={
-                    view.selected.includes(row.key) ? "true" : "false"
-                  }
-                  onClick={(event) => {
-                    if (
-                      event.target.closest(
-                        "input,label,button,select,option,textarea,.row-select",
+                <Fragment key={row.key}>
+                  <tr
+                    key={row.key}
+                    className={
+                      "event-row" +
+                      (view.selected.includes(row.key) ? " selected" : "")
+                    }
+                    data-event-key={row.key}
+                    data-selected={
+                      view.selected.includes(row.key) ? "true" : "false"
+                    }
+                    onClick={(event) => {
+                      if (
+                        event.target.closest(
+                          "input,label,button,select,option,textarea,.row-select",
+                        )
                       )
-                    )
-                      return;
-                    appEvents.selectEventTableRow(row, view.interaction, event);
-                  }}
-                  onDoubleClick={() => appEvents.seekEventTableRow(row, view.interaction)}
-                >
-                  {view.showCheckbox && (
-                    <td className="row-select">
-                      <input
-                        type="checkbox"
-                        checked={view.selected.includes(row.key)}
-                        onClick={(event) => event.stopPropagation()}
-                        onChange={() => appEvents.toggleEventTableRow(row, view.interaction)}
+                        return;
+                      appEvents.selectEventTableRow(
+                        row,
+                        view.interaction,
+                        event,
+                      );
+                    }}
+                    onDoubleClick={() =>
+                      appEvents.seekEventTableRow(row, view.interaction)
+                    }
+                  >
+                    {view.showCheckbox && (
+                      <td className="row-select">
+                        <input
+                          type="checkbox"
+                          checked={view.selected.includes(row.key)}
+                          onClick={(event) => event.stopPropagation()}
+                          onChange={() =>
+                            appEvents.toggleEventTableRow(row, view.interaction)
+                          }
+                        />
+                      </td>
+                    )}
+                    {row.cells.map((cell, index) => (
+                      <Cell
+                        key={index}
+                        cell={cell}
+                        row={row}
+                        table={view.interaction}
                       />
+                    ))}
+                    <td>
+                      <button
+                        type="button"
+                        className="small danger"
+                        title="Elimina skill"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          appEvents.deleteEventByKey(row.key);
+                        }}
+                      >
+                        ✕
+                      </button>
                     </td>
-                  )}
-                  {row.cells.map((cell, index) => (
-                    <Cell key={index} cell={cell} row={row} table={view.interaction} />
-                  ))}
-                  <td>
-                    <button
-                      type="button"
-                      className="small danger"
-                      title="Elimina skill"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        appEvents.deleteEventByKey(row.key);
-                      }}
-                    >
-                      ✕
-                    </button>
-                  </td>
-                </tr>
+                  </tr>
+                  {notes
+                    .filter((note) => note.anchorKey === String(row.key))
+                    .map((note) => (
+                      <tr className="match-note-row" key={note.id}>
+                        <td colSpan={view.headers.length}>
+                          <MatchNoteMarker note={note} />
+                        </td>
+                      </tr>
+                    ))}
+                </Fragment>
               ))}
             </tbody>
           </table>
@@ -182,5 +223,13 @@ export function EventTable({ id, className }) {
 
 export function EventLogSummary() {
   const view = useViewStore(eventLogSummaryStore);
-  return <div id="events-log-summary" className="events-log-summary" aria-live="polite">{view.text}</div>;
+  return (
+    <div
+      id="events-log-summary"
+      className="events-log-summary"
+      aria-live="polite"
+    >
+      {view.text}
+    </div>
+  );
 }

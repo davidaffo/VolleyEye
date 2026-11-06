@@ -1,3 +1,4 @@
+import { MatchNoteComposer } from "../MatchNotes.jsx";
 import { ScoutWidgetPortal, ScoutWidgetZone, ScoutWidgetDragFeedback } from '../ScoutWorkspace.jsx';
 import { ManualScoreControls } from '../ScoreControls.jsx';
 import { YouTubeFrame } from '../VideoControls.jsx';
@@ -216,6 +217,7 @@ export function ScoutPage() {
                 ]}
               />
               </div>
+              <MatchNoteComposer />
               <ButtonList as={AppActionButton}
                 items={[
                   ["btn-net-block-prompt","Muro",{"className":"small net-action-btn net-action-btn--block-prompt hidden","type":"button"}],

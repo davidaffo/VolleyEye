@@ -5,6 +5,10 @@ Le voci storiche riportano i messaggi originali dei commit e i relativi collegam
 
 Prima della versione 0.1.0 il progetto era già in sviluppo, ma non aveva una numerazione di release registrata.
 
+## 0.20.6 — 2026-11-06
+
+- Aggiunte annotazioni separate dagli eventi, inseribili durante la partita dal tasto blu “Aggiungi nota” nella rete tramite popup, con set e punteggio e indicate nel log da una riga blu compatta con icona; in analisi video un pulsante con contatore apre il popup dedicato per consultarle, raggiungere il video, risolverle o eliminarle.
+
 ## 0.20.5 — 2026-11-06
 
 - Le modifiche vengono raccolte durante lo sviluppo in un file di appoggio; il comando release le trasferisce nel changelog e svuota il file automaticamente, senza richiedere note da inserire a mano.

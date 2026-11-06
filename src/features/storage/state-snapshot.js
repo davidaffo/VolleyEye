@@ -1,3 +1,4 @@
+import { normalizeMatchNotes } from "../../domain/match-notes.js";
 import { normalizeAutoLiberoRolePreference } from '../teams/preferences.js';
 import { AUTO_LIBERO_ROLE_DEFAULT_VERSION } from '../../../js/globals.js';
 import { getCurrentMatchPayload } from '../teams/current-payload.js';
@@ -59,6 +60,7 @@ export function buildCompactLocalStateSnapshot(snapshot) {
     opponentPreferredLibero: snapshot.opponentPreferredLibero || "",
     opponentCaptains: Array.isArray(snapshot.opponentCaptains) ? snapshot.opponentCaptains.slice(0, 1) : [],
     events: Array.isArray(snapshot.events) ? snapshot.events : [],
+    notes: normalizeMatchNotes(snapshot.notes),
     stats: snapshot.stats || {},
     opponentStats: snapshot.opponentStats || {},
     court: Array.isArray(snapshot.court) ? snapshot.court : [],

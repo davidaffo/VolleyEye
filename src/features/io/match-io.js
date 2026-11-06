@@ -1,3 +1,4 @@
+import { normalizeMatchNotes } from "../../domain/match-notes.js";
 import { session } from "../state/io-match-io.js";
 import { ensureMatchDefaults, buildMatchDisplayName } from "../teams/match-details.js";
 import { AUTO_LIBERO_ROLE_DEFAULT_VERSION, logError, session as matchState } from "../../../js/globals.js";
@@ -64,6 +65,7 @@ export function applyImportedMatch(nextState, options = {}) {
   const preservedOpponentSkillConfig = matchState.state.opponentSkillConfig || {};
   resetSetTypeState();
   const merged = Object.assign({}, matchState.state, nextState);
+  merged.notes = normalizeMatchNotes(nextState.notes);
   merged.evaluateDefenseAfterBlock = !!nextState.evaluateDefenseAfterBlock;
   merged.opponentEvaluateDefenseAfterBlock = !!nextState.opponentEvaluateDefenseAfterBlock;
   const normalizedPlayers = normalizePlayers(nextState.players || []);

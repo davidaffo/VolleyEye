@@ -44,6 +44,7 @@ export function buildMatchExportPayload() {
       opponentSkillConfig: matchState.state.opponentSkillConfig,
       court: matchState.state.court,
       events: matchState.state.events,
+      notes: matchState.state.notes || [],
       stats: matchState.state.stats,
       metricsConfig: matchState.state.metricsConfig,
       scoreOverrides: matchState.state.scoreOverrides,
