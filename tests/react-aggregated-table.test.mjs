@@ -41,6 +41,8 @@ for (const both of [false, true])
           opponent: ["Ospite Uno", "Ospite Due"],
         };
       let view;
+      const rotationInputs = [];
+      let selectedSet = null;
       const scope = team === "opponent" ? "opponent" : "our",
         chosen = new Set(team === "both" ? [] : [team]);
       const context = vm.createContext({
@@ -79,7 +81,7 @@ for (const both of [false, true])
         getPlayerNumbersForScope: () => ({}),
         matchesTeamFilter: (event, teams) =>
           !teams.size || teams.has(event.team),
-        matchesSummarySetFilter: () => true,
+        matchesSummarySetFilter: (event) => selectedSet === null || event.set === selectedSet,
         getTeamNameForScope: (scope) => (scope === "our" ? "Casa" : "Ospite"),
         getTeamScopeFromEvent: (event) => event.team,
         emptyCounts: empty,
@@ -106,7 +108,7 @@ for (const both of [false, true])
         formatPercentValue: (value, n) =>
           n ? `${Math.round((value / n) * 100)}%` : "-",
         formatPercentValueSafe: (value, n) =>
-          n ? `${Math.round((value / n) * 100)}%` : "-",
+          n ? `${Math.round((value / n) * 100)}%` : "0%",
         formatDelta: (value) => (value > 0 ? "+" + value : String(value)),
         computePlayerPointsMap: (events) => {
           const result = {};
@@ -141,13 +143,10 @@ for (const both of [false, true])
         getEventPointValue: (event) => event.value,
         getPointDirectionFor: (scope, event) =>
           event.code === "#" ? "for" : null,
-        computeAttackSplitSummary: (events) => ({
-          err: events.filter((event) => event.code === "=").length,
-          mur: 0,
-          pt: events.filter((event) => event.code === "#").length,
-          tot: events.length,
-        }),
-        computeRotationDeltasForEvents: () => [1, -1, 0, 2, -2, 0],
+        computeRotationDeltasForEvents: (source, scope) => {
+          rotationInputs.push({ source, scope });
+          return [1, -1, 0, 2, -2, 0];
+        },
         getSkillIdFromHeader: (element) =>
           skills.find((id) => element.classList.contains("skill-" + id)),
         getSkillLabel: (id) => id,
@@ -167,6 +166,11 @@ for (const both of [false, true])
           read("../src/features/analysis/table-cells.js") +
           read("../src/features/analysis/statistic-model.js") +
           read("../src/features/analysis/aggregated-table.js") +
+          extract(
+            read("../src/features/analysis/filter-model.js"),
+            "computeAttackSplitSummary",
+            "formatPercentValueSafe",
+          ) +
           read("../src/features/analysis/summary-model.js"),
         context,
       );
@@ -205,4 +209,60 @@ for (const both of [false, true])
         ),
         reference("react-aggregated-table:8184"),
       );
+
+      // Known receptions are split explicitly; missing and invalid values stay out.
+      rotationInputs.length = 0;
+      events.splice(0, events.length);
+      for (const team of ["our", "opponent"]) {
+        const attack = (code, receiveEvaluation, attackBp = false) => ({
+          team, set: 1, playerIdx: 0, skillId: "attack", code,
+          receiveEvaluation, attackBp, value: 1,
+        });
+        events.push(
+          attack("#", "#"), attack("#", "+"), attack("=", "+"),
+          attack("/", "#"), attack("+", "+"),
+          attack("#", "!"), attack("=", "-"), attack("/", "!"),
+          attack("-", "-"),
+          ...[undefined, null, "", " ", "FB", "unknown", "/", "="].map(value => attack("#", value)),
+          attack("#", undefined, true), attack("=", undefined, true),
+          attack("/", undefined, true), attack("+", undefined, true),
+        );
+      }
+      context.renderAggregatedTable();
+      const extraRows = nativeRows(view.extraRows);
+      assert.ok(!extraRows.flat().some(cell => ["Break Point", "BP punti"].includes(cell.text)));
+      assert.ok(extraRows.flat().some(cell => cell.text === "Contrattacchi"));
+      assert.ok(rotationInputs.length > 0);
+      for (const input of rotationInputs) {
+        assert.equal(input.source.length, events.length);
+        assert.ok(input.source.some(event => event.team === "our"));
+        assert.ok(input.source.some(event => event.team === "opponent"));
+      }
+      for (let start = 0; start < extraRows.length; start += 9) {
+        assert.deepEqual(extraRows[start + 3].slice(3).map(cell => cell.text), [
+          "1", "1", "2", "40%", "0%", "5",
+          "1", "1", "1", "25%", "-25%", "4",
+        ]);
+        assert.deepEqual(extraRows[start + 7].slice(1, 7).map(cell => cell.text), [
+          "1", "1", "1", "25%", "-25%", "4",
+        ]);
+      }
+      for (const row of extraRows) {
+        assert.equal(row.reduce((sum, cell) => sum + cell.span, 0), 15);
+      }
+      selectedSet = 1;
+      events.push({ team: "opponent", set: 2, skillId: "attack", code: "#", value: 1 });
+      rotationInputs.length = 0;
+      context.renderAggregatedTable();
+      for (const input of rotationInputs) {
+        assert.equal(input.source.length, events.length - 1);
+        assert.ok(input.source.every(event => event.set === 1));
+        assert.ok(input.source.some(event => event.team === "opponent"));
+      }
+      events.splice(0, events.length);
+      context.renderAggregatedTable();
+      const emptyRows = nativeRows(view.extraRows);
+      assert.equal(emptyRows[3][7].text, "0%");
+      assert.equal(emptyRows[3][13].text, "0%");
+      assert.equal(emptyRows[7][5].text, "0%");
     });

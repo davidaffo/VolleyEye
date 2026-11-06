@@ -326,12 +326,23 @@ Sotto il riepilogo principale è presente anche una tabella aggiuntiva con alcun
 
 Qui trovi, tra le altre cose:
 
-- dati di **cambio palla**
+- dati di **cambio palla diretto**
 - attacchi dopo **ricezione positiva**
 - attacchi dopo **ricezione non positiva**
-- dati di **break point**
 - rendimento del **contrattacco**
 - differenza di rendimento per **rotazione**
+
+Il **cambio palla diretto** conta gli attacchi `#` classificati come primo attacco dopo ricezione; la percentuale è `punti diretti / ricezioni × 100`. Non misura tutti gli scambi vinti in ricezione.
+
+Il riepilogo non mostra punti o percentuali di break point: la classificazione attuale riconosce i contrattacchi, ma non distingue gli scambi iniziati sul proprio servizio.
+
+Nei tre gruppi di attacco (dopo ricezione positiva, dopo ricezione non positiva e contrattacco), **Pt%** indica `punti / attacchi totali × 100`, mentre **Eff** indica `(punti − errori − murate subite) / attacchi totali × 100`. Qui i codici sono fissi: `#` per i punti, `=` per gli errori e `/` per le murate subite. Senza attacchi, entrambe le percentuali mostrano `0%`.
+
+Gli attacchi dopo ricezione vengono suddivisi solo quando la valutazione della ricezione è nota: `#` e `+` per la positiva; `!` e `-` per la non positiva. Le ricezioni `/` e `=` non portano al primo attacco e sono escluse da questi gruppi. Le valutazioni mancanti o non riconosciute non entrano in nessuno dei due gruppi; non vengono dedotte automaticamente. Questa esclusione riguarda i due gruppi di attacco e non modifica il conteggio dei punti diretti.
+
+La **differenza rotazione** nel riepilogo sotto al tabellino somma i punti a favore e sottrae quelli contro, includendo gli eventi di entrambe le squadre nei set selezionati. Per gli eventi avversari usa la rotazione della squadra analizzata registrata nel campo `opponentSetterPosition`. Gli eventi senza una rotazione valida da 1 a 6 per la squadra analizzata vengono esclusi dal saldo per rotazione, senza attribuirli alla rotazione 1.
+
+Durante l’importazione DVW la sequenza degli eventi ricostruisce la ricezione associata al primo attacco e distingue questo dai contrattacchi. Il contesto viene separato per set e squadra e azzerato a ogni servizio e punto assegnato. Se mancano gli eventi necessari, la fase rimane sconosciuta.
 
 ### Grafici skill
 

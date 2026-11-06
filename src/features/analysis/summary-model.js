@@ -33,7 +33,6 @@ import {
   matchesSummarySetFilter,
   computeAttackSplitSummary,
   formatPercentValueSafe,
-  getPointDirectionFor,
   computeRotationDeltasForEvents,
 } from "./filter-model.js";
 
@@ -344,12 +343,19 @@ export function buildReactAggregatedTable({ chartTones } = {}) {
   };
   const renderSummaryExtraTable = (scopes) => {
 
-const buildRow = (cells, { isHeader = false } = {}) => {
+    const buildRow = (cells, { isHeader = false } = {}) => {
       extraRows.push({
         cells: cells.map((cell) => ({ ...cell, tag: isHeader ? "th" : "td" })),
       });
     };
     const positiveReceiveCodes = new Set(["#", "+"]);
+    const nonPositiveReceiveCodes = new Set(["!", "-"]);
+    const attackEfficiencyCell = (summary) => ({
+      text: formatPercentValueSafe(
+        summary.pt - summary.err - summary.mur,
+        summary.tot,
+      ),
+    });
     const tableScopes = Array.isArray(scopes) && scopes.length ? scopes : [];
     tableScopes.forEach((scope, idx) => {
       const scopeEvents = analysisEvents.filter(
@@ -359,13 +365,13 @@ const buildRow = (cells, { isHeader = false } = {}) => {
       );
       const teamName = getTeamNameForScope(scope);
       if (idx > 0) {
-        buildRow([{ text: "", colspan: 14 }]);
+        buildRow([{ text: "", colspan: 15 }]);
       }
-      buildRow([{ text: teamName, colspan: 14 }], { isHeader: true });
+      buildRow([{ text: teamName, colspan: 15 }], { isHeader: true });
       buildRow(
         [
-          { text: "Cambio palla", colspan: 3 },
-          { text: "Attacchi su ricezione positiva", colspan: 5 },
+          { text: "Cambio palla diretto", colspan: 3 },
+          { text: "Attacchi su ricezione positiva", colspan: 6 },
           { text: "Attacchi su ricezione non positiva", colspan: 6 },
         ],
         { isHeader: true },
@@ -373,19 +379,20 @@ const buildRow = (cells, { isHeader = false } = {}) => {
       buildRow(
         [
           { text: "Ricezione" },
-          { text: "CP punti" },
+          { text: "Punti diretti" },
           { text: "%" },
           { text: "Err" },
           { text: "Mur" },
           { text: "Pt" },
           { text: "Pt%" },
+          { text: "Eff" },
           { text: "Tot" },
           { text: "Err" },
           { text: "Mur" },
           { text: "Pt" },
           { text: "Pt%" },
+          { text: "Eff" },
           { text: "Tot" },
-          { text: "" },
         ],
         { isHeader: true },
       );
@@ -404,7 +411,7 @@ const buildRow = (cells, { isHeader = false } = {}) => {
         positiveReceiveCodes.has(ev.receiveEvaluation),
       );
       const nonPosReceiveAttacks = sideoutAttacks.filter(
-        (ev) => !positiveReceiveCodes.has(ev.receiveEvaluation),
+        (ev) => nonPositiveReceiveCodes.has(ev.receiveEvaluation),
       );
       const posSummary = computeAttackSplitSummary(posReceiveAttacks);
       const nonPosSummary = computeAttackSplitSummary(nonPosReceiveAttacks);
@@ -416,32 +423,32 @@ const buildRow = (cells, { isHeader = false } = {}) => {
         { text: posSummary.mur },
         { text: posSummary.pt },
         { text: formatPercentValueSafe(posSummary.pt, posSummary.tot) },
+        attackEfficiencyCell(posSummary),
         { text: posSummary.tot },
         { text: nonPosSummary.err },
         { text: nonPosSummary.mur },
         { text: nonPosSummary.pt },
         { text: formatPercentValueSafe(nonPosSummary.pt, nonPosSummary.tot) },
+        attackEfficiencyCell(nonPosSummary),
         { text: nonPosSummary.tot },
-        { text: "-" },
       ]);
-      buildRow([{ text: "", colspan: 14 }]);
+      buildRow([{ text: "", colspan: 15 }]);
       buildRow(
         [
-          { text: "Break Point", colspan: 3 },
-          { text: "Contrattacchi", colspan: 5 },
+          { text: "", colspan: 3 },
+          { text: "Contrattacchi", colspan: 6 },
           { text: "Differenza rotazione", colspan: 6 },
         ],
         { isHeader: true },
       );
       buildRow(
         [
-          { text: "Battuta" },
-          { text: "BP punti" },
-          { text: "%" },
+          { text: "", colspan: 3 },
           { text: "Err" },
           { text: "Mur" },
           { text: "Pt" },
           { text: "Pt%" },
+          { text: "Eff" },
           { text: "Tot" },
           { text: "1" },
           { text: "2" },
@@ -452,34 +459,21 @@ const buildRow = (cells, { isHeader = false } = {}) => {
         ],
         { isHeader: true },
       );
-      const serveEvents = scopeEvents.filter(
-        (ev) => ev && ev.skillId === "serve",
-      );
-      const serveCount = serveEvents.length;
-      const bpPointEvents = scopeEvents.filter((ev) => {
-        if (!ev) return false;
-        const direction = getPointDirectionFor(scope, ev);
-        if (direction !== "for") return false;
-        if (ev.skillId === "serve" || ev.skillId === "block") return true;
-        return ev.skillId === "attack" && ev.attackBp === true;
-      });
-      const bpPoints = bpPointEvents.reduce(
-        (sum, ev) => sum + getEventPointValue(ev),
-        0,
-      );
       const counterAttacks = scopeEvents.filter(
         (ev) => ev && ev.skillId === "attack" && ev.attackBp === true,
       );
       const counterSummary = computeAttackSplitSummary(counterAttacks);
-      const rotationDeltas = computeRotationDeltasForEvents(scopeEvents, scope);
+      const rotationDeltas = computeRotationDeltasForEvents(
+        analysisEvents.filter((ev) => matchesSummarySetFilter(ev)),
+        scope,
+      );
       buildRow([
-        { text: serveCount },
-        { text: bpPoints },
-        { text: formatPercentValueSafe(bpPoints, serveCount) },
+        { text: "", colspan: 3 },
         { text: counterSummary.err },
         { text: counterSummary.mur },
         { text: counterSummary.pt },
         { text: formatPercentValueSafe(counterSummary.pt, counterSummary.tot) },
+        attackEfficiencyCell(counterSummary),
         { text: counterSummary.tot },
         ...Array.from({ length: 6 }, (_, index) => ({
           text: rotationDeltas[index] || 0,

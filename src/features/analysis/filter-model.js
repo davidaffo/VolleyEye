@@ -327,7 +327,14 @@ export function computeRotationDeltasForEvents(events, scope) {
   (events || []).forEach(ev => {
     const direction = getPointDirectionFor(scope, ev);
     if (!direction) return;
-    const rot = ev.rotation && ev.rotation >= 1 && ev.rotation <= 6 ? ev.rotation : 1;
+    // Rotation belongs to the event's team; the opposite team's rotation is
+    // recorded separately. Never guess a rotation when that snapshot is absent.
+    const rawRotation = getTeamScopeFromEvent(ev) === scope
+      ? ev.rotation
+      : ev.opponentSetterPosition;
+    if (typeof rawRotation !== "number" && typeof rawRotation !== "string") return;
+    const rot = Number(rawRotation);
+    if (!Number.isInteger(rot) || rot < 1 || rot > 6) return;
     const val = getEventPointValue(ev);
     const entry = rotations[rot - 1];
     if (direction === "for") {

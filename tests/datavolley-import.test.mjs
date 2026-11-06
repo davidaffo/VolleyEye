@@ -31,6 +31,53 @@ function harness() {
 }
 const root = dvwFixtureRoot('resources/data volley');
 const files = [`${root}/data volley example file.dvw`, ...readdirSync(`${root}/files scout`).filter(f => f.endsWith('.dvw')).map(f => `${root}/files scout/${f}`)];
+
+test('DVW import reconstructs reception and transition attacks from both teams without changing scores', () => {
+  const ctx = harness();
+  const header = readFileSync(files[0], 'utf8').split('[3SCOUT]')[0];
+  const codes = [
+    '*01SH+', 'a01RH+', 'a01EH#', 'a01AH+',
+    '*01DH+', '*01EH#', '*01AH+', 'a01DH+', 'a01AH#', 'ap0:1',
+    'a01SH+', '*01RH!', '*01EH#', '*01AH#', '*p1:1',
+  ];
+  const rows = codes.map(code => ctx.buildDvRow(code, {
+    setNum: 1, ourCourt: [], opponentCourt: [],
+  }));
+  const result = ctx.parseDataVolleyDvwToMatchState(header + '[3SCOUT]\n' + rows.join('\n'));
+  const attacks = result.events.filter(event => event.skillId === 'attack');
+  assert.deepEqual(Array.from(attacks, event => [event.team, event.attackBp, event.receiveEvaluation]), [
+    ['opponent', false, '+'], ['our', true, null],
+    ['opponent', true, null], ['our', false, '!'],
+  ]);
+  const sets = result.events.filter(event => event.skillId === 'second');
+  assert.deepEqual(Array.from(sets, event => event.receiveEvaluation), ['+', null, '!']);
+  const summary = ctx.computePointsSummary(1, { events: result.events, includeOverrides: false });
+  assert.deepEqual([summary.totalFor, summary.totalAgainst], [1, 1]);
+});
+
+test('DVW attack contexts reject unplayable receptions and never leak across points, serves, or sets', () => {
+  const ctx = harness();
+  const ev = (skillId, code, team = 'our', set = 1, extra = {}) => ({
+    skillId, code, team, set, attackBp: null, receiveEvaluation: null, ...extra,
+  });
+  const events = [
+    ev('pass', '#'), ev('second', '#'), ev('attack', '+'), ev('attack', '#'),
+    ev('pass', '/'), ev('attack', '#'),
+    ev('pass', '='), ev('attack', '#'),
+    ev('pass', '+'), ev('manual', 'point', 'our', 1, { pointDirection: 'for' }), ev('attack', '#'),
+    ev('pass', '+'), ev('serve', '+', 'opponent'), ev('attack', '#'),
+    ev('pass', '+'), ev('attack', '#', 'our', 2),
+    ev('pass', '-'), ev('freeball', '+'), ev('attack', '#'),
+    ev('pass', '!'), ev('attack', '+', 'opponent'), ev('attack', '#'),
+  ];
+  ctx.restoreDvwAttackContexts(events);
+  assert.deepEqual(events.filter(event => event.skillId === 'attack').map(event => [event.attackBp, event.receiveEvaluation]), [
+    [false, '#'], [true, null], [null, null], [null, null],
+    [null, null], [null, null], [null, null], [true, null],
+    [null, null], [true, null],
+  ]);
+});
+
 for (const file of files) {
   test(`DataVolley originale: ${file}`, () => {
     const ctx = harness();

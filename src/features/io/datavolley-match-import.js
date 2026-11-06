@@ -9,6 +9,54 @@ import { normalizeDataVolleyEventMeta } from "../teams/player-identity.js";
 import { computeAttackDirectionDeg } from "../../domain/trajectory-geometry.js";
 import { session as matchState } from "../../../js/globals.js";
 
+export function restoreDvwAttackContexts(events) {
+  const contexts = new Map();
+  const fresh = () => ({ our: { phase: null, receive: null }, opponent: { phase: null, receive: null } });
+  for (const event of events || []) {
+    if (!event) continue;
+    const set = Number(event.set);
+    if (!contexts.has(set)) contexts.set(set, fresh());
+    let context = contexts.get(set);
+    const scope = getTeamScopeFromEvent(event);
+    const other = scope === "our" ? "opponent" : "our";
+    const skill = event.skillId;
+    if (event.actionType === "timeout" || event.actionType === "substitution") continue;
+    if (skill === "serve") {
+      context = fresh();
+      contexts.set(set, context);
+      context[scope].phase = true;
+    } else if (skill === "pass") {
+      const playable = ["#", "+", "!", "-"].includes(event.code);
+      context[scope] = { phase: playable ? false : null, receive: playable ? event : null };
+    } else if (["defense", "freeball", "block"].includes(skill)) {
+      context[scope] = { phase: true, receive: null };
+    }
+    if (["pass", "attack", "second", "defense", "freeball"].includes(skill) && context[other].phase === false) {
+      context[other] = { phase: true, receive: null };
+    }
+    if (skill === "second" || skill === "attack") {
+      const receive = context[scope].receive;
+      if (receive) {
+        event.receiveEvaluation = receive.code;
+        event.receivePosition = receive.receivePosition ?? receive.zone ?? null;
+      }
+      if (skill === "attack") {
+        // This is the existing attack/transition flag, not the serving phase.
+        event.attackBp = context[scope].phase;
+        context[scope] = { phase: true, receive: null };
+        context[other] = { phase: true, receive: null };
+      }
+    }
+    const terminalSkill = Object.values(DV_SKILLS_BY_CODE).includes(skill);
+    const terminal = (terminalSkill && event.code === "=") ||
+      (["serve", "attack", "block"].includes(skill) && event.code === "#") ||
+      (skill === "attack" && event.code === "/");
+    if (terminal || event.pointDirection === "for" || event.pointDirection === "against") {
+      contexts.set(set, fresh());
+    }
+  }
+}
+
 export function parseDvwPlayersSection(lines, teamMeta, side = "our") {
   const playersDetailed = [];
   const players = [];
@@ -536,6 +584,7 @@ export function parseDataVolleyDvwToMatchState(text) {
     setContext.lastEventIndex = events.length;
     events.push(event);
   });
+  restoreDvwAttackContexts(events);
   const playedSetNumbers = Array.from(new Set(events.map(ev => parseInt(ev.set, 10)).filter(Boolean))).sort((a, b) => a - b);
   const currentSet = playedSetNumbers.length ? playedSetNumbers[playedSetNumbers.length - 1] : 1;
   let currentIsServing = false;
