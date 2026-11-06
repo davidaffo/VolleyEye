@@ -28,4 +28,6 @@ La build usa esplicitamente la modalità `production`, sia con `serve` sia nel w
 
 Vite usa /VolleyEye/ come percorso di produzione. Il service worker viene generato dalla build includendo i chunk React, i documenti, le immagini e le risorse necessarie all'export offline. L'URL del sito e i dati salvati nel browser mantengono la stessa origine e lo stesso percorso.
 
-Per aggiornare la versione: `npm run release`. Vedi [procedura release](RELEASE_PROCESS.md).
+Lo [storico delle versioni](docs/changelog.md) è consultabile anche dal link **Changelog** nel footer del sito, con l'ultimo aggiornamento in cima.
+
+Durante lo sviluppo le note vengono accumulate in `CHANGELOG.pending.md` da chi esegue le modifiche, incluso Codex. `npm run release` le trasferisce automaticamente nel changelog, aggiorna la versione e svuota il file di appoggio. Vedi [procedura release](RELEASE_PROCESS.md).

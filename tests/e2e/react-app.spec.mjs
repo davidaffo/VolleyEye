@@ -66,6 +66,20 @@ test("React avvia archivio, navigazione e tema sul percorso GitHub Pages", async
   expect(errors).toEqual([]);
 });
 
+test("il changelog è accessibile dal footer e mostra la versione corrente per prima", async ({ page }) => {
+  await openApp(page);
+  const link = page.getByRole("link", { name: "Changelog", exact: true });
+  const [popup] = await Promise.all([page.waitForEvent("popup"), link.click()]);
+  await expect(popup.locator("#doc-root h1")).toHaveText("Changelog di VolleyEye");
+  const { baseVersion } = JSON.parse(readFileSync("version.config.json", "utf8"));
+  await expect(popup.locator("#doc-root h2").first()).toContainText(baseVersion);
+  await expect(popup.locator("#doc-root h2").last()).toContainText("0.1.0");
+  await popup.locator("#doc-nav a").filter({ hasText: "0.1.0 —" }).click();
+  await expect(popup).toHaveURL(/#0-1-0-/);
+  await popup.getByRole("link", { name: "Torna all'app" }).click();
+  await expect(popup.locator(".app-title")).toHaveText("VolleyEye");
+});
+
 test("contatori React: 8 cambi, 2 tempi, superamento limiti, annulla e persistenza", async ({
   page,
 }) => {

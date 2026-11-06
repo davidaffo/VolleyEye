@@ -19,6 +19,15 @@ export function AppFooter() {
         <span>{"Licenza: GPL-3.0"}</span>
       </div>
       <div className="app-footer-links">
+        <a
+          className="app-footer-manual"
+          href="docs/markdown-viewer.html?doc=changelog.md&title=Changelog"
+          target="_blank"
+          rel="noopener"
+          title="Consulta tutte le versioni e le novità di VolleyEye"
+        >
+          Changelog
+        </a>
         <button
           id="btn-force-refresh-app"
           onClick={() =>

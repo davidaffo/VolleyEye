@@ -3,8 +3,9 @@
   "tasks": [
     {
       "label": "Aggiorna versione VolleyEye",
-      "type": "shell",
-      "command": "npm run release -- ${input:versionIncrement}",
+      "type": "process",
+      "command": "npm",
+      "args": ["run", "release", "--", "${input:versionIncrement}"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": []
     }
