@@ -96,7 +96,7 @@ export async function maybeImportMatchFromUrl() {
 
 export function exportDatabaseToFile() {
   const payload = buildDatabaseBackupPayload();
-  const json = JSON.stringify(payload, null, 2);
+  const json = JSON.stringify(payload);
   const blob = new Blob([json], { type: "application/json" });
   const now = new Date();
   const pad2 = num => String(num).padStart(2, "0");

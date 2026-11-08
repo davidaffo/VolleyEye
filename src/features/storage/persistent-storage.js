@@ -4,6 +4,7 @@ import { STORAGE_KEY, PERSISTENT_DB_NAME, MATCH_PREFIX, TEAM_PREFIX, PLAYER_PREF
 import { getStateDb } from "./state-db.js";
 import { session as stateDbState } from "../state/storage-state-db.js";
 import { buildLocalUiSnapshot } from "./ui-preferences.js";
+import { decodeArchiveEntries } from "./archive-codec.js";
 
 
 
@@ -21,7 +22,9 @@ export function readArchiveEntries(db) {
       entries.set(cursor.key, cursor.value);
       cursor.continue();
     };
-    tx.oncomplete = () => resolve(entries);
+    tx.oncomplete = () => {
+      try { resolve(decodeArchiveEntries(entries)); } catch (error) { reject(error); }
+    };
     tx.onabort = () => reject(tx.error || new Error("Lettura archivio non riuscita."));
     tx.onerror = () => {};
   });
@@ -100,4 +103,3 @@ export async function initializePersistentStorage(options = {}) {
     tx.onerror = () => {};
   });
 }
-

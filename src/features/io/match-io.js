@@ -3,6 +3,7 @@ import { session } from "../state/io-match-io.js";
 import { ensureMatchDefaults, buildMatchDisplayName } from "../teams/match-details.js";
 import { AUTO_LIBERO_ROLE_DEFAULT_VERSION, logError, session as matchState } from "../../../js/globals.js";
 import { cloneIsolationData } from "../../domain/snapshots.js";
+import { unpackDatabaseBackup } from "./database-backup.js";
 import { getStoredThemePreference, sanitizeRosterIsolation, applyTheme } from "../teams/core/state-store.js";
 import { saveState } from "../storage/save-state.js";
 import { normalizeThemePreference, normalizeVideoFilterPresets } from "../storage/ui-preferences.js";
@@ -377,8 +378,7 @@ export async function applyImportedDatabase(nextState) {
     alert("File database non valido.");
     return false;
   }
-  const imported =
-    (cloneIsolationData(nextState.state));
+  const imported = unpackDatabaseBackup(nextState).state;
   if (!Array.isArray(imported.players) || !Array.isArray(imported.events)) {
     alert("File database non valido: mancano roster o cronologia del match.");
     return false;

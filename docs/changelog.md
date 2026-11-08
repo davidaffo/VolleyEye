@@ -5,6 +5,12 @@ Le voci storiche riportano i messaggi originali dei commit e i relativi collegam
 
 Prima della versione 0.1.0 il progetto era già in sviluppo, ma non aveva una numerazione di release registrata.
 
+## 0.20.7 — 2026-11-08
+
+- I dati di annullamento, inclusi quelli dei vecchi cambi set, vengono eliminati quando si termina una partita; il pulsante «Ottimizza spazio» nel menu Debug pulisce tutte le partite, compatta l’archivio locale e condivide le foto duplicate, mantenendo compatti anche i salvataggi successivi.
+- I backup salvano ogni foto una sola volta e un unico elenco delle squadre, eliminando le copie ridondanti e mantenendo il ripristino dei backup precedenti.
+- I backup compattano gli eventi e le traiettorie, evitano la copia della partita aperta e i rientri superflui e rimuovono i dati di annullamento delle partite terminate, mantenendo il ripristino dei backup precedenti.
+
 ## 0.20.6 — 2026-11-06
 
 - Aggiunte annotazioni separate dagli eventi, inseribili durante la partita dal tasto blu “Aggiungi nota” nella rete tramite popup, con set e punteggio e indicate nel log da una riga blu compatta con icona; in analisi video un pulsante con contatore apre il popup dedicato per consultarle, raggiungere il video, risolverle o eliminarle.

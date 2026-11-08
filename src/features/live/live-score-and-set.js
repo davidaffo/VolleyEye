@@ -13,7 +13,7 @@ import { enforceAutoLiberoForScope, enforceAutoLiberoForState } from "../teams/c
 import { saveState } from "../storage/save-state.js";
 import { getLastFlowEvent, computeTwoTeamFlowFromEvent, getPredictedSkillId, clearReceiveContext } from "./flow-model.js";
 import { updateNextSkillIndicator } from "../scout/flow-view.js";
-import { captureScoutActionSnapshot, attachScoutActionSnapshot } from "../events/history-model.js";
+import { captureScoutActionSnapshot, attachScoutActionSnapshot, clearScoutUndoStates } from "../events/history-model.js";
 import { cancelPartialSkillFlowForScope } from "../scout/selection-state.js";
 import { buildBaseEventPayload, recordSetAction } from "../events/recording-model.js";
 import { pauseSkillClock, pauseVideoClock, resumeSkillClock, resumeVideoClock, snapshotSkillClock, snapshotVideoClock } from "./clocks.js";
@@ -378,6 +378,7 @@ export function applySetChange(nextSet, options = {}) {
     pauseSkillClock();
     pauseVideoClock();
     matchState.state.matchFinished = true;
+    clearScoutUndoStates(matchState.state.events);
     setCurrentSet(nextSet);
     saveState({ persistLocal: true });
     renderEventsLog();

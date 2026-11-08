@@ -1,6 +1,7 @@
 import { session as matchState } from "../../js/globals.js";
 import { applyTopBarVisibility, backfillPlayerIdsInSavedMatches } from "../features/scout-ui.js";
 import { saveState } from "../features/storage/save-state.js";
+import { optimizeArchiveSpace } from "../features/storage/undo-cleanup.js";
 import { forceSyncDataFromLog } from "../features/video/event-editor.js";
 import { resetTrajectoryFilters, resetServeTrajectoryFilters, resetVideoFilters } from "../features/analysis/analysis-filters.js";
 import { resetSecondFilters } from "../features/analysis/second-distribution.js";
@@ -36,6 +37,16 @@ export function syncReactDebugLog() {
 export function backfillReactPlayerIds() {
   if (confirm("Scrivere gli ID giocatrici in tutti i match salvati?"))
     backfillPlayerIdsInSavedMatches();
+}
+
+export async function optimizeReactArchiveSpace() {
+  if (!confirm("Ottimizzare lo spazio di tutte le partite e delle anagrafiche? Verranno compattati i dati, condivise le foto duplicate ed eliminati i dati di annullamento, inclusi quelli della partita aperta. Azioni, foto e statistiche restano conservate.")) return;
+  try {
+    await optimizeArchiveSpace();
+    alert("Spazio ottimizzato. Archivio e foto compattati, dati di annullamento rimossi. Anche i prossimi salvataggi useranno il formato compatto.");
+  } catch (error) {
+    alert("Ottimizzazione dello spazio non completata. " + error.message);
+  }
 }
 
 export function runReactAppAction(name) {

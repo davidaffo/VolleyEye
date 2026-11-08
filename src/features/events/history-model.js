@@ -1,5 +1,17 @@
 import { session as matchState } from "../../../js/globals.js";
 
+export function clearScoutUndoStates(events = []) {
+  const keys = ["undoState", "__undoSnapshot", "prevSetResults", "nextSetResults", "prevSetStarts", "nextSetStarts",
+    "prevClock", "nextClock", "prevVideoClock", "nextVideoClock"];
+  let removed = 0;
+  events.forEach(event => {
+    if (!event || typeof event !== "object") return;
+    if (keys.some(key => Object.hasOwn(event, key))) removed++;
+    keys.forEach(key => delete event[key]);
+  });
+  return removed;
+}
+
 export function captureScoutActionSnapshot({ includeSetState = false } = {}) {
   // Una ricevuta contiene solo lo stato di gioco, mai storico, archivi o video.
   const keys = [

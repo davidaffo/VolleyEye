@@ -404,13 +404,19 @@ test('il contesto di ricezione e le variabili dei due campi vengono sincronizzat
   assert.deepEqual(plain(c.opponentAutoRoleBaseCourt), plain(c.state.opponentAutoRoleBaseCourt));
 });
 
-test('fine partita e ripresa mantengono ricevute valide senza aggiungere eventi fittizi', () => {
+test('fine partita elimina le ricevute prima del salvataggio senza aggiungere eventi fittizi', () => {
   const c = setup();
   c.addManualPoint('for', 1, 'for');
   const count = c.state.events.length;
+  assert.ok(c.state.events.some(event => event.undoState));
   c.endMatch();
   assert.equal(c.state.matchFinished, true);
   assert.equal(c.state.events.length, count);
+  for (const event of c.state.events) {
+    assert.equal(Object.hasOwn(event, 'undoState'), false);
+    assert.equal(Object.hasOwn(event, '__undoSnapshot'), false);
+  }
+  assert.ok(JSON.parse(c.persisted).events.every(event => !Object.hasOwn(event, 'undoState')));
   c.endMatch();
   assert.equal(c.state.matchFinished, false);
   c.state = JSON.parse(c.persisted);

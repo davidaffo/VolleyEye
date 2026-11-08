@@ -19,7 +19,7 @@ import { selectAttributionErrorType, applyAttribution } from "../features/scout/
 import { closeManagedPlayersPaste, applyManagedPlayersPaste } from "../features/teams/paste-commands.js";
 import { changeReactSetting } from "../features/settings/commands.js";
 import { loadReactMobileYoutube, openReactLocalVideoPicker } from "../features/video/source-commands.js";
-import { toggleReactTopbar, syncReactDebugLog, backfillReactPlayerIds, runReactAppAction, openReactMatchFilePicker, changeReactScoutDrawer } from "./app-actions.js";
+import { toggleReactTopbar, syncReactDebugLog, backfillReactPlayerIds, optimizeReactArchiveSpace, runReactAppAction, openReactMatchFilePicker, changeReactScoutDrawer } from "./app-actions.js";
 import { recordReactFloatingServeError, changeReactSetType, changeReactOpponentSkill, resizeReactPanel } from "../features/archive/database-controls.js";
 import { handleImportDatabaseFile, handleImportMatchFile } from "../features/io/file-and-url-import.js";
 import { applyDvwScoutInput, queueCurrentDvwScoutToken, openDvwScoutHelp } from "../features/io/datavolley-live-entry.js";
@@ -125,6 +125,7 @@ export const actions = createCommands({
   toggleReactTopbar,
   syncReactDebugLog,
   backfillReactPlayerIds,
+  optimizeReactArchiveSpace,
   openAttackTrajectoryModal,
   closeAttackTrajectoryModal,
   setServeTypeSelection,

@@ -2,47 +2,8 @@ import { MATCH_PREFIX, session as matchState, logError } from "../../../js/globa
 import { session as persistentStorageState } from "../state/storage-persistent-storage.js";
 import { cloneIsolationData } from "../../domain/snapshots.js";
 
-export function encodeMatchStoragePayload(data) {
-  const events = data && data.state && data.state.events;
-  if (!Array.isArray(events) || !events.length || events.some(event => !event || typeof event !== "object" || Array.isArray(event))) {
-    return JSON.stringify(data);
-  }
-  const keys = new Set(events.flatMap(event => Object.keys(event)));
-  const columns = Array.from(keys, key => {
-    const values = [];
-    const lookup = new Map();
-    const indices = events.map(event => {
-      const value = Object.prototype.hasOwnProperty.call(event, key) ? JSON.stringify(event[key]) : undefined;
-      if (value === undefined) return -1;
-      if (!lookup.has(value)) {
-        lookup.set(value, values.length);
-        values.push(JSON.parse(value));
-      }
-      return lookup.get(value);
-    });
-    return [key, values, indices];
-  });
-  const payload = { ...data, state: { ...data.state } };
-  delete payload.state.events;
-  return JSON.stringify({ storageFormat: "volleyeye-match-columns-v1", payload, eventCount: events.length, columns });
-}
-
-export function decodeMatchStoragePayload(raw) {
-  const stored = JSON.parse(raw);
-  if (!stored || stored.storageFormat !== "volleyeye-match-columns-v1") return stored;
-  const events = Array.from({ length: stored.eventCount }, () => ({}));
-  stored.columns.forEach(([key, values, indices]) => {
-    indices.forEach((index, row) => {
-      if (index < 0) return;
-      // Each event owns its nested values, just as with regular JSON.parse.
-      Object.defineProperty(events[row], key, {
-        value: JSON.parse(JSON.stringify(values[index])), enumerable: true, writable: true, configurable: true
-      });
-    });
-  });
-  stored.payload.state.events = events;
-  return stored.payload;
-}
+import { decodeMatchStoragePayload } from "./match-codec.js";
+export { encodeMatchStoragePayload, decodeMatchStoragePayload } from "./match-codec.js";
 
 export function getMatchStorageKey(name) {
   return MATCH_PREFIX + name;

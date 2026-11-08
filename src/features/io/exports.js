@@ -11,6 +11,7 @@ import { setActiveTab, setActiveAggTab } from "../core/app-lifecycle.js";
 import { session as browserEffectsState } from "../../app/browser-effects.js";
 import { getCurrentMatchPayload } from "../teams/current-payload.js";
 import { loadTeamsMapFromStorage } from "../teams/storage/team-repository.js";
+import { packDatabaseBackup } from "./database-backup.js";
 
 export function prepareAnalysisFiltersForPdf(container) {
   if (!container) return () => {};
@@ -194,13 +195,11 @@ export function buildDatabaseBackupPayload() {
     (loadTeamsMapFromStorage());
   payload.state.savedTeams =
     (cloneIsolationData(savedTeams));
-  payload.state.savedOpponentTeams =
-    (cloneIsolationData(savedTeams));
   payload.state.playersDb =
     (cloneIsolationData(matchState.state.playersDb || {}));
   payload.state.selectedMatch = matchState.state.selectedMatch || "";
   payload.state.loadedMatchName = matchState.state.loadedMatchName || matchState.state.selectedMatch || "";
-  return payload;
+  return packDatabaseBackup(payload);
 }
 
 export async function exportMatchToFile() {
@@ -252,4 +251,3 @@ export function clearMatchSheetPrint() {
   document.getElementById("match-sheet-print-root")?.remove();
   document.body.classList.remove("printing-match-sheet");
 }
-

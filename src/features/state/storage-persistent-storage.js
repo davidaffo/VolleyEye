@@ -1,4 +1,5 @@
 import { createDomainState } from "../../app/domain-state.mjs";
+import { prepareArchiveWrites } from "../storage/archive-codec.js";
 
 export const session = createDomainState({
 "ARCHIVE_DB_STORE": () => ("archive"),
@@ -25,11 +26,13 @@ export const session = createDomainState({
       return Promise.resolve(true);
     }
     if (!this.db) throw new Error("Archivio non disponibile. Riapri l’app prima di salvare.");
+    const prepared = prepareArchiveWrites(writes, this.cache);
+    writes = prepared.cacheWrites;
     const revisions = new Map();
     const tx = this.db.transaction(persistentStorageState.ARCHIVE_DB_STORE, "readwrite");
     const store = tx.objectStore(persistentStorageState.ARCHIVE_DB_STORE);
     try {
-      writes.forEach((value, key) => {
+      prepared.storedWrites.forEach((value, key) => {
         const revision = (this.revisions.get(key) || 0) + 1;
         this.revisions.set(key, revision);
         revisions.set(key, revision);

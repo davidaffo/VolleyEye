@@ -1,10 +1,12 @@
 import { ModalDialog } from "../ui/Modal.jsx";
+import { useState } from "react";
 
 import { useViewStore } from "../../hooks/useViewStore.js";
 
 import { debugStore } from "../../state/roster-import-store.mjs";
 import { actions as appActions } from "../../app/actions.mjs";
 export function DebugModal() {
+  const [optimizing, setOptimizing] = useState(false);
   const view = useViewStore(debugStore),
     run = (command) => appActions[command]().catch(console.error),
     close = () => run("closeDebugModal");
@@ -40,6 +42,24 @@ export function DebugModal() {
           className="secondary"
         >
           {"Scrivi ID giocatrici nei match"}
+        </button>
+      </div>
+      <p className="section-note">
+        Compatta tutte le partite e le anagrafiche, condivide le foto duplicate ed elimina i dati di annullamento, inclusi quelli della partita aperta.
+      </p>
+      <div className="controls-row">
+        <button
+          id="btn-optimize-space"
+          disabled={optimizing}
+          onClick={async () => {
+            setOptimizing(true);
+            try { await appActions.optimizeReactArchiveSpace(); }
+            catch (error) { console.error(error); }
+            finally { setOptimizing(false); }
+          }}
+          className="danger"
+        >
+          {optimizing ? "Ottimizzazione…" : "Ottimizza spazio"}
         </button>
       </div>
     </ModalDialog>
