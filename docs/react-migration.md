@@ -40,12 +40,12 @@ Gli effetti di avvio e stampa vengono registrati da `useEffect` e rimossi alla c
 
 ## GitHub Pages
 
-`npm run build` genera `dist/` con asset e service worker basati sui chunk effettivi. Il percorso di produzione rimane `/VolleyEye/`, mantenendo origine e storage del sito.
+`npm run build` genera `dist/` con asset e service worker basati sui chunk effettivi. Il percorso di produzione è `/` sul dominio `https://volleyeye.davidaffo.com/`. Il cambio di origine separa lo storage dalle altre app; i dati del vecchio indirizzo richiedono export/import.
 
 Il workflow `.github/workflows/pages.yml` esegue installazione, test della logica, build e prove browser. Le pull request verso `main` vengono verificate; i push su `main` pubblicano `dist/` con GitHub Pages. Per attivarlo, la Source di Pages deve essere **GitHub Actions**. Alla verifica del 13 ottobre 2026, Pages usa ancora la pubblicazione dalla radice di `main` (`build_type: legacy`). Per pubblicare React occorrono la Source **GitHub Actions** e il workflow presente su `main`. Lavorare su un branch di migrazione non pubblica automaticamente il sito.
 
 ## Verifiche
 
-I test di integrazione compilano e caricano il vero grafo dei moduli ES e montano i componenti React. Le unità che simulano dipendenze estraggono i corpi delle funzioni dalle sorgenti native; non mantengono copie del programma classico. I riferimenti di 93 prove su campo, grafici, editor, tabelle e anteprima DataVolley sono salvati in `tests/fixtures/react-ui-reference.json`, acquisiti prima della rimozione dei renderer. Le prove DOM dei campi e dei match importati montano i componenti React reali. Le prove Playwright esercitano la build sotto `/VolleyEye/`, compresi persistenza, riapertura offline, import/export, contatori oltre i limiti e identità del canvas nei portal.
+I test di integrazione compilano e caricano il vero grafo dei moduli ES e montano i componenti React. Le unità che simulano dipendenze estraggono i corpi delle funzioni dalle sorgenti native; non mantengono copie del programma classico. I riferimenti di 93 prove su campo, grafici, editor, tabelle e anteprima DataVolley sono salvati in `tests/fixtures/react-ui-reference.json`, acquisiti prima della rimozione dei renderer. Le prove DOM dei campi e dei match importati montano i componenti React reali. Le prove Playwright esercitano la build sotto `/`, compresi persistenza, riapertura offline, import/export, contatori oltre i limiti e identità del canvas nei portal.
 
 Il video locale usa una fixture WebM di 10 secondi. La prova YouTube usa un SDK simulato e non verifica il servizio esterno reale.

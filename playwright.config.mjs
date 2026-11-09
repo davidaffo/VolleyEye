@@ -4,13 +4,13 @@ export default defineConfig({
   testDir: "./tests/e2e",
   timeout: 180000,
   use: {
-    baseURL: "http://127.0.0.1:4173/VolleyEye/",
+    baseURL: "http://127.0.0.1:4173/",
     trace: "retain-on-failure",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
     command: "npm run preview -- --port 4173 --strictPort",
-    url: "http://127.0.0.1:4173/VolleyEye/",
+    url: "http://127.0.0.1:4173/",
     reuseExistingServer: !process.env.CI,
   },
 });

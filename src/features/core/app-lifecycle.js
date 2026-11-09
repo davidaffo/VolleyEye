@@ -29,19 +29,11 @@ import { renderSetTrendAnalysis, renderPlayByPlayAnalysis } from "../live/score-
 import { renderAnalysisSkillChartsPanel } from "../analysis/skill-analysis.js";
 import { renderMatchSheetAnalysis } from "../analysis/match-sheet.js";
 import { stopPlayByPlay, scheduleVideoMobileSourcePrompt } from "../video/playback.js";
+import { clearVolleyEyeAppAssets } from "./browser-storage-cleanup.js";
 
 export function resetMatch() {
   if (!confirm("Sei sicuro di voler resettare tutti i dati del match?")) return;
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.getRegistrations().then(regs => {
-      regs.forEach(reg => reg.unregister());
-    });
-  }
-  if ("caches" in window) {
-    caches.keys().then(keys => {
-      keys.forEach(key => caches.delete(key));
-    });
-  }
+  void clearVolleyEyeAppAssets();
   resetSetTypeState();
   const preservedCourt = matchState.state.court ? stripCourtReplacements(matchState.state.court) : Array.from({ length: 6 }, () => ({ main: "" }));
   const preservedRotation = matchState.state.rotation || 1;
@@ -100,7 +92,7 @@ export function deleteIndexedDbByName(name) {
   });
 }
 
-export async function deleteAllIndexedDbDatabases() {
+export async function deleteVolleyEyeIndexedDbDatabases() {
   if (!("indexedDB" in window)) return;
   const targets = new Set();
   if (typeof stateDbState.STATE_DB_NAME !== "undefined" && stateDbState.STATE_DB_NAME) {
@@ -108,16 +100,6 @@ export async function deleteAllIndexedDbDatabases() {
   }
   if (typeof teamManagementState.LOCAL_VIDEO_DB !== "undefined" && teamManagementState.LOCAL_VIDEO_DB) {
     targets.add(teamManagementState.LOCAL_VIDEO_DB);
-  }
-  if (typeof indexedDB.databases === "function") {
-    try {
-      const dbs = await indexedDB.databases();
-      (dbs || []).forEach(entry => {
-        if (entry && entry.name) targets.add(entry.name);
-      });
-    } catch (_) {
-      // ignore
-    }
   }
   await Promise.all(Array.from(targets).map(name => deleteIndexedDbByName(name)));
 }
@@ -167,22 +149,7 @@ export async function resetAppData() {
 }
 
 export async function forceRefreshAppAssets() {
-  try {
-    if ("serviceWorker" in navigator) {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map(reg => reg.unregister()));
-    }
-  } catch (_) {
-    // ignore
-  }
-  try {
-    if ("caches" in window) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map(key => caches.delete(key)));
-    }
-  } catch (_) {
-    // ignore
-  }
+  await clearVolleyEyeAppAssets();
   try {
     sessionStorage.removeItem("sw-refresh-requested");
   } catch (_) {
@@ -260,14 +227,7 @@ export function registerServiceWorker() {
   if (isLocalDevHost) {
     // In local development the SW frequently serves stale assets while debugging.
     // Force-disable it so localhost always uses files directly from the dev server.
-    if (supportsSw) {
-      navigator.serviceWorker.getRegistrations().then(regs => {
-        regs.forEach(reg => reg.unregister());
-      }).catch(() => {});
-    }
-    if ("caches" in window) {
-      caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key)))).catch(() => {});
-    }
+    void clearVolleyEyeAppAssets();
     checkRemoteVersion();
     return;
   }

@@ -29,7 +29,7 @@ test('le librerie di dominio esportano API native senza namespace del browser', 
 });
 
 test('la build Pages include app ed export React e genera il precache dagli asset emessi', () => {
-  assert.match(read('vite.config.mjs'),/\/VolleyEye\//);
+  assert.match(read('vite.config.mjs'),/base:\s*['"]\/['"]/);
   assert.match(read('build/analysis-export.mjs'),/src\/main\.jsx/);
   assert.match(read('build/static-assets-plugin.mjs'),/Object\.keys\(bundle\)/);
   assert.match(read('.github/workflows/pages.yml'),/path: dist/);

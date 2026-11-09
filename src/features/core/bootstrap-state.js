@@ -2,7 +2,8 @@ import { ensureMatchDefaults } from "../teams/match-details.js";
 import { renderPlayers } from "../live/team-rendering.js";
 import { updateCourtModalPlacement, initCrossTabResetSync, applyVideoLayoutWidths, applyScoutColumnLayout, applyTopBarVisibility } from "../scout-ui.js";
 import { session as rosterLineupState } from "../state/roster-lineup.js";
-import { initBugReportLink, initTabs, initMobileNavigation, setupFocusGuards, setActiveAggTab, clearStateSnapshotFromIndexedDb, deleteAllIndexedDbDatabases, syncMatchSessionUI, setActiveTab, ensureBaseRotationDefault, renderMatchesSelect } from "./app-lifecycle.js";
+import { initBugReportLink, initTabs, initMobileNavigation, setupFocusGuards, setActiveAggTab, clearStateSnapshotFromIndexedDb, deleteVolleyEyeIndexedDbDatabases, syncMatchSessionUI, setActiveTab, ensureBaseRotationDefault, renderMatchesSelect } from "./app-lifecycle.js";
+import { clearVolleyEyeAppAssets, clearVolleyEyeLocalStorage } from "./browser-storage-cleanup.js";
 import { resetAttackShortcutModals } from "../live/team-management.js";
 import { initSetTypeShortcuts, handleVideoShortcut } from "../live/scout-shortcuts.js";
 import { listenRuntime } from "../../app/browser-effects.js";
@@ -77,35 +78,20 @@ export async function initializeApplicationState() {
     } catch (_) {
       // ignore
     }
-    if ("serviceWorker" in navigator) {
-      try {
-        const regs = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(regs.map(reg => reg.unregister()));
-      } catch (_) {
-        // ignore
-      }
-    }
+    await clearVolleyEyeAppAssets();
     try {
       await clearCachedLocalVideo();
     } catch (_) {
       // ignore
     }
-    if ("caches" in window) {
-      try {
-        const keys = await caches.keys();
-        await Promise.all(keys.map(key => caches.delete(key)));
-      } catch (_) {
-        // ignore
-      }
-    }
     try {
-      localStorage.clear();
+      clearVolleyEyeLocalStorage();
     } catch (_) {
       // ignore
     }
     await clearStateSnapshotFromIndexedDb();
     try {
-      await deleteAllIndexedDbDatabases();
+      await deleteVolleyEyeIndexedDbDatabases();
     } catch (_) {
       // ignore
     }

@@ -166,8 +166,8 @@ test("build PWA: manifest corretto e riapertura offline con chunk React in cache
   const manifestHref = await page
     .locator('link[rel="manifest"]')
     .getAttribute("href");
-  expect(manifestHref).toBe("/VolleyEye/manifest.json");
-  await page.evaluate(async () => {
+  expect(manifestHref).toBe("/manifest.json");
+  const workerScope = await page.evaluate(async () => {
     const registration = await navigator.serviceWorker.ready;
     if (!navigator.serviceWorker.controller) {
       await new Promise((resolve) =>
@@ -178,6 +178,7 @@ test("build PWA: manifest corretto e riapertura offline con chunk React in cache
     }
     return registration.scope;
   });
+  expect(workerScope).toBe(new URL("/", page.url()).href);
   await context.setOffline(true);
   await page.reload();
   await page.waitForFunction(
