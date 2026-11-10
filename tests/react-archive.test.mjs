@@ -106,4 +106,22 @@ test("archive view preserves immutable labels across points and refreshes rename
   assert.equal(latest.archivedMatches[0].label, "Aurora");
   assert.equal(latest.archivedMatches[1].label, "Nuovo nome");
   assert.equal(previous[0].label, "Aurora (1)");
+  state.savedMatches = {
+    missing: { state: { match: { name: "Senza data" } } },
+    older: { state: { match: { name: "Vecchia", date: "2025-12-31" } } },
+    invalid: { state: { match: { name: "Data non valida", date: "invalid" } } },
+    newest: { state: { match: { name: "Recente", date: "2026-11-10" } } },
+    sameDay: { state: { match: { name: "Stessa data", date: "2026-11-10" } } },
+    middle: { state: { match: { name: "Intermedia", date: "2026-01-01" } } },
+  };
+  context.publishRuntimeView();
+  assert.deepEqual(Array.from(latest.archivedMatches, row => row.name), [
+    "newest", "sameDay", "middle", "older", "missing", "invalid",
+  ]);
+  assert.deepEqual(Object.keys(state.savedMatches), [
+    "missing", "older", "invalid", "newest", "sameDay", "middle",
+  ]);
+  state.savedMatches.older.state.match.date = "2026-11-11";
+  context.publishRuntimeView();
+  assert.equal(latest.archivedMatches[0].name, "older");
 });

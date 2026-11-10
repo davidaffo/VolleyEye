@@ -23,6 +23,7 @@ export function publishRuntimeView() {
       const payload = matchState.state.savedMatches[name];
       return [
         name,
+        payload?.state?.match?.date || "",
         payload && payload.state && payload.state.match
           ? buildMatchDisplayName(payload.state.match)
           : name,
@@ -31,8 +32,17 @@ export function publishRuntimeView() {
   );
   if (signature !== applicationState.archiveSignature) {
     applicationState.archiveSignature = signature;
+    const matchDate = (name) => {
+      const date = Date.parse(matchState.state.savedMatches[name]?.state?.match?.date);
+      return Number.isFinite(date) ? date : -Infinity;
+    };
+    const sortedNames = names.slice().sort((a, b) => {
+      const dateA = matchDate(a);
+      const dateB = matchDate(b);
+      return dateA === dateB ? 0 : dateB - dateA;
+    });
     applicationState.archiveRows = Object.freeze(
-      names.map((name) =>
+      sortedNames.map((name) =>
         Object.freeze({
           name,
           label:
