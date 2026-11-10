@@ -20,6 +20,7 @@ const actions = {
 
   "btn-timeout": ["recordTimeoutEvent", true],
   "btn-timeout-opp": ["recordOpponentTimeoutEvent", true],
+  "btn-timeout-opp-single": ["recordOpponentTimeoutEvent", true],
   "btn-score-team-point": ["startReactPointPick", true],
   "btn-score-team-error": ["startReactErrorPick", true],
   "btn-score-opp-point": ["handleOpponentPoint", true],

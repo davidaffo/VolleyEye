@@ -5,6 +5,7 @@ import { AppActionButton } from './AppActions.jsx';
 import { ScoutActionButton, ScoutRotationSelect, ScoutLiberoSelect, ForceSkillButton } from './ScoutOptions.jsx';
 import { LiberoBench } from './LiberoBench.jsx';
 import { ScoutCourt } from './ScoutCourt.jsx';
+import { TeamCounter } from './TeamCounter.jsx';
 
 const skills = [['serve', 'Ba'], ['pass', 'Ri'], ['second', 'Al'], ['attack', 'At'], ['block', 'Mu'], ['defense', 'Di']];
 const liberoRoles = [['', 'Nessuno'], ['P', 'P'], ['S', 'S'], ['C', 'C'], ['O', 'O']];
@@ -86,6 +87,8 @@ export function SingleTeamOpponentPanel() {
         <AppActionButton id="btn-score-opp-error-single" className="small danger" aria-label="Errore avversaria">Errore</AppActionButton>
       </div>
       <ScoutActionButton id="btn-freeball-opp-single" className="small danger" aria-label="Freeball avversaria">Freeball</ScoutActionButton>
+      <AppActionButton id="btn-timeout-opp-single" className="small secondary" aria-label="Timeout avversaria">Timeout</AppActionButton>
+      <span className="team-counter">TO: <strong><TeamCounter counter="timeoutsOpponent" /></strong></span>
     </div>
   </div>;
 }
