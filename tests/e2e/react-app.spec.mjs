@@ -2330,15 +2330,52 @@ test('integrazione main: export partita da navigazione desktop e mobile chiude i
   let download = await pending;
   expect(JSON.parse(readFileSync(await download.path(), 'utf8')).state.events.length).toBeGreaterThan(0);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.locator('#mobile-navigation > summary').click();
-  await expect(page.locator('#mobile-navigation')).toHaveAttribute('open', '');
+  const navigationButton = page.locator('#btn-open-navigation-mobile');
+  await expect(navigationButton).toHaveAccessibleName('Navigazione');
+  const bounds = await navigationButton.boundingBox();
+  expect(bounds.width).toBe(36);
+  expect(bounds.height).toBe(36);
+  expect(bounds.x).toBeLessThan(20);
+  for (const selector of ['#btn-open-navigation-mobile', '#btn-open-menu-mobile', '#btn-open-log-mobile']) {
+    await expect(page.locator(selector)).toHaveClass(/mobile-toolbar-button/);
+  }
+  for (const theme of ['dark', 'light']) {
+    await page.evaluate(theme => document.body.dataset.theme = theme, theme);
+    const appearance = await page.evaluate(() => {
+      const nav = document.querySelector('#btn-open-navigation-mobile');
+      const settings = document.querySelector('#btn-open-menu-mobile');
+      const log = document.querySelector('#btn-open-log-mobile');
+      const properties = ['backgroundColor', 'color', 'border', 'borderRadius', 'boxShadow', 'padding', 'width', 'height', 'fontSize'];
+      const style = element => Object.fromEntries(properties.map(key => [key, getComputedStyle(element)[key]]));
+      const box = element => element.getBoundingClientRect();
+      return {
+        nav: style(nav), settings: style(settings),
+        tag: nav.tagName,
+        sameBar: nav.closest('.scout-mobile-bar') === settings.closest('.scout-mobile-bar') &&
+          nav.closest('.scout-mobile-bar') === log.closest('.scout-mobile-bar'),
+        centers: [settings, log].map(element => box(element).top + box(element).height / 2),
+        navTop: box(nav).top,
+        bottomGap: innerHeight - box(settings).bottom,
+      };
+    });
+    expect(appearance.tag).toBe('BUTTON');
+    expect(appearance.nav).toEqual(appearance.settings);
+    expect(appearance.sameBar).toBe(true);
+    expect(Math.max(...appearance.centers) - Math.min(...appearance.centers)).toBeLessThan(1);
+    expect(appearance.bottomGap).toBeLessThan(20);
+    expect(appearance.navTop).toBeLessThan(20);
+  }
+  await navigationButton.click();
+  await expect(navigationButton).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('#mobile-navigation')).toBeVisible();
   const button = page.locator('#mobile-navigation .mobile-match-export');
   expect(await button.evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
   pending = page.waitForEvent('download');
   await button.click();
   download = await pending;
   expect(JSON.parse(readFileSync(await download.path(), 'utf8')).state.events.length).toBeGreaterThan(0);
-  await expect(page.locator('#mobile-navigation')).not.toHaveAttribute('open', '');
+  await expect(navigationButton).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('#mobile-navigation')).toBeHidden();
   expect(errors).toEqual([]);
 });
 
@@ -2477,5 +2514,39 @@ test("annotazioni separate tra eventi e revisione video anche su mobile", async 
   await noteDialog.getByRole("button", { name: "Salva nota", exact: true }).click();
   await expect(noteDialog).not.toBeVisible();
   expect(await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot().notes[0].text)).toBe("Nota da telefono");
+  expect(errors).toEqual([]);
+});
+
+
+test('footer mobile: nascosto dentro una partita anche con Modalità mobile test', async ({ page }) => {
+  const errors = await openApp(page);
+  const footer = page.locator('.app-footer');
+  await expect(footer).toBeVisible();
+  await page.locator('#btn-load-match').click();
+  await expect(footer).toBeVisible();
+  await page.evaluate(async () => {
+    const app = window.VolleyEye.app;
+    const snapshot = app.getMatchSnapshot();
+    snapshot.matchFinished = false;
+    await app.invoke('applyImportedMatch', snapshot, { silent: true });
+  });
+  // Activate the actual setting, rather than adding its CSS class by hand.
+  await page.locator('#force-mobile-toggle').check({ timeout: 10000 });
+  await expect(page.locator('body')).toHaveClass(/force-mobile/);
+  await expect(footer).toBeHidden();
+  await page.locator('#btn-open-menu-mobile').click({ timeout: 10000 });
+  await page.locator('#force-mobile-toggle').uncheck({ timeout: 10000 });
+  await expect(footer).toBeVisible();
+  await page.locator('[data-close-drawer="menu"]').evaluate(button => button.click());
+  for (const size of [{ width: 390, height: 844 }, { width: 568, height: 320 }]) {
+    await page.setViewportSize(size);
+    for (const tab of ['scout', 'aggregated', 'video', 'info']) {
+      await page.evaluate(tab => window.VolleyEye.app.invoke('setActiveTab', tab), tab);
+      await expect(footer).toBeHidden();
+      await expect(page.locator('#btn-open-navigation-mobile')).toBeVisible();
+    }
+  }
+  await page.evaluate(() => window.VolleyEye.app.invoke('exitCurrentMatch'));
+  await expect(footer).toBeVisible();
   expect(errors).toEqual([]);
 });

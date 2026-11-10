@@ -33,6 +33,7 @@ export function LiberoBench({ scope }) {
           <div
             key={player.name}
             className={player.className}
+            title={player.label}
             data-player-name={player.name}
             data-team-scope={scope}
             draggable={!player.used && !player.replaced}

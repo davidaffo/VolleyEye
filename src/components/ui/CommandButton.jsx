@@ -3,6 +3,7 @@ import { actions as appActions, events as appEvents } from "../../app/actions.mj
 
 // Immediate dispatch preserves the browser gesture for file pickers and clipboard.
 export function CommandButton({
+  as: Component = "button",
   command,
   args = [],
   immediate = false,
@@ -19,8 +20,8 @@ export function CommandButton({
     }
   };
   return (
-    <button {...props} onClick={execute}>
+    <Component {...props} onClick={execute}>
       {children}
-    </button>
+    </Component>
   );
 }

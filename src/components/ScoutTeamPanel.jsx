@@ -43,8 +43,7 @@ function TeamToolbar({ scope, side, suffix }) {
           </label>
           <ScoutActionButton type="button" id={`btn-swap-libero${suffix}`} className="small secondary">Cambia L</ScoutActionButton>
         </div>
-        <div className="skill-flow-panel">
-          <label>Forza prossima skill</label>
+        <div className="skill-flow-panel" role="group" aria-label="Forza prossima skill">
           <div className="skill-flow-grid skill-flow-inline" id={`skill-flow-buttons${suffix}`}>
             {skills.map(([skill, label]) => (
               <ForceSkillButton key={skill} scope={scope} type="button"

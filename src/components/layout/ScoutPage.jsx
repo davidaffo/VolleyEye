@@ -24,27 +24,6 @@ import { LiveScoreValue } from "../RuntimeControls.jsx";
 export function ScoutPage() {
   return (
     <TabPanel className="tab-panel scout-live" data-tab="scout">
-      <div className="scout-mobile-bar">
-        <ScoutDrawerButton
-          drawer="menu"
-          id="btn-open-menu-mobile"
-          className="secondary small"
-          type="button"
-          aria-label="Impostazioni"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 8.75a3.25 3.25 0 1 0 0 6.5a3.25 3.25 0 0 0 0-6.5ZM4.7 9.9l-1.65-1a1 1 0 0 1-.36-1.37l1.4-2.42a1 1 0 0 1 1.34-.4l1.8.78a7.7 7.7 0 0 1 1.64-.95l.28-1.94A1 1 0 0 1 9.15 1h2.7a1 1 0 0 1 .99.86l.28 1.94c.58.23 1.12.54 1.64.95l1.8-.78a1 1 0 0 1 1.34.4l1.4 2.42a1 1 0 0 1-.36 1.37l-1.65 1c.08.52.12 1.05.12 1.6s-.04 1.08-.12 1.6l1.65 1a1 1 0 0 1 .36 1.37l-1.4 2.42a1 1 0 0 1-1.34.4l-1.8-.78a7.7 7.7 0 0 1-1.64.95l-.28 1.94a1 1 0 0 1-.99.86h-2.7a1 1 0 0 1-.99-.86l-.28-1.94a7.7 7.7 0 0 1-1.64-.95l-1.8.78a1 1 0 0 1-1.34-.4l-1.4-2.42a1 1 0 0 1 .36-1.37l1.65-1a9.9 9.9 0 0 1-.12-1.6c0-.55.04-1.08.12-1.6Z"></path>
-          </svg>
-        </ScoutDrawerButton>
-        <ScoutDrawerButton
-          drawer="log"
-          id="btn-open-log-mobile"
-          className="secondary small"
-          type="button"
-        >
-          {"Log"}
-        </ScoutDrawerButton>
-      </div>
       <ScoutDrawerBackdrop
         id="scout-drawer-backdrop"
         className="drawer-backdrop"

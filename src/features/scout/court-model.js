@@ -63,11 +63,7 @@ export function buildLiberoBenchModel() {
         (used.has(name) || locked[name] !== undefined ? " bench-locked" : ""),
       label:
         formatNameWithNumberFor(name, numbers, { scope, captainSet }) +
-        (used.has(name)
-          ? " (in campo)"
-          : locked[name] !== undefined
-            ? " (sost. libero)"
-            : ""),
+        (used.has(name) ? " (in campo)" : ""),
       restorePosition: locked[name],
     }));
   }

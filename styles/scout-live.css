@@ -92,7 +92,7 @@
   width: 100%;
 }
 .scout-live .sl-toolbar .sl-team-controls .libero-inline {
-  flex: 1 1 180px;
+  flex: 1 1 22rem;
   min-width: 0;
 }
 .scout-live .sl-toolbar .sl-team-controls .skill-flow-panel {
@@ -174,7 +174,8 @@
 /* Un'unica altezza per i comandi, anche quando gli stili del componente
    prevedono dimensioni maggiori. Le maniglie mantengono la loro geometria. */
 .scout-live button:not(:where([role="separator"], .scout-widget-handle, .video-resize-handle, .libero-return-btn)),
-.scout-live .file-btn {
+.scout-live .file-btn,
+.scout-live .libero-inline .bench-chip {
   box-sizing: border-box;
   height: var(--sl-btn-h) !important;
   min-height: var(--sl-btn-h) !important;
@@ -184,6 +185,27 @@
   line-height: 1.1 !important;
   align-items: center;
   justify-content: center;
+}
+.scout-live .libero-inline .bench-chip {
+  display: inline-flex;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.scout-live .libero-inline .bench-chip > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scout-live .libero-inline .libero-tags {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  margin-top: 0;
+  padding-bottom: 0;
 }
 .scout-live .rotation-controls,
 .scout-live .rotation-controls .rotation-select {

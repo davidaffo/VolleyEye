@@ -417,25 +417,6 @@ export function syncMatchSessionUI() {
 
 
 
-export function initMobileNavigation() {
-  const navigation = document.getElementById("mobile-navigation");
-  if (!navigation) return;
-  const close = restoreFocus => {
-    if (!navigation.open) return;
-    navigation.open = false;
-    if (restoreFocus) navigation.querySelector("summary").focus();
-  };
-  navigation.addEventListener("click", event => {
-    if (event.target.closest("button")) close(true);
-  });
-  listenRuntime(document, "click", event => {
-    if (!navigation.contains(event.target)) close(false);
-  });
-  listenRuntime(document, "keydown", event => {
-    if (event.key === "Escape") close(true);
-  });
-}
-
 export function setupFocusGuards() {
   const shouldBlurElement = el => {
     if (!(el instanceof HTMLElement)) return false;

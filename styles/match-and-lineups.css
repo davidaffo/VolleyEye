@@ -669,7 +669,7 @@ body.scout-columns-resizing {
 .scout-mobile-bar {
   display: none;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.4rem;
   position: fixed;
   left: 0;
   right: 0;
@@ -678,7 +678,15 @@ body.scout-columns-resizing {
   z-index: 36;
   pointer-events: none;
 }
-.scout-mobile-bar button {
+.mobile-scout-tools { display: none; }
+body[data-active-tab="scout"] .mobile-scout-tools { display: contents; }
+.scout-mobile-bar #btn-open-log-mobile { margin-left: auto; }
+#btn-open-navigation-mobile {
+  position: fixed;
+  top: 0.6rem;
+  left: 0.6rem;
+}
+.scout-mobile-bar .mobile-toolbar-button {
   background: rgba(12, 12, 12, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #e5e7eb;
@@ -694,7 +702,7 @@ body.scout-columns-resizing {
   min-height: 0;
   pointer-events: auto;
 }
-#btn-open-menu-mobile {
+.mobile-toolbar-button:has(svg) {
   width: 36px;
   height: 36px;
   display: inline-flex;
@@ -702,7 +710,7 @@ body.scout-columns-resizing {
   justify-content: center;
   padding: 0;
 }
-#btn-open-menu-mobile svg {
+.mobile-toolbar-button svg {
   width: 18px;
   height: 18px;
   fill: currentColor;
@@ -710,11 +718,11 @@ body.scout-columns-resizing {
 #btn-open-log-mobile {
   padding: 0.4rem 0.7rem;
 }
-body[data-theme="light"] .scout-mobile-bar button {
+body[data-theme="light"] .mobile-toolbar-button {
   background: rgba(255, 255, 255, 0.9);
   border-color: rgba(15, 23, 42, 0.15);
 }
-body[data-theme="light"] .scout-mobile-bar button {
+body[data-theme="light"] .mobile-toolbar-button {
   color: #0f172a;
 }
 .drawer-backdrop {

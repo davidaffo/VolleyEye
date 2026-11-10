@@ -352,8 +352,6 @@ export const actions = createCommands({
   exitCurrentMatch,
   exportMatchToFile,
   exportMatchFromNavigation: () => {
-    const navigation = document.getElementById("mobile-navigation");
-    if (navigation) navigation.open = false;
     exportMatchToFile();
   },
   exportDataVolleyToFile,

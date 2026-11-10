@@ -2,7 +2,7 @@ import { ensureMatchDefaults } from "../teams/match-details.js";
 import { renderPlayers } from "../live/team-rendering.js";
 import { updateCourtModalPlacement, initCrossTabResetSync, applyVideoLayoutWidths, applyScoutColumnLayout, applyTopBarVisibility } from "../scout-ui.js";
 import { session as rosterLineupState } from "../state/roster-lineup.js";
-import { initBugReportLink, initTabs, initMobileNavigation, setupFocusGuards, setActiveAggTab, clearStateSnapshotFromIndexedDb, deleteVolleyEyeIndexedDbDatabases, syncMatchSessionUI, setActiveTab, ensureBaseRotationDefault, renderMatchesSelect } from "./app-lifecycle.js";
+import { initBugReportLink, initTabs, setupFocusGuards, setActiveAggTab, clearStateSnapshotFromIndexedDb, deleteVolleyEyeIndexedDbDatabases, syncMatchSessionUI, setActiveTab, ensureBaseRotationDefault, renderMatchesSelect } from "./app-lifecycle.js";
 import { clearVolleyEyeAppAssets, clearVolleyEyeLocalStorage } from "./browser-storage-cleanup.js";
 import { resetAttackShortcutModals } from "../live/team-management.js";
 import { initSetTypeShortcuts, handleVideoShortcut } from "../live/scout-shortcuts.js";
@@ -49,7 +49,6 @@ export async function initializeApplicationState() {
   initCrossTabResetSync();
   initBugReportLink();
   initTabs();
-  initMobileNavigation();
   setupFocusGuards();
   resetAttackShortcutModals();
   initSetTypeShortcuts();

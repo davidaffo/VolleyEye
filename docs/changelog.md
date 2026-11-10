@@ -5,6 +5,17 @@ Le voci storiche riportano i messaggi originali dei commit e i relativi collegam
 
 Prima della versione 0.1.0 il progetto era già in sviluppo, ma non aveva una numerazione di release registrata.
 
+## 0.21.0 — 2026-11-10
+
+- In modalità singola squadra è disponibile il comando Timeout avversaria, con il contatore dei timeout avversari rimanenti.
+- Le partite salvate sono ordinate per data della partita, dalla più recente alla più vecchia, con quelle senza una data valida in fondo.
+- Il reset dei dati, l’aggiornamento e l’avvio in sviluppo preservano database, impostazioni, cache e service worker delle altre app sulla stessa origine.
+- VolleyEye usa il nuovo indirizzo https://volleyeye.davidaffo.com/, con risorse e installazione offline servite dalla radice del sito e archivio separato dalle altre app.
+- Su mobile la navigazione usa un piccolo pulsante hamburger in alto a sinistra, con componente e stile condivisi con Impostazioni e Log, che restano in basso e non compare più l’etichetta fissa con il nome della partita; il footer è nascosto dentro una partita, anche in modalità mobile test.
+- Rimossa la scritta sopra i tasti per forzare la prossima skill: i comandi sono allineati a quelli del libero e occupano meno spazio verticale su desktop e mobile, per entrambe le squadre.
+- Rimossa la dicitura «sost. libero» dai nomi dei giocatori sostituiti dal libero, per entrambe le squadre.
+- Le schedine dei liberi in panchina e dei giocatori sostituiti hanno la stessa altezza degli altri comandi della riga, con testo centrato e allineamento uniforme su desktop e mobile; i nomi lunghi vengono abbreviati con puntini senza scorrimento orizzontale e restano leggibili per intero nel suggerimento al passaggio del mouse.
+
 ## 0.20.7 — 2026-11-08
 
 - I dati di annullamento, inclusi quelli dei vecchi cambi set, vengono eliminati quando si termina una partita; il pulsante «Ottimizza spazio» nel menu Debug pulisce tutte le partite, compatta l’archivio locale e condivide le foto duplicate, mantenendo compatti anche i salvataggi successivi.
