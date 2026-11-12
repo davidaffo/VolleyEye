@@ -34,6 +34,7 @@ import { recalcAllStatsAndUpdateUI } from "../analysis/stats-update.js";
 import { renderEventsLog } from "../events/log-view.js";
 import { renderAggregatedTable } from "../analysis/aggregated-table.js";
 import { ensureSkillClock, ensureVideoClock } from "../live/clocks.js";
+import { showStartupProgress } from "../../app/startup-screen.js";
 
 export function applyForceMobileLayout(enabled) {
   document.body.classList.toggle("force-mobile", !!enabled);
@@ -115,6 +116,7 @@ export async function initializeApplicationState() {
       window.__appResetInProgress = false;
     }
   }
+  await showStartupProgress("Apertura dell’archivio…");
   await initializePersistentStorage({ temporary: isExportAnalysisHtml });
   let loadedFromIndexedDb = false;
   let loadedFromLocalStorage = false;
@@ -133,8 +135,10 @@ export async function initializeApplicationState() {
   const hasMatchLink = !!readMatchLinkParam();
   const hasPersistedData = loadedFromIndexedDb || loadedFromLocalStorage || hasStoredCollections || hasMatchLink;
   if (!isExportAnalysisHtml && !hasPersistedData && getDefaultDemoPreference() !== "removed") {
+    await showStartupProgress("Preparazione delle squadre e della partita demo…");
     defaultDemoCreated = await loadDefaultDemoMatch();
   }
+  await showStartupProgress("Preparazione dell’interfaccia…");
   applyVideoLayoutWidths();
   applyScoutColumnLayout();
   if (!isExportAnalysisHtml) {

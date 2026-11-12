@@ -93,6 +93,63 @@ test("il grafo dei moduli ES nativi completa il bootstrap", async () => {
   );
 });
 
+for (const kind of ['match', 'backup']) {
+  for (const previous of ['demo', 'empty', 'same roster']) {
+    test(`import ${kind} replaces automatic lineup caches after ${previous}`, async () => {
+      const context = buildBrowserContext();
+      context.alert = () => {};
+      runtimeFiles.forEach(path => vm.runInContext(readRuntimeSource(path), context, { filename: path }));
+      await context.init();
+      vm.runInContext(`
+        const incomingCourt = [
+          { main: 'Setter', replaced: '' }, { main: 'Outside A', replaced: '' },
+          { main: 'Middle A', replaced: '' }, { main: 'Opposite', replaced: '' },
+          { main: 'Outside B', replaced: '' }, { main: 'Libero', replaced: 'Middle B' }
+        ];
+        const incomingPlayers = incomingCourt.flatMap(slot => [slot.main, slot.replaced]).filter(Boolean);
+        const incomingState = {
+          match: { teamName: 'Imported home', opponent: 'Imported away' },
+          players: incomingPlayers, opponentPlayers: incomingPlayers.map(name => 'Away ' + name),
+          liberos: ['Libero'], opponentLiberos: ['Away Libero'],
+          court: incomingCourt,
+          opponentCourt: incomingCourt.map(slot => ({ main: 'Away ' + slot.main, replaced: slot.replaced ? 'Away ' + slot.replaced : '' })),
+          rotation: 1, opponentRotation: 1, isServing: true, useOpponentTeam: true,
+          autoLiberoRole: 'C', autoLiberoBackline: true,
+          preferredLibero: 'Libero', events: [], savedTeams: {}, savedMatches: {}
+        };
+      `, context);
+      if (previous !== 'demo') {
+        context.previous = previous;
+        vm.runInContext(`
+          const staleCourt = previous === 'empty'
+            ? Array.from({ length: 6 }, () => ({ main: '', replaced: '' }))
+            : [...incomingCourt].reverse();
+          updateAutoRoleBaseCourtCache(staleCourt, 'our');
+          updateAutoRoleBaseCourtCache(staleCourt, 'opponent');
+        `, context);
+      }
+      if (kind === 'backup') {
+        await vm.runInContext(`applyImportedDatabase(packDatabaseBackup({ app: 'volleyeye', state: incomingState }))`, context);
+      } else {
+        vm.runInContext(`applyImportedMatch(incomingState, { silent: true })`, context);
+      }
+      for (const scope of ['our', 'opponent']) {
+        context.scope = scope;
+        const result = JSON.parse(vm.runInContext(`JSON.stringify((() => {
+          const court = scope === 'our' ? state.court : state.opponentCourt;
+          const expected = scope === 'our' ? incomingState.court : incomingState.opponentCourt;
+          const data = prepareScoutCourtData(scope, null);
+          return { court, expected, cards: Array.from({ length: 6 }, (_, i) => buildScoutCourtCard(data, i).name) };
+        })())`, context));
+        assert.deepEqual(result.court, result.expected);
+        assert.equal(result.cards.filter(Boolean).length, 6);
+        assert.deepEqual(new Set(result.cards), new Set(result.expected.map(slot => slot.main)));
+      }
+      await vm.runInContext('archiveStorage.flush()', context);
+    });
+  }
+}
+
 test("dopo il caricamento di un match il roster avversario aggiorna stato, numeri e panchina attivi", async () => {
   const context = buildBrowserContext();
   const saved = new Map();

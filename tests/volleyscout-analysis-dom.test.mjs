@@ -45,6 +45,11 @@ async function browser(options = {}) {
   window.localStorage.setItem('volleyeye-default-demo-preference', 'removed');
   const context = dom.getInternalVMContext();
   runtimeFiles.forEach(file => vm.runInContext(readRuntimeSource(file), context, { filename: file }));
+  // This harness renders the running app without main.jsx and disables all
+  // animation/timer tasks. The real startup splash is covered by browser tests.
+  window.document.getElementById('startup-screen')?.remove();
+  window.document.getElementById('root')?.removeAttribute('inert');
+  window.document.getElementById('root')?.removeAttribute('aria-busy');
   await window.init();
   return { dom, window, context, strokes };
 }

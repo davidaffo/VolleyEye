@@ -7,6 +7,12 @@
   }
 }
 
+@media (min-width: 901px) {
+  body:not(.force-mobile)[data-match-session="true"] .app-footer {
+    display: flex;
+  }
+}
+
 @media (max-width: 900px) {
   .topbar-toggle-btn {
     display: none !important;

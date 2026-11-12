@@ -118,6 +118,8 @@ export function applyImportedMatch(nextState, options = {}) {
   merged.opponentCourt = Array.isArray(nextState.opponentCourt)
     ? nextState.opponentCourt
     : Array.from({ length: 6 }, () => ({ main: "", replaced: "" }));
+  merged.autoRoleBaseCourt = Array.isArray(nextState.autoRoleBaseCourt) ? nextState.autoRoleBaseCourt : [];
+  merged.opponentAutoRoleBaseCourt = Array.isArray(nextState.opponentAutoRoleBaseCourt) ? nextState.opponentAutoRoleBaseCourt : [];
   merged.opponentCaptains = normalizePlayers(nextState.opponentCaptains || [])
     .filter(name => (merged.opponentPlayers || []).includes(name))
     .slice(0, 1);
@@ -172,6 +174,18 @@ export function applyImportedMatch(nextState, options = {}) {
   cleanLiberoAutoMap();
   cleanCourtLiberoReplacementsForScope("our");
   cleanCourtLiberoReplacementsForScope("opponent");
+  // Automatic libero placement reads the runtime cache before rendering can
+  // sanitize it. Replace both caches at the match boundary, even for old exports
+  // that only contain the current courts.
+  for (const [scope, baseKey, courtKey] of [
+    ["our", "autoRoleBaseCourt", "court"],
+    ["opponent", "opponentAutoRoleBaseCourt", "opponentCourt"]
+  ]) {
+    updateAutoRoleBaseCourtCache(
+      matchState.state[baseKey].length === 6 ? matchState.state[baseKey] : matchState.state[courtKey],
+      scope
+    );
+  }
   syncTeamsFromStorage();
   syncOpponentTeamsFromStorage();
   enforceAutoLiberoForState({ skipServerOnServe: true });

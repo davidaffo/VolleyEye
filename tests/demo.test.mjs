@@ -80,7 +80,8 @@ test("al primo caricamento viene chiesto se conservare o eliminare le demo", () 
   assert.match(html, /Non usare ed elimina/);
   assert.match(chooser, /removeDefaultDemoData\(\{ askConfirmation: false, showResult: false \}\)/);
   assert.match(source, /getDefaultDemoPreference\(\) !== "removed"/);
-  assert.match(source, /await showDefaultDemoWelcomePopup\(\)/);
+  assert.match(source, /void showDefaultDemoWelcomePopup\(\)/);
+  assert.doesNotMatch(source, /await showDefaultDemoWelcomePopup\(\)/);
 });
 
 test("la gestione dati espone il comando dedicato per cancellare le demo", () => {

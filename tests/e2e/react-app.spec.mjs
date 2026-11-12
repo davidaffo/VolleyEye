@@ -18,7 +18,6 @@ async function openApp(page) {
   await page.goto("./");
   const demos = page.locator('[data-demo-choice="keep"]');
   await Promise.race([
-    demos.waitFor({ state: "visible" }).then(() => demos.click()),
     page
       .locator(".startup-error")
       .waitFor({ state: "visible" })
@@ -33,6 +32,7 @@ async function openApp(page) {
     () => document.documentElement.dataset.appReady === "true",
   );
   await expect(page.locator(".startup-error")).toHaveCount(0);
+  if (await demos.isVisible()) await demos.click();
   return errors;
 }
 
@@ -2524,6 +2524,12 @@ test('footer mobile: nascosto dentro una partita anche con Modalità mobile test
   await expect(footer).toBeVisible();
   await page.locator('#btn-load-match').click();
   await expect(footer).toBeVisible();
+  for (const tab of ['scout', 'aggregated', 'video', 'info']) {
+    await page.evaluate(tab => window.VolleyEye.app.invoke('setActiveTab', tab), tab);
+    await footer.scrollIntoViewIfNeeded();
+    await expect(footer).toBeInViewport();
+  }
+  await page.evaluate(() => window.VolleyEye.app.invoke('setActiveTab', 'scout'));
   await page.evaluate(async () => {
     const app = window.VolleyEye.app;
     const snapshot = app.getMatchSnapshot();

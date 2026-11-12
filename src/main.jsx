@@ -11,6 +11,7 @@ import { stop as stopApplication } from "./app/dispose.js";
 import "../js/app-version.js";
 import "./analytics.js";
 import { runtimeStore } from "./state/runtime-store.mjs";
+import { showStartupProgress, completeStartupScreen, failStartupScreen } from "./app/startup-screen.js";
 import "../style.css";
 import "../styles/match-and-lineups.css";
 import "../styles/analysis-base.css";
@@ -49,14 +50,18 @@ function Application() {
     window.addEventListener('beforeunload', beforeUnload);
     window.addEventListener('beforeprint', prepareMatchSheetPrint);
     window.addEventListener('afterprint', clearMatchSheetPrint);
-    startApplication().then(() => {
+    showStartupProgress("Caricamento del programma…").then(() => {
+      if (mounted) return startApplication();
+    }).then(() => {
       if (!mounted) return;
       window.VolleyEye ||= {};
       window.VolleyEye.app = Object.freeze({ invoke, getSnapshot: runtimeStore.getSnapshot, getMatchSnapshot });
       document.documentElement.dataset.appReady = 'true';
+      completeStartupScreen();
     }).catch(error => {
       if (!mounted) return;
       console.error('Avvio VolleyEye non riuscito', error);
+      failStartupScreen();
       runtimeStore.publish({ ...runtimeStore.getSnapshot(), startupError: error.message });
     });
     return () => {

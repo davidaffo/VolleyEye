@@ -37,7 +37,8 @@ export async function finalizeApplicationBootstrap(context) {
     }
   }
   if (defaultDemoCreated) {
-    await showDefaultDemoWelcomePopup();
+    // The welcome choice must not keep startup (and its splash screen) pending.
+    void showDefaultDemoWelcomePopup();
   }
 }
 

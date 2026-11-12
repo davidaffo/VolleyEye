@@ -5,6 +5,12 @@ Le voci storiche riportano i messaggi originali dei commit e i relativi collegam
 
 Prima della versione 0.1.0 il progetto era già in sviluppo, ma non aveva una numerazione di release registrata.
 
+## 0.21.1 — 2026-11-12
+
+- Corretta la scomparsa delle giocatrici dal campo aprendo una partita o importando un backup dopo un'altra squadra o quella di esempio.
+- Aggiunta una schermata di caricamento all’avvio, anche durante la preparazione dei dati demo, con possibilità di riprovare in caso di errore.
+- Ripristinata esplicitamente la visualizzazione del footer durante le partite su desktop, mantenendolo nascosto solo in modalità mobile.
+
 ## 0.21.0 — 2026-11-10
 
 - In modalità singola squadra è disponibile il comando Timeout avversaria, con il contatore dei timeout avversari rimanenti.

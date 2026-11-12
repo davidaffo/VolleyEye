@@ -13,5 +13,5 @@ const module = { exports: {} };
 new Function('require', 'module', 'exports', result.outputFiles[0].text)(require, module, module.exports);
 const shell = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
 const markup = renderToStaticMarkup(createElement(module.exports.AppLayout));
-const html = shell.replace('<div id="root"></div>', '<div id="root">' + markup + '</div>');
+const html = shell.replace(/(<div id="root"[^>]*>)(<\/div>)/, (_, opening, closing) => opening + markup + closing);
 export function readAppHtml() { return html; }

@@ -8,10 +8,32 @@
   <link rel="icon" type="image/png" href="./icons/icon-192.png" />
   <link rel="apple-touch-icon" href="./icons/icon-192.png" />
   <link rel="manifest" href="./manifest.json" />
+  <style>
+    .startup-screen { position: fixed; inset: 0; z-index: 2147483647; display: grid; place-items: center; padding: 1.5rem; background: #111111; color: #f8fafc; font-family: system-ui, sans-serif; text-align: center; }
+    .startup-screen__content { max-width: 26rem; }
+    .startup-screen img { width: 88px; height: 88px; border-radius: 20px; }
+    .startup-screen h1 { margin: 1rem 0 .75rem; font-size: 2rem; letter-spacing: -.04em; }
+    .startup-screen p { color: #cbd5e1; line-height: 1.5; }
+    .startup-screen__spinner { display: block; width: 28px; height: 28px; margin: 1.5rem auto; border: 3px solid #374151; border-top-color: #e5a33e; border-radius: 50%; animation: startup-spin 1s linear infinite; }
+    .startup-screen button { padding: .75rem 1.25rem; border: 0; border-radius: .5rem; background: #e5a33e; color: #111; font: inherit; font-weight: 600; cursor: pointer; }
+    .startup-screen [hidden] { display: none; }
+    @keyframes startup-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .startup-screen__spinner { animation: none; } }
+  </style>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-GZWZ7KBCLM"></script>
 </head>
 <body>
-  <div id="root"></div>
+  <div id="startup-screen" class="startup-screen">
+    <div class="startup-screen__content">
+      <img src="./icons/icon-192.png" alt="" width="88" height="88" />
+      <h1>VolleyEye</h1>
+      <span class="startup-screen__spinner" aria-hidden="true"></span>
+      <p id="startup-status" role="status" aria-live="polite">Caricamento del programma…</p>
+      <button id="startup-retry" type="button" hidden>Riprova</button>
+      <noscript><p>Attiva JavaScript per aprire VolleyEye.</p></noscript>
+    </div>
+  </div>
+  <div id="root" inert aria-busy="true"></div>
   <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
