@@ -5,6 +5,10 @@ Le voci storiche riportano i messaggi originali dei commit e i relativi collegam
 
 Prima della versione 0.1.0 il progetto era già in sviluppo, ma non aveva una numerazione di release registrata.
 
+## 0.21.2 — 2026-11-16
+
+- Aggiunto il conteggio delle azioni giocate nel tabellino e nell’analisi individuale, basato sulle presenze registrate durante la partita.
+
 ## 0.21.1 — 2026-11-12
 
 - Corretta la scomparsa delle giocatrici dal campo aprendo una partita o importando un backup dopo un'altra squadra o quella di esempio.

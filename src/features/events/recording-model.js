@@ -113,6 +113,7 @@ export function buildBaseEventPayload(base) {
   const lastEventTime = lastEvent ? lastEvent.t : null;
   const durationMs = getDefaultSkillDurationMs();
   return {
+    courtPlayers: Object.fromEntries(["our", "opponent"].map(scope => [scope, ((scope === "our" ? matchState.state.court : matchState.state.opponentCourt) || []).map(slot => typeof slot === "string" ? slot : slot?.main || "").filter(Boolean)])),
     eventId: getNextEventId(),
     t: nowIso,
     durationMs: durationMs,

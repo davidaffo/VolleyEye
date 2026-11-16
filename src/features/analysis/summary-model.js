@@ -1,3 +1,4 @@
+import { computePlayerRallies } from "./player-rallies.js";
 import { SKILL_COLUMNS } from "../../domain/analysis-columns.js";
 import { normalizeSkillCounts, buildSkillEntries } from "./statistic-model.js";
 import { skillCells } from "./table-cells.js";
@@ -95,6 +96,7 @@ export function buildReactAggregatedHeaders(sets, includeErrors) {
       }),
     );
   }
+  top.push({ text: "Azioni", rowspan: 2, title: "Azioni giocate in campo" });
   top.push({ text: "Punti", colspan: includeErrors ? 5 : 4 });
   bottom.push(
     ...[
@@ -275,7 +277,7 @@ export function buildReactAggregatedTable({ chartTones } = {}) {
   const playedSets = getSummarySetNumbers();
   const includeOpponentErrorsCol = !matchState.state.useOpponentTeam;
   const summaryColCount =
-    32 + (includeOpponentErrorsCol ? 1 : 0) + playedSets.length;
+    33 + (includeOpponentErrorsCol ? 1 : 0) + playedSets.length;
   const showBothTeams =
     matchState.state.useOpponentTeam &&
     analysisFiltersState.analysisTeamFilterState.teams.size === 0 &&
@@ -569,6 +571,7 @@ export function buildReactAggregatedTable({ chartTones } = {}) {
       scoutUiState.analysisStatsCache = statsByPlayer;
       scoutUiState.analysisStatsScope = scope;
     }
+    const playerRallies = computePlayerRallies(analysisEvents, scope);
     const playerPoints = computePlayerPointsMap(summaryEvents, scope);
     const playerErrors = computePlayerErrorsMap(summaryEvents);
     const playerOpponentErrors = includeOpponentErrorsCol
@@ -626,6 +629,7 @@ export function buildReactAggregatedTable({ chartTones } = {}) {
           playerIdx: idx,
         },
         ...startCells,
+        { text: playerRallies[idx] ?? "–" },
         { text: points.for || 0 },
         { text: points.against || 0 },
         { text: formatDelta((points.for || 0) - (points.against || 0)) },
@@ -659,6 +663,7 @@ export function buildReactAggregatedTable({ chartTones } = {}) {
     const totalCells = [
       { text: "Totale squadra" },
       ...startTotalsCells,
+      { text: "–" },
       { text: teamTotals.totalFor || 0 },
       { text: teamTotals.totalAgainst || 0 },
       {
@@ -691,6 +696,7 @@ export function buildReactAggregatedTable({ chartTones } = {}) {
       const setCells = [
         { text: "Set " + setNum },
         ...setStartCells,
+        { text: "–" },
         { text: setTotals.totalFor || 0 },
         { text: setTotals.totalAgainst || 0 },
         {

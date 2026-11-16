@@ -110,6 +110,7 @@ for (const both of [false, true])
         formatPercentValueSafe: (value, n) =>
           n ? `${Math.round((value / n) * 100)}%` : "0%",
         formatDelta: (value) => (value > 0 ? "+" + value : String(value)),
+        computePlayerRallies: () => ({ 0: 7, 1: 4 }),
         computePlayerPointsMap: (events) => {
           const result = {};
           events.forEach((event) => {
@@ -194,13 +195,20 @@ for (const both of [false, true])
             ),
           ),
         );
-      assert.deepEqual(nativeRows(view.rows), reference("react-aggregated-table:8060"));
+      const legacyRows = nativeRows(view.rows).map((row, index) => {
+        if (view.rows[index].className === "agg-body-header") return row.filter(cell => cell.text !== "Azioni");
+        if (row.length === 1 && row[0].span > 1) return [{ ...row[0], span: row[0].span - 1 }];
+        if (row.length > 4 && row[4].text !== "Azioni") return [...row.slice(0, 4), ...row.slice(5)];
+        return row.filter(cell => cell.text !== "Azioni");
+      });
+      assert.ok(nativeRows(view.rows).some(row => row[4]?.text === "7"));
+      assert.deepEqual(legacyRows, reference("react-aggregated-table:8060"));
       assert.deepEqual(nativeRows(view.extraRows), reference("react-aggregated-table:8119"));
       assert.deepEqual(
         JSON.parse(
           JSON.stringify(
             view.headers.map((cells) =>
-              cells.map((cell) => ({
+              cells.filter(cell => cell.text !== "Azioni").map((cell) => ({
                 text: String(cell.text ?? ""),
                 span: cell.colspan || 1,
               })),

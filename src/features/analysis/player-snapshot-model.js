@@ -1,3 +1,5 @@
+import { computePlayerRallies } from "./player-rallies.js";
+import { getAnalysisEvents } from "./filter-model.js";
 import { SKILL_COLUMNS } from "../../domain/analysis-columns.js";
 import { normalizeSkillCounts, buildSkillEntries } from "./statistic-model.js";
 import { statisticEntry } from "./table-cells.js";
@@ -41,6 +43,7 @@ export function buildReactPlayerAnalysisSnapshots() {
   if (idx === null || !players || !players[idx]) {
     return { primary: null, compare: null };
   }
+  const playerRallies = computePlayerRallies(getAnalysisEvents(), analysisScope);
   const playerPoints = computePlayerPointsMap(filteredEvents, analysisScope);
   const playerErrors = computePlayerErrorsMap(filteredEvents);
   const playerPassAces = computePlayerPassAceMap(filteredEvents, analysisScope);
@@ -61,6 +64,7 @@ export function buildReactPlayerAnalysisSnapshots() {
         {
           title: "Punti",
           entries: [
+            statisticEntry("Azioni", playerRallies[playerIdx] ?? "–"),
             statisticEntry("Fatti", points.for || 0),
             statisticEntry("Subiti", points.against || 0, "lower"),
             statisticEntry(

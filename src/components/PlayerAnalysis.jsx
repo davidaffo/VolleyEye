@@ -11,7 +11,7 @@ import { playerAnalysisStore } from "../state/roster-import-store.mjs";
 import { analysisTableStore } from "../state/analysis-table-store.mjs";
 import { actions as appActions, events as appEvents } from "../app/actions.mjs";
 
-const sections = [['', 'Punti', ['Fatti', 'Subiti', 'Δ', 'Falli/Errori']],
+const sections = [['', 'Punti', ['Azioni', 'Fatti', 'Subiti', 'Δ', 'Falli/Errori']],
   ...SKILL_COLUMNS.map(({ id, label, columns }) => [id, label, columns])];
 const comparisonClasses = Object.fromEntries(sections.map(([skill, title]) =>
   [title, 'skill-' + (skill || 'points')]));
