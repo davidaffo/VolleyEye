@@ -4,3 +4,4 @@
 - Apertura delle partite più rapida durante l'uso del server di sviluppo, anche con molti eventi.
 - Un indicatore segnala il caricamento durante l'apertura di una partita.
 - Rimosso l'avviso del browser che interrompeva il ricaricamento della pagina.
+- I filtri dell'analisi video restano nella stessa posizione quando cambia il numero di eventi mostrati.

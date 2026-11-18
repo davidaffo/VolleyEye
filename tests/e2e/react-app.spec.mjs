@@ -105,6 +105,22 @@ test("il riquadro video iniziale ha le dimensioni della tabella eventi", async (
   })).toBeLessThan(2);
 });
 
+test("i filtri video non si spostano quando la tabella viene filtrata", async ({ page }) => {
+  await page.setViewportSize({ width: 1500, height: 850 });
+  await openApp(page);
+  await page.locator("#btn-load-match").click();
+  await expect(page.locator("body")).toHaveAttribute("data-active-tab", "scout");
+  await page.evaluate(() => window.VolleyEye.app.invoke("navigateToTab", "video"));
+  const filter = page.locator('#video-filter-skills input[value="serve"]');
+  await filter.scrollIntoViewIfNeeded();
+  const before = await filter.evaluate(element => element.getBoundingClientRect().top);
+  await filter.check();
+  await expect.poll(() => filter.evaluate(element => element.getBoundingClientRect().top))
+    .toBeGreaterThan(before - 3);
+  await expect.poll(() => filter.evaluate(element => element.getBoundingClientRect().top))
+    .toBeLessThan(before + 3);
+});
+
 test("il changelog è accessibile dal footer e mostra la versione corrente per prima", async ({ page }) => {
   await openApp(page);
   const link = page.getByRole("link", { name: "Changelog", exact: true });
