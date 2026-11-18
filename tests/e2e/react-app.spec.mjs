@@ -66,6 +66,22 @@ test("React avvia archivio, navigazione e tema sul percorso GitHub Pages", async
   expect(errors).toEqual([]);
 });
 
+test("l'apertura della partita mostra un indicatore fino al completamento", async ({ page }) => {
+  await openApp(page);
+  await page.evaluate(() => {
+    const original = window.requestAnimationFrame.bind(window);
+    let remaining = 2;
+    window.requestAnimationFrame = callback => remaining-- > 0
+      ? original(time => setTimeout(() => callback(time), 150))
+      : original(callback);
+  });
+  await page.locator("#btn-load-match").click({ noWaitAfter: true });
+  await expect(page.getByRole("status")).toHaveText("Caricamento partita…");
+  await expect(page.locator("#btn-load-match")).toBeDisabled();
+  await expect(page.locator("body")).toHaveAttribute("data-active-tab", "scout");
+  await expect(page.getByRole("status")).toHaveCount(0);
+});
+
 test("il changelog è accessibile dal footer e mostra la versione corrente per prima", async ({ page }) => {
   await openApp(page);
   const link = page.getByRole("link", { name: "Changelog", exact: true });

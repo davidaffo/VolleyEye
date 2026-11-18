@@ -11,7 +11,7 @@ import {
 } from "../state/event-table-store.mjs";
 import { events as appEvents } from "../app/actions.mjs";
 
-function Cell({ cell, row, table }) {
+function Cell({ cell, row, tableRef }) {
   const [editor, setEditor] = useState(null),
     ref = useRef(null);
   const done = () => {
@@ -28,11 +28,11 @@ function Cell({ cell, row, table }) {
       data-editing={editor ? "true" : "false"}
       onDoubleClick={(event) => {
         if (cell.trajectory) {
-          appEvents.editEventTrajectory(row, cell.trajectory, table, event);
+          appEvents.editEventTrajectory(row, cell.trajectory, tableRef.current, event);
           return;
         }
         event.stopPropagation();
-        const model = appEvents.editEventCell(row, cell.field, table);
+        const model = appEvents.editEventCell(row, cell.field, tableRef.current);
         if (model) setEditor(model);
       }}
     >
@@ -57,11 +57,13 @@ export function EventTable({ id, className }) {
   const notes = id === "events-log" ? notesView.notes : [];
   const view = eventTableStore.getView(id),
     root = useRef(null),
-    all = useRef(null);
+    all = useRef(null),
+    tableRef = useRef(view.interaction);
   const count = view.rows.filter((row) =>
     view.selected.includes(row.key),
   ).length;
   useLayoutEffect(() => {
+    tableRef.current = view.interaction;
     if (view.contextKey) appEvents.bindReactEventTable(id, root.current);
     if (all.current)
       all.current.indeterminate = count > 0 && count < view.rows.length;
@@ -185,7 +187,7 @@ export function EventTable({ id, className }) {
                         key={index}
                         cell={cell}
                         row={row}
-                        table={view.interaction}
+                        tableRef={tableRef}
                       />
                     ))}
                     <td>

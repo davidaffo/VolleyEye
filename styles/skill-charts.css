@@ -911,8 +911,8 @@ body[data-theme="light"] .court-cell.best-eff {
 }
 .video-player-wrap--analysis video,
 .video-player-wrap--analysis .youtube-frame {
-  min-height: var(--video-panel-height, 320px);
-  height: var(--video-panel-height, 320px);
+  min-height: var(--video-panel-height, 70vh);
+  height: var(--video-panel-height, 70vh);
 }
 .video-resize-handle {
   position: relative;

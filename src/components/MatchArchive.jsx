@@ -1,4 +1,6 @@
 import { CommandButton } from "./ui/CommandButton.jsx";
+import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { useViewStore } from "../hooks/useViewStore.js";
 
@@ -72,6 +74,42 @@ export function MatchActionButton({
   ...props
 }) {
   const view = useArchiveView();
+  const [loading, setLoading] = useState(false);
+  const loadingRef = useRef(false);
+  if (command === "enterSelectedMatch") {
+    const enterMatch = async () => {
+      if (loadingRef.current) return;
+      loadingRef.current = true;
+      setLoading(true);
+      try {
+        // Leave time for the indicator to paint before synchronous match loading.
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        await appActions.enterSelectedMatch();
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      } catch (error) {
+        reportMatchArchiveError(error);
+      } finally {
+        loadingRef.current = false;
+        setLoading(false);
+      }
+    };
+    return (
+      <>
+        <button {...props} disabled={loading || (requiresSelection && !view.selectedMatch)} onClick={enterMatch}>
+          {children}
+        </button>
+        {loading && createPortal(
+          <div className="export-splash is-visible match-loading" role="status" aria-live="polite">
+            <div className="export-splash__card">
+              <span className="export-splash__spinner" aria-hidden="true" />
+              <span>Caricamento partita…</span>
+            </div>
+          </div>,
+          document.body,
+        )}
+      </>
+    );
+  }
   return (
     <CommandButton
       {...props}
