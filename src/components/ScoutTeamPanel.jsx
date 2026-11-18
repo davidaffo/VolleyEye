@@ -85,7 +85,7 @@ export function SingleTeamOpponentPanel() {
         <AppActionButton id="btn-score-opp-point-single" className="small success" aria-label="Punto avversaria">Punto</AppActionButton>
         <AppActionButton id="btn-score-opp-error-single" className="small danger" aria-label="Errore avversaria">Errore</AppActionButton>
       </div>
-      <ScoutActionButton id="btn-freeball-opp-single" className="small danger" aria-label="Freeball avversaria">Freeball</ScoutActionButton>
+      <ScoutActionButton id="btn-freeball-opp-single" className="small secondary" aria-label="Freeball avversaria">Freeball</ScoutActionButton>
       <AppActionButton id="btn-timeout-opp-single" className="small secondary" aria-label="Timeout avversaria">Timeout</AppActionButton>
       <span className="team-counter">TO: <strong><TeamCounter counter="timeoutsOpponent" /></strong></span>
     </div>

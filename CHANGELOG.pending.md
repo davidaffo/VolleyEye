@@ -5,3 +5,4 @@
 - Un indicatore segnala il caricamento durante l'apertura di una partita.
 - Rimosso l'avviso del browser che interrompeva il ricaricamento della pagina.
 - I filtri dell'analisi video restano nella stessa posizione quando cambia il numero di eventi mostrati.
+- Il pulsante Freeball avversaria è grigio, come gli altri pulsanti secondari.
