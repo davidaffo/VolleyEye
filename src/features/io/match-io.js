@@ -401,9 +401,10 @@ export async function applyImportedDatabase(nextState) {
   const failedWrites = [];
   const importedTeams = imported.savedTeams || imported.savedOpponentTeams || {};
   if (importedTeams && typeof importedTeams === "object") {
-    Object.entries(importedTeams).forEach(([name, data]) => {
+    for (const [index, [name, data]] of Object.entries(importedTeams).entries()) {
       if (!saveTeamToStorage(name, data)) failedWrites.push(`squadra \"${name}\"`);
-    });
+      if (index % 5 === 4 && typeof globalThis.setTimeout === "function") await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    }
     syncTeamsFromStorage();
   }
   if (imported.playersDb && typeof imported.playersDb === "object") {
@@ -411,9 +412,10 @@ export async function applyImportedDatabase(nextState) {
     if (!savePlayersDbToStorage(matchState.state.playersDb)) failedWrites.push("archivio giocatrici");
   }
   if (imported.savedMatches && typeof imported.savedMatches === "object") {
-    Object.entries(imported.savedMatches).forEach(([name, data]) => {
+    for (const [index, [name, data]] of Object.entries(imported.savedMatches).entries()) {
       if (!saveMatchToStorage(name, data)) failedWrites.push(`partita \"${name}\"`);
-    });
+      if (index % 5 === 4 && typeof globalThis.setTimeout === "function") await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    }
     syncMatchesFromStorage();
     matchState.state.selectedMatch = imported.selectedMatch || "";
     matchState.state.loadedMatchName = imported.loadedMatchName || imported.selectedMatch || "";

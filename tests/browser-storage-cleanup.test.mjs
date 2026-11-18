@@ -1,3 +1,4 @@
+import { NEXTCLOUD_ADDRESS_KEY, NEXTCLOUD_FOLDERS_KEY } from "../src/features/io/nextcloud-preferences.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import vm from "node:vm";
@@ -40,7 +41,7 @@ function harness(href = "https://example.test/VolleyEye/?reset_app=1") {
     caches: { async keys() { return [...cacheNames]; }, async delete(key) { return cacheNames.delete(key); } },
     document: { getElementById() { return null; } },
     updateBannerStore: { publish() {} },
-    STORAGE_KEY, MATCH_PREFIX, TEAM_PREFIX, OPPONENT_TEAM_PREFIX, PLAYER_PREFIX,
+    STORAGE_KEY, MATCH_PREFIX, TEAM_PREFIX, OPPONENT_TEAM_PREFIX, PLAYER_PREFIX, NEXTCLOUD_ADDRESS_KEY, NEXTCLOUD_FOLDERS_KEY,
     STATE_DB_NAME: stateDbState.STATE_DB_NAME,
     LOCAL_VIDEO_DB: videoState.LOCAL_VIDEO_DB,
     THEME_PREFERENCE_KEY: themeState.THEME_PREFERENCE_KEY,
@@ -86,7 +87,7 @@ test("il reset elimina solo i due database VolleyEye e conserva i dati di un'alt
 
 test("il reset locale conserva le chiavi estranee anche sotto Data/", () => {
   const { ctx, saved } = harness();
-  const own = [STORAGE_KEY, STORAGE_KEY + ":archive-migration-v1", PLAYER_PREFIX,
+  const own = [NEXTCLOUD_ADDRESS_KEY, NEXTCLOUD_FOLDERS_KEY, STORAGE_KEY, STORAGE_KEY + ":archive-migration-v1", PLAYER_PREFIX,
     MATCH_PREFIX + "partita", TEAM_PREFIX + "squadra", OPPONENT_TEAM_PREFIX + "ospiti",
     ctx.THEME_PREFERENCE_KEY, ctx.DEFAULT_DEMO_PREFERENCE_KEY, ctx.APP_RESET_SIGNAL_KEY];
   const foreign = ["other-pwa", "Data/OtherApp/match", "volleyeye-other-app", PLAYER_PREFIX + "Other"];

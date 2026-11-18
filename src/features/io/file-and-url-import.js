@@ -113,26 +113,33 @@ export function exportDatabaseToFile() {
   downloadBlob(blob, "backup_" + stamp + ".json");
 }
 
-export function handleImportDatabaseFile(file) {
+export function importDatabasePayload(parsed) {
+  return applyImportedDatabase(parsed && ["volleyeye", "simple-volley-scout"].includes(parsed.app) && parsed.state ? parsed : { state: parsed });
+}
+
+export async function importDatabaseFile(file) {
+  if (!file) return false;
+  const text = typeof FileReader === "undefined" ? await file.text() : await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = event => resolve(event.target?.result || "");
+    reader.onerror = () => reject(reader.error || new Error("Impossibile leggere il file database."));
+    reader.onabort = () => reject(new Error("Lettura del file database interrotta."));
+    reader.readAsText(file);
+  });
+  return importDatabasePayload(JSON.parse(text));
+}
+
+export async function handleImportDatabaseFile(file) {
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async e => {
-    try {
-      const txt = (e.target && e.target.result) || "";
-      const parsed = JSON.parse(txt);
-      if (parsed && ["volleyeye", "simple-volley-scout"].includes(parsed.app) && parsed.state) {
-        await applyImportedDatabase(parsed);
-      } else {
-        await applyImportedDatabase({ state: parsed });
-      }
-    } catch (err) {
-      console.error("Import database error", err);
-      alert("Errore durante l'import del database.");
-    } finally {
-      if (rosterLineupState.elDbFileInput) rosterLineupState.elDbFileInput.value = "";
-    }
-  };
-  reader.readAsText(file);
+  try {
+    return await importDatabaseFile(file);
+  } catch (err) {
+    console.error("Import database error", err);
+    alert("Errore durante l'import del database.");
+    return false;
+  } finally {
+    if (rosterLineupState.elDbFileInput) rosterLineupState.elDbFileInput.value = "";
+  }
 }
 
 export async function fetchJsonFromUrl(url) {

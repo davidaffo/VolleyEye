@@ -1,7 +1,8 @@
+import { CloudDatabase } from "../CloudDatabase.jsx";
 import { ThemePicker } from '../ThemePicker.jsx';
 import { ButtonList } from "../ui/ButtonList.jsx";
 import { TabPanel } from "../ui/TabPanel.jsx";
-import { AppActionButton, DatabaseImportInput, DatabaseUrlInput, DemoDeleteButton, MatchImportButton, MatchImportInput } from "../AppActions.jsx";
+import { AppActionButton, DatabaseImportInput, DemoDeleteButton, MatchImportButton, MatchImportInput } from "../AppActions.jsx";
 import { MatchArchiveList, MatchActionButton } from "../MatchArchive.jsx";
 
 export function MatchPage() {
@@ -103,6 +104,7 @@ export function MatchPage() {
               </div>
               <div className="match-manager-panel match-manager-panel--actions">
                 <h4>{"Azioni database"}</h4>
+                <div className="controls-row match-actions-row database-actions-row">
                 <AppActionButton
                   id="btn-open-debug-modal"
                   className="secondary"
@@ -110,7 +112,6 @@ export function MatchPage() {
                 >
                   {"Debug"}
                 </AppActionButton>
-                <div className="controls-row match-actions-row">
                   <AppActionButton id="btn-export-db" className="secondary">
                     {"Esporta database completo"}
                   </AppActionButton>
@@ -123,19 +124,7 @@ export function MatchPage() {
                     accept="application/json,text/plain"
                     hidden={true}
                   />
-                </div>
-                <div className="controls-row match-actions-row match-actions-row--url">
-                  <DatabaseUrlInput
-                    id="import-db-url"
-                    type="url"
-                    className="match-url-input"
-                    placeholder="https://.../backup.json"
-                  />
-                  <AppActionButton id="btn-import-db-url" className="secondary">
-                    {"Importa database da URL"}
-                  </AppActionButton>
-                </div>
-                <div className="controls-row match-actions-row">
+                  <CloudDatabase />
                   <DemoDeleteButton
                     id="btn-delete-demo-data"
                     className="secondary hidden"

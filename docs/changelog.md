@@ -5,6 +5,21 @@ Le voci storiche riportano i messaggi originali dei commit e i relativi collegam
 
 Prima della versione 0.1.0 il progetto era già in sviluppo, ma non aveva una numerazione di release registrata.
 
+## 0.22.0 — 2026-11-18
+
+- Aggiunto il pannello cloud per importare database da link, sincronizzare backup con Nextcloud e condividere un collegamento senza password.
+- Uniformato il popup cloud agli altri popup e compattate le azioni del database.
+- Riorganizzato il cloud con accesso guidato a Nextcloud e navigazione delle cartelle per importare, esportare e condividere i backup.
+- Migliorati i messaggi di errore e la guida per risolvere i problemi di connessione a Nextcloud.
+- La condivisione Nextcloud permette di scegliere il nome utente e il percorso della destinataria.
+- Memorizzato nel browser l’indirizzo Nextcloud dopo una connessione riuscita.
+- Ripristinata l’ultima cartella Nextcloud visitata per ciascun account.
+- Consentita l’importazione diretta di un file Nextcloud condiviso anche quando non è possibile elencare la cartella.
+- Migliorata la ricerca dei backup condivisi quando la cartella Nextcloud si trova in una posizione diversa nell’account destinatario.
+- Migliorata la risposta dell’interfaccia e aggiunto lo stato di avanzamento durante l’importazione dei database.
+- I backup scaricati da Nextcloud usano lo stesso importatore dei file locali, evitando copie aggiuntive.
+- Aggiunta una schermata dedicata ai link Nextcloud condivisi, con il file indicato e la sola importazione.
+
 ## 0.21.2 — 2026-11-16
 
 - Aggiunto il conteggio delle azioni giocate nel tabellino e nell’analisi individuale, basato sulle presenze registrate durante la partita.

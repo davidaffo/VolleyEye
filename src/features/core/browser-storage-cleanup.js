@@ -1,3 +1,4 @@
+import { NEXTCLOUD_ADDRESS_KEY, NEXTCLOUD_FOLDERS_KEY } from '../io/nextcloud-preferences.js';
 import { STORAGE_KEY, MATCH_PREFIX, TEAM_PREFIX, OPPONENT_TEAM_PREFIX, PLAYER_PREFIX } from "../../../js/globals.js";
 import { session as stateStoreState } from "../state/teams-core-state-store.js";
 import { session as matchIoState } from "../state/io-match-io.js";
@@ -6,6 +7,8 @@ import { session as scoutUiState } from "../state/scout-ui.js";
 export function clearVolleyEyeLocalStorage() {
   const ownedKeys = new Set([
     STORAGE_KEY,
+    NEXTCLOUD_ADDRESS_KEY,
+    NEXTCLOUD_FOLDERS_KEY,
     STORAGE_KEY + ":archive-migration-v1",
     PLAYER_PREFIX,
     stateStoreState.THEME_PREFERENCE_KEY,

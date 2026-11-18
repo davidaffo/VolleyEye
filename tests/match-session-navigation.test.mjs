@@ -90,7 +90,7 @@ test("le azioni sono raggruppate per match e database", () => {
     assert.doesNotMatch(databasePanel, new RegExp(`id="${id}"`));
   });
   assert.doesNotMatch(savedMatchesPanel, /import-match-url|btn-import-match-url/);
-  assert.match(databasePanel, /id="import-db-url"/);
+  assert.match(databasePanel, /aria-haspopup="dialog"[^>]*>.*Cloud<\/button>/);
   assert.match(databasePanel, /id="btn-export-db"/);
   assert.match(databasePanel, /id="btn-import-db"/);
 });

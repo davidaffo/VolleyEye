@@ -912,3 +912,35 @@ body[data-theme="light"] .event-btn.code-negative:hover {
 }
 @media (max-width: 900px) {
   }
+
+.skill-modal__content.cloud-dialog { width: min(620px, 96vw); max-height: min(90vh, 800px); padding: .75rem; }
+.database-actions-row { flex-wrap: wrap; }
+.database-actions-row > button { flex: 1 1 auto; min-width: max-content; }
+.cloud-dialog__row { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; }
+.cloud-dialog section + section { margin-top: 1.25rem; }
+.cloud-dialog label { display: block; margin: .7rem 0; }
+.cloud-dialog label input { display: block; width: 100%; margin-top: .25rem; box-sizing: border-box; }
+.cloud-dialog__row .match-url-input { flex: 1 1 220px; }
+
+
+.cloud-choice { display: grid; gap: .65rem; }
+.cloud-choice__button { display: flex; flex-direction: column; align-items: flex-start; gap: .25rem; text-align: left; padding: .9rem; }
+.cloud-choice__button span { font-size: .86rem; opacity: .8; }
+.cloud-back { margin: .25rem 0 .8rem; }
+.cloud-files__heading { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: .5rem; }
+.cloud-files__heading h4, .cloud-files__heading p { margin: 0 0 .3rem; }
+.cloud-files__path { overflow-wrap: anywhere; font-weight: 600; }
+.cloud-files__list { display: grid; gap: .3rem; max-height: 240px; overflow-y: auto; padding: .3rem; border: 1px solid var(--border-color, #475569); border-radius: .5rem; }
+.cloud-files__item { display: flex; justify-content: space-between; align-items: center; gap: .7rem; width: 100%; text-align: left; overflow-wrap: anywhere; }
+.cloud-files__item span:last-child { flex-shrink: 0; font-size: .8rem; }
+.cloud-files__item.is-selected { outline: 2px solid #60a5fa; outline-offset: -2px; }
+.cloud-export { margin-top: 1rem; padding-top: .8rem; border-top: 1px solid var(--border-color, #475569); }
+.cloud-status { overflow-wrap: anywhere; }
+.cloud-help { margin: 1rem 0; font-size: .9rem; }
+.cloud-help summary { cursor: pointer; font-weight: 600; }
+.cloud-help p { margin: .6rem 0; }
+
+.cloud-shared-import__file { display: flex; gap: .75rem; align-items: center; padding: .85rem; border: 1px solid var(--border-color, #475569); border-radius: .5rem; overflow-wrap: anywhere; }
+.cloud-shared-import__file div { min-width: 0; }
+.cloud-shared-import__file strong, .cloud-shared-import__file div span { display: block; }
+.cloud-shared-import__file div span { font-size: .85rem; opacity: .8; }
