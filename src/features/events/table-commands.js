@@ -9,7 +9,7 @@ import { eventTableStore } from "../../state/event-table-store.mjs";
 import { renderVideoAnalysis } from "../video/playback.js";
 import { seekVideoToTime } from "../video/media-state.js";
 import { buildEventEditControl } from "./edit-model.js";
-import { pushVideoUndoSnapshot } from "../video/undo-model.js";
+import { pushVideoUndoSnapshot, commitVideoUndoSnapshot } from "../video/undo-model.js";
 import { captureServeTrajectory } from "../live/trajectories.js";
 import { openAttackTrajectoryModal } from "../scout/trajectory-dialog.js";
 import { getTeamScopeFromEvent } from "../teams/selectors.js";
@@ -147,15 +147,17 @@ export function handleEventTableHeader(table, header) {
 export function buildReactEventControl(ev, field, baseMs, videoTime) {
   const model = buildEventEditControl(ev, field, baseMs, videoTime);
   let captured = false;
+  let undoCapture;
   const change = model.onChange;
   return {
     ...model,
     onChange: (value) => {
       if (!captured) {
-        pushVideoUndoSnapshot();
+        undoCapture = pushVideoUndoSnapshot(false, [ev]);
         captured = true;
       }
       change(value);
+      commitVideoUndoSnapshot(undoCapture);
       refreshAfterVideoEdit(
         ![
           "videoTime",

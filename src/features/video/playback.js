@@ -11,7 +11,7 @@ import { computeEventVideoTime } from "./timing.js";
 import { updateVideoSyncLabel, publishReactVideoView } from "./source-view.js";
 import { clearYoutubeSource, renderYoutubePlayer, renderYoutubePlayerScout } from "./youtube-player.js";
 import { persistLocalVideoReference } from "./local-file-storage.js";
-import { pushVideoUndoSnapshot } from "./undo-model.js";
+import { pushVideoUndoSnapshot, commitVideoUndoSnapshot } from "./undo-model.js";
 import { getVideoBaseTimeMs, getVideoSkillEvents } from "./event-model.js";
 import { resolvePlayerIdx } from "../events/player-links.js";
 import { updateSelectionStyles, updateVideoSelectionCount } from "../events/selection-view.js";
@@ -415,12 +415,13 @@ export function syncFirstSkillToVideo() {
     alert("Skill selezionata non trovata.");
     return;
   }
-  pushVideoUndoSnapshot();
+  const undoCapture = pushVideoUndoSnapshot(false, skillEvents.slice(selectedIdx).map(({ ev }) => ev));
   skillEvents.forEach(({ ev }, idx) => {
     if (!ev || idx < selectedIdx) return;
     const current = computeEventVideoTime(ev, baseMs);
     ev.videoTime = Math.max(0, current + delta);
   });
+  commitVideoUndoSnapshot(undoCapture);
   saveState({ persistLocal: true });
   renderVideoAnalysis();
   if (typeof window !== "undefined" && window.trackVolleyEyeEventOnce) {

@@ -70,6 +70,7 @@ function setup() {
     refreshAfterVideoEdit: () => {},
     markVideoUndoCapture: () => {},
     pushVideoUndoSnapshot: () => {},
+    commitVideoUndoSnapshot: () => {},
     setSelectionForContext: () => {},
     closeCurrentEdit: () => {},
     eventTableStore: {

@@ -1,3 +1,4 @@
+import { restoreVideoUndo } from "./undo-model.js";
 import { parseYoutubeId } from "./timing.js";
 import { session as matchState } from "../../../js/globals.js";
 import { session as workspaceLayoutState } from "../state/live-workspace-layout.js";
@@ -170,8 +171,7 @@ export function undoLastVideoEdit() {
     alert("Non ci sono modifiche video da annullare.");
     return;
   }
-  matchState.state.events = Array.isArray(snapshot.events) ? snapshot.events : [];
-  matchState.state.video = Object.assign({}, matchState.state.video || {}, snapshot.video || {});
+  restoreVideoUndo(snapshot);
   saveState();
   recalcAllStatsAndUpdateUI();
   renderEventsLog({ suppressScroll: true });

@@ -2,7 +2,7 @@ import { clearCurrentEventEdit } from "./edit-view.js";
 import { session as matchState } from "../../../js/globals.js";
 import { session as workspaceLayoutState } from "../state/live-workspace-layout.js";
 import { saveState } from "../storage/save-state.js";
-import { shouldTrackVideoUndo, pushVideoUndoSnapshot } from "./undo-model.js";
+import { shouldTrackVideoUndo, pushVideoUndoSnapshot, commitVideoUndoSnapshot } from "./undo-model.js";
 import { syncEventPlayerLinks } from "../events/player-links.js";
 import { invalidateAnalysisCaches } from "../analysis/cache-model.js";
 import { recalculateMatchStats } from "../analysis/stats-model.js";
@@ -96,13 +96,14 @@ export function applyBulkEditSession() {
         closeBulkEditModal();
         return;
       }
-      pushVideoUndoSnapshot(true);
+      const undoCapture = pushVideoUndoSnapshot(true, workspaceLayoutState.bulkEditSession.events);
       workspaceLayoutState.bulkEditActive = false;
       workspaceLayoutState.bulkEditSession.events.forEach(ev => {
         entries.forEach(([key, value]) => {
           ev[key] = value;
         });
       });
+      commitVideoUndoSnapshot(undoCapture);
       const shouldRecalc = workspaceLayoutState.bulkEditSession.shouldRecalc;
       closeBulkEditModal();
       refreshAfterVideoEdit(shouldRecalc);
@@ -119,10 +120,12 @@ export function closeCurrentEdit({ refresh = false } = {}) {
 export function applyAttackFieldToEvents(events, updater, { shouldRecalc = true } = {}) {
   const targetEvents = Array.isArray(events) ? events.filter(Boolean) : [];
   if (!targetEvents.length || typeof updater !== "function") return false;
+  let undoCapture;
   if (targetEvents.length > 1 || (document && document.body && document.body.dataset.activeTab === "video")) {
-    pushVideoUndoSnapshot(true);
+    undoCapture = pushVideoUndoSnapshot(true, targetEvents);
   }
   targetEvents.forEach(ev => updater(ev));
+  commitVideoUndoSnapshot(undoCapture);
   if (document && document.body && document.body.dataset.activeTab === "video") {
     refreshAfterVideoEdit(shouldRecalc);
     renderEventsLog({ suppressScroll: true });

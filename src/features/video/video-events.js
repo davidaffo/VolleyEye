@@ -9,7 +9,7 @@ import { getPlayerNumbersForScope, getTeamScopeFromEvent, getTeamNameForScope } 
 import { setModalOpenState } from "../layout/modals.js";
 import { refreshAfterVideoEdit } from "./event-editor.js";
 import { renderVideoAnalysis } from "./playback.js";
-import { pushVideoUndoSnapshot } from "./undo-model.js";
+import { pushVideoUndoSnapshot, commitVideoUndoSnapshot } from "./undo-model.js";
 import { getVideoBaseTimeMs, getVideoSkillEvents } from "./event-model.js";
 import { computeEventVideoTime } from "./timing.js";
 import { saveState } from "../storage/save-state.js";
@@ -47,7 +47,7 @@ const videoEventsState = session;
 export function adjustSelectedVideoTimes(deltaSeconds) {
   const rows = getSelectedRows(getActiveEventContextKey());
   if (!rows.length) return;
-  pushVideoUndoSnapshot();
+  const undoCapture = pushVideoUndoSnapshot(false, rows.map(row => row.ev));
   rows.forEach(r => {
     const ev = r.ev;
     if (!ev) return;
@@ -60,6 +60,7 @@ export function adjustSelectedVideoTimes(deltaSeconds) {
     const next = Math.max(0, current + deltaSeconds);
     ev.videoTime = next;
   });
+  commitVideoUndoSnapshot(undoCapture);
   refreshAfterVideoEdit(false);
   renderEventsLog();
   handleSeekForSelection(getActiveEventContextKey(), { userAction: true });
@@ -70,13 +71,13 @@ export function adjustCurrentRowVideoTime(deltaSeconds) {
   if (!ctxKey || !scoutUiState.eventTableContexts[ctxKey]) return;
   const rows = scoutUiState.eventTableContexts[ctxKey].rows || [];
   if (!rows.length) return;
-  pushVideoUndoSnapshot();
   const currentKey =
     (scoutUiState.selectedEventIds.size && scoutUiState.lastSelectedEventId && scoutUiState.selectedEventIds.has(scoutUiState.lastSelectedEventId)
       ? scoutUiState.lastSelectedEventId
       : scoutUiState.selectedEventIds.values().next().value) || rows[0].key;
   const target = rows.find(r => r.key === currentKey);
   if (!target || !target.ev) return;
+  const undoCapture = pushVideoUndoSnapshot(false, [target.ev]);
   const baseMs = getVideoBaseTimeMs(getVideoSkillEvents());
   const current =
     typeof target.ev.videoTime === "number"
@@ -85,6 +86,7 @@ export function adjustCurrentRowVideoTime(deltaSeconds) {
         ? target.videoTime
         : computeEventVideoTime(target.ev, baseMs);
   target.ev.videoTime = Math.max(0, current + deltaSeconds);
+  commitVideoUndoSnapshot(undoCapture);
   saveState({ persistLocal: true });
   renderEventsLog();
   renderVideoAnalysis();
@@ -167,7 +169,7 @@ export function correctVideoScoresFromSelection(startHome, startAway) {
     alert("Seleziona uno o più eventi per correggere il punteggio.");
     return;
   }
-  pushVideoUndoSnapshot(true);
+  const undoCapture = pushVideoUndoSnapshot(true, rows.map(row => row.ev));
   let currentSet = null;
   let homeScore = Math.max(0, home);
   let awayScore = Math.max(0, away);
@@ -193,6 +195,7 @@ export function correctVideoScoresFromSelection(startHome, startAway) {
       awayScore += getEventPointValue(ev);
     }
   });
+  commitVideoUndoSnapshot(undoCapture);
   saveState({ persistLocal: true });
   refreshAfterVideoEdit(false);
   renderEventsLog({ suppressScroll: true });
@@ -330,13 +333,14 @@ export function applySkillDurationDefaults() {
     alert("Inserisci una durata valida per almeno una skill.");
     return;
   }
-  pushVideoUndoSnapshot(true);
+  const undoCapture = pushVideoUndoSnapshot(true, (matchState.state.events || []).filter(ev => ev && defaults[ev.skillId]));
   (matchState.state.events || []).forEach(ev => {
     if (!ev || !ev.skillId) return;
     const next = defaults[ev.skillId];
     if (!next) return;
     ev.durationMs = next;
   });
+  commitVideoUndoSnapshot(undoCapture);
   matchState.state.skillDurationLastApplied = defaults;
   saveState({ persistLocal: true });
   renderEventsLog({ suppressScroll: true });
@@ -413,7 +417,7 @@ export function applyUnifyTimes() {
     alert("Nessun collegamento trovato nei filtri attivi.");
     return;
   }
-  pushVideoUndoSnapshot(true);
+  const undoCapture = pushVideoUndoSnapshot(true, pairs.flatMap(pair => [pair.a, pair.b]));
   pairs.forEach(pair => {
     const preferred = preferredSources[pair.type] || null;
     const source = resolveSourceEventForLink(pair.a, pair.b, preferred);
@@ -422,6 +426,7 @@ export function applyUnifyTimes() {
     pair.a.videoTime = time;
     pair.b.videoTime = time;
   });
+  commitVideoUndoSnapshot(undoCapture);
   saveState({ persistLocal: true });
   renderEventsLog({ suppressScroll: true });
   renderVideoAnalysis();
@@ -452,7 +457,7 @@ export function applyOffsetsToSelectedSkills() {
     alert("Inserisci almeno un offset diverso da 0.");
     return;
   }
-  pushVideoUndoSnapshot();
+  const undoCapture = pushVideoUndoSnapshot(false, rows.map(row => row.ev));
   const baseMs = getVideoBaseTimeMs(getVideoSkillEvents());
   rows.forEach(r => {
     const ev = r.ev;
@@ -476,6 +481,7 @@ export function applyOffsetsToSelectedSkills() {
           : computeEventVideoTime(ev, baseMs);
     ev.videoTime = Math.max(0, current + delta);
   });
+  commitVideoUndoSnapshot(undoCapture);
   saveState({ persistLocal: true });
   renderEventsLog();
   renderVideoAnalysis();
