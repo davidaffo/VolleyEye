@@ -7,3 +7,4 @@
 - I filtri dell'analisi video restano nella stessa posizione quando cambia il numero di eventi mostrati.
 - Il pulsante Freeball avversaria è grigio, come gli altri pulsanti secondari.
 - Nella finestra dei cambi, l'opzione Doppio cambio porta la rotazione alla posizione opposta alla conferma delle sostituzioni.
+- Nella preparazione del set si può impostare la rotazione avversaria anche in modalità singola.

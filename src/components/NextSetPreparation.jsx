@@ -178,6 +178,21 @@ export function NextSetPreparation() {
               drag={drag}
             />
           </div>
+          {!view.double && (
+            <div className="next-set-opponent-rotation">
+              <label htmlFor="next-set-single-rotation-opp">Rotazione avversaria</label>
+              <RotationControls
+                className="rotation-controls next-set-rotation-controls"
+                ids={['next-set-single-rotate-cw-opp', 'next-set-single-rotation-opp', 'next-set-single-rotate-ccw-opp']}
+                value={view.teams.opponent?.rotation || 1}
+                onChange={value => run('setNextSetRotation', 'opponent', value)}
+                onRotate={direction => {
+                  const rotation = view.teams.opponent?.rotation || 1;
+                  run('setNextSetRotation', 'opponent', direction === 'cw' ? rotation % 6 + 1 : (rotation + 4) % 6 + 1);
+                }}
+              />
+            </div>
+          )}
           <label
             className={"auto-rotate-toggle" + (first ? " hidden" : "")}
             id="next-set-swap-row"

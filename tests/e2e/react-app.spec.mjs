@@ -121,6 +121,34 @@ test("i filtri video non si spostano quando la tabella viene filtrata", async ({
     .toBeLessThan(before + 3);
 });
 
+test("in singola squadra si imposta la rotazione avversaria nella preparazione del set", async ({ page }) => {
+  await openApp(page);
+  await page.locator("#btn-load-match").click();
+  await expect(page.locator("body")).toHaveAttribute("data-active-tab", "scout");
+  await page.evaluate(async () => {
+    const app = window.VolleyEye.app;
+    const match = app.getMatchSnapshot();
+    match.useOpponentTeam = false;
+    match.matchFinished = false;
+    match.currentSet = 1;
+    await app.invoke("applyImportedMatch", match, { silent: true });
+  });
+  await page.locator("#btn-next-set").click();
+  const dialog = page.locator("#next-set-inline");
+  const rotation = dialog.getByLabel("Rotazione avversaria");
+  await expect(rotation).toBeVisible();
+  const initial = (await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot())).opponentRotation;
+  await rotation.selectOption("4");
+  await expect.poll(() => page.evaluate(() => window.VolleyEye.app.getMatchSnapshot().opponentRotation)).toBe(initial);
+  await dialog.locator("#next-set-cancel").click();
+  await page.locator("#btn-next-set").click();
+  await rotation.selectOption("5");
+  await dialog.locator("#next-set-start").click();
+  const saved = await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot());
+  expect(saved.opponentRotation).toBe(5);
+  expect(saved.setStarts[2].opponent.rotation).toBe(5);
+});
+
 test("il changelog è accessibile dal footer e mostra la versione corrente per prima", async ({ page }) => {
   await openApp(page);
   const link = page.getByRole("link", { name: "Changelog", exact: true });

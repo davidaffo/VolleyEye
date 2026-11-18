@@ -969,6 +969,13 @@ body:has(.next-set-inline:not(.hidden)) {
   gap: 0.8rem;
   align-items: start;
 }
+.next-set-opponent-rotation {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0.5rem 0;
+}
 .next-set-lineup-block {
   min-width: 0;
   padding: 0.7rem;
