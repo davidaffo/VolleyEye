@@ -259,6 +259,10 @@
   background: #000;
   aspect-ratio: 16 / 9;
 }
+.video-player-wrap.video-player-wrap--analysis video,
+.video-player-wrap.video-player-wrap--analysis .youtube-frame {
+  min-height: var(--video-panel-height, var(--video-table-height, 70vh));
+}
 .youtube-focus-guard {
   position: absolute;
   inset: 0;

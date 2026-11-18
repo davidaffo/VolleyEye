@@ -82,6 +82,29 @@ test("l'apertura della partita mostra un indicatore fino al completamento", asyn
   await expect(page.getByRole("status")).toHaveCount(0);
 });
 
+test("il riquadro video iniziale ha le dimensioni della tabella eventi", async ({ page }) => {
+  await page.setViewportSize({ width: 1500, height: 900 });
+  await openApp(page);
+  await page.evaluate(() => window.VolleyEye.app.invoke("flushStorage"));
+  await page.evaluate(() => {
+    const key = "volleyScoutV1";
+    const stored = JSON.parse(localStorage.getItem(key));
+    stored.uiVideoLayout = { analysisHeight: 320, scoutHeight: 300 };
+    stored.lastSavedAt = Date.now() + 60000;
+    localStorage.setItem(key, JSON.stringify(stored));
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.documentElement.dataset.appReady === "true");
+  await page.locator("#btn-load-match").click();
+  await expect(page.locator("body")).toHaveAttribute("data-active-tab", "scout");
+  await page.evaluate(() => window.VolleyEye.app.invoke("navigateToTab", "video"));
+  await expect.poll(async () => page.evaluate(() => {
+    const table = document.querySelector(".video-table-wrapper").getBoundingClientRect();
+    const video = document.querySelector("#analysis-video").getBoundingClientRect();
+    return Math.max(Math.abs(table.height - video.height), Math.abs(table.width - video.width));
+  })).toBeLessThan(2);
+});
+
 test("il changelog è accessibile dal footer e mostra la versione corrente per prima", async ({ page }) => {
   await openApp(page);
   const link = page.getByRole("link", { name: "Changelog", exact: true });

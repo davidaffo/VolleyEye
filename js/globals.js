@@ -205,7 +205,7 @@ export const session = createDomainState({
     showSecond: false
   },
   uiVideoLayout: {
-    analysisHeight: 320,
+    analysisHeight: null,
     scoutHeight: 320
   },
   uiScoutColumns: {

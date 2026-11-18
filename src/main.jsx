@@ -1,7 +1,6 @@
 import { AppLayout } from "./components/AppLayout.jsx";
 import { useEffect } from 'react';
 import { applySkillThemeVars } from '../js/globals.js';
-import { session as persistentStorageState } from "./features/state/storage-persistent-storage.js";
 import { prepareMatchSheetPrint, clearMatchSheetPrint } from './features/io/exports.js';
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
@@ -42,12 +41,6 @@ function Application() {
   useEffect(() => {
     let mounted = true;
     applySkillThemeVars();
-    const beforeUnload = event => {
-      if (!persistentStorageState.archiveStorage.pending.size && !persistentStorageState.archiveStorage.failed) return;
-      event.preventDefault();
-      event.returnValue = '';
-    };
-    window.addEventListener('beforeunload', beforeUnload);
     window.addEventListener('beforeprint', prepareMatchSheetPrint);
     window.addEventListener('afterprint', clearMatchSheetPrint);
     showStartupProgress("Caricamento del programma…").then(() => {
@@ -66,7 +59,6 @@ function Application() {
     });
     return () => {
       mounted = false;
-      window.removeEventListener('beforeunload', beforeUnload);
       window.removeEventListener('beforeprint', prepareMatchSheetPrint);
       window.removeEventListener('afterprint', clearMatchSheetPrint);
       stopApplication();

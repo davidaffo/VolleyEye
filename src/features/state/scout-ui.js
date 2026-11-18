@@ -33,7 +33,7 @@ export const session = createDomainState({
 "setTrendSelectionKey": () => (""),
 "serveTrajectoryScope": () => (null),
 "VIDEO_LAYOUT_DEFAULTS": () => ({
-  analysisHeight: Math.round((globalThis.innerHeight || 800) * 0.7),
+  analysisHeight: null,
   scoutHeight: 320
 }),
 "VIDEO_LAYOUT_LIMITS": () => ({

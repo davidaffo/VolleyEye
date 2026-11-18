@@ -1,4 +1,5 @@
 import { VideoMatchNotes } from "../MatchNotes.jsx";
+import { useEffect, useRef } from "react";
 import { FilterVisibility } from "../ui/FilterField.jsx";
 import { YouTubeFrame } from "../VideoControls.jsx";
 import { AnalysisFilterFields } from "../AnalysisFilter.jsx";
@@ -13,6 +14,18 @@ import { VideoPresets, VideoPresetCreate } from "../VideoPresets.jsx";
 import { EventTable } from "../EventTable.jsx";
 
 export function VideoPage() {
+  const tableRef = useRef(null);
+  const gridRef = useRef(null);
+  useEffect(() => {
+    if (typeof ResizeObserver !== "function" || !tableRef.current || !gridRef.current) return;
+    const grid = gridRef.current;
+    const observer = new ResizeObserver(entries => {
+      const height = entries[0]?.target.getBoundingClientRect().height;
+      if (height > 0) grid.style.setProperty("--video-table-height", `${height}px`);
+    });
+    observer.observe(tableRef.current);
+    return () => observer.disconnect();
+  }, []);
   return (
     <TabPanel className="tab-panel" data-tab="video" id="video-panel">
       <div id="video-analysis-host">
@@ -41,9 +54,9 @@ export function VideoPage() {
             <VideoSourceControls />
             <VideoMatchNotes />
           </div>
-          <div className="video-analysis__grid">
+          <div className="video-analysis__grid" ref={gridRef}>
             <div className="video-skills">
-              <div className="table-wrapper video-table-wrapper">
+              <div className="table-wrapper video-table-wrapper" ref={tableRef}>
                 <EventTable id="video-skills-container" />
               </div>
               <VideoViewText

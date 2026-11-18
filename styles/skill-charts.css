@@ -802,7 +802,7 @@ body[data-theme="light"] .court-cell.best-eff {
 }
 .video-analysis__grid {
   display: grid;
-  grid-template-columns: minmax(420px, 1.35fr) minmax(360px, 1fr);
+  grid-template-columns: repeat(2, minmax(420px, 1fr));
   gap: 0.8rem;
   align-items: stretch;
 }
@@ -911,8 +911,8 @@ body[data-theme="light"] .court-cell.best-eff {
 }
 .video-player-wrap--analysis video,
 .video-player-wrap--analysis .youtube-frame {
-  min-height: var(--video-panel-height, 70vh);
-  height: var(--video-panel-height, 70vh);
+  min-height: var(--video-panel-height, var(--video-table-height, 70vh));
+  height: var(--video-panel-height, var(--video-table-height, 70vh));
 }
 .video-resize-handle {
   position: relative;

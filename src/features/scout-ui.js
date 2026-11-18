@@ -232,11 +232,12 @@ export function ensureVideoLayoutState() {
   const current = matchState.state.uiVideoLayout && typeof matchState.state.uiVideoLayout === "object" ? matchState.state.uiVideoLayout : {};
   matchState.state.uiVideoLayout = {
     analysisHeight:
-      Number.isFinite(current.analysisHeight) && current.analysisHeight > 0
+      current.analysisHeightVersion !== 1
+        ? scoutUiState.VIDEO_LAYOUT_DEFAULTS.analysisHeight
+        : Number.isFinite(current.analysisHeight) && current.analysisHeight > 0
         ? current.analysisHeight
-        : Number.isFinite(current.analysisWidth) && current.analysisWidth > 0
-          ? current.analysisWidth
-          : scoutUiState.VIDEO_LAYOUT_DEFAULTS.analysisHeight,
+        : scoutUiState.VIDEO_LAYOUT_DEFAULTS.analysisHeight,
+    analysisHeightVersion: 1,
     scoutHeight:
       Number.isFinite(current.scoutHeight) && current.scoutHeight > 0
         ? current.scoutHeight
@@ -259,7 +260,8 @@ export function clampVideoLayoutSize(kind, size) {
 export function applyVideoLayoutWidths() {
   ensureVideoLayoutState();
   const root = document.documentElement;
-  const analysisHeight = `${clampVideoLayoutSize("analysisHeight", matchState.state.uiVideoLayout.analysisHeight)}px`;
+  const savedAnalysisHeight = matchState.state.uiVideoLayout.analysisHeight;
+  const analysisHeight = savedAnalysisHeight == null ? "" : `${clampVideoLayoutSize("analysisHeight", savedAnalysisHeight)}px`;
   const scoutHeight = `${clampVideoLayoutSize("scoutHeight", matchState.state.uiVideoLayout.scoutHeight)}px`;
   if (
     typeof root.style.getPropertyValue !== "function" ||
@@ -277,7 +279,7 @@ export function applyVideoLayoutWidths() {
 
 export function setVideoLayoutWidth(kind, width, persist = true) {
   ensureVideoLayoutState();
-  matchState.state.uiVideoLayout[kind] = clampVideoLayoutSize(kind, width);
+  matchState.state.uiVideoLayout[kind] = kind === "analysisHeight" && width == null ? null : clampVideoLayoutSize(kind, width);
   applyVideoLayoutWidths();
   if (persist) {
     saveState({ persistLocal: true });
@@ -300,7 +302,9 @@ export function startVideoResizeDrag(event, kind) {
   if (event.cancelable) event.preventDefault();
   ensureVideoLayoutState();
   const startY = event.clientY;
-  const startSize = clampVideoLayoutSize(kind, matchState.state.uiVideoLayout[kind]);
+  const currentSize = matchState.state.uiVideoLayout[kind];
+  const measuredSize = kind === "analysisHeight" ? document.querySelector(".video-player-wrap--analysis .video-media")?.getBoundingClientRect().height : null;
+  const startSize = clampVideoLayoutSize(kind, currentSize ?? measuredSize ?? scoutUiState.VIDEO_LAYOUT_DEFAULTS.scoutHeight);
   const onMove = moveEvent => {
     const delta = moveEvent.clientY - startY;
     const nextSize = clampVideoLayoutSize(kind, startSize + delta);
@@ -469,9 +473,6 @@ export function restoreModalToPopup(modal) {
   const current = courtPlacementStore.getSnapshot();
   courtPlacementStore.publish({ popupIds: [...new Set([...current.popupIds, modal.id])] });
 }
-
-
-
 
 
 
