@@ -741,6 +741,9 @@ test("formazione React: annullamento, numeri di maglia e sostituzione registrata
   }, match);
   const modal = page.locator("#lineup-modal");
   await expect(modal).toBeVisible();
+  const doubleChange = modal.getByRole("checkbox", { name: "Doppio cambio" });
+  await expect(doubleChange).not.toBeChecked();
+  await doubleChange.check();
   const before = await page.evaluate(() =>
     window.VolleyEye.app.getMatchSnapshot(),
   );
@@ -757,6 +760,7 @@ test("formazione React: annullamento, numeri di maglia e sostituzione registrata
   await page.evaluate(() =>
     window.VolleyEye.app.invoke("openMobileLineupModal", "our"),
   );
+  await expect(doubleChange).not.toBeChecked();
   await page.locator("#lineup-modal-toggle-numbers").click();
   const inputs = modal.locator(".lineup-number-input");
   await expect(inputs).toHaveCount(6);

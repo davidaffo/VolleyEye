@@ -3,7 +3,7 @@ import { useLineupInteractions } from "../../hooks/useLineupInteractions.js";
 import { LineupSlot, LineupChip } from "../ui/LineupPlayer.jsx";
 
 import { useViewStore } from "../../hooks/useViewStore.js";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { lineupStore } from "../../state/lineup-store.mjs";
 import { actions as appActions } from "../../app/actions.mjs";
 function run(command, ...args) {
@@ -44,6 +44,10 @@ function NumberInput({ slot, index, focus }) {
 export function LineupModal() {
   const view = useViewStore(lineupStore);
   const court = useRef(null);
+  const [doubleChange, setDoubleChange] = useState(false);
+  useEffect(() => {
+    if (!view.open) setDoubleChange(false);
+  }, [view.open]);
   const interactions = useLineupInteractions({
     context: "modal", scope: view.scope,
     place: (name, index) => run("placeManagedLineupPlayer", name, index),
@@ -116,10 +120,16 @@ export function LineupModal() {
           >
             {view.context === "next-set" ? "Salva formazione" : "Metti in campo (Override)"}
           </button>
+          {view.context === "match" && (
+            <label className="lineup-modal__double-change">
+              <input type="checkbox" checked={doubleChange} onChange={event => setDoubleChange(event.target.checked)} />
+              Doppio cambio
+            </label>
+          )}
           <button
             id="lineup-modal-save-substitution"
             className={"danger" + (view.context === "next-set" ? " hidden" : "")}
-            onClick={() => run("saveLineupModal", { countSubstitutions: true })}
+            onClick={() => run("saveLineupModal", { countSubstitutions: true, doubleChange })}
           >
             Effettua sostituzioni
           </button>

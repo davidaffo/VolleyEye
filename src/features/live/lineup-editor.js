@@ -405,7 +405,7 @@ export function closeSetStartModal() {
   setModalOpenState(false, true);
 }
 
-export function saveLineupModal({ countSubstitutions = false } = {}) {
+export function saveLineupModal({ countSubstitutions = false, doubleChange = false } = {}) {
   const actionSnapshot = countSubstitutions ? captureScoutActionSnapshot() : null;
   const prevCourt = countSubstitutions ? getLineupBaseCourtFromState() : null;
   const nextCourt = getCourtShape(scoutUiState.lineupModalCourt);
@@ -452,6 +452,12 @@ export function saveLineupModal({ countSubstitutions = false } = {}) {
     subs.forEach(sub => recordSubstitutionEvent(Object.assign({}, sub, { teamScope: scope })));
     if (subs.length) {
       attachScoutActionSnapshot(matchState.state.events[matchState.state.events.length - 1], actionSnapshot);
+      if (doubleChange) {
+        const rotation = scope === "opponent" ? matchState.state.opponentRotation : matchState.state.rotation;
+        const opposite = ((Number(rotation) - 1 + 3) % 6) + 1;
+        if (scope === "opponent") setOpponentRotation(opposite);
+        else setRotation(opposite);
+      }
       saveState({ persistLocal: true });
     }
   }

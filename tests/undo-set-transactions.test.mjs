@@ -497,6 +497,34 @@ test('due cambi confermati insieme dalla formazione sono una sola operazione ann
   }
 });
 
+test('il doppio cambio inverte solo la rotazione della squadra interessata ed è annullabile', () => {
+  for (const scope of ['our', 'opponent']) for (let rotation = 1; rotation <= 6; rotation++) {
+    const c = setup();
+    vm.runInContext(read('js/scout/live/lineup-editor.js'), c);
+    const courtKey = scope === 'our' ? 'court' : 'opponentCourt';
+    const rotationKey = scope === 'our' ? 'rotation' : 'opponentRotation';
+    const otherKey = scope === 'our' ? 'opponentRotation' : 'rotation';
+    c.state[rotationKey] = rotation;
+    const otherRotation = c.state[otherKey];
+    c.getLineupBaseCourtFromState = () => c.state[courtKey];
+    c.lineupModalCourt = plain(c.state[courtKey]);
+    c.lineupModalCourt[0].main = 'Riserva 1';
+    c.lineupModalCourt[3].main = 'Riserva 2';
+    c.lineupModalContext = 'match';
+    c.lineupModalScope = scope;
+    c.lineupModalDefaultRotation = null;
+    c.closeLineupModal = () => {};
+    c.saveLineupModal({ countSubstitutions: true, doubleChange: true });
+    assert.equal(c.state[rotationKey], (rotation + 2) % 6 + 1);
+    assert.equal(c.state[otherKey], otherRotation);
+    c.state = JSON.parse(c.persisted);
+    c.undoLastEvent();
+    assert.equal(c.state[rotationKey], rotation);
+    assert.equal(c.state[otherKey], otherRotation);
+    assert.equal(c.state.events.length, 0);
+  }
+});
+
 test('audit: annulla conserva un evento aggiunto in analisi tra l’azione precedente e quella da annullare', () => {
   const c = setup();
   c.addManualPoint('for', 1, 'for');

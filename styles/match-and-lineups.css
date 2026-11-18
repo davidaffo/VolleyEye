@@ -301,9 +301,17 @@ body[data-theme="light"] .lineup-chip.replaced-chip {
 }
 .lineup-modal__foot {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.4rem;
   padding-top: 0.2rem;
+}
+.lineup-modal__double-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  font-size: 0.85rem;
 }
 .lineup-modal__libero {
   margin-right: auto;
