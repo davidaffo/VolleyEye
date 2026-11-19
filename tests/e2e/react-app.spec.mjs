@@ -374,6 +374,9 @@ test("archivio React: selezione separata dal caricamento, creazione e cancellazi
   expect(untouchedActive.match).toEqual(created.match);
   expect(untouchedActive.events).toEqual(created.events);
   await page.locator("#btn-load-match").click();
+  await expect.poll(async () =>
+    (await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot())).loadedMatchName,
+  ).toBe(originalName);
   const loaded = await page.evaluate(() =>
     window.VolleyEye.app.getMatchSnapshot(),
   );
