@@ -272,9 +272,9 @@ export function setCourtPlayerForScope(
   }
 }
 
-export function applyAutoRolePositioning() {
+export function applyAutoRolePositioning({ persist = true } = {}) {
  if (!prepareAutoRolePositioning()) return;
- saveState();
+ if (persist) saveState();
  renderPlayers();
  renderLiberoBench();
 

@@ -318,11 +318,10 @@ export function exitCurrentMatch() {
   if (!matchState.state || !matchState.state.uiMatchSessionActive) return;
   pauseSkillClock();
   pauseVideoClock();
-  persistCurrentMatch({ allowCreate: false });
   matchState.state.uiMatchSessionActive = false;
   document.body.classList.remove("drawer-menu-open", "drawer-log-open");
   syncMatchSessionUI();
   setActiveTab("match");
   renderMatchesSelect();
-  saveState({ persistLocal: true, skipMatchPersist: true });
+  saveState({ persistLocal: true });
 }

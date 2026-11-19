@@ -2643,3 +2643,165 @@ test('footer mobile: nascosto dentro una partita anche con Modalità mobile test
   await expect(footer).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test('scout live: le analisi differite mostrano subito le skill registrate', async ({ page }) => {
+  const errors = await openApp(page);
+  const match = JSON.parse(readFileSync('match_demo.json', 'utf8')).state;
+  Object.assign(match, { events: [], currentSet: 1, setResults: {}, scoreOverrides: {},
+    matchFinished: false, matchEndSetSnapshot: null, matchEndSetRecorded: null,
+    predictiveSkillFlow: false, autoRotate: false, useOpponentTeam: true,
+    skillFlowOverride: null, opponentSkillFlowOverride: null, pendingServe: null });
+  await page.evaluate(async snapshot => {
+    const app = window.VolleyEye.app;
+    await app.invoke('applyImportedMatch', snapshot, { silent: true });
+    await app.invoke('saveState', { persistLocal: true });
+    await app.invoke('enterSelectedMatch');
+  }, match);
+  const card = page.locator('#players-container .court-card:not(.empty)').first();
+  const name = await card.getAttribute('data-player-name');
+  await page.evaluate(() => window.VolleyEye.app.invoke('setActiveTab', 'aggregated'));
+  const playerRow = page.locator('#agg-table-body tr').filter({ hasText: name.split(' ')[0] }).first();
+  await expect(playerRow).toBeVisible();
+  const before = await playerRow.textContent();
+  await page.evaluate(() => window.VolleyEye.app.invoke('setActiveTab', 'scout'));
+  await card.locator('.skill-picker-btn.skill-pass').click();
+  await page.locator('#players-container .court-card[data-player-name=' + JSON.stringify(name) + '] .event-btn[data-skill-id="pass"][data-code="+"]').click();
+  await expect.poll(async () => (await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot())).events.length).toBe(1);
+  await page.evaluate(() => window.VolleyEye.app.invoke('setActiveTab', 'aggregated'));
+  await expect(playerRow).toBeVisible();
+  await expect.poll(() => playerRow.textContent()).not.toBe(before);
+  await page.evaluate(() => window.VolleyEye.app.invoke('setActiveTab', 'video'));
+  await expect(page.locator('#video-skills-container tbody tr.event-row')).toHaveCount(1);
+  await expect(page.locator('#video-skills-container tbody tr.event-row')).toContainText('Ricezione');
+  expect(errors).toEqual([]);
+});
+
+test('scout live: traiettoria e valutazione di attacco restano registrabili', async ({ page }) => {
+  const errors = await openApp(page);
+  const match = JSON.parse(readFileSync('match_demo.json', 'utf8')).state;
+  Object.assign(match, { events: [], currentSet: 1, setResults: {}, scoreOverrides: {},
+    matchFinished: false, matchEndSetSnapshot: null, matchEndSetRecorded: null,
+    predictiveSkillFlow: false, autoRotate: false, useOpponentTeam: true,
+    skillFlowOverride: null, opponentSkillFlowOverride: null, pendingServe: null,
+    attackTrajectoryEnabled: true, attackTrajectorySimplified: true, setTypePromptEnabled: false });
+  await page.evaluate(async snapshot => {
+    const app = window.VolleyEye.app;
+    await app.invoke('applyImportedMatch', snapshot, { silent: true });
+    await app.invoke('saveState', { persistLocal: true });
+    await app.invoke('enterSelectedMatch');
+  }, match);
+  const card = page.locator('#players-container .court-card:not(.empty)').first();
+  const name = await card.getAttribute('data-player-name');
+  const selectedCard = page.locator('#players-container .court-card[data-player-name=' + JSON.stringify(name) + ']');
+  await card.locator('.skill-picker-btn.skill-attack').click();
+  await selectedCard.locator('.attack-select-grid button').first().click();
+  const modal = page.locator('#attack-trajectory-modal');
+  await expect(modal).toBeVisible();
+  const canvas = page.locator('#attack-trajectory-canvas');
+  await expect.poll(() => canvas.evaluate(el => el.width)).toBeGreaterThan(0);
+  await canvas.click({ position: { x: 130, y: 70 } });
+  await expect(modal).toBeHidden();
+  // Il blocco evita il clic residuo del gesto touch sulla traiettoria.
+  await page.waitForTimeout(400);
+  await selectedCard.locator('.event-btn[data-skill-id="attack"][data-code="+"]').click();
+  await expect.poll(async () => (await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot())).events.length).toBe(1);
+  const event = (await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot())).events[0];
+  expect(event.attackTrajectory?.start).toBeTruthy();
+  expect(event.attackTrajectory?.end).toBeTruthy();
+  expect(errors).toEqual([]);
+});
+
+test('scout live: i dati restano recuperabili con archivio ottimizzato', async ({ page }) => {
+  const errors = await openApp(page);
+  const match = JSON.parse(readFileSync('match_demo.json', 'utf8')).state;
+  Object.assign(match, { events: [], currentSet: 1, setResults: {}, scoreOverrides: {},
+    matchFinished: false, matchEndSetSnapshot: null, matchEndSetRecorded: null,
+    predictiveSkillFlow: false, autoRotate: true, useOpponentTeam: true,
+    skillFlowOverride: null, opponentSkillFlowOverride: null, pendingServe: null });
+  await page.evaluate(async snapshot => {
+    const app = window.VolleyEye.app;
+    await app.invoke('applyImportedMatch', snapshot, { silent: true });
+    await app.invoke('saveState', { persistLocal: true });
+    await app.invoke('enterSelectedMatch');
+    await app.invoke('optimizeReactArchiveSpace');
+    await app.invoke('flushStorage');
+  }, match);
+  const card = page.locator('#players-container .court-card:not(.empty)').first();
+  const name = await card.getAttribute('data-player-name');
+  await card.locator('.skill-picker-btn.skill-pass').click();
+  const selectedCard = page.locator('#players-container .court-card[data-player-name=' + JSON.stringify(name) + ']');
+  await selectedCard.locator('.event-btn[data-skill-id="pass"][data-code="+"]').click();
+  await expect.poll(async () => (await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot())).events.length).toBe(1);
+  await selectedCard.locator('.skill-picker-btn.skill-pass').click();
+  await selectedCard.locator('.event-btn[data-skill-id="pass"][data-code="-"]').click();
+  await expect.poll(async () => (await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot())).events.length).toBe(2);
+  await page.evaluate(() => window.VolleyEye.app.invoke('flushStorage'));
+  const stored = await page.evaluate(async () => {
+    const selected = window.VolleyEye.app.getMatchSnapshot().selectedMatch;
+    const db = await new Promise((resolve, reject) => {
+      const request = indexedDB.open('volleyScoutStateDb');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const read = key => new Promise((resolve, reject) => {
+      const request = db.transaction('archive', 'readonly').objectStore('archive').get(key);
+      request.onsuccess = () => resolve(JSON.parse(request.result));
+      request.onerror = () => reject(request.error);
+    });
+    const keys = await new Promise((resolve, reject) => {
+      const request = db.transaction('archive', 'readonly').objectStore('archive').getAllKeys();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const result = { session: await read('volleyScoutV1'), match: await read('Data/Matches/' + selected), keys };
+    db.close();
+    return result;
+  });
+  expect(stored.keys.filter(key => String(key).startsWith('__scoutJournal/')).length).toBe(2);
+  await page.reload();
+  await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true');
+  const reopened = await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot());
+  expect(reopened.events).toHaveLength(2);
+  expect(reopened.events[0].skillId).toBe('pass');
+  expect(reopened.events[0].undoState).toBeTruthy();
+  await page.evaluate(async () => {
+    await window.VolleyEye.app.invoke('undoLastEvent');
+    await window.VolleyEye.app.invoke('flushStorage');
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true');
+  const afterUndo = await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot());
+  expect(afterUndo.events).toHaveLength(1);
+  expect(afterUndo.events[0].code).toBe('+');
+  expect(errors).toEqual([]);
+});
+
+test('scout live: uscita dalla partita consolida le skill prima del ricaricamento', async ({ page }) => {
+  const errors = await openApp(page);
+  const match = JSON.parse(readFileSync('match_demo.json', 'utf8')).state;
+  Object.assign(match, { events: [], currentSet: 1, setResults: {}, scoreOverrides: {},
+    matchFinished: false, predictiveSkillFlow: false, autoRotate: true, useOpponentTeam: true,
+    skillFlowOverride: null, opponentSkillFlowOverride: null, pendingServe: null });
+  await page.evaluate(async snapshot => {
+    const app = window.VolleyEye.app;
+    await app.invoke('applyImportedMatch', snapshot, { silent: true });
+    await app.invoke('saveState', { persistLocal: true });
+    await app.invoke('enterSelectedMatch');
+    await app.invoke('flushStorage');
+  }, match);
+  const card = page.locator('#players-container .court-card:not(.empty)').first();
+  const name = await card.getAttribute('data-player-name');
+  await card.locator('.skill-picker-btn.skill-pass').click();
+  await page.locator('#players-container .court-card[data-player-name=' + JSON.stringify(name) + '] .event-btn[data-skill-id="pass"][data-code="+"]').click();
+  await page.evaluate(async () => {
+    await window.VolleyEye.app.invoke('exitCurrentMatch');
+    await window.VolleyEye.app.invoke('flushStorage');
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true');
+  await page.evaluate(() => window.VolleyEye.app.invoke('enterSelectedMatch'));
+  const reopened = await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot());
+  expect(reopened.events).toHaveLength(1);
+  expect(reopened.events[0].code).toBe('+');
+  expect(errors).toEqual([]);
+});

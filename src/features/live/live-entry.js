@@ -7,18 +7,13 @@ import { updateCourtModalPlacement } from "../scout-ui.js";
 import { getPlayersForScope } from "../teams/selectors.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { renderEventsLog } from "../events/log-view.js";
-import { renderLiveScore } from "../core/runtime-view.js";
 import { renderScoreAndRotations } from "../analysis/score-view.js";
 import { addPlayerPoint } from "./live-score-and-set.js";
 import { computePointsSummary } from "../analysis/scores.js";
-import { renderAggregatedTable } from "../analysis/aggregated-table.js";
-import { renderVideoAnalysis } from "../video/playback.js";
-import { renderTrajectoryAnalysis, renderServeTrajectoryAnalysis } from "../analysis/trajectory-rendering.js";
 import { setSkillModalOpen, closeSkillModal } from "../scout/skill-modal-state.js";
 import { renderSkillChoice, renderSkillCodes } from "../scout/skill-dialog.js";
 import { resetSkillSelectionForPlayer } from "../scout/selection-state.js";
 import { publishAttributionView, setAttributionOpen } from "../scout/attribution-view.js";
-import { scheduleVideoSafeRender } from "../video/media-state.js";
 
 export function schedulePostEventUpdates({
   suppressScroll = false,
@@ -27,22 +22,17 @@ export function schedulePostEventUpdates({
   playerIdx = null,
   skillId = null,
   persistLocal = false,
-  scope = "our"
+  scope = "our",
+  journal = null
 } = {}) {
-  scheduleVideoSafeRender(() => {
-    saveState({ persistLocal });
-    renderPlayers();
-    scrollToActiveCourtOnMobileAlways();
-    renderEventsLog({ suppressScroll, append });
-    if (includeAggregates) {
-      renderLiveScore();
-      renderScoreAndRotations(computePointsSummary());
-      renderAggregatedTable();
-      renderVideoAnalysis();
-      renderTrajectoryAnalysis();
-      renderServeTrajectoryAnalysis();
-    }
-  });
+  saveState({ persistLocal, skipArchiveSyncForScout: true, journal });
+  renderPlayers({ deferScoutViews: true });
+  scrollToActiveCourtOnMobileAlways();
+  renderEventsLog({ suppressScroll, append, scoutLive: true });
+  if (includeAggregates) {
+    // Le statistiche e il punteggio sono aggiornati subito.
+    renderScoreAndRotations(computePointsSummary());
+  }
 }
 
 

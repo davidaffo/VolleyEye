@@ -234,6 +234,7 @@ export async function handleEventClick(
     }
   }
   const actionSnapshot = captureScoutActionSnapshot();
+  const changedEvents = [];
   matchState.state.freeballPending = false;
   matchState.state.freeballPendingScope = scope;
   if (scope === "opponent") {
@@ -320,6 +321,7 @@ export async function handleEventClick(
     });
     if (lastServe) {
       linkEvents(lastServe, event, "serve-pass");
+      changedEvents.push(lastServe);
     }
   }
   if (skillId === "defense" && matchState.state.useOpponentTeam) {
@@ -330,6 +332,7 @@ export async function handleEventClick(
     if (lastAttackOrBlock) {
       const relType = lastAttackOrBlock.skillId === "block" ? "block-defense" : "attack-defense";
       linkEvents(lastAttackOrBlock, event, relType);
+      changedEvents.push(lastAttackOrBlock);
     }
   }
   if (skillId === "attack" && matchState.state.useOpponentTeam) {
@@ -339,6 +342,7 @@ export async function handleEventClick(
     });
     if (lastSet) {
       linkEvents(lastSet, event, "set-attack");
+      changedEvents.push(lastSet);
     }
   }
   if (skillId === "serve") {
@@ -398,7 +402,7 @@ export async function handleEventClick(
   }
   applyReceiveContextToEvent(event);
   matchState.state.events.push(event);
-  handleAutoRotationFromEvent(event, scope);
+  handleAutoRotationFromEvent(event, scope, { persist: false });
   if (!matchState.state.useOpponentTeam && matchState.state.predictiveSkillFlow && scope === "our" && skillId === "serve") {
     if (code === "/") {
       matchState.state.freeballPending = true;
@@ -430,6 +434,7 @@ export async function handleEventClick(
   const inferredAttackEvent = skillId === "block" ? applyBlockInference(event, scope, code) : null;
   if (inferredAttackEvent) {
     linkEvents(inferredAttackEvent, event, "attack-block");
+    changedEvents.push(inferredAttackEvent);
   }
   if (skillId === "serve" && code === "/") {
     triggerFreeballFlow({ persist: false, rerender: false, scope });
@@ -453,7 +458,8 @@ export async function handleEventClick(
     playerIdx,
     skillId,
     persistLocal,
-    scope
+    scope,
+    journal: { beforeCount: actionSnapshot.eventCount, changed: changedEvents }
   });
   if (
     (scope === "opponent" ? matchState.state.opponentAttackTrajectoryEnabled : matchState.state.attackTrajectoryEnabled) &&

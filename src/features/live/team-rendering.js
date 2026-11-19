@@ -9,14 +9,13 @@ import { updateOpponentRotationDisplay } from "../teams/court-view.js";
 import { recalcAllStatsAndUpdateUI } from "../analysis/stats-update.js";
 import { publishReactLogServeTrajectories } from "../analysis/trajectory-view.js";
 import { renderScoutCourt } from "../scout/court-commands.js";
-import { scheduleVideoSafeRender } from "../video/media-state.js";
 import { normalizeSetTypeValue } from "../../domain/skill-values.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { saveState } from "../storage/save-state.js";
 import { makePlayerKey } from "../teams/selectors.js";
 import { startAttackSelection } from "../scout/selection-flow.js";
 
-export function renderPlayers() {
+export function renderPlayers({ refreshAnalysis = true, deferScoutViews = false } = {}) {
   publishReactSettings();
   syncCourtSideLayout();
   ensureMetricsConfigDefaults();
@@ -26,7 +25,7 @@ export function renderPlayers() {
   renderScoutTeamCourt("our", { nextSkillId: ourSkill });
   renderScoutTeamCourt("opponent", { nextSkillId: opponentSkill });
   updateOpponentRotationDisplay();
-  recalcAllStatsAndUpdateUI();
+  if (refreshAnalysis) recalcAllStatsAndUpdateUI({ deferScoutViews });
 
   updateNetBlockPrompt();
   publishReactLogServeTrajectories();
@@ -49,7 +48,7 @@ export function renderScoutTeamCourt(scope, { nextSkillId = null, animate = fals
   const hidden = (scope === "opponent" && !matchState.state.useOpponentTeam) || (activeScope && activeScope !== scope);
 
     renderScoutCourt(scope, { hidden: !!hidden, compact, nextSkillId, animate,
-      effects: { onRender: renderPlayers, onScheduleRender: scheduleRenderPlayers, onQueuedAttack: startQueuedSetterAttack },
+      effects: { onRender: () => renderPlayers({ refreshAnalysis: false }), onScheduleRender: scheduleRenderPlayers, onQueuedAttack: startQueuedSetterAttack },
     });
     return;
 
@@ -78,8 +77,8 @@ export function syncCourtSideLayout() {
   }
 }
 
-export function scheduleRenderPlayers() {
-  scheduleVideoSafeRender(renderPlayers);
+export function scheduleRenderPlayers(options) {
+  renderPlayers(options);
 }
 
 export function setNextSetType(val) {
@@ -91,7 +90,7 @@ export function setNextSetType(val) {
   saveState();
   publishReactSetTypeShortcuts();
   // Aggiorna subito le card/skill aperte per mostrare il nuovo tipo alzata
-  renderPlayers();
+  renderPlayers({ refreshAnalysis: false });
 }
 
 export function startQueuedSetterAttack({ playerIdx, scope }, choice) {
@@ -104,7 +103,7 @@ export function startQueuedSetterAttack({ playerIdx, scope }, choice) {
     () => {
       if (scoutUiState.attackMetaByPlayer[key])
         scoutUiState.attackMetaByPlayer[key].fromNextSetType = true;
-      renderPlayers();
+      renderPlayers({ refreshAnalysis: false });
     },
     scope,
   );

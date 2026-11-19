@@ -116,3 +116,11 @@ test('import database espande il backup prima di validare e salvare le partite',
   assert.equal(active, null);
   assert.equal(writes.length, 0);
 });
+
+test('il salvataggio ottimizzato conserva ricevute e dati originali senza alterare la partita', () => {
+  const c = setup(), original = fixture(true), expected = clone(original);
+  const packed = clone(c.packDatabaseBackup(original, { clearFinishedUndo: false }));
+  assert.deepEqual(original, expected);
+  assert.deepEqual(clone(c.unpackDatabaseBackup(packed)), { ...expected, version: 3 });
+  assert.ok(packed.state.savedMatches.match);
+});

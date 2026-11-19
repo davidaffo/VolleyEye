@@ -5,6 +5,27 @@ Le voci storiche riportano i messaggi originali dei commit e i relativi collegam
 
 Prima della versione 0.1.0 il progetto era già in sviluppo, ma non aveva una numerazione di release registrata.
 
+## 0.23.0 — 2026-11-19
+
+- Nell'analisi video, il riquadro del filmato ha inizialmente le stesse dimensioni della tabella degli eventi.
+- Apertura delle partite più rapida durante l'uso del server di sviluppo, anche con molti eventi.
+- Un indicatore segnala il caricamento durante l'apertura di una partita.
+- Rimosso l'avviso del browser che interrompeva il ricaricamento della pagina.
+- I filtri dell'analisi video restano nella stessa posizione quando cambia il numero di eventi mostrati.
+- Il pulsante Freeball avversaria è grigio, come gli altri pulsanti secondari.
+- Nella finestra dei cambi, l'opzione Doppio cambio porta la rotazione alla posizione opposta alla conferma delle sostituzioni.
+- Nella preparazione del set si può impostare la rotazione avversaria anche in modalità singola.
+- Le modifiche nell’analisi video usano meno memoria per consentire l’annullamento, conservando fino a 30 operazioni.
+- Durante la rilevazione da video, le skill aggiornano subito lo scout e la posizione video invariata non viene salvata ripetutamente.
+- La registrazione delle skill aggiorna punteggio e analisi senza ripetere operazioni già eseguite.
+- La tabella video ordinata richiede meno elaborazioni quando viene aggiornata durante la rilevazione.
+- Il salvataggio della partita riduce copie e riletture inutili, anche quando l’archivio è ottimizzato.
+- Nello scout live, la scelta di fondamentali e traiettorie evita ricalcoli inutili delle statistiche.
+- Durante lo scout live il salvataggio evita anche la rilettura completa dell’archivio dopo ogni valutazione; le analisi non visibili vengono aggiornate all’apertura e il registro elabora solo gli eventi mostrati.
+- Dopo ogni valutazione, lo scout aggiorna il registro senza ridisegnare inutilmente le righe, le celle e le tabelle non visibili.
+- Durante lo scout live, le skill vengono salvate in modo incrementale, senza ricopiare tutta la partita a ogni valutazione; i dati restano recuperabili dopo la riapertura.
+- La rilevazione live riutilizza le regole di punteggio finché non vengono modificate.
+
 ## 0.22.0 — 2026-11-18
 
 - Aggiunto il pannello cloud per importare database da link, sincronizzare backup con Nextcloud e condividere un collegamento senza password.

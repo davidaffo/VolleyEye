@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { buildSync } from "esbuild";
 import { createRequire } from "node:module";
-import { createElement } from "react";
+import { createElement, Profiler, act } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { createRoot } from "react-dom/client";
 import { JSDOM } from "jsdom";
 
 const bundle = buildSync({
@@ -103,4 +104,39 @@ test("una nota precedente al primo evento è visibile anche con registro vuoto",
   );
   assert.match(markup, /match-note-marker/);
   assert.match(markup, /Rivedere il muro/);
+});
+
+test("il registro live non ridisegna la tabella video e aggiorna le celle modificate", async () => {
+  const dom = new JSDOM('<div id="root"></div>');
+  const previous = { window: globalThis.window, document: globalThis.document, act: globalThis.IS_REACT_ACT_ENVIRONMENT };
+  globalThis.window = dom.window;
+  globalThis.document = dom.window.document;
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  const root = createRoot(document.getElementById('root'));
+  const renders = { log: 0, video: 0 };
+  try {
+    eventTableStore.publish('events-log', table);
+    eventTableStore.publish('video-skills-container', table);
+    await act(() => root.render(createElement('div', null,
+      createElement(Profiler, { id: 'log', onRender: () => renders.log++ }, createElement(EventTable, { id: 'events-log' })),
+      createElement(Profiler, { id: 'video', onRender: () => renders.video++ }, createElement(EventTable, { id: 'video-skills-container' })),
+    )));
+    const videoRenders = renders.video;
+    const updated = { ...table, rows: table.rows.map((row, index) => index ? row : { ...row, cells: [{ field: 'eventId', text: 'modificato' }] }) };
+    await act(() => {
+      eventTableStore.publish('events-log', updated);
+      matchNotesStore.publish({ notes: [], unresolved: 0 });
+    });
+    assert.equal(renders.video, videoRenders);
+    assert.match(document.querySelector('#events-log').textContent, /modificato/);
+    await act(() => eventTableStore.publish('video-skills-container', updated));
+    assert.ok(renders.video > videoRenders);
+    assert.match(document.querySelector('#video-skills-container').textContent, /modificato/);
+  } finally {
+    await act(() => root.unmount());
+    dom.window.close();
+    globalThis.window = previous.window;
+    globalThis.document = previous.document;
+    globalThis.IS_REACT_ACT_ENVIRONMENT = previous.act;
+  }
 });

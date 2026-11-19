@@ -193,7 +193,7 @@ function refreshScoutSkill(player) {
       player.skillId,
       player.scope,
     );
-  else renderPlayers();
+  else renderPlayers({ refreshAnalysis: false });
 }
 
 export async function selectScoutServeType(player, type) {
@@ -201,7 +201,7 @@ export async function selectScoutServeType(player, type) {
   await startServeTypeSelection(
     playerIdx,
     type,
-    player.inModal ? () => refreshScoutSkill(player) : renderPlayers,
+    () => refreshScoutSkill(player),
     scope,
   );
 }
@@ -220,7 +220,7 @@ export async function startScoutAttack(player, choice, queued = false) {
         if (queued) markQueued();
         refreshScoutSkill(player);
       }
-    : renderPlayers;
+    : () => renderPlayers({ refreshAnalysis: false });
   await startAttackSelection(playerIdx, choice, done, scope);
   if (queued && !inModal) markQueued();
 }

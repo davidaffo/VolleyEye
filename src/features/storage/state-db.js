@@ -32,6 +32,20 @@ export function readStateFromIndexedDb() {
   return Promise.resolve(raw ? JSON.parse(raw) : null);
 }
 
-export function writeStateToIndexedDb(snapshot) {
-  return persistentStorageState.archiveStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+export function serializeStateSnapshot(snapshot, { matchName, serializedMatch } = {}) {
+  const matches = snapshot?.savedMatches;
+  if (typeof serializedMatch !== "string" || !matchName || !matches ||
+      Object.keys(matches).length !== 1 || !Object.hasOwn(matches, matchName)) {
+    return JSON.stringify(snapshot);
+  }
+  // Il payload della partita è già serializzato per l'archivio: lo si inserisce
+  // nella sessione senza attraversare una seconda volta tutto lo storico.
+  const { savedMatches, ...rest } = snapshot;
+  const prefix = JSON.stringify(rest);
+  return prefix.slice(0, -1) + (prefix.length > 2 ? "," : "") +
+    '"savedMatches":{' + JSON.stringify(matchName) + ':' + serializedMatch + '}}';
+}
+
+export function writeStateToIndexedDb(snapshot, options) {
+  return persistentStorageState.archiveStorage.setItem(STORAGE_KEY, serializeStateSnapshot(snapshot, options), options);
 }

@@ -107,20 +107,19 @@ export function sortVideoEvents(events, baseMs = null) {
   const sortState = ensureVideoAnalysisSortState();
   if (!sortState.key || !sortState.dir) return events;
   const dirFactor = sortState.dir === "desc" ? -1 : 1;
-  return [...events].sort((a, b) => {
-    const av = getVideoSortDisplayValue(a, sortState.key, baseMs);
-    const bv = getVideoSortDisplayValue(b, sortState.key, baseMs);
-    if (typeof av === "number" && typeof bv === "number") {
-      if (av !== bv) return (av - bv) * dirFactor;
-    } else {
-      const cmp = String(av || "").localeCompare(String(bv || ""), "it", {
-        sensitivity: "base",
-        numeric: true,
-      });
-      if (cmp !== 0) return cmp * dirFactor;
-    }
-    const aId = Number.isFinite(a.eventId) ? a.eventId : 0;
-    const bId = Number.isFinite(b.eventId) ? b.eventId : 0;
-    return aId - bId;
-  });
+  const collator = new Intl.Collator("it", { sensitivity: "base", numeric: true });
+  return events.map(event => ({ event, value: getVideoSortDisplayValue(event, sortState.key, baseMs) }))
+    .sort((a, b) => {
+      const av = a.value;
+      const bv = b.value;
+      if (typeof av === "number" && typeof bv === "number") {
+        if (av !== bv) return (av - bv) * dirFactor;
+      } else {
+        const cmp = collator.compare(String(av || ""), String(bv || ""));
+        if (cmp !== 0) return cmp * dirFactor;
+      }
+      const aId = Number.isFinite(a.event.eventId) ? a.event.eventId : 0;
+      const bId = Number.isFinite(b.event.eventId) ? b.event.eventId : 0;
+      return aId - bId;
+    }).map(({ event }) => event);
 }

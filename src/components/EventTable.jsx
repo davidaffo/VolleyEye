@@ -1,17 +1,17 @@
-import { Fragment } from "react";
+import { memo } from "react";
 import { MatchNoteMarker } from "./MatchNotes.jsx";
 import { matchNotesStore } from "../state/match-notes-store.mjs";
 
 import { EventControl } from "./EventControl.jsx";
 import { useViewStore } from "../hooks/useViewStore.js";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   eventTableStore,
   eventLogSummaryStore,
 } from "../state/event-table-store.mjs";
 import { events as appEvents } from "../app/actions.mjs";
 
-function Cell({ cell, row, tableRef }) {
+const Cell = memo(function Cell({ cell, row, tableRef }) {
   const [editor, setEditor] = useState(null),
     ref = useRef(null);
   const done = () => {
@@ -50,13 +50,65 @@ function Cell({ cell, row, tableRef }) {
       )}
     </td>
   );
-}
+}, (previous, next) =>
+  previous.row.key === next.row.key &&
+  previous.row.ev === next.row.ev &&
+  previous.row.videoTime === next.row.videoTime &&
+  previous.cell.field === next.cell.field &&
+  previous.cell.text === next.cell.text &&
+  previous.cell.trajectory === next.cell.trajectory &&
+  (previous.cell.classes || []).join(" ") === (next.cell.classes || []).join(" ") &&
+  previous.tableRef === next.tableRef
+);
+const EventRow = memo(function EventRow({ row, selected, showCheckbox, tableRef, notes, columnCount }) {
+  return <>
+    <tr
+      className={"event-row" + (selected ? " selected" : "")}
+      data-event-key={row.key}
+      data-selected={selected ? "true" : "false"}
+      onClick={(event) => {
+        if (event.target.closest("input,label,button,select,option,textarea,.row-select")) return;
+        appEvents.selectEventTableRow(row, tableRef.current, event);
+      }}
+      onDoubleClick={() => appEvents.seekEventTableRow(row, tableRef.current)}
+    >
+      {showCheckbox && <td className="row-select">
+        <input type="checkbox" checked={selected}
+          onClick={(event) => event.stopPropagation()}
+          onChange={() => appEvents.toggleEventTableRow(row, tableRef.current)} />
+      </td>}
+      {row.cells.map((cell, index) => <Cell key={index} cell={cell} row={row} tableRef={tableRef} />)}
+      <td><button type="button" className="small danger" title="Elimina skill"
+        onClick={(event) => { event.stopPropagation(); appEvents.deleteEventByKey(row.key); }}>✕</button></td>
+    </tr>
+    {notes.map((note) => <tr className="match-note-row" key={note.id}>
+      <td colSpan={columnCount}><MatchNoteMarker note={note} /></td>
+    </tr>)}
+  </>;
+}, (a, b) => a.row.key === b.row.key && a.row.ev === b.row.ev &&
+  a.row.videoTime === b.row.videoTime && a.selected === b.selected &&
+  a.showCheckbox === b.showCheckbox && a.tableRef === b.tableRef &&
+  a.columnCount === b.columnCount && JSON.stringify(a.notes) === JSON.stringify(b.notes) &&
+  a.row.cells.length === b.row.cells.length && a.row.cells.every((cell, index) => {
+    const next = b.row.cells[index];
+    return cell.field === next.field && cell.text === next.text &&
+      cell.trajectory === next.trajectory && (cell.classes || []).join(" ") === (next.classes || []).join(" ");
+  }));
+const emptyNotesView = Object.freeze({ notes: Object.freeze([]) });
+
 export function EventTable({ id, className }) {
-  useViewStore(eventTableStore);
-  const notesView = useViewStore(matchNotesStore);
+  const view = useSyncExternalStore(
+    eventTableStore.subscribe,
+    () => eventTableStore.getView(id),
+    () => eventTableStore.getView(id),
+  );
+  const notesView = useSyncExternalStore(
+    matchNotesStore.subscribe,
+    () => id === "events-log" ? matchNotesStore.getSnapshot() : emptyNotesView,
+    () => id === "events-log" ? matchNotesStore.getSnapshot() : emptyNotesView,
+  );
   const notes = id === "events-log" ? notesView.notes : [];
-  const view = eventTableStore.getView(id),
-    root = useRef(null),
+  const root = useRef(null),
     all = useRef(null),
     tableRef = useRef(view.interaction);
   const count = view.rows.filter((row) =>
@@ -141,80 +193,10 @@ export function EventTable({ id, className }) {
               </tr>
             </thead>
             <tbody>
-              {view.rows.map((row) => (
-                <Fragment key={row.key}>
-                  <tr
-                    key={row.key}
-                    className={
-                      "event-row" +
-                      (view.selected.includes(row.key) ? " selected" : "")
-                    }
-                    data-event-key={row.key}
-                    data-selected={
-                      view.selected.includes(row.key) ? "true" : "false"
-                    }
-                    onClick={(event) => {
-                      if (
-                        event.target.closest(
-                          "input,label,button,select,option,textarea,.row-select",
-                        )
-                      )
-                        return;
-                      appEvents.selectEventTableRow(
-                        row,
-                        view.interaction,
-                        event,
-                      );
-                    }}
-                    onDoubleClick={() =>
-                      appEvents.seekEventTableRow(row, view.interaction)
-                    }
-                  >
-                    {view.showCheckbox && (
-                      <td className="row-select">
-                        <input
-                          type="checkbox"
-                          checked={view.selected.includes(row.key)}
-                          onClick={(event) => event.stopPropagation()}
-                          onChange={() =>
-                            appEvents.toggleEventTableRow(row, view.interaction)
-                          }
-                        />
-                      </td>
-                    )}
-                    {row.cells.map((cell, index) => (
-                      <Cell
-                        key={index}
-                        cell={cell}
-                        row={row}
-                        tableRef={tableRef}
-                      />
-                    ))}
-                    <td>
-                      <button
-                        type="button"
-                        className="small danger"
-                        title="Elimina skill"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          appEvents.deleteEventByKey(row.key);
-                        }}
-                      >
-                        ✕
-                      </button>
-                    </td>
-                  </tr>
-                  {notes
-                    .filter((note) => note.anchorKey === String(row.key))
-                    .map((note) => (
-                      <tr className="match-note-row" key={note.id}>
-                        <td colSpan={view.headers.length}>
-                          <MatchNoteMarker note={note} />
-                        </td>
-                      </tr>
-                    ))}
-                </Fragment>
-              ))}
+              {view.rows.map((row) => <EventRow key={row.key} row={row}
+                selected={view.selected.includes(row.key)} showCheckbox={view.showCheckbox}
+                tableRef={tableRef} columnCount={view.headers.length}
+                notes={notes.filter((note) => note.anchorKey === String(row.key))} />)}
             </tbody>
           </table>
         )

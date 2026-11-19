@@ -43,7 +43,7 @@ export async function optimizeReactArchiveSpace() {
   if (!confirm("Ottimizzare lo spazio di tutte le partite e delle anagrafiche? Verranno compattati i dati, condivise le foto duplicate ed eliminati i dati di annullamento, inclusi quelli della partita aperta. Azioni, foto e statistiche restano conservate.")) return;
   try {
     await optimizeArchiveSpace();
-    alert("Spazio ottimizzato. Archivio e foto compattati, dati di annullamento rimossi. Anche i prossimi salvataggi useranno il formato compatto.");
+    alert("Spazio ottimizzato. Archivio e foto compattati, dati di annullamento rimossi. I salvataggi saranno compattati fuori dalla rilevazione live.");
   } catch (error) {
     alert("Ottimizzazione dello spazio non completata. " + error.message);
   }

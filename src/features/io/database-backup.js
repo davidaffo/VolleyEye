@@ -33,7 +33,8 @@ export function unpackBackupMatch(packed) {
 }
 
 export function packDatabaseBackup(payload, { clearFinishedUndo = true } = {}) {
-  const source = cloneIsolationData(payload);
+  // Senza pulizia delle ricevute, il passaggio foto esegue già la copia isolata.
+  const source = clearFinishedUndo ? cloneIsolationData(payload) : payload;
   const matches = source.state.savedMatches || {};
   for (const state of [source.state, ...Object.values(matches).map(match => match.state)]) {
     if (clearFinishedUndo && state?.matchFinished) clearScoutUndoStates(state.events || []);

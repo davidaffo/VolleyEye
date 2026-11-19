@@ -11,6 +11,7 @@ import { publishReactLogServeTrajectories } from "../analysis/trajectory-view.js
 import { updateLiveDvwMirror } from "../io/datavolley-entry-view.js";
 import { getErrorTypeLabel } from "../analysis/player-model.js";
 import { handleSeekForSelection } from "./selection-commands.js";
+import { syncEventPlayerLinks } from "./player-links.js";
 
 export function renderEventsLog(options = {}) {
   publishMatchNotes();
@@ -65,8 +66,16 @@ export function renderEventsLog(options = {}) {
   };
   const latestFmt = formatEv(latest);
   summaryText = latestFmt.leftText;
-  const skillEvents = getVideoSkillEvents();
-  const baseMs = getVideoBaseTimeMs(skillEvents);
+  let baseMs;
+  if (options.scoutLive) {
+    // Il registro mostra soltanto gli ultimi 40 eventi; gli altri saranno
+    // sincronizzati quando si aprono le viste di analisi o si salva la partita.
+    syncEventPlayerLinks(recent);
+    const firstSkill = matchState.state.events.find(event => event && event.skillId);
+    baseMs = getVideoBaseTimeMs(firstSkill ? [{ ev: firstSkill }] : []);
+  } else {
+    baseMs = getVideoBaseTimeMs(getVideoSkillEvents());
+  }
   publishReactEventTable("events-log", recent, {
     showSeek: false,
     showVideoTime: true,

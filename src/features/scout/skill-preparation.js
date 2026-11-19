@@ -12,7 +12,7 @@ import { getCodeTone } from "../settings/rules.js";
 export function prepareScoutSkillControls(
   playerIdx,
   activeName,
-  { nextSkillId = null, scope = "our" } = {},
+  { nextSkillId = null, scope = "our", compact: suppliedCompact } = {},
   effects,
 ) {
   const playerKey = makePlayerKey(scope, playerIdx);
@@ -43,9 +43,10 @@ export function prepareScoutSkillControls(
     Object.freeze({ player, hasSelection, kind, ...details });
   const empty = () => finish("empty");
   const note = (text) => finish("note", { text });
-  const compact =
+  const compact = suppliedCompact ?? (
     !!matchState.state.forceMobileLayout ||
-    window.matchMedia("(max-width: 900px)").matches;
+    window.matchMedia("(max-width: 900px)").matches
+  );
   const blockPrompt =
     rawNext === "block" &&
     getNetBlockPromptScope() === scope &&

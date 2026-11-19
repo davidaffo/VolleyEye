@@ -389,3 +389,35 @@ test('court actions retain the player, court position and team scope through the
     ['applyPointForPickedPlayer', 'our', 2, 'Ada', gesture],
   ]);
 });
+
+test('la chiusura dopo una skill aggiorna il campo senza ripetere le analisi', async () => {
+  const { ctx } = setup();
+  const refreshes = [];
+  ctx.renderPlayers = options => refreshes.push(options?.refreshAnalysis);
+  ctx.handleEventClick = () => true;
+  await ctx.recordScoutSkill({ playerIdx: 2, scope: 'opponent', activeName: 'Atleta', inModal: false }, 'pass', '+', false, { currentTarget: {} });
+  assert.deepEqual(refreshes, [false]);
+  ctx.leaveScoutSkillEvaluation({ playerIdx: 2, scope: 'opponent' });
+  assert.deepEqual(refreshes, [false, true]);
+});
+
+test('scegliere e annullare una skill aggiorna il campo senza ricalcolare le analisi', () => {
+  const { ctx } = setup();
+  const refreshes = [];
+  ctx.renderPlayers = options => refreshes.push(['render', options?.refreshAnalysis]);
+  ctx.scheduleRenderPlayers = options => refreshes.push(['schedule', options?.refreshAnalysis]);
+  ctx.chooseScoutSkill(player, 'pass');
+  ctx.cancelScoutSkillSelection(player);
+  assert.deepEqual(refreshes, [['schedule', false], ['render', false]]);
+});
+
+test('completare la traiettoria aggiorna il campo senza ricalcolare le analisi', async () => {
+  const { ctx } = setup();
+  const refreshes = [];
+  ctx.renderPlayers = options => refreshes.push(options?.refreshAnalysis);
+  ctx.startServeTypeSelection = async (_idx, _type, done) => done();
+  ctx.startAttackSelection = async (_idx, _type, done) => done();
+  await ctx.selectScoutServeType({ ...player, inModal: false }, 'JF');
+  await ctx.startScoutAttack({ ...player, inModal: false }, null);
+  assert.deepEqual(refreshes, [false, false]);
+});

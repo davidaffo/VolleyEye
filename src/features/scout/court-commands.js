@@ -60,6 +60,7 @@ export function renderScoutCourt(
               prepareScoutSkillControls(playerIndex, name, {
                 nextSkillId: predicted,
                 scope,
+                compact,
               }, effects),
             )
           : null,

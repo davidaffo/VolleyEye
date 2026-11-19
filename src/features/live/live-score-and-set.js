@@ -28,7 +28,7 @@ import { renderScoreAndRotations } from "../analysis/score-view.js";
 const liveScoreAndSetState = session;
 
 
-export function handleAutoRotationFromEvent(eventObj, scope = "our") {
+export function handleAutoRotationFromEvent(eventObj, scope = "our", { persist = true } = {}) {
   if (!matchState.state || !matchState.state.autoRotate) {
     matchState.state.autoRotatePending = false;
     return;
@@ -44,7 +44,7 @@ export function handleAutoRotationFromEvent(eventObj, scope = "our") {
       const direction = getPointDirection(eventObj);
       const opponentKeepsServe = direction !== "against";
       if (!opponentKeepsServe && ourWasReceiving) {
-        rotateCourt("ccw");
+        rotateCourt("ccw", { persist });
         eventObj.autoRotationDirection = "ccw";
         eventObj.autoRotationScope = "our";
       }
@@ -58,7 +58,7 @@ export function handleAutoRotationFromEvent(eventObj, scope = "our") {
       if (matchState.state.isServing) {
         enforceAutoLiberoForScope("opponent", { skipServerOnServe: true });
       }
-      saveState();
+      if (persist) saveState();
       return;
     }
     if (eventObj.skillId === "pass") {
@@ -66,7 +66,7 @@ export function handleAutoRotationFromEvent(eventObj, scope = "our") {
       matchState.state.isServing = true;
       eventObj.autoRotateNext = true;
       enforceAutoLiberoForScope("opponent", { skipServerOnServe: true });
-      saveState();
+      if (persist) saveState();
       return;
     }
     let pending = wasReceiving;
@@ -74,7 +74,7 @@ export function handleAutoRotationFromEvent(eventObj, scope = "our") {
     const direction = getPointDirection(eventObj);
     if (direction === "for") {
       if (pending) {
-        rotateOpponentCourt("ccw");
+        rotateOpponentCourt("ccw", { persist });
         eventObj.autoRotationDirection = "ccw";
         eventObj.autoRotationScope = "opponent";
       }
@@ -84,7 +84,7 @@ export function handleAutoRotationFromEvent(eventObj, scope = "our") {
       pending = true;
       serving = false;
       if (ourWasReceiving) {
-        rotateCourt("ccw");
+        rotateCourt("ccw", { persist });
         eventObj.autoRotationDirection = "ccw";
         eventObj.autoRotationScope = "our";
       }
@@ -98,7 +98,7 @@ export function handleAutoRotationFromEvent(eventObj, scope = "our") {
     if (matchState.state.isServing) {
       enforceAutoLiberoForScope("opponent", { skipServerOnServe: true });
     }
-    saveState();
+    if (persist) saveState();
     return;
   }
   const wasReceiving = !matchState.state.isServing || !!matchState.state.autoRotatePending;
@@ -108,7 +108,7 @@ export function handleAutoRotationFromEvent(eventObj, scope = "our") {
     const direction = getPointDirection(eventObj);
     const keepServe = direction !== "against";
     if (!keepServe && opponentWasReceiving) {
-      rotateOpponentCourt("ccw");
+      rotateOpponentCourt("ccw", { persist });
       eventObj.autoRotationDirection = "ccw";
       eventObj.autoRotationScope = "opponent";
     }
@@ -122,7 +122,7 @@ export function handleAutoRotationFromEvent(eventObj, scope = "our") {
     if (matchState.state.isServing) {
       enforceAutoLiberoForScope("opponent", { skipServerOnServe: true });
     }
-    saveState();
+    if (persist) saveState();
     return;
   }
   if (eventObj.skillId === "pass") {
@@ -130,7 +130,7 @@ export function handleAutoRotationFromEvent(eventObj, scope = "our") {
     matchState.state.isServing = false;
     eventObj.autoRotateNext = true;
     enforceAutoLiberoForScope("our", { skipServerOnServe: true });
-    saveState();
+    if (persist) saveState();
     return;
   }
   let pending = wasReceiving;
@@ -138,7 +138,7 @@ export function handleAutoRotationFromEvent(eventObj, scope = "our") {
   const direction = getPointDirection(eventObj);
   if (direction === "for") {
     if (pending) {
-      rotateCourt("ccw");
+      rotateCourt("ccw", { persist });
       eventObj.autoRotationDirection = "ccw";
       eventObj.autoRotationScope = "our";
     }
@@ -148,7 +148,7 @@ export function handleAutoRotationFromEvent(eventObj, scope = "our") {
     pending = true;
     serving = false;
     if (opponentWasReceiving) {
-      rotateOpponentCourt("ccw");
+      rotateOpponentCourt("ccw", { persist });
       eventObj.autoRotationDirection = "ccw";
       eventObj.autoRotationScope = "opponent";
     }
@@ -165,9 +165,9 @@ export function handleAutoRotationFromEvent(eventObj, scope = "our") {
   if (matchState.state.isServing) {
     enforceAutoLiberoForScope("opponent", { skipServerOnServe: true });
   }
-  saveState();
+  if (persist) saveState();
   if (matchState.state.autoRolePositioning) {
-    applyAutoRolePositioning();
+    applyAutoRolePositioning({ persist });
   }
 }
 
@@ -252,7 +252,7 @@ export function addManualPoint(
   attachScoutActionSnapshot(event, actionSnapshot);
   clearReceiveContext(scope);
   matchState.state.events.push(event);
-  handleAutoRotationFromEvent(event, scope);
+  handleAutoRotationFromEvent(event, scope, { persist: false });
   const scoringScope = direction === "for" ? scope : getOppositeScope(scope);
   matchState.state.pendingServe = null;
   matchState.state.freeballPending = false;

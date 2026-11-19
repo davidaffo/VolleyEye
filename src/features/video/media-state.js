@@ -56,28 +56,6 @@ export function isYoutubePlayerPlaying(player, readyFlag) {
   }
 }
 
-export function isVideoPlaybackActive() {
-  if (matchState.state.video && matchState.state.video.youtubeId) {
-    if (isYoutubePlayerPlaying(workspaceLayoutState.ytPlayerScout, workspaceLayoutState.ytPlayerScoutReady)) return true;
-    if (isYoutubePlayerPlaying(workspaceLayoutState.ytPlayer, workspaceLayoutState.ytPlayerReady)) return true;
-    return false;
-  }
-  return isVideoElementPlaying(matchState.elAnalysisVideoScout) || isVideoElementPlaying(matchState.elAnalysisVideo);
-}
-
-export function scheduleVideoSafeRender(task) {
-  if (typeof task !== "function") return;
-  if (!matchState.state.videoScoutMode || !isVideoPlaybackActive()) {
-    task();
-    return;
-  }
-  if (typeof requestIdleCallback === "function") {
-    requestIdleCallback(task, { timeout: 200 });
-    return;
-  }
-  browserEffectsState.setTimeout(task, 60);
-}
-
 export function updateVideoPlaybackSnapshot(forcedSeconds = null, force = false) {
   if (typeof window !== "undefined" && window.__appResetInProgress) return;
   if (!matchState.state.video) return;
@@ -89,8 +67,12 @@ export function updateVideoPlaybackSnapshot(forcedSeconds = null, force = false)
       : getActiveVideoPlaybackSeconds();
   if (typeof playback !== "number" || !isFinite(playback)) return;
   workspaceLayoutState.lastVideoSnapshotMs = now;
-  matchState.state.video.lastPlaybackSeconds = Math.max(0, playback);
-  saveState({ persistLocal: true });
+  const nextPlayback = Math.max(0, playback);
+  if (!force && matchState.state.video.lastPlaybackSeconds === nextPlayback) return;
+  matchState.state.video.lastPlaybackSeconds = nextPlayback;
+  const scoutLive = !!matchState.state.videoScoutMode && typeof document !== "undefined" &&
+    document.body?.dataset.activeTab === "scout";
+  saveState({ persistLocal: true, skipArchiveSyncForScout: scoutLive });
 }
 
 export function startVideoPlaybackSnapshotTimer() {

@@ -10,7 +10,7 @@ import { enforceAutoLiberoForState, initStats } from "../teams/court-state-model
 import { renderEventsLog } from "../events/log-view.js";
 import { saveState } from "../storage/save-state.js";
 import { buildMatchDisplayName } from "../teams/match-details.js";
-import { recalcAllStatsAndUpdateUI } from "../analysis/stats-update.js";
+import { recalcAllStatsAndUpdateUI, refreshDeferredScoutViews } from "../analysis/stats-update.js";
 import { renderPlayers } from "../live/team-rendering.js";
 import { updateRotationDisplay } from "../teams/court-view.js";
 import { session as stateDbState } from "../state/storage-state-db.js";
@@ -356,6 +356,7 @@ export function setActiveTab(target) {
     document.documentElement.dataset.activeTab = target;
   }
   syncMatchSessionUI();
+  refreshDeferredScoutViews(target);
 
   if (target === "aggregated" && getAggTabRenderer(rosterLineupState.activeAggTab)) {
     // Navigation can change again before either deferred callback runs.

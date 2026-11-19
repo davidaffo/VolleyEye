@@ -58,6 +58,20 @@ test('video sorting keeps source chronology and ascending event IDs for equal de
   } finally { match.state = previous; }
 });
 
+test('video sorting reads each event sort value once', () => {
+  const previous = match.state;
+  match.state = {players: [], opponentPlayers: [], uiVideoAnalysisSort: {key: 'code', dir: 'asc'}};
+  let reads = 0;
+  const events = ['b', 'a', 'c', 'a'].map((value, eventId) => ({
+    eventId,
+    get code() { reads++; return value; },
+  }));
+  try {
+    assert.deepEqual(sortVideoEvents(events).map(event => event.eventId), [1, 3, 0, 2]);
+    assert.equal(reads, events.length);
+  } finally { match.state = previous; }
+});
+
 test('event table schema keeps headers and editor fields aligned across display modes without UI callbacks', () => {
   const previous = match.state;
   match.state = {players: [], opponentPlayers: [], selectedTeam: 'Casa', selectedOpponentTeam: 'Ospiti'};

@@ -58,10 +58,24 @@ export function getPointDirection(ev) {
   if (ev && ev.skillId === "manual" && (ev.pointDirection === "for" || ev.pointDirection === "against")) {
     return ev.pointDirection;
   }
-  ensurePointRulesDefaults();
+  // Le regole cambiano raramente, ma possono essere modificate anche in posto.
+  // La firma rileva tali modifiche senza rinormalizzare tutte le skill per ogni evento.
+  let signature;
+  try { signature = JSON.stringify(matchState.state.pointRules || {}); } catch (_) { signature = null; }
+  const cached = getPointDirection.normalizedRules;
+  if (signature === null || !cached || cached.state !== matchState.state || cached.signature !== signature) {
+    ensurePointRulesDefaults();
+    try { signature = JSON.stringify(matchState.state.pointRules || {}); } catch (_) { signature = null; }
+    getPointDirection.normalizedRules = signature === null ? null : { state: matchState.state, signature, bySkill: new Map() };
+  }
   const skill = ev.skillId;
   const code = ev.code;
-  const cfg = normalizePointRule(skill, matchState.state.pointRules && matchState.state.pointRules[skill]);
+  const activeCache = getPointDirection.normalizedRules;
+  let cfg = activeCache?.bySkill.get(skill);
+  if (!cfg) {
+    cfg = normalizePointRule(skill, matchState.state.pointRules && matchState.state.pointRules[skill]);
+    activeCache?.bySkill.set(skill, cfg);
+  }
   if (cfg.for.includes(code)) return "for";
   if (cfg.against.includes(code)) return "against";
   return null;

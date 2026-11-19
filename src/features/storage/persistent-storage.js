@@ -5,6 +5,7 @@ import { getStateDb } from "./state-db.js";
 import { session as stateDbState } from "../state/storage-state-db.js";
 import { buildLocalUiSnapshot } from "./ui-preferences.js";
 import { decodeArchiveEntries } from "./archive-codec.js";
+import { recoverScoutJournal, recoveredJournalCheckpoint } from "./scout-journal.js";
 
 
 
@@ -23,7 +24,7 @@ export function readArchiveEntries(db) {
       cursor.continue();
     };
     tx.oncomplete = () => {
-      try { resolve(decodeArchiveEntries(entries)); } catch (error) { reject(error); }
+      try { resolve(recoverScoutJournal(decodeArchiveEntries(entries))); } catch (error) { reject(error); }
     };
     tx.onabort = () => reject(tx.error || new Error("Lettura archivio non riuscita."));
     tx.onerror = () => {};
@@ -45,6 +46,8 @@ export async function initializePersistentStorage(options = {}) {
   persistentStorageState.archiveStorage.db = db;
   persistentStorageState.archiveStorage.cache = await readArchiveEntries(db);
   persistentStorageState.archiveStorage.confirmed = new Map(persistentStorageState.archiveStorage.cache);
+  const recovered = recoveredJournalCheckpoint(persistentStorageState.archiveStorage.cache);
+  if (recovered) await persistentStorageState.archiveStorage.commit(recovered, { deferPacking: true });
   const legacyKeys = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);

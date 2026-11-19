@@ -70,7 +70,9 @@ export function saveMatchToStorage(name, data, options = {}) {
         // ignore debug tracing failures
       }
     }
-    const committed = persistentStorageState.archiveStorage.setItem(getMatchStorageKey(name), JSON.stringify(data));
+    const committed = persistentStorageState.archiveStorage.setItem(getMatchStorageKey(name),
+      typeof options.serializedPayload === "string" ? options.serializedPayload : JSON.stringify(data),
+      { deferPacking: !!options.deferPacking });
     return options.waitForCommit ? committed.then(() => true) : true;
   } catch (e) {
     const isQuota =

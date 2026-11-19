@@ -26,7 +26,7 @@ export function generateMatchName(base = "") {
 }
 
 export function persistCurrentMatch(options = {}) {
-  const { allowCreate = true } = options || {};
+  const { allowCreate = true, snapshotPayload = null, deferPacking = false, serializedPayload = null, notifyArchive = true } = options || {};
   if (typeof window !== "undefined") {
     const resetCooldownActive =
       Number.isFinite(window.__recentAppResetAt) &&
@@ -52,17 +52,19 @@ export function persistCurrentMatch(options = {}) {
   }
   if (!allowCreate) {
     const knownInMemory = !!(matchState.state.savedMatches && matchState.state.savedMatches[currentName]);
-    const knownInStorage = !!loadMatchFromStorage(currentName);
-    if (!knownInMemory && !knownInStorage) {
+    if (!knownInMemory && !loadMatchFromStorage(currentName)) {
       return false;
     }
   }
   const desiredName = currentName || generateMatchName(matchState.state.loadedMatchName || matchState.state.selectedMatch);
-  const payload = getCurrentMatchPayload(desiredName);
+  const payload = snapshotPayload && snapshotPayload.name === desiredName && snapshotPayload.state
+    ? snapshotPayload
+    : getCurrentMatchPayload(desiredName);
   matchState.state.loadedMatchName = desiredName;
   matchState.state.selectedMatch = desiredName;
   matchState.state.savedMatches[desiredName] = cloneIsolationData(payload);
-  const stored = saveMatchToStorage(desiredName, payload);
-  emitDomainEvent('match-archive-changed');
+  const stored = saveMatchToStorage(desiredName, payload, { deferPacking,
+    serializedPayload: payload === snapshotPayload ? serializedPayload : null });
+  if (notifyArchive) emitDomainEvent('match-archive-changed');
   return stored;
 }

@@ -248,3 +248,14 @@ test("cambi, ingresso libero e rientro usano la stessa logica e modificano solta
   }
   dom.window.close();
 });
+
+test('il solo aggiornamento del campo evita il ricalcolo delle analisi', () => {
+  const { context: c, dom } = setup();
+  let recalc = 0;
+  c.recalcAllStatsAndUpdateUI = () => recalc++;
+  c.renderPlayers();
+  c.renderPlayers({ refreshAnalysis: false });
+  assert.equal(recalc, 1);
+  assert.equal(dom.window.document.querySelectorAll('.court-card').length, 12);
+  dom.window.close();
+});

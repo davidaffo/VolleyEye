@@ -26,7 +26,7 @@ export function prepareArchiveWrites(input, cache) {
     if (!data || typeof data !== "object" || Array.isArray(data)) continue;
     const isMatch = key.startsWith(MATCH_PREFIX);
     if (isMatch && (!data.state || typeof data.state !== "object")) continue;
-    const source = JSON.parse(raw);
+    const source = data;
     const state = isMatch ? source.state : source;
     const opponentTeamsAlias = Object.hasOwn(state, "savedOpponentTeams") && Object.hasOwn(state, "savedTeams") &&
       JSON.stringify(state.savedOpponentTeams) === JSON.stringify(state.savedTeams);

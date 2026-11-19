@@ -1,5 +1,6 @@
 import { createDomainState } from "../../app/domain-state.mjs";
 import { prepareArchiveWrites } from "../storage/archive-codec.js";
+import { STORAGE_KEY, MATCH_PREFIX } from "../../../js/globals.js";
 
 export const session = createDomainState({
 "ARCHIVE_DB_STORE": () => ("archive"),
@@ -12,21 +13,45 @@ export const session = createDomainState({
   temporary: false,
   pending: new Set(),
   revisions: new Map(),
+  staged: new Map(),
+  journal: null,
   get failed() { return this.failedKeys.size > 0; },
-  get length() { return this.cache.size; },
-  key(index) { return Array.from(this.cache.keys())[index] ?? null; },
-  keys() { return Array.from(this.cache.keys()); },
-  getItem(key) { return this.cache.get(key) ?? null; },
-  setItem(key, value) { return this.commit(new Map([[key, String(value)]])); },
+  get length() { return this.keys().length; },
+  key(index) { return this.keys()[index] ?? null; },
+  keys() { return Array.from(new Set([...this.cache.keys(), ...this.staged.keys()])); },
+  getItem(key) {
+    const staged = this.staged.get(key);
+    if (staged) return JSON.stringify(staged.value);
+    if (this.journal && key === STORAGE_KEY) return JSON.stringify(this.journal.session);
+    if (this.journal && key === MATCH_PREFIX + this.journal.name) return JSON.stringify(this.journal.match);
+    return this.cache.get(key) ?? null;
+  },
+  stageObjects(values) {
+    if (values.has(STORAGE_KEY)) this.journal = null;
+    const revisions = new Map();
+    for (const [key, value] of values) {
+      const revision = (this.revisions.get(key) || 0) + 1;
+      this.revisions.set(key, revision);
+      this.staged.set(key, { value, revision });
+      revisions.set(key, revision);
+    }
+    return revisions;
+  },
+  setItem(key, value, options) { return this.commit(new Map([[key, String(value)]]), options); },
   removeItem(key) { return this.commit(new Map([[key, null]])); },
-  commit(writes) {
+  commit(writes, { deferPacking = false, insertOnly = false } = {}) {
     writes = new Map(writes);
+    if (writes.has(STORAGE_KEY)) this.journal = null;
     if (this.temporary) {
-      writes.forEach((value, key) => value === null ? this.cache.delete(key) : this.cache.set(key, value));
+      writes.forEach((value, key) => { this.staged.delete(key); value === null ? this.cache.delete(key) : this.cache.set(key, value); });
       return Promise.resolve(true);
     }
     if (!this.db) throw new Error("Archivio non disponibile. Riapri l’app prima di salvare.");
-    const prepared = prepareArchiveWrites(writes, this.cache);
+    // Nello scout i record restano validi anche non compressi: la normale
+    // scrittura fuori dalla rilevazione li ottimizza nuovamente.
+    const prepared = deferPacking
+      ? { cacheWrites: writes, storedWrites: writes }
+      : prepareArchiveWrites(writes, this.cache);
     writes = prepared.cacheWrites;
     const revisions = new Map();
     const tx = this.db.transaction(persistentStorageState.ARCHIVE_DB_STORE, "readwrite");
@@ -37,6 +62,7 @@ export const session = createDomainState({
         this.revisions.set(key, revision);
         revisions.set(key, revision);
         if (value === null) store.delete(key);
+        else if (insertOnly) store.add(value, key);
         else store.put(value, key);
       });
     } catch (error) {
@@ -44,6 +70,7 @@ export const session = createDomainState({
       throw error;
     }
     writes.forEach((value, key) => value === null ? this.cache.delete(key) : this.cache.set(key, value));
+    writes.forEach((_, key) => this.staged.delete(key));
     const completion = new Promise((resolve, reject) => {
       tx.oncomplete = () => {
         writes.forEach((value, key) => {

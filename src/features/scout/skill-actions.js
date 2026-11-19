@@ -17,15 +17,15 @@ import { closeSkillModal } from "./skill-modal-state.js";
 
 export function cancelScoutSkillSelection({ playerIdx, scope }) {
   resetSkillSelectionForPlayer(playerIdx, scope);
-  renderPlayers();
+  renderPlayers({ refreshAnalysis: false });
 }
-export function leaveScoutSkillEvaluation({ playerIdx, scope }) {
+export function leaveScoutSkillEvaluation({ playerIdx, scope }, { refreshAnalysis = true } = {}) {
   setSelectedSkillForScope(scope, playerIdx, null);
-  renderPlayers();
+  renderPlayers({ refreshAnalysis });
 }
 export function chooseScoutSkill({ playerIdx, scope }, skillId) {
   setSelectedSkillForScope(scope, playerIdx, skillId);
-  scheduleRenderPlayers();
+  scheduleRenderPlayers({ refreshAnalysis: false });
 }
 export function openScoutSkillPicker(
   { playerIdx, activeName, scope, inModal },
@@ -98,7 +98,7 @@ export async function recordScoutSkill(
     }
   }
   if (inModal) closeSkillModal();
-  else leaveScoutSkillEvaluation({ playerIdx, scope });
+  else leaveScoutSkillEvaluation({ playerIdx, scope }, { refreshAnalysis: false });
 }
 export function assignScoutTeamPoint(scope) {
   handleTeamPoint(scope);

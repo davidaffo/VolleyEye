@@ -10,6 +10,8 @@ const dbSource = readFileSync('src/features/state/storage-state-db.js', 'utf8') 
 const uiSource = readFileSync('src/features/storage/ui-preferences.js', 'utf8');
 function harness({ indexedDB = new IDBFactory(), saved = new Map() } = {}) {
   const ctx = vm.createContext({
+    recoverScoutJournal: entries => entries,
+    recoveredJournalCheckpoint: () => null,
     cloneIsolationData: value => JSON.parse(JSON.stringify(value)),
     ARCHIVE_OPTIMIZED_KEY: '__archiveOptimizedV1', ARCHIVE_PHOTO_PREFIX: '__archivePhoto/',
     indexedDB, console: { error() {} },
@@ -279,4 +281,44 @@ test('foto differenti rimangono distinte anche in caso di collisione dell’iden
   assert.equal(JSON.parse(reopened.ctx.archive.getItem('Data/Teams/second')).photo, 'ritratto B');
   assert.equal(JSON.parse(reopened.ctx.archive.getItem('Data/Opponents/old')).photo, 'ritratto A');
   assert.equal([...(await rawEntries(reopened.ctx.archive.db)).keys()].filter(key => key.startsWith('__archivePhoto/')).length, 2);
+});
+
+test('salvataggio rapido nello scout resta recuperabile e torna compatto fuori dalla rilevazione', async () => {
+  const { ctx, indexedDB, saved } = harness();
+  await ctx.initializePersistentStorage();
+  await ctx.archive.setItem('__archiveOptimizedV1', '1');
+  const match = { version: 1, state: { events: [{ eventId: 7, code: '+', undoState: { before: { rotation: 2 } } }], players: [{ name: 'Ada', photo: 'ritratto' }] } };
+  const raw = JSON.stringify(match);
+  await ctx.archive.setItem('Data/Matches/live', raw, { deferPacking: true });
+  assert.equal((await rawEntries(ctx.archive.db)).get('Data/Matches/live'), raw);
+  const reopened = harness({ indexedDB, saved });
+  await reopened.ctx.initializePersistentStorage();
+  assert.deepEqual(JSON.parse(reopened.ctx.archive.getItem('Data/Matches/live')), match);
+  await reopened.ctx.archive.setItem('Data/Matches/live', raw);
+  assert.equal(JSON.parse((await rawEntries(reopened.ctx.archive.db)).get('Data/Matches/live')).storageFormat, 'volleyeye-archive-v1');
+  const reopenedAgain = harness({ indexedDB, saved });
+  await reopenedAgain.ctx.initializePersistentStorage();
+  assert.deepEqual(JSON.parse(reopenedAgain.ctx.archive.getItem('Data/Matches/live')), match);
+});
+
+test('un salvataggio rapido fallito conserva la partita precedente', async () => {
+  const { ctx, indexedDB, saved } = harness();
+  await ctx.initializePersistentStorage();
+  await ctx.archive.setItem('__archiveOptimizedV1', '1');
+  const previous = JSON.stringify({ state: { events: [{ eventId: 1 }] } });
+  const next = JSON.stringify({ state: { events: [{ eventId: 1 }, { eventId: 2 }] } });
+  await ctx.archive.setItem('Data/Matches/live', previous, { deferPacking: true });
+  const db = ctx.archive.db;
+  const transaction = db.transaction.bind(db);
+  db.transaction = (...args) => {
+    const tx = transaction(...args);
+    if (args[1] === 'readwrite') queueMicrotask(() => tx.abort());
+    return tx;
+  };
+  await assert.rejects(ctx.archive.setItem('Data/Matches/live', next, { deferPacking: true }));
+  assert.equal(ctx.archive.getItem('Data/Matches/live'), previous);
+  db.transaction = transaction;
+  const reopened = harness({ indexedDB, saved });
+  await reopened.ctx.initializePersistentStorage();
+  assert.equal(reopened.ctx.archive.getItem('Data/Matches/live'), previous);
 });

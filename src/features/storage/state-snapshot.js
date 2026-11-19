@@ -5,11 +5,11 @@ import { getCurrentMatchPayload } from '../teams/current-payload.js';
 import { cloneIsolationData } from '../../domain/snapshots.js';
 import { normalizeThemePreference } from './ui-preferences.js';
 
-export function buildCompactLocalStateSnapshot(snapshot) {
+export function buildCompactLocalStateSnapshot(snapshot, { journal = false } = {}) {
   if (!snapshot || typeof snapshot !== "object") return null;
   const selectedMatch = snapshot.selectedMatch || "";
   const currentMatchPayload =
-    selectedMatch
+    selectedMatch && !journal
       ? getCurrentMatchPayload(selectedMatch)
       : null;
   const compact = {
@@ -104,13 +104,17 @@ export function buildCompactLocalStateSnapshot(snapshot) {
     pointRules: snapshot.pointRules || {},
     savedTeams: snapshot.savedTeams || {},
     savedOpponentTeams: snapshot.savedOpponentTeams || snapshot.savedTeams || {},
-    savedMatches:
-      currentMatchPayload && selectedMatch
-        ? { [selectedMatch]: currentMatchPayload }
-        : {},
+    // Il payload è già una copia isolata, quindi non va clonato di nuovo.
+    savedMatches: {},
     scoreOverrides: snapshot.scoreOverrides || {},
     setResults: snapshot.setResults || {},
     setStarts: snapshot.setStarts || {}
   };
-  return cloneIsolationData(compact);
+  if (journal) {
+    const { events, savedMatches, savedTeams, savedOpponentTeams, ...patch } = compact;
+    return patch;
+  }
+  const isolated = cloneIsolationData(compact);
+  if (currentMatchPayload && selectedMatch) isolated.savedMatches[selectedMatch] = currentMatchPayload;
+  return isolated;
 }

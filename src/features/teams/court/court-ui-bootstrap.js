@@ -414,9 +414,9 @@ export function setOpponentRotation(value) {
   renderOpponentPlayers({ animate: true });
 }
 
-export function rotateOpponentCourt(direction = "cw") {
+export function rotateOpponentCourt(direction = "cw", { persist = true } = {}) {
   rotateCourtState(direction, "opponent");
-  saveState();
+  if (persist) saveState();
   updateOpponentRotationDisplay();
   renderOpponentPlayers({ animate: true });
 }
@@ -424,7 +424,7 @@ export function rotateOpponentCourt(direction = "cw") {
 
 
 
-export function rotateCourt(direction) {
+export function rotateCourt(direction, { persist = true } = {}) {
   const prevCourtRects = captureRects(".court-card", el => {
     const name = el.dataset.playerName || "";
     const pos = el.dataset.posIndex || "";
@@ -435,8 +435,8 @@ export function rotateCourt(direction) {
     const pos = el.dataset.slotIndex || "";
     return name || "mini-" + pos;
   });
-  if (rotateCourtState(direction)) applyAutoRolePositioning();
-  saveState();
+  if (rotateCourtState(direction)) applyAutoRolePositioning({ persist });
+  if (persist) saveState();
   renderPlayers();
 
   updateRotationDisplay();

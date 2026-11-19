@@ -144,6 +144,7 @@ function navigationContext() {
     document: { body: { dataset: {} }, documentElement: { dataset: {} } }, window: {},
     hasUsableMatch: () => true, saveState: () => calls.push('save'),
     syncMatchSessionUI: () => calls.push('session'), publishRuntimeView: () => calls.push('runtime'),
+    refreshDeferredScoutViews: () => {},
     requestAnimationFrame: callback => frames.push(callback), setTimeout: (callback, delay) => { assert.equal(delay, 0); timers.push(callback); },
     renderTrajectoryAnalysis: () => calls.push('attack'), renderServeTrajectoryAnalysis: () => calls.push('serve'),
     renderPlayerAnalysis: () => calls.push('player'), renderSetTrendAnalysis: () => calls.push('trend'),
@@ -192,4 +193,25 @@ test('analysis navigation covers each panel and skips unknown panels and saves d
     assert.equal(frames.length, 0);
     assert.equal(timers.length, 0);
   }
+});
+
+test('lo scout aggiorna subito statistiche e punteggio e ricostruisce le viste differite una sola volta', () => {
+  const calls = [];
+  const context = vm.createContext({
+    activeTab: 'scout', activeAggTab: 'player',
+    recalculateMatchStats: () => calls.push('stats'),
+    renderLiveScore: () => calls.push('score'),
+    renderAggregatedTable: () => calls.push('analysis'),
+    renderPlayerAnalysis: () => calls.push('player'),
+    renderVideoAnalysis: () => calls.push('video'),
+  });
+  vm.runInContext(readSourceFixture('src/features/analysis/stats-update.js', 'utf8'), context);
+  context.recalcAllStatsAndUpdateUI({ deferScoutViews: true });
+  context.recalcAllStatsAndUpdateUI({ deferScoutViews: true });
+  assert.deepEqual(calls, ['stats', 'score', 'stats', 'score']);
+  context.refreshDeferredScoutViews('aggregated');
+  context.refreshDeferredScoutViews('aggregated');
+  context.refreshDeferredScoutViews('video');
+  context.refreshDeferredScoutViews('video');
+  assert.deepEqual(calls, ['stats', 'score', 'stats', 'score', 'analysis', 'player', 'video']);
 });
