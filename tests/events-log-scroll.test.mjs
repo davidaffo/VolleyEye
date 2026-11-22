@@ -4,6 +4,8 @@ import test from "node:test";
 import vm from "node:vm";
 import { JSDOM } from "jsdom";
 import { readScoutSource } from "./helpers/scout-source.mjs";
+import { sourceFunctions } from "./helpers/source-functions.mjs";
+import { readSourceFixture } from "./helpers/source-fixture.mjs";
 
 const source = featureSource("src/features/events/log-view.js");
 
@@ -52,18 +54,29 @@ test("il registro porta l'ultima riga in vista dopo inserimento e ricostruzione,
     flush();
     assert.equal(log.querySelectorAll("tbody tr").length, 2);
     assert.equal(log.scrollTop, 100);
-    assert.equal(scrolledRows.at(-1).id, "2");
-    assert.equal(scrolledRows.at(-1).options.block, "nearest");
-    assert.equal(scrolledRows.at(-1).options.inline, "nearest");
+    assert.equal(scrolledRows.length, 0, "non scorre la pagina per mostrare la riga");
     c.renderEventsLog({ suppressScroll: true });
     flush();
-    assert.equal(scrolledRows.length, 2, "le modifiche senza scorrimento mantengono la posizione");
+    assert.equal(log.scrollTop, 100, "le modifiche senza scorrimento mantengono la posizione");
     add(3);
     c.renderEventsLog();
     flush();
-    assert.equal(scrolledRows.at(-1).id, "3");
+    assert.equal(scrolledRows.length, 0);
     assert.equal(log.scrollTop, 150);
   } finally {
     dom.window.close();
   }
+});
+
+test("la selezione nello scout scorre solo il registro, mai la pagina", () => {
+  let pageScrolls = 0;
+  const log = { scrollTop: 20, getBoundingClientRect: () => ({ top: 100, bottom: 200 }) };
+  const row = { closest: () => log, getBoundingClientRect: () => ({ top: 205, bottom: 225 }), scrollIntoView: () => pageScrolls++ };
+  const c = { document: { body: { dataset: { activeTab: "scout" } } } };
+  vm.runInNewContext(sourceFunctions(readSourceFixture("src/features/events/selection-commands.js", "utf8"), ["scrollRowIntoView"]), c);
+  c.scrollRowIntoView({ tr: row });
+  assert.equal(log.scrollTop, 45);
+  row.closest = () => null;
+  c.scrollRowIntoView({ tr: row });
+  assert.equal(pageScrolls, 0);
 });

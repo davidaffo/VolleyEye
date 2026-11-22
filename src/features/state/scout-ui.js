@@ -135,7 +135,6 @@ export const session = createDomainState({
 "lastMobileScrollY": () => (null),
 "mobileBodyLock": () => (null),
 "globalModalScrim": () => (null),
-"pendingMobileActiveScroll": () => (false)
 }, {
 "elAttackTrajectoryModal": () => (document.getElementById("attack-trajectory-modal")),
 "elAttackTrajectoryCanvas": () => (document.getElementById("attack-trajectory-canvas")),

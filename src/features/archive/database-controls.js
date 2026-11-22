@@ -38,12 +38,12 @@ export function openReactOpponentLineup() {
   return openMobileLineupModal("opponent");
 }
 
-export function startReactPointPick() {
-  return startPointPickMode("our");
+export function startReactPointPick(scope = "our") {
+  return startPointPickMode(scope);
 }
 
-export function startReactErrorPick() {
-  return startErrorPickMode("our");
+export function startReactErrorPick(scope = "our") {
+  return startErrorPickMode(scope);
 }
 
 export function resetReactScoutWidgets() {

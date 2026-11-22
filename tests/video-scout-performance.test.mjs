@@ -31,7 +31,6 @@ test('dopo una skill lo scout aggiorna subito campo, log e statistiche', () => {
   const context = vm.createContext({
     saveState: () => calls.push('save'),
     renderPlayers: () => calls.push('court', 'score', 'stats', 'trajectory', 'serve', 'video'),
-    scrollToActiveCourtOnMobileAlways: () => calls.push('scroll'),
     renderEventsLog: () => calls.push('log'),
     renderLiveScore: () => calls.push('score'),
     computePointsSummary: () => ({}),
@@ -43,7 +42,7 @@ test('dopo una skill lo scout aggiorna subito campo, log e statistiche', () => {
   });
   vm.runInContext(readSourceFixture('src/features/live/live-entry.js', 'utf8'), context);
   context.schedulePostEventUpdates();
-  assert.deepEqual(calls, ['save', 'court', 'score', 'stats', 'trajectory', 'serve', 'video', 'scroll', 'log', 'rotations']);
+  assert.deepEqual(calls, ['save', 'court', 'score', 'stats', 'trajectory', 'serve', 'video', 'log', 'rotations']);
 });
 
 test('il registro live sincronizza solo gli ultimi eventi mantenendo lo stesso tempo iniziale', () => {

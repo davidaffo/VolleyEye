@@ -23,8 +23,8 @@ const actions = {
   "btn-timeout-opp-single": ["recordOpponentTimeoutEvent", true],
   "btn-score-team-point": ["startReactPointPick", true],
   "btn-score-team-error": ["startReactErrorPick", true],
-  "btn-score-opp-point": ["handleOpponentPoint", true],
-  "btn-score-opp-error": ["handleOpponentErrorPoint", true],
+  "btn-score-opp-point": ["startReactPointPick", true, "opponent"],
+  "btn-score-opp-error": ["startReactErrorPick", true, "opponent"],
   "btn-score-opp-point-single": ["handleOpponentPoint", true],
   "btn-score-opp-error-single": ["handleOpponentErrorPoint", true],
   "btn-reset-scout-widgets": ["resetReactScoutWidgets", true],
@@ -60,14 +60,14 @@ const actions = {
 export function AppActionButton({ id, children, ...props }) {
   const controls = useViewStore(runtimeStore);
   const entry = actions[id];
-  const [command, scoutOnly] = Array.isArray(entry) ? entry : [entry, false];
+  const [command, scoutOnly, scope] = Array.isArray(entry) ? entry : [entry, false];
   return (
     <CommandButton
       id={id}
       {...props}
       disabled={props.disabled || (scoutOnly && !!controls.scoutControlsDisabled)}
       command="runReactAppAction"
-      args={[command]}
+      args={scope ? [command, scope] : [command]}
       immediate
     >
       {children}

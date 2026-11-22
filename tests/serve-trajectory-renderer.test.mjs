@@ -2,6 +2,7 @@ import { readAppHtml } from './helpers/app-html.mjs';
 import assert from "node:assert/strict";
 import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
 import test from "node:test";
+import vm from "node:vm";
 import { readScoutSource } from "./helpers/scout-source.mjs";
 import { readStyleSource } from "./helpers/style-source.mjs";
 
@@ -45,4 +46,23 @@ test("il campo centrale viene sovrapposto davvero al tratto di battuta", () => {
   assert.match(canvasRenderer, /0,\s*gapStart,\s*width,\s*gapHeight/);
   assert.doesNotMatch(canvasRenderer, /const gapOverlapPx = 30/);
   assert.doesNotMatch(canvasRenderer, /const srcCut/);
+});
+
+test("il pannello live scompare quando la squadra al servizio non ha le traiettorie abilitate", () => {
+  let published;
+  const c = {
+    state: { useOpponentTeam: true, showServeTrajectoryLogOur: false, showServeTrajectoryLogOpp: false },
+    elServeTrajectoryLogToggleInline: null, elServeTrajectoryLogToggleInlineOpp: null,
+    getServingScopeForLogTrajectory: () => 'our', getActiveServeSelectionScope: () => null,
+    analysisTableStore: { publish: (_id, view) => { published = view; } },
+    buildReactTrajectoryLegend: () => [], getServeTrajectoryEventsForServer: () => ({ events: [], serverName: '' }),
+    getServeStatsForServer: () => null,
+  };
+  vm.runInNewContext(sourceFunctions(model, ['publishReactLogServeTrajectories']), c);
+  c.publishReactLogServeTrajectories();
+  assert.equal(published.visible, false);
+  c.state.showServeTrajectoryLogOur = true;
+  c.publishReactLogServeTrajectories();
+  assert.equal(published.visible, true);
+  assert.equal(published.cards[0].visible, true);
 });

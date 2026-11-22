@@ -29,12 +29,12 @@ export function applyAttribution(kind, index = null) {
   const view = attributionStore.getSnapshot()[kind];
   if (!view?.open) return;
   if (index === null) {
-    if (kind === "point") handleTeamPoint();
+    if (kind === "point") handleTeamPoint(view.scope || "our");
     else handleTeamError(scoutUiState.selectedErrorType, view.scope);
   } else {
     const player = view.players.find((entry) => entry.idx === index);
     if (!player) return;
-    if (kind === "point") addPlayerPoint(player.idx, player.name);
+    if (kind === "point") addPlayerPoint(player.idx, player.name, view.scope || "our");
     else addPlayerError(player.idx, player.name, scoutUiState.selectedErrorType, view.scope);
   }
   if (kind === "point") closePointModal();

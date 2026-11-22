@@ -22,7 +22,7 @@ function TeamToolbar({ scope, side, suffix }) {
           />
       </div>}
       <div className="score-actions court-game-actions sl-action-row">
-        <AppActionButton id={`btn-score-${opponent ? 'opp' : 'team'}-point`} className={opponent ? 'small success' : 'small'}>Punto</AppActionButton>
+        <AppActionButton id={`btn-score-${opponent ? 'opp' : 'team'}-point`} className="small success">Punto</AppActionButton>
         <AppActionButton id={`btn-score-${opponent ? 'opp' : 'team'}-error`} className="small danger">Errore</AppActionButton>
         {opponent ? (
           <ScoutActionButton id="btn-freeball-opp" className="secondary small">Freeball</ScoutActionButton>

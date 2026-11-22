@@ -389,7 +389,7 @@ export function publishReactLogServeTrajectories() {
     };
   });
   analysisTableStore.publish("log-serve-trajectory", {
-    visible: !!serving,
+    visible: cards.some((card) => card.visible),
     cards,
     legend: cards.some((card) => card.visible)
       ? buildReactTrajectoryLegend("serve")

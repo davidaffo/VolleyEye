@@ -7,7 +7,7 @@ import { session as matchState } from "../../../js/globals.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { makePlayerKey } from "../teams/selectors.js";
 import { getAttackMetaForPlayer, setSelectedSkillForScope } from "../live/flow-model.js";
-import { resetSkillSelectionForPlayer, clearAttackSelection } from "./selection-state.js";
+import { resetSkillSelectionForPlayer, clearAttackSelection, cancelPartialSkillFlowForScope } from "./selection-state.js";
 import { clearServeTypeInlineListener, setServeTypeFocusPlayer } from "./serve-keyboard.js";
 import { renderPlayers, scheduleRenderPlayers, setNextSetType } from "../live/team-rendering.js";
 import { handleEventClick } from "../live/event-recording.js";
@@ -17,6 +17,15 @@ import { closeSkillModal } from "./skill-modal-state.js";
 
 export function cancelScoutSkillSelection({ playerIdx, scope }) {
   resetSkillSelectionForPlayer(playerIdx, scope);
+  renderPlayers({ refreshAnalysis: false });
+}
+export function cancelPendingScoutServe() {
+  const scope = matchState.state.pendingServe?.scope;
+  if (!scope) return;
+  cancelPartialSkillFlowForScope(scope);
+  cancelPartialSkillFlowForScope(scope === "our" ? "opponent" : "our");
+  matchState.state.flowTeamScope = scope;
+  saveState({ persistLocal: true });
   renderPlayers({ refreshAnalysis: false });
 }
 export function leaveScoutSkillEvaluation({ playerIdx, scope }, { refreshAnalysis = true } = {}) {
@@ -110,6 +119,7 @@ const scoutSkillCommands = Object.freeze({
   applyPointForPickedPlayer, openErrorModalForPickedPlayer,
   stopPointPickMode, stopErrorPickMode, openErrorModal, assignScoutTeamPoint,
   cancelScoutSkillSelection,
+  cancelPendingScoutServe,
   leaveScoutSkillEvaluation,
   chooseScoutSkill,
   openScoutSkillPicker,

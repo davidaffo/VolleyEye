@@ -898,10 +898,6 @@ body.scout-widget-dragging [data-scout-widget-zone="right"]:empty::before {
   align-self: flex-end;
   margin-bottom: 0.1rem;
 }
-.scout-col-right #events-log {
-  max-height: 44vh;
-  min-height: 180px;
-}
 .players-area {
   display: flex;
   flex-direction: column;

@@ -2,7 +2,7 @@ import { clearErrorPickMode } from "../scout/pick-model.js";
 import { session as matchState } from "../../../js/globals.js";
 import { renderPlayers } from "./team-rendering.js";
 import { saveState } from "../storage/save-state.js";
-import { scrollToActiveCourtOnMobileAlways, isDesktopCourtModalLayout, setCourtAreaLocked, setModalOpenState } from "../layout/modals.js";
+import { isDesktopCourtModalLayout, setCourtAreaLocked, setModalOpenState } from "../layout/modals.js";
 import { updateCourtModalPlacement } from "../scout-ui.js";
 import { getPlayersForScope } from "../teams/selectors.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
@@ -27,7 +27,6 @@ export function schedulePostEventUpdates({
 } = {}) {
   saveState({ persistLocal, skipArchiveSyncForScout: true, journal });
   renderPlayers({ deferScoutViews: true });
-  scrollToActiveCourtOnMobileAlways();
   renderEventsLog({ suppressScroll, append, scoutLive: true });
   if (includeAggregates) {
     // Le statistiche e il punteggio sono aggiornati subito.
@@ -109,7 +108,7 @@ export function startErrorPickMode(scope = "our") {
 export function startPointPickMode(scope = "our") {
   const players = getPlayersForScope(scope);
   if (!players || players.length === 0) {
-    openPointModal();
+    openPointModal(scope);
     return;
   }
   stopErrorPickMode({ render: false });
@@ -167,9 +166,9 @@ export function closeErrorModal() {
   setModalOpenState(false);
 }
 
-export function openPointModal() {
+export function openPointModal(scope = "our") {
   if (!matchState.elPointModal) return;
-  renderPointModal();
+  publishAttributionView("point", scope);
   if (isDesktopCourtModalLayout()) {
     setCourtAreaLocked(true);
   }

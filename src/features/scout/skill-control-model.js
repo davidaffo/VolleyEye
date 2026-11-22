@@ -70,7 +70,7 @@ export const SCOUT_SERVE_TYPES = Object.freeze([
 
 // Presentation consumes the completed preparation; it never advances the live flow.
 export function buildPreparedScoutSkillView(prepared) {
-  const { player, hasSelection, kind, picked } = prepared;
+  const { player, hasSelection, cancelPendingServe, kind, picked } = prepared;
   const { playerIdx, activeName } = player;
   const {
     view,
@@ -81,6 +81,7 @@ export function buildPreparedScoutSkillView(prepared) {
     note,
     action,
   } = createScoutSkillView(player, hasSelection);
+  if (cancelPendingServe) view.cancel = action("cancelPendingScoutServe");
   const group = (className, buttons, header = null, pointerAction = null) =>
     buildGroup(
       player.inModal ? "modal-skill-codes" : className,

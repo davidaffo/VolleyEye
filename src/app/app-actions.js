@@ -49,7 +49,7 @@ export async function optimizeReactArchiveSpace() {
   }
 }
 
-export function runReactAppAction(name) {
+export function runReactAppAction(name, ...args) {
   const actions = {
     resetTrajectoryFilters,
     resetServeTrajectoryFilters,
@@ -94,7 +94,7 @@ export function runReactAppAction(name) {
   };
   if (!Object.hasOwn(actions, name))
     throw new Error("Unknown app action: " + name);
-  return actions[name]();
+  return actions[name](...args);
 }
 
 export function openReactMatchFilePicker() {

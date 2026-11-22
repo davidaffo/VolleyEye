@@ -5,9 +5,9 @@ import { getSortedPlayerEntriesForScope, getSortedPlayerEntries } from "../teams
 import { attributionStore } from "../../state/attribution-store.mjs";
 import { formatNameWithNumber, formatNameWithNumberFor } from "../teams/roster-data.js";
 
-export function publishAttributionView(kind) {
+export function publishAttributionView(kind, pointScope = "our") {
   const prefill = kind === "error" ? scoutUiState.errorModalPrefillPlayer : null;
-  const scope = prefill?.scope || "our";
+  const scope = prefill?.scope || (kind === "point" ? pointScope : "our");
   const prefilled = typeof prefill?.playerIdx === "number";
   const pickedName = prefilled
     ? prefill.playerName ||

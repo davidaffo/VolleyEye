@@ -1,7 +1,5 @@
 import { session as matchState } from "../../../js/globals.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
-import { session as browserEffectsState } from "../../app/browser-effects.js";
-import { getMobileActiveScope } from "../live/flow-model.js";
 
 export function isDesktopCourtModalLayout() {
   if (matchState.state.forceMobileLayout) return false;
@@ -80,8 +78,6 @@ export function setModalOpenState(isOpen, forcePopup = false) {
       if (scoutUiState.lastMobileScrollY !== null) {
         window.scrollTo({ top: scoutUiState.lastMobileScrollY, behavior: "auto" });
       }
-      scoutUiState.pendingMobileActiveScroll = true;
-      maybeScrollToActiveCourtOnMobile();
       scoutUiState.lastMobileScrollY = null;
     }
   }
@@ -90,64 +86,6 @@ export function setModalOpenState(isOpen, forcePopup = false) {
 export function setGlobalModalState(isOpen, options = {}) {
   const forcePopup = typeof options === "boolean" ? options : !!options.forcePopup;
   setModalOpenState(isOpen, forcePopup);
-}
-
-export function getActiveCourtContainerForScroll() {
-  const activeScope = getMobileActiveScope() || "our";
-  return activeScope === "opponent"
-    ? document.getElementById("opponent-players-container")
-    : document.getElementById("players-container");
-}
-
-export function isElementInViewport(el) {
-  if (!el) return false;
-  const rect = el.getBoundingClientRect();
-  const viewHeight = window.innerHeight || document.documentElement.clientHeight || 0;
-  return rect.bottom > 0 && rect.top < viewHeight;
-}
-
-export function isElementVisible(el) {
-  if (!el) return false;
-  if (el.classList && el.classList.contains("hidden")) return false;
-  return !!(el.offsetParent || el.getClientRects().length);
-}
-
-export function maybeScrollToActiveCourtOnMobile() {
-  if (!scoutUiState.pendingMobileActiveScroll) return;
-  scoutUiState.pendingMobileActiveScroll = false;
-  const isCompactMobile = !!matchState.state.forceMobileLayout || window.matchMedia("(max-width: 900px)").matches;
-  if (!isCompactMobile) return;
-  const target = getActiveCourtContainerForScroll();
-  if (!target || !isElementVisible(target)) {
-    scoutUiState.pendingMobileActiveScroll = true;
-    return;
-  }
-  if (isElementInViewport(target)) {
-    scoutUiState.pendingMobileActiveScroll = false;
-    return;
-  }
-  scoutUiState.pendingMobileActiveScroll = false;
-  requestAnimationFrame(() => {
-    target.scrollIntoView({ behavior: "smooth", block: "center" });
-  });
-}
-
-export function scrollToActiveCourtOnMobileAlways(tries = 3) {
-  const isCompactMobile = !!matchState.state.forceMobileLayout || window.matchMedia("(max-width: 900px)").matches;
-  if (!isCompactMobile) return;
-  const target = getActiveCourtContainerForScroll();
-  if (!target) return;
-  if (!isElementVisible(target)) {
-    if (tries > 0) {
-      browserEffectsState.setTimeout(() => {
-        scrollToActiveCourtOnMobileAlways(tries - 1);
-      }, 60);
-    }
-    return;
-  }
-  requestAnimationFrame(() => {
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
 }
 
 export function suppressTransientClicks(ms = 350) {

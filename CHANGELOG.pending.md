@@ -1,3 +1,11 @@
 # Modifiche in attesa
 
+- In doppia squadra i pulsanti Punto ed Errore dell'avversaria permettono di scegliere la giocatrice o la squadra, come quelli della squadra nostra.
+
+- Il registro eventi mantiene un'altezza utile e si può ridimensionare verticalmente anche sotto il campo; il riquadro vuoto delle traiettorie non viene più mostrato.
+
+- In doppia squadra è possibile annullare la battuta parziale dalla ricezione avversaria anche dopo l'inserimento della traiettoria.
+
+- Durante lo scout live la pagina non scorre più automaticamente quando si registrano azioni; il registro continua a scorrere al suo interno.
+
 - L'importazione accetta anche squadre con tutte le giocatrici fuori rosa e protegge le squadre già archiviate con lo stesso nome.

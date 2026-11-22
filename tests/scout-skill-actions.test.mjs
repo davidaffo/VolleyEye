@@ -411,6 +411,23 @@ test('scegliere e annullare una skill aggiorna il campo senza ricalcolare le ana
   assert.deepEqual(refreshes, [['schedule', false], ['render', false]]);
 });
 
+test('annullare la battuta in attesa ripristina il servizio senza toccare lo storico', () => {
+  for (const scope of ['our', 'opponent']) {
+    const { ctx, calls } = setup();
+    ctx.state.events = [{ eventId: 1 }];
+    ctx.state.pendingServe = { scope, meta: { serveEnd: { x: 0.2, y: 0.7 } } };
+    ctx.cancelPartialSkillFlowForScope = target => {
+      calls.push(['cancel', target]);
+      if (ctx.state.pendingServe?.scope === target) ctx.state.pendingServe = null;
+    };
+    ctx.cancelPendingScoutServe();
+    assert.equal(ctx.state.pendingServe, null);
+    assert.equal(ctx.state.flowTeamScope, scope);
+    assert.deepEqual(ctx.state.events, [{ eventId: 1 }]);
+    assert.deepEqual(calls, [['cancel', scope], ['cancel', scope === 'our' ? 'opponent' : 'our'], 'save', 'render']);
+  }
+});
+
 test('completare la traiettoria aggiorna il campo senza ricalcolare le analisi', async () => {
   const { ctx } = setup();
   const refreshes = [];

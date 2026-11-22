@@ -2135,6 +2135,23 @@ test('formazione default: drag e rilascio touch modificano solo il draft', async
   expect(errors).toEqual([]);
 });
 
+test('registro sotto il campo mantiene altezza e ridimensionamento verticale', async ({ page }) => {
+  const errors = await openApp(page);
+  await page.locator('#btn-load-match').click();
+  const widget = page.locator('[data-scout-widget="events"]');
+  const handle = widget.locator('.scout-widget-handle');
+  await handle.focus();
+  await handle.press('ArrowLeft');
+  await handle.press('ArrowDown');
+  await handle.press('ArrowDown');
+  await expect(page.locator('[data-scout-widget-zone="center-bottom"] > [data-scout-widget="events"]')).toHaveCount(1);
+  const log = page.locator('#events-log');
+  expect(await log.evaluate(el => ({ height: el.getBoundingClientRect().height, resize: getComputedStyle(el).resize }))).toEqual({ height: 220, resize: 'vertical' });
+  await log.evaluate(el => { el.style.height = '340px'; });
+  expect(await log.evaluate(el => el.getBoundingClientRect().height)).toBe(340);
+  expect(errors).toEqual([]);
+});
+
 test('widget React: tastiera conserva nodi, focus e ordine dopo il reload', async ({ page }) => {
   const errors = await openApp(page);
   await page.locator('#btn-load-match').click();
@@ -2644,6 +2661,35 @@ test('footer mobile: nascosto dentro una partita anche con Modalità mobile test
   }
   await page.evaluate(() => window.VolleyEye.app.invoke('exitCurrentMatch'));
   await expect(footer).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('doppia squadra: punto ed errore si attribuiscono alle giocatrici di entrambi i campi', async ({ page }) => {
+  const errors = await openApp(page);
+  const match = JSON.parse(readFileSync('match_demo.json', 'utf8')).state;
+  Object.assign(match, { events: [], currentSet: 1, setResults: {}, scoreOverrides: {},
+    matchFinished: false, matchEndSetSnapshot: null, matchEndSetRecorded: null,
+    predictiveSkillFlow: false, autoRotate: false, useOpponentTeam: true });
+  await page.evaluate(async snapshot => {
+    const app = window.VolleyEye.app;
+    await app.invoke('applyImportedMatch', snapshot, { silent: true });
+    await app.invoke('saveState', { persistLocal: true });
+    await app.invoke('enterSelectedMatch');
+  }, match);
+  for (const [scope, buttonPrefix, container] of [
+    ['our', 'team', '#players-container'], ['opponent', 'opp', '#opponent-players-container'],
+  ]) {
+    const name = await page.locator(`${container} .court-card:not(.empty)`).first().getAttribute('data-player-name');
+    const card = page.locator(`${container} .court-card[data-player-name=${JSON.stringify(name)}]`);
+    await page.locator(`#btn-score-${buttonPrefix}-point`).click();
+    await card.locator('.error-pick-row button').click();
+    await page.locator(`#btn-score-${buttonPrefix}-error`).click();
+    await card.locator('.error-pick-row button').click();
+    await page.locator('#error-modal [data-error-type="Double"]').click();
+    const events = (await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot())).events;
+    expect(events.slice(-2).map(event => [event.team, event.code, event.playerName, event.errorType || null]))
+      .toEqual([[scope, 'for', name, null], [scope, 'error', name, 'Double']]);
+  }
   expect(errors).toEqual([]);
 });
 

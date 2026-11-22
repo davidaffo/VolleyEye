@@ -259,3 +259,16 @@ test('predictive serve preparation transfers metadata and clears the selection b
     assert.deepEqual(calls, [['select', 'our', 0, null], ['schedule']]);
   } finally { dom.window.close(); }
 });
+
+test('la ricezione avversaria offre l’annullamento della battuta parziale', () => {
+  for (const mobile of [false, true]) {
+    const { context, dom } = setup({ double: true, predictive: true, mobile,
+      pending: { scope: 'our', playerIdx: 0, playerName: 'A', meta: { serveEnd: { x: 0.4, y: 0.5 } } },
+      flow: { teamScope: 'opponent', skillId: 'pass' } });
+    try {
+      const prepared = context.prepareScoutSkillControls(0, 'B', { nextSkillId: 'pass', scope: 'opponent' });
+      const view = context.buildPreparedScoutSkillView(prepared);
+      assert.equal(view.cancel.command, 'cancelPendingScoutServe');
+    } finally { dom.window.close(); }
+  }
+});

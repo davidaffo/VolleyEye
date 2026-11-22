@@ -2,7 +2,6 @@ import { publishReactFloatingServeError, publishReactSetTypeShortcuts } from "..
 import { session as matchState } from "../../../js/globals.js";
 import { getScoutCourtSkill, getMobileActiveScope } from "./flow-model.js";
 import { updateSetTypeVisibility, updateNetBlockPrompt } from "../scout/flow-view.js";
-import { maybeScrollToActiveCourtOnMobile } from "../layout/modals.js";
 import { publishReactSettings } from "../settings/view.js";
 import { ensureMetricsConfigDefaults } from "../settings/rules.js";
 import { updateOpponentRotationDisplay } from "../teams/court-view.js";
@@ -31,7 +30,6 @@ export function renderPlayers({ refreshAnalysis = true, deferScoutViews = false 
   publishReactLogServeTrajectories();
   const compact = !!matchState.state.forceMobileLayout || window.matchMedia("(max-width: 900px)").matches;
   publishReactFloatingServeError(compact);
-  maybeScrollToActiveCourtOnMobile();
 }
 
 export function renderOpponentPlayers(options = {}) {

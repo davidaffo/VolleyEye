@@ -49,8 +49,19 @@ export function isEditingField(target) {
 }
 
 export function scrollRowIntoView(record) {
-  if (!record || !record.tr || typeof record.tr.scrollIntoView !== "function") return;
-  record.tr.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  const row = record && record.tr;
+  if (!row) return;
+  const log = row.closest?.("#events-log");
+  if (log) {
+    const rowRect = row.getBoundingClientRect();
+    const logRect = log.getBoundingClientRect();
+    if (rowRect.top < logRect.top) log.scrollTop += rowRect.top - logRect.top;
+    else if (rowRect.bottom > logRect.bottom) log.scrollTop += rowRect.bottom - logRect.bottom;
+    return;
+  }
+  if (document.body?.dataset.activeTab !== "scout") {
+    row.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+  }
 }
 
 export function handleSeekForSelection(contextKey, opts = {}) {

@@ -39,8 +39,12 @@ export function prepareScoutSkillControls(
     scoutUiState.serveTypeInlinePlayer === playerKey ||
     !!scoutUiState.blockConfirmByPlayer[playerKey];
   const player = { playerIdx, activeName, scope };
+  const cancelPendingServe = !!(
+    matchState.state.useOpponentTeam && matchState.state.pendingServe?.scope &&
+    matchState.state.pendingServe.scope !== scope
+  );
   const finish = (kind, details = {}) =>
-    Object.freeze({ player, hasSelection, kind, ...details });
+    Object.freeze({ player, hasSelection, cancelPendingServe, kind, ...details });
   const empty = () => finish("empty");
   const note = (text) => finish("note", { text });
   const compact = suppliedCompact ?? (

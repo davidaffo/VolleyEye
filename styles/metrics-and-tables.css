@@ -248,7 +248,10 @@ body[data-theme="light"] .bench-chip.bench-locked {
   box-shadow: 0 0 0 1px rgba(45, 108, 223, 0.3);
 }
 #events-log {
-  max-height: 140px;
+  height: 220px;
+  min-height: 140px;
+  max-height: 80vh;
+  resize: vertical;
   overflow-y: auto;
   font-size: 0.8rem;
   border-radius: 0.4rem;
