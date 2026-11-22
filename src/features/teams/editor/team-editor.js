@@ -1,4 +1,4 @@
-import { getRemovedLiveTeamPlayers } from "../player-reference-model.js";
+import { getRemovedLiveTeamPlayers, hasLivePlayerReferences } from "../player-reference-model.js";
 import { ensureMatchDefaults } from "../match-details.js";
 import { TEMPLATE_TEAM, session as matchState } from "../../../../js/globals.js";
 import { normalizePlayers, buildFullName, enforceSingleCaptainFlag } from "../../../domain/player-names.js";
@@ -517,8 +517,13 @@ export function saveTeamManagerPayload(options = {}) {
       isOpponent ? "opponent" : "our",
       liveCurrentPayload
     );
-    if (removed.length > 0 && !matchState.state.matchFinished) {
-      alert("Durante la partita non puoi rimuovere giocatrici dal roster rapido.");
+    const scope = isOpponent ? "opponent" : "our";
+    const currentPlayers = isOpponent ? matchState.state.opponentPlayers || [] : matchState.state.players || [];
+    const blocked = removed.find(player =>
+      !payload.playersDetailed.some(entry => entry.id === player.id && entry.out) ||
+      hasLivePlayerReferences(player, scope, currentPlayers));
+    if (blocked) {
+      alert("Non puoi mettere fuori rosa " + blocked.name + ": è collegata a eventi della partita o a un'azione in corso.");
       return;
     }
   }

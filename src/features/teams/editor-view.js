@@ -1,14 +1,20 @@
 import { openPlayerPhotoEditor, preparePlayerPhotoDataUrl } from "../players/photo-editor.js";
-import { PLAYER_PHOTO_REMOVE_RESULT, pickImageFile, logError } from "../../../js/globals.js";
+import { PLAYER_PHOTO_REMOVE_RESULT, pickImageFile, logError, session as matchState } from "../../../js/globals.js";
 import { session as rosterLineupState } from "../state/roster-lineup.js";
 import { isValidPlayerId, generatePlayerId, findPlayersDbMatchByName } from "./storage/team-repository.js";
 import { buildFullName, enforceSingleCaptainFlag } from "../../domain/player-names.js";
 import { sortNamesByNumber, formatNameWithNumberFor, formatStructuredPlayerName } from "./roster-data.js";
 import { teamEditorStore } from "../../state/team-editor-store.mjs";
 import { setGlobalModalState } from "../layout/modals.js";
+import { hasLivePlayerReferences } from "./player-reference-model.js";
+import { getCurrentTeamPayload, getCurrentOpponentPayload } from "./current-payload.js";
 
 export function publishTeamEditorView() {
   if (!rosterLineupState.teamManagerState) return;
+  const scope = rosterLineupState.teamManagerScope === "opponent" ? "opponent" : "our";
+  const liveEdit = !!rosterLineupState.teamManagerLiveEditMode;
+  const currentPlayers = scope === "opponent" ? matchState.state.opponentPlayers || [] : matchState.state.players || [];
+  const currentDetailed = liveEdit ? (scope === "opponent" ? getCurrentOpponentPayload() : getCurrentTeamPayload()).playersDetailed : [];
   const players = (rosterLineupState.teamManagerState.players || []).map((player, idx) => ({
     player,
     idx,
@@ -37,8 +43,11 @@ export function publishTeamEditorView() {
     p.lastName = (p.lastName || (!p.firstName ? p.name : "") || "").trim();
     p.firstName = (p.firstName || "").trim();
     p.name = buildFullName(p.lastName, p.firstName);
+    const current = currentDetailed.find(player => player.id === p.id && !player.out);
+    const outProtected = liveEdit && !!current && hasLivePlayerReferences(current, scope, currentPlayers);
     return Object.freeze({
       ...p,
+      outProtected,
       onNumber: (value) => {
         p.number = value;
         renderTeamManagerTable();
@@ -57,7 +66,7 @@ export function publishTeamEditorView() {
         renderTeamManagerTable();
       },
       onOut: (checked) => {
-        if (rosterLineupState.teamManagerLiveEditMode) return;
+        if (checked && outProtected) return;
         p.out = checked;
         renderTeamManagerTable();
       },

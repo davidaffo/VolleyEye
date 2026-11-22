@@ -4,7 +4,7 @@ import { session as match } from '../js/globals.js';
 import { session as roster } from '../src/features/state/roster-lineup.js';
 import { session as storage } from '../src/features/state/storage-persistent-storage.js';
 import { replaceTeamPlayerNameReferences, replacePlayerNameInLineup, renameTeamPlayerAcrossCurrentMatchById,
-  getLiveRosterChange, applyLiveRosterNames, getRemovedLiveTeamPlayers } from '../src/features/teams/player-reference-model.js';
+  getLiveRosterChange, applyLiveRosterNames, getRemovedLiveTeamPlayers, hasLivePlayerReferences, remapLiveRosterReferences } from '../src/features/teams/player-reference-model.js';
 
 const id = '11111111-1111-4111-8111-111111111111';
 const otherId = '22222222-2222-4222-8222-222222222222';
@@ -123,4 +123,22 @@ test('lineup reference replacement preserves absent lineups and normalizes missi
   const lineup = [{ main: 'Ada', replaced: 'Ada', ignored: true }, null];
   assert.deepEqual(replacePlayerNameInLineup(lineup, 'Ada', 'New'), [{ main: 'New', replaced: 'New' }, { main: '', replaced: '' }]);
   assert.equal(lineup[0].main, 'Ada');
+});
+
+test('fuori rosa: rileva riferimenti e riallinea gli indici e le ricevute di annullamento per entrambe le squadre', () => {
+  for (const scope of ['our', 'opponent']) isolated(() => {
+    const player = { id, name: 'Ada' };
+    const names = ['Ada', 'Bea'];
+    const snapshotCourt = scope === 'our' ? 'court' : 'opponentCourt';
+    const before = { [snapshotCourt]: [{ main: 'Ada', replaced: '' }] };
+    match.state.events = [{ team: scope, playerIdx: 1, playerName: 'Bea', setterIdx: 1, setterName: 'Bea', undoState: { before } }];
+    assert.equal(hasLivePlayerReferences(player, scope, names), false);
+    match.state.events.push({ team: scope, playerIn: 'Ada' });
+    assert.equal(hasLivePlayerReferences(player, scope, names), true);
+    match.state.events.pop();
+    remapLiveRosterReferences(scope, names, ['Bea'], [player]);
+    assert.equal(match.state.events[0].playerIdx, 0);
+    assert.equal(match.state.events[0].setterIdx, 0);
+    assert.equal(before[snapshotCourt][0].main, '');
+  });
 });

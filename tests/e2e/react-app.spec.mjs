@@ -919,6 +919,58 @@ test("campo React: valutazione di ricezione su entrambe le squadre e dialogo fon
   expect(errors).toEqual([]);
 });
 
+test('modifica rapida: fuori rosa solo senza eventi, per entrambe le squadre', async ({ page }) => {
+  const errors = await openApp(page);
+  const match = JSON.parse(readFileSync('match_demo.json', 'utf8')).state;
+  Object.assign(match, { currentSet: 1, matchFinished: false, matchEndSetSnapshot: null,
+    matchEndSetRecorded: null, useOpponentTeam: true, predictiveSkillFlow: false, autoRotate: false });
+  match.events = ['our', 'opponent'].map((scope, i) => ({ eventId: i + 1, set: 1, team: scope,
+    playerIdx: 1, playerName: (scope === 'our' ? match.players : match.opponentPlayers)[1], skillId: 'pass', code: '+' }));
+  await page.evaluate(async snapshot => {
+    const app = window.VolleyEye.app;
+    await app.invoke('applyImportedMatch', snapshot, { silent: true });
+    await app.invoke('saveState', { persistLocal: true });
+    await app.invoke('enterSelectedMatch');
+  }, match);
+  const removedByKey = {};
+  for (const [scope, key] of [['our', 'players'], ['opponent', 'opponentPlayers']]) {
+    const before = await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot());
+    const removed = before[key][0], protectedName = before[key][1];
+    removedByKey[key] = removed;
+    await page.evaluate(scope => window.VolleyEye.app.invoke('openTeamManagerModal', { scope, liveEdit: true }), scope);
+    const modal = page.locator('#team-manager-modal');
+    const rowFor = async name => {
+      for (const row of await modal.locator('.team-manager-row').all()) {
+        const last = await row.getByPlaceholder('Cognome').inputValue();
+        const first = await row.getByPlaceholder('Nome', { exact: true }).inputValue();
+        if ([last, first].filter(Boolean).join(' ') === name) return row;
+      }
+      throw new Error('Giocatrice non trovata: ' + name);
+    };
+    const protectedRow = await rowFor(protectedName);
+    const protectedCheckbox = protectedRow.locator('td').nth(6).locator('input');
+    await expect(protectedCheckbox).toBeDisabled();
+    await expect(protectedCheckbox).toHaveAttribute('title', /collegata a eventi/);
+    await (await rowFor(removed)).locator('td').nth(6).locator('input').check();
+    await page.locator('#team-manager-save').click();
+    await expect(modal).toBeHidden();
+    const after = await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot());
+    expect(after[key]).not.toContain(removed);
+    const event = after.events.find(entry => entry.team === scope);
+    expect(event.playerName).toBe(protectedName);
+    expect(event.playerIdx).toBe(0);
+    expect(after[scope === 'our' ? 'court' : 'opponentCourt'].some(slot => slot.main === removed || slot.replaced === removed)).toBe(false);
+  }
+  await page.evaluate(() => window.VolleyEye.app.invoke('flushStorage'));
+  await page.reload();
+  await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true');
+  const reopened = await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot());
+  expect(reopened.players).not.toContain(removedByKey.players);
+  expect(reopened.opponentPlayers).not.toContain(removedByKey.opponentPlayers);
+  expect(reopened.events.map(event => event.playerIdx)).toEqual([0, 0]);
+  expect(errors).toEqual([]);
+});
+
 test("editor squadra React: bozza, salvataggio archivio e creazione senza modificare la partita", async ({
   page,
 }) => {

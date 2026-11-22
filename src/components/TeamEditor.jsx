@@ -97,10 +97,8 @@ onBlur={nameChanged} onChange={value => { setFirst(value); act(player.onName, va
           className="team-manager-input"
           type="checkbox"
           checked={!!player.out}
-          disabled={liveEdit}
-          title={
-            liveEdit ? "Fuori rosa disabilitato durante la partita." : undefined
-          }
+          disabled={!!player.outProtected && !player.out}
+          title={player.outProtected ? "Non disponibile: la giocatrice è collegata a eventi della partita o a un'azione in corso." : undefined}
           onChange={(event) => act(player.onOut, event.target.checked)}
         />
       </td>

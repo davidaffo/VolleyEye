@@ -193,6 +193,7 @@ export function getLiveRosterChange(currentPayload, payload) {
 export function applyLiveRosterNames(
   { currentDetailed, nextDetailed, currentIds, hasStableIdOverlap },
   rename,
+  { removeMissing = false } = {},
 ) {
   const nextPlayer = (player, index) =>
     hasStableIdOverlap
@@ -205,8 +206,9 @@ export function applyLiveRosterNames(
   });
   const orderedNames = currentDetailed.map((player, index) => {
     const next = nextPlayer(player, index);
+    if (!next && removeMissing) return null;
     return next && next.name ? next.name : player.name;
-  });
+  }).filter(Boolean);
   const addedNames = (
     hasStableIdOverlap
       ? nextDetailed.filter((player) => player.id && !currentIds.has(player.id))
@@ -215,6 +217,61 @@ export function applyLiveRosterNames(
     .map((player) => player.name)
     .filter(Boolean);
   return orderedNames.concat(addedNames);
+}
+
+export function hasLivePlayerReferences(player, scope, currentPlayers = []) {
+  const index = currentPlayers.indexOf(player.name);
+  const sameName = value => typeof value === "string" && value.trim().toLowerCase() === String(player.name || "").trim().toLowerCase();
+  return (matchState.state.events || []).some(event => {
+    if (!event || getTeamScopeFromEvent(event) !== scope) return false;
+    return (player.id && event.playerId === player.id) ||
+      sameName(event.playerName) || sameName(event.setterName) ||
+      sameName(event.playerIn) || sameName(event.playerOut) ||
+      (index >= 0 && (event.playerIdx === index || event.setterIdx === index));
+  }) || (matchState.state.pendingServe?.scope === scope &&
+    ((player.id && matchState.state.pendingServe.playerId === player.id) || sameName(matchState.state.pendingServe.playerName) ||
+      (index >= 0 && matchState.state.pendingServe.playerIdx === index)));
+}
+
+export function remapLiveRosterReferences(scope, oldNames, nextNames, removed) {
+  const removedNames = new Set(removed.map(player => player.name));
+  const remap = index => typeof index === "number" && oldNames[index] ? Math.max(-1, nextNames.indexOf(oldNames[index])) : index;
+  const cleanCourt = court => Array.isArray(court) ? court.map(slot => ({ ...slot,
+    main: removedNames.has(slot?.main) ? "" : slot?.main || "",
+    replaced: removedNames.has(slot?.replaced) ? "" : slot?.replaced || "" })) : court;
+  const courtKey = scope === "opponent" ? "opponentCourt" : "court";
+  const baseKey = scope === "opponent" ? "opponentAutoRoleBaseCourt" : "autoRoleBaseCourt";
+  const mapKey = scope === "opponent" ? "opponentLiberoAutoMap" : "liberoAutoMap";
+  const preferredKey = scope === "opponent" ? "opponentPreferredLibero" : "preferredLibero";
+  const cleanSnapshot = before => {
+    if (!before) return;
+    for (const key of [courtKey, baseKey]) if (Array.isArray(before[key])) before[key] = cleanCourt(before[key]);
+    if (before[mapKey]) before[mapKey] = Object.fromEntries(Object.entries(before[mapKey]).filter(([name, libero]) => !removedNames.has(name) && !removedNames.has(libero)));
+    if (removedNames.has(before[preferredKey])) before[preferredKey] = "";
+    if (before.pendingServe?.scope === scope) {
+      if (removedNames.has(before.pendingServe.playerName)) before.pendingServe = null;
+      else if (typeof before.pendingServe.playerIdx === "number") {
+        const index = remap(before.pendingServe.playerIdx);
+        before.pendingServe.playerIdx = index < 0 ? null : index;
+      }
+    }
+    for (const start of Object.values(before.setStarts || {})) if (start?.[scope]?.court) start[scope].court = cleanCourt(start[scope].court);
+  };
+  for (const event of matchState.state.events || []) {
+    if (!event) continue;
+    if (getTeamScopeFromEvent(event) === scope) {
+      for (const key of ["playerIdx", "setterIdx"]) if (typeof event[key] === "number") {
+        const next = remap(event[key]);
+        event[key] = next < 0 ? null : next;
+      }
+    }
+    cleanSnapshot((event.undoState || event.__undoSnapshot)?.before);
+    for (const starts of [event.prevSetStarts, event.nextSetStarts]) {
+      for (const start of Object.values(starts || {})) if (start?.[scope]?.court) start[scope].court = cleanCourt(start[scope].court);
+    }
+  }
+  const pending = matchState.state.pendingServe;
+  if (pending?.scope === scope && typeof pending.playerIdx === "number") pending.playerIdx = remap(pending.playerIdx);
 }
 
 export function getRemovedLiveTeamPlayers(

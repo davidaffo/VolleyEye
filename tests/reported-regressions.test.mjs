@@ -231,10 +231,8 @@ test("il taglio video riusa i pacchetti originali e il preset suggerisce il nome
 
 test("una partita in pausa o conclusa non blocca più la modifica squadra", () => {
   const editor = readFileSync(new URL("../src/features/teams/editor/team-editor.js", import.meta.url), "utf8");
-  const players = readFileSync(new URL("../src/features/teams/core/player-model.js", import.meta.url), "utf8");
   assert.match(editor, /hasMatchDataForReset\(\) && !state\.matchFinished/);
-  assert.match(editor, /removed\.length > 0 && !state\.matchFinished/);
-  assert.match(players, /!state\.matchFinished[\s\S]*?removed\.length > 0/);
+  assert.match(editor, /hasLivePlayerReferences\(player, scope, currentPlayers\)/);
 });
 
 test("tutti i dati esposti nella tabella eventi sono modificabili", () => {
