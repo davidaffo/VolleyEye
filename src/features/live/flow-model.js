@@ -407,6 +407,12 @@ export function isBlockEligibleForScope(scope = "our") {
 
 export function getPredictedSkillIdForScope(scope) {
   if (scope === "opponent" && !matchState.state.useOpponentTeam) return null;
+  if (matchState.state.useOpponentTeam) {
+    const last = getLastFlowEvent(matchState.state.events || []);
+    if (last?.skillId === "attack" && last.pendingBlockEval &&
+        getOppositeScope(getTeamScopeFromEvent(last)) === scope &&
+        isSkillEnabledForScope("block", scope)) return "block";
+  }
   if (!matchState.state.predictiveSkillFlow) return null;
   if (
     matchState.state.pendingServe &&

@@ -1,5 +1,7 @@
 # Modifiche in attesa
 
+- In doppia squadra un attacco con valutazione / attende il muro dell'altra squadra anche con il flusso automatico disattivato, prima di attribuire il punto.
+
 - In doppia squadra i pulsanti Punto ed Errore dell'avversaria permettono di scegliere la giocatrice o la squadra, come quelli della squadra nostra.
 
 - Il registro eventi mantiene un'altezza utile e si può ridimensionare verticalmente anche sotto il campo; il riquadro vuoto delle traiettorie non viene più mostrato.

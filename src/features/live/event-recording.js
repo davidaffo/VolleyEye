@@ -363,7 +363,6 @@ export async function handleEventClick(
     const otherScope = getOppositeScope(scope);
     if (
       matchState.state.useOpponentTeam &&
-      matchState.state.predictiveSkillFlow &&
       code === "/" &&
       isSkillEnabledForScope("block", otherScope)
     ) {

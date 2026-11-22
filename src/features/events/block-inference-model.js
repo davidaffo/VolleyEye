@@ -17,7 +17,7 @@ export function updateSkillStatsForEvent(scope, playerIdx, skillId, prevCode, ne
 }
 
 export function applyBlockInference(blockEvent, blockScope, blockCode) {
-  if (!matchState.state.useOpponentTeam || !matchState.state.predictiveSkillFlow) return;
+  if (!matchState.state.useOpponentTeam) return;
   if (!blockEvent || blockEvent.skillId !== "block") return;
   const attackScope = getOppositeScope(blockScope);
   const events = matchState.state.events || [];
@@ -26,7 +26,7 @@ export function applyBlockInference(blockEvent, blockScope, blockCode) {
     const ev = events[i];
     if (!ev || Number(ev.set || 1) !== Number(matchState.state.currentSet || 1) || ev.skillId !== "attack") continue;
     if (getTeamScopeFromEvent(ev) !== attackScope) continue;
-    if (ev.pendingBlockEval || ev.code === "/") {
+    if (ev.pendingBlockEval || (matchState.state.predictiveSkillFlow && ev.code === "/")) {
       attackEvent = ev;
       break;
     }

@@ -2693,6 +2693,75 @@ test('doppia squadra: punto ed errore si attribuiscono alle giocatrici di entram
   expect(errors).toEqual([]);
 });
 
+test('doppia squadra: attacco slash richiede il muro della squadra opposta', async ({ page }) => {
+  const errors = await openApp(page);
+  const match = JSON.parse(readFileSync('match_demo.json', 'utf8')).state;
+  Object.assign(match, { events: [], currentSet: 1, setResults: {}, scoreOverrides: {},
+    matchFinished: false, matchEndSetSnapshot: null, matchEndSetRecorded: null,
+    predictiveSkillFlow: true, autoRotate: false, useOpponentTeam: true,
+    attackTrajectoryEnabled: false, opponentAttackTrajectoryEnabled: false,
+    setTypePromptEnabled: false, opponentSetTypePromptEnabled: false,
+    opponentSkillConfig: { ...(match.opponentSkillConfig || {}), block: true },
+    metricsConfig: { ...match.metricsConfig, block: { ...match.metricsConfig?.block, enabled: true } },
+    pendingServe: null, skillFlowOverride: null, opponentSkillFlowOverride: null });
+  await page.evaluate(async snapshot => {
+    const app = window.VolleyEye.app;
+    await app.invoke('applyImportedMatch', snapshot, { silent: true });
+    await app.invoke('saveState', { persistLocal: true });
+    await app.invoke('enterSelectedMatch');
+  }, match);
+  for (const [scope, attacking, defending] of [
+    ['opponent', '#opponent-players-container', '#players-container'],
+    ['our', '#players-container', '#opponent-players-container'],
+  ]) {
+    await page.evaluate(scope => window.VolleyEye.app.invoke('forceNextSkill', 'attack', scope), scope);
+    const attacker = page.locator(`${attacking} .court-card:not(.empty)`).first();
+    const attackName = await attacker.getAttribute('data-player-name');
+    const active = page.locator(`${attacking} .court-card[data-player-name=${JSON.stringify(attackName)}]`);
+    await active.locator('.attack-select-grid button').first().click();
+    await active.locator('.event-btn[data-skill-id="attack"][data-code="/"]').click();
+    await expect(page.locator(`${defending} .court-card .event-btn[data-skill-id="block"]`).first()).toBeVisible({ timeout: 5000 });
+    await page.locator(`${defending} .court-card .event-btn[data-skill-id="block"][data-code="#"]`).first().click();
+    const events = (await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot())).events;
+    expect(events.at(-2)).toMatchObject({ team: scope, skillId: 'attack', derivedFromBlock: true });
+    expect(events.at(-1)).toMatchObject({ team: scope === 'our' ? 'opponent' : 'our', skillId: 'block', code: '#' });
+  }
+  expect(errors).toEqual([]);
+});
+
+test('attacco slash avversario attende il muro nostro anche senza flusso automatico', async ({ page }) => {
+  const errors = await openApp(page);
+  const match = JSON.parse(readFileSync('match_demo.json', 'utf8')).state;
+  Object.assign(match, { events: [], currentSet: 1, setResults: {}, scoreOverrides: {},
+    matchFinished: false, matchEndSetSnapshot: null, matchEndSetRecorded: null,
+    predictiveSkillFlow: false, autoRotate: false, useOpponentTeam: true,
+    attackTrajectoryEnabled: false, opponentAttackTrajectoryEnabled: false,
+    setTypePromptEnabled: false, opponentSetTypePromptEnabled: false,
+    metricsConfig: { ...match.metricsConfig, block: { ...match.metricsConfig?.block, enabled: true } },
+    pendingServe: null, skillFlowOverride: null, opponentSkillFlowOverride: null });
+  await page.evaluate(async snapshot => {
+    const app = window.VolleyEye.app;
+    await app.invoke('applyImportedMatch', snapshot, { silent: true });
+    await app.invoke('saveState', { persistLocal: true });
+    await app.invoke('enterSelectedMatch');
+  }, match);
+  const attacker = page.locator('#opponent-players-container .court-card:not(.empty)').first();
+  const name = await attacker.getAttribute('data-player-name');
+  await attacker.locator('.skill-picker-btn.skill-attack').click();
+  const active = page.locator(`#opponent-players-container .court-card[data-player-name=${JSON.stringify(name)}]`);
+  await active.locator('.attack-select-grid button').first().click();
+  await active.locator('.event-btn[data-skill-id="attack"][data-code="/"]').click();
+  let snapshot = await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot());
+  expect(snapshot.events.at(-1)).toMatchObject({ team: 'opponent', skillId: 'attack', pendingBlockEval: true });
+  await expect(page.locator('#players-container .event-btn[data-skill-id="block"][data-code="#"]').first()).toBeVisible({ timeout: 5000 });
+  await page.locator('#players-container .event-btn[data-skill-id="block"][data-code="#"]').first().click();
+  snapshot = await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot());
+  expect(snapshot.events.at(-2)).toMatchObject({ team: 'opponent', skillId: 'attack', derivedFromBlock: true });
+  expect(snapshot.events.at(-1)).toMatchObject({ team: 'our', skillId: 'block', code: '#' });
+  expect(snapshot.predictiveSkillFlow).toBe(false);
+  expect(errors).toEqual([]);
+});
+
 test('scout live: le analisi differite mostrano subito le skill registrate', async ({ page }) => {
   const errors = await openApp(page);
   const match = JSON.parse(readFileSync('match_demo.json', 'utf8')).state;
