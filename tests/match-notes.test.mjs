@@ -73,6 +73,23 @@ test("note consecutive e note iniziali non richiedono un evento e conservano l'o
   assert.equal(c.state.events.length, 0);
 });
 
+test("modificare una nota conserva contesto e stato, e rifiuta testi vuoti", () => {
+  const { context: c, saved } = setup();
+  c.state.videoScoutMode = true;
+  c.addMatchNote("Originale");
+  const id = c.state.notes[0].id;
+  c.resolveMatchNote(id, true);
+  const before = JSON.stringify({ ...c.state.notes[0], text: undefined });
+  const count = saved();
+  assert.equal(c.editMatchNote(id, "  "), false);
+  assert.equal(c.editMatchNote("inesistente", "Testo"), false);
+  assert.equal(saved(), count);
+  assert.equal(c.editMatchNote(id, "  Testo corretto  "), true);
+  assert.equal(c.state.notes[0].text, "Testo corretto");
+  assert.equal(JSON.stringify({ ...c.state.notes[0], text: undefined }), before);
+  assert.equal(saved(), count + 1);
+});
+
 test("cancellare l'azione di riferimento conserva la nota dopo il predecessore superstite", () => {
   const note = { precedingEventKeys: ["1", "2", "4"] };
   assert.equal(findNoteAnchorKey(note, [1, 2, 4, 5]), "4");

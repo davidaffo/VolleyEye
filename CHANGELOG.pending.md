@@ -1,5 +1,7 @@
 # Modifiche in attesa
 
+- Le annotazioni della partita si possono modificare dal registro eventi e dall'analisi video, conservando posizione e stato.
+
 - In doppia squadra un attacco con valutazione / attende il muro dell'altra squadra anche con il flusso automatico disattivato, prima di attribuire il punto.
 
 - In doppia squadra i pulsanti Punto ed Errore dell'avversaria permettono di scegliere la giocatrice o la squadra, come quelli della squadra nostra.

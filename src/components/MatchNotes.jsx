@@ -5,6 +5,8 @@ import { matchNotesStore } from "../state/match-notes-store.mjs";
 import { events as appEvents } from "../app/actions.mjs";
 
 export function MatchNote({ note, video = false, onSeek }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(note.text);
   return (
     <article
       className={"match-note" + (note.resolved ? " match-note--resolved" : "")}
@@ -20,8 +22,27 @@ export function MatchNote({ note, video = false, onSeek }) {
         </span>
         <span>{note.resolved ? "Risolta" : "Da risolvere"}</span>
       </div>
-      <p>{note.text}</p>
+      {editing ? (
+        <form className="match-note-composer" onSubmit={(event) => {
+          event.preventDefault();
+          if (appEvents.editMatchNote(note.id, draft)) setEditing(false);
+        }}>
+          <label>
+            Modifica nota
+            <textarea aria-label="Testo della nota" rows={4} value={draft} autoFocus
+              onChange={(event) => setDraft(event.target.value)} />
+          </label>
+          <div className="match-note__actions">
+            <button type="button" className="small secondary" onClick={() => setEditing(false)}>Annulla</button>
+            <button type="submit" className="small" disabled={!draft.trim()}>Salva modifica</button>
+          </div>
+        </form>
+      ) : <p>{note.text}</p>}
       <div className="match-note__actions">
+        {!editing && <button type="button" className="small secondary" onClick={() => {
+          setDraft(note.text);
+          setEditing(true);
+        }}>Modifica</button>}
         <label>
           <input
             type="checkbox"

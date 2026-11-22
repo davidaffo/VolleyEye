@@ -54,6 +54,14 @@ export function resolveMatchNote(id, resolved) {
   );
 }
 
+export function editMatchNote(id, text) {
+  if (typeof text !== "string" || !text.trim()) return false;
+  const notes = normalizeMatchNotes(matchState.state.notes);
+  if (!notes.some((note) => note.id === id)) return false;
+  saveNotes(notes.map((note) => note.id === id ? { ...note, text: text.trim() } : note));
+  return true;
+}
+
 export function deleteMatchNote(id) {
   saveNotes(
     normalizeMatchNotes(matchState.state.notes).filter(

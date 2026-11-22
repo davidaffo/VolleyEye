@@ -2580,6 +2580,10 @@ test("annotazioni separate tra eventi e revisione video anche su mobile", async 
   await marker.click();
   const singleNote = page.getByRole("dialog", { name: "Annotazione", exact: true });
   await expect(singleNote).toContainText("Dopo evento 4");
+  await singleNote.getByRole("button", { name: "Modifica", exact: true }).click();
+  await singleNote.getByRole("textbox", { name: "Testo della nota" }).fill("Nota corretta dal registro");
+  await singleNote.getByRole("button", { name: "Salva modifica" }).click();
+  await expect(marker).toContainText("Nota corretta dal registro");
   await singleNote.getByRole("button", { name: "Chiudi annotazioni" }).click();
   await page.evaluate(() => window.VolleyEye.app.invoke("recordTimeoutEvent"));
   await expect(page.locator("#events-log tbody > tr")).toHaveCount(6);
@@ -2593,7 +2597,12 @@ test("annotazioni separate tra eventi e revisione video anche su mobile", async 
   const desktopNotes = page.locator(".video-analysis__actions .video-notes-button");
   await expect(desktopNotes).toBeVisible();
   await desktopNotes.click();
-  await expect(page.getByRole("dialog", { name: "Annotazioni partita", exact: true })).toContainText("Rivedere il tocco a muro");
+  await expect(page.getByRole("dialog", { name: "Annotazioni partita", exact: true })).toContainText("Nota corretta dal registro");
+  const desktopReview = page.getByRole("dialog", { name: "Annotazioni partita", exact: true });
+  await desktopReview.getByRole("button", { name: "Modifica", exact: true }).click();
+  await desktopReview.getByRole("textbox", { name: "Testo della nota" }).fill("Nota corretta dal video");
+  await desktopReview.getByRole("button", { name: "Salva modifica" }).click();
+  await expect(desktopReview).toContainText("Nota corretta dal video");
   await page.getByRole("dialog", { name: "Annotazioni partita", exact: true }).getByRole("button", { name: "Chiudi annotazioni" }).click();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => window.VolleyEye.app.invoke("closeVideoMobileSourceModal"));
@@ -2610,7 +2619,7 @@ test("annotazioni separate tra eventi e revisione video anche su mobile", async 
   await page.evaluate(() => window.VolleyEye.app.invoke("closeVideoMobileSourceModal"));
   await page.getByRole("button", { name: "Annotazioni: 0 da risolvere su 1", exact: true }).filter({ visible: true }).click();
   await expect(review).toContainText("Tutte le note sono risolte");
-  await expect(review).toContainText("Rivedere il tocco a muro");
+  await expect(review).toContainText("Nota corretta dal video");
   await review.getByRole("button", { name: "Elimina nota" }).click();
   await expect(review).toContainText("Nessuna annotazione per questa partita.");
   await review.getByRole("button", { name: "Chiudi annotazioni" }).click();
