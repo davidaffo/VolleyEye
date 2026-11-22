@@ -1,0 +1,104 @@
+{
+  "version": 3,
+  "name": "AGV_Campomorone_2div",
+  "staff": {
+    "headCoach": "",
+    "assistantCoach": "",
+    "manager": ""
+  },
+  "officialCode": "",
+  "officialId": "",
+  "playersDetailed": [
+    {
+      "id": "720c4524-077e-4fe6-a929-4be6dbf73540",
+      "firstName": "",
+      "lastName": "Palleggiatore 1",
+      "codeOfficial": "",
+      "photo": "",
+      "number": "10",
+      "role": "",
+      "isCaptain": false,
+      "out": true
+    },
+    {
+      "id": "e529f817-7738-494e-be73-2cfc46058fdf",
+      "firstName": "",
+      "lastName": "Schiacciatore 1",
+      "codeOfficial": "",
+      "photo": "",
+      "number": "1",
+      "role": "",
+      "isCaptain": false,
+      "out": true
+    },
+    {
+      "id": "4ead0977-9039-417e-9288-02a5d5e6b870",
+      "firstName": "",
+      "lastName": "Schiacciatore 2",
+      "codeOfficial": "",
+      "photo": "",
+      "number": "3",
+      "role": "",
+      "isCaptain": false,
+      "out": true
+    },
+    {
+      "id": "3685db3b-b7a5-4a46-9d51-960cf9a4415d",
+      "firstName": "",
+      "lastName": "Opposto 1",
+      "codeOfficial": "",
+      "photo": "",
+      "number": "6",
+      "role": "",
+      "isCaptain": false,
+      "out": true
+    },
+    {
+      "id": "1cc5bb18-5c5a-4428-ac99-3d9bfc579740",
+      "firstName": "",
+      "lastName": "Opposto 2",
+      "codeOfficial": "",
+      "photo": "",
+      "number": "8",
+      "role": "",
+      "isCaptain": false,
+      "out": true
+    },
+    {
+      "id": "54d6578f-67af-4b37-b337-4bae9bf7bf67",
+      "firstName": "",
+      "lastName": "Centrale 1",
+      "codeOfficial": "",
+      "photo": "",
+      "number": "2",
+      "role": "",
+      "isCaptain": false,
+      "out": true
+    },
+    {
+      "id": "7a483d2e-ae71-4e6c-9a68-974abf3961cd",
+      "firstName": "",
+      "lastName": "Centrale 2",
+      "codeOfficial": "",
+      "photo": "",
+      "number": "19",
+      "role": "",
+      "isCaptain": false,
+      "out": true
+    },
+    {
+      "id": "774edabf-f1df-4aaa-ab97-9016e9faf8a1",
+      "firstName": "",
+      "lastName": "Libero 2",
+      "codeOfficial": "",
+      "photo": "",
+      "number": "14",
+      "role": "L",
+      "isCaptain": false,
+      "out": true
+    }
+  ],
+  "defaultLineup": [],
+  "defaultRotation": 3,
+  "preferredLibero": "Libero 1"
+}

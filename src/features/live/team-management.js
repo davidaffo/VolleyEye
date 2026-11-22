@@ -15,7 +15,7 @@ import { setAttackShortcutOpen, getAttackShortcutOpen, publishAttackSetterOption
 import { publishTeamsManagerView, setTeamsManagerOpen } from "../teams/manager-view.js";
 import { session as rosterLineupState } from "../state/roster-lineup.js";
 import { loadMatchesMapFromStorage, getMatchStorageKey } from "../storage/match-repository.js";
-import { normalizeTeamPayload, listTeamsFromStorage, extractRosterFromTeam, saveTeamToStorage, syncTeamsFromStorage, loadTeamsMapFromStorage, savePlayersDbToStorage, loadPlayersDbFromStorage, buildPlayersDbEntry, compactTeamPayload, getTeamStorageKey } from "../teams/storage/team-repository.js";
+import { normalizeTeamPayload, listTeamsFromStorage, saveTeamToStorage, syncTeamsFromStorage, loadTeamsMapFromStorage, savePlayersDbToStorage, loadPlayersDbFromStorage, buildPlayersDbEntry, compactTeamPayload, getTeamStorageKey } from "../teams/storage/team-repository.js";
 import { publishPlayersDbView, setPlayersDbOpen } from "../players/database-view.js";
 import { debugStore } from "../../state/roster-import-store.mjs";
 import { syncCourtSideLayout, renderPlayers } from "./team-rendering.js";
@@ -369,10 +369,12 @@ export function importTeamToStorageOnly(file) {
         alert("Il file non contiene un nome squadra valido.");
         return;
       }
-      const roster =
-        (extractRosterFromTeam(normalized));
-      if (!roster || !Array.isArray(roster.players) || roster.players.length === 0) {
+      if (!normalized.playersDetailed.length) {
         alert("Il file non contiene giocatrici valide.");
+        return;
+      }
+      if (listTeamsFromStorage().includes(name)) {
+        alert("Esiste già una squadra con questo nome. Rinomina la squadra nel file prima di importarla.");
         return;
       }
       if (!saveTeamToStorage(name, normalized)) {
