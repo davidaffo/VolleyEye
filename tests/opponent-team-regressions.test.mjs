@@ -267,7 +267,7 @@ function managerContext(storageOnly = false) {
   const c = {
     state: { selectedTeam: "Casa", selectedOpponentTeam: "In partita", useOpponentTeam: true,
       match: { opponent: "In partita" }, opponentPlayers: ["In campo"], autoRolePositioning: false },
-    teamManagerLiveEditMode: false, teamManagerStorageOnly: storageOnly, teamManagerScope: "opponent",
+    teamManagerLiveEditMode: false, teamManagerStorageOnly: storageOnly, teamManagerIsNew: false, teamManagerScope: "opponent",
     teamManagerState: { name: payload.name }, window: {}, collectTeamManagerPayload: () => payload,
     hasMatchDataForReset: () => false, compactTeamPayload: value => value,
     saveOpponentTeamToStorage: () => true, extractRosterFromTeam: value => value,
@@ -290,4 +290,14 @@ test("la modifica dell'archivio avversario non cambia l'identità o il roster de
   const before = plain(c.state);
   c.saveTeamManagerPayload({ closeModal: false, showAlert: false });
   assert.deepEqual(c.saved, before);
+});
+test("una nuova squadra non sovrascrive una squadra già archiviata", () => {
+  const c = managerContext(true);
+  c.teamManagerIsNew = true;
+  c.loadTeamFromStorage = name => name === "Archivio" ? { name } : null;
+  c.alert = message => { c.warning = message; };
+  c.saveOpponentTeamToStorage = () => { throw new Error("sovrascrittura inattesa"); };
+  c.saveTeamManagerPayload({ closeModal: false, showAlert: false });
+  assert.match(c.warning, /Esiste già una squadra/);
+  assert.equal(c.teamManagerIsNew, true);
 });

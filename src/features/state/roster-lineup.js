@@ -42,6 +42,7 @@ export const session = createDomainState({
 "teamManagerScope": () => ("our"),
 "teamManagerLiveEditMode": () => (false),
 "teamManagerStorageOnly": () => (false),
+"teamManagerIsNew": () => (false),
 "autoRolePhaseApplied": () => (""),
 "autoRoleRotationApplied": () => (null),
 "autoRoleBaseCourt": () => (null),

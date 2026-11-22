@@ -5,6 +5,10 @@ Le voci storiche riportano i messaggi originali dei commit e i relativi collegam
 
 Prima della versione 0.1.0 il progetto era già in sviluppo, ma non aveva una numerazione di release registrata.
 
+## 0.23.1 — 2026-11-22
+
+- La creazione di una squadra protegge quelle già salvate dalla sovrascrittura e mantiene il nome scelto usando il modello precompilato.
+
 ## 0.23.0 — 2026-11-19
 
 - Nell'analisi video, il riquadro del filmato ha inizialmente le stesse dimensioni della tabella degli eventi.

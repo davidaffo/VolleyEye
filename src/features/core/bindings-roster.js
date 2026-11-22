@@ -142,7 +142,7 @@ export function generateManagedTeamTemplate() {
       const playersDetailed =
         (buildTemplatePlayersDetailed());
       rosterLineupState.teamManagerState = {
-        name: rosterLineupState.teamManagerScope === "opponent" ? matchState.state.selectedOpponentTeam || "Avversaria" : matchState.state.selectedTeam || "Squadra",
+        name: rosterLineupState.teamManagerState?.name || "",
         staff: Object.assign({}, rosterLineupState.DEFAULT_STAFF),
         players: playersDetailed,
         defaultRotation: 1,

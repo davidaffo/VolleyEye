@@ -353,6 +353,7 @@ export function refreshTeamManagerFromSelection() {
   if (!rosterLineupState.elTeamManagerModal || rosterLineupState.elTeamManagerModal.classList.contains("hidden")) return;
   if (rosterLineupState.teamManagerScope !== "our") return;
   rosterLineupState.teamManagerLiveEditMode = false;
+  rosterLineupState.teamManagerIsNew = false;
   rosterLineupState.teamManagerStorageOnly = false;
   const selected = matchState.state.selectedTeam || (matchState.elTeamsSelect && matchState.elTeamsSelect.value) || "";
   const source = selected ? loadTeamFromStorage(selected) : null;
@@ -369,6 +370,7 @@ export function openTeamManagerModal(scope = "our") {
   }
   const { liveEdit = false, storageOnly = false } = options;
   rosterLineupState.teamManagerScope = scope;
+  rosterLineupState.teamManagerIsNew = false;
   rosterLineupState.teamManagerLiveEditMode = !!liveEdit;
   rosterLineupState.teamManagerStorageOnly = !!storageOnly;
   const isOpponent = scope === "opponent";
@@ -389,6 +391,7 @@ export function openTeamManagerModal(scope = "our") {
 }
 
 export function openNewTeamManager() {
+  rosterLineupState.teamManagerIsNew = true;
   rosterLineupState.teamManagerScope = "our";
   rosterLineupState.teamManagerLiveEditMode = false;
   rosterLineupState.teamManagerStorageOnly = true;
@@ -487,7 +490,7 @@ export function saveTeamManagerPayload(options = {}) {
   } = options;
   const liveEditMode = !!rosterLineupState.teamManagerLiveEditMode;
   const storageOnly = !!rosterLineupState.teamManagerStorageOnly;
-  const previousName = rosterLineupState.teamManagerState && rosterLineupState.teamManagerState.name ? rosterLineupState.teamManagerState.name.trim() : "";
+  const previousName = !rosterLineupState.teamManagerIsNew && rosterLineupState.teamManagerState && rosterLineupState.teamManagerState.name ? rosterLineupState.teamManagerState.name.trim() : "";
   const payload = collectTeamManagerPayload();
   if (!payload || !payload.name) {
     alert("Inserisci un nome squadra valido.");
@@ -520,6 +523,10 @@ export function saveTeamManagerPayload(options = {}) {
     }
   }
   let nextName = payload.name.trim();
+  if (saveToStorage && rosterLineupState.teamManagerIsNew && loadTeamFromStorage(nextName)) {
+    alert("Esiste già una squadra con questo nome. Scegli un nome diverso.");
+    return;
+  }
   if (previousName && nextName && previousName !== nextName) {
     payload.name = previousName;
     nextName = previousName;
@@ -578,6 +585,7 @@ export function saveTeamManagerPayload(options = {}) {
   if (rosterLineupState.teamManagerState) {
     rosterLineupState.teamManagerState.name = nextName;
   }
+  rosterLineupState.teamManagerIsNew = false;
   const roster = extractRosterFromTeam(payload);
   if (storageOnly) {
     // La gestione dell'archivio non deve modificare roster, formazione o liberi del match aperto.
