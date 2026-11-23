@@ -6,14 +6,15 @@ import {
 import { session as analysisFiltersState } from "../state/analysis-analysis-filters.js";
 import { normalizeSetNumber, buildAttackTypeLabel } from "./values.js";
 import { getServeStartZone } from "./trajectory-model.js";
-export function getFilteredPlayerTrajectoryEventsForPlayer(playerIdx) {
+import { getTeamScopeFromEvent } from '../teams/selectors.js';
+export function getFilteredPlayerTrajectoryEventsForPlayer(playerIdx, scope = null) {
   const events = getAnalysisEvents().filter((ev) => {
     if (!ev || ev.skillId !== "attack") return false;
     const dir = ev.attackDirection || ev.attackTrajectory;
     if (!dir || !dir.start || !dir.end) return false;
     if (playerIdx === null) return false;
     if (
-      !matchesTeamFilter(ev, analysisFiltersState.analysisTeamFilterState.teams)
+      (scope ? getTeamScopeFromEvent(ev) !== scope : !matchesTeamFilter(ev, analysisFiltersState.analysisTeamFilterState.teams))
     )
       return false;
     return ev.playerIdx === playerIdx;
@@ -60,12 +61,12 @@ export function getFilteredPlayerTrajectoryEventsForPlayer(playerIdx) {
   });
 }
 
-export function getFilteredPlayerAttackSummaryEventsForPlayer(playerIdx) {
+export function getFilteredPlayerAttackSummaryEventsForPlayer(playerIdx, scope = null) {
   const events = getAnalysisEvents().filter((ev) => {
     if (!ev || ev.skillId !== "attack") return false;
     if (playerIdx === null) return false;
     if (
-      !matchesTeamFilter(ev, analysisFiltersState.analysisTeamFilterState.teams)
+      (scope ? getTeamScopeFromEvent(ev) !== scope : !matchesTeamFilter(ev, analysisFiltersState.analysisTeamFilterState.teams))
     )
       return false;
     return ev.playerIdx === playerIdx;
@@ -112,13 +113,13 @@ export function getFilteredPlayerAttackSummaryEventsForPlayer(playerIdx) {
   });
 }
 
-export function getFilteredPlayerServeTrajectoryEventsForPlayer(playerIdx) {
+export function getFilteredPlayerServeTrajectoryEventsForPlayer(playerIdx, scope = null) {
   const events = getAnalysisEvents().filter((ev) => {
     if (!ev || ev.skillId !== "serve") return false;
     if (!ev.serveStart || !ev.serveEnd) return false;
     if (playerIdx === null) return false;
     if (
-      !matchesTeamFilter(ev, analysisFiltersState.analysisTeamFilterState.teams)
+      (scope ? getTeamScopeFromEvent(ev) !== scope : !matchesTeamFilter(ev, analysisFiltersState.analysisTeamFilterState.teams))
     )
       return false;
     return ev.playerIdx === playerIdx;

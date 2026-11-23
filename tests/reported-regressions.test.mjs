@@ -386,7 +386,7 @@ test("le formazioni usano i numeri del proprio roster e sezioni blu e rossa", ()
 test("l'avatar precede il nome e viene riutilizzato nel confronto giocatrici", () => {
   const analysis = readFileSync(new URL("../src/components/PlayerAnalysis.jsx", import.meta.url), "utf8");
   assert.ok(analysis.indexOf('className="player-analysis-identity__avatar"') < analysis.indexOf('className="player-analysis-identity__text"'));
-  assert.match(readFileSync(new URL("../src/features/analysis/player-snapshot-model.js", import.meta.url), "utf8"), /photo:\s*getPlayerPhotoForScope\(analysisScope, name\)/);
+  assert.match(readFileSync(new URL("../src/features/analysis/player-snapshot-model.js", import.meta.url), "utf8"), /photo:\s*getPlayerPhotoForScope\(scope, name\)/);
   assert.match(analysis, /<Identity snapshot=\{snapshot\} compact/);
   assert.match(css, /\.player-analysis-identity\s*\{[\s\S]*?display:\s*flex/);
   assert.match(css, /\.player-analysis-identity\.is-compact \.player-analysis-identity__avatar/);

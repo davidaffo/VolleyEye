@@ -51,7 +51,7 @@ export function PlayerAnalysisRegion({
   const visible = preference
     ? view.preferences[preference] !== false
     : region === "compareFilter"
-      ? !!view.preferences.compareEnabled && view.entries.length >= 2
+      ? !!view.preferences.compareEnabled && view.compareEntries.length > 0
       : !view.compare;
   return (
     <Component {...props} className={className + (visible ? "" : " hidden")} />
@@ -85,7 +85,7 @@ export function PlayerAnalysisSelect({ compare = false }) {
         </option>
       ) : (
         entries.map((entry) => (
-          <option key={entry.idx} value={String(entry.idx)}>
+          <option key={entry.value ?? entry.idx} value={entry.value ?? String(entry.idx)}>
             {entry.label}
           </option>
         ))
@@ -226,7 +226,7 @@ function CompareCard({ snapshot, other, view, index }) {
       attackBody: prefs.showSecond ? prefix + "-attack-body" : null,
       distribution: prefs.showSecond ? prefix + "-distribution" : null,
       charts: prefix + "-charts",
-    });
+    }, snapshot.scope, other.scope);
   }, [view, snapshot.playerIdx, other.playerIdx, prefix]);
   return (
     <div
@@ -235,6 +235,7 @@ function CompareCard({ snapshot, other, view, index }) {
       }
     >
       <Identity snapshot={snapshot} compact />
+      {snapshot.teamName && <div className="player-analysis-compare-team">{snapshot.teamName}</div>}
       <table className="player-analysis-compare-table">
         <tbody>
           {snapshot.metrics.map((section, sectionIndex) => (

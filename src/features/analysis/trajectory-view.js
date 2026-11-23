@@ -247,15 +247,14 @@ export function publishReactGlobalAttackGrid() {
   );
 }
 
-export function publishReactPlayerAttackGrid(target, index) {
-  const scope = getAnalysisTeamScope(),
-    far =
+export function publishReactPlayerAttackGrid(target, index, scope = getAnalysisTeamScope()) {
+  const far =
       getAnalysisCourtSide(
         ensurePlayerAnalysisState().courtSideByScope[scope],
       ) === "far";
   publishReactAttackGrid(
     target,
-    getFilteredPlayerTrajectoryEventsForPlayer(index),
+    getFilteredPlayerTrajectoryEventsForPlayer(index, scope),
     far,
   );
 }
@@ -319,9 +318,8 @@ export function publishReactGlobalServeGrid() {
   });
 }
 
-export function publishReactPlayerServeGrid(target, index) {
-  const scope = getAnalysisTeamScope(),
-    far =
+export function publishReactPlayerServeGrid(target, index, scope = getAnalysisTeamScope()) {
+  const far =
       getAnalysisCourtSide(
         ensurePlayerAnalysisState().courtSideByScope[scope],
       ) === "far";
@@ -333,7 +331,7 @@ export function publishReactPlayerServeGrid(target, index) {
         : [
             buildReactServeTrajectoryCard(
               index,
-              getFilteredPlayerServeTrajectoryEventsForPlayer(index),
+              getFilteredPlayerServeTrajectoryEventsForPlayer(index, scope),
               scope,
               far,
             ),

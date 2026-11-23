@@ -13,7 +13,7 @@ test('React player regions follow comparison and preferences without replacing m
     const hidden = selector => query(selector).classList.contains('hidden');
     const table = query('#player-analysis-table-wrap');
     const panel = query('#player-analysis-attack');
-    store.publish({ entries: [{ idx: 0 }, { idx: 1 }], primary: null, compare: null,
+    store.publish({ entries: [{ idx: 0 }, { idx: 1 }], compareEntries: [{ idx: 1 }], primary: null, compare: null,
       preferences: { compareEnabled: true, showAttack: false, showServe: true, showSecond: false } });
     window.__flushReactViews();
     assert.equal(hidden('#player-analysis-compare-filter'), false);
@@ -26,7 +26,7 @@ test('React player regions follow comparison and preferences without replacing m
     assert.equal(hidden('#player-analysis-table-wrap'), true);
     assert.equal(hidden('.player-analysis-columns'), true);
     assert.equal(hidden('.player-skill-charts-panel'), true);
-    store.publish({ compare: null, entries: [{ idx: 0 }], preferences: { compareEnabled: true, showAttack: true } });
+    store.publish({ compare: null, entries: [{ idx: 0 }], compareEntries: [], preferences: { compareEnabled: true, showAttack: true } });
     window.__flushReactViews();
     assert.equal(hidden('#player-analysis-compare-filter'), true);
     assert.equal(hidden('#player-analysis-attack'), false);

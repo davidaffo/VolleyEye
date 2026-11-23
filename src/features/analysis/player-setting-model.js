@@ -8,12 +8,13 @@ import { session as analysisFiltersState } from "../state/analysis-analysis-filt
 import { normalizeSetNumber } from "./values.js";
 import { normalizeSetTypeValue } from "../../domain/skill-values.js";
 import { getPlayerAnalysisPlayerIdx } from "./player-model.js";
-export function getFilteredPlayerSecondEventsForPlayer(playerIdx) {
+import { getTeamScopeFromEvent } from '../teams/selectors.js';
+export function getFilteredPlayerSecondEventsForPlayer(playerIdx, scope = null) {
   const events = getAnalysisEvents().filter((ev) => {
     if (!ev || ev.skillId !== "attack") return false;
     if (playerIdx === null) return false;
     if (
-      !matchesTeamFilter(ev, analysisFiltersState.analysisTeamFilterState.teams)
+      (scope ? getTeamScopeFromEvent(ev) !== scope : !matchesTeamFilter(ev, analysisFiltersState.analysisTeamFilterState.teams))
     )
       return false;
     return getSetterFromEvent(ev) === playerIdx;
@@ -61,8 +62,9 @@ export function attachDampCountsByRotation(filteredEvents, allEvents) {
 
 export function getFilteredPlayerAttacksForSecondDistribution(
   playerIdx = getPlayerAnalysisPlayerIdx(),
+  scope = null,
 ) {
-  const all = getFilteredPlayerSecondEventsForPlayer(playerIdx);
+  const all = getFilteredPlayerSecondEventsForPlayer(playerIdx, scope);
   const filtered = all.filter((ev) => {
     const setType = normalizeSetTypeValue(
       ev.setType ||

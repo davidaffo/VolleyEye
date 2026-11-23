@@ -93,6 +93,53 @@ test("il grafo dei moduli ES nativi completa il bootstrap", async () => {
   );
 });
 
+test('confronto giocatrici distingue squadre e indici uguali nei dati e nelle traiettorie', async () => {
+  const context = buildBrowserContext();
+  context.alert = () => {};
+  runtimeFiles.forEach(path => vm.runInContext(readRuntimeSource(path), context, { filename: path }));
+  await context.init();
+  vm.runInContext(`
+    Object.assign(state, { useOpponentTeam: true, players: ['Casa'], opponentPlayers: ['Ospite'],
+      selectedTeam: 'Casa', selectedOpponentTeam: 'Ospite',
+      match: { teamName: 'Casa', opponent: 'Ospite' },
+      uiPlayerAnalysis: { playerIdx: 0, compareEnabled: true, comparePlayerIdx: 0, comparePlayerScope: 'opponent' },
+      events: [
+        { eventId: 1, team: 'our', playerIdx: 0, setterIdx: 0, playerName: 'Casa', skillId: 'attack', code: '#', set: 1,
+          attackDirection: { start: {x: 0.1, y: 0.2}, end: {x: 0.3, y: 0.4} } },
+        { eventId: 2, team: 'opponent', playerIdx: 0, setterIdx: 0, playerName: 'Ospite', skillId: 'attack', code: '=', set: 1,
+          attackDirection: { start: {x: 0.2, y: 0.2}, end: {x: 0.4, y: 0.4} } }
+      ] });
+    analysisTeamFilterState.teams = new Set(['our']);
+    invalidateAnalysisCaches();
+    publishReactPlayerAnalysis();
+  `, context);
+  const result = JSON.parse(vm.runInContext(`JSON.stringify({
+    primary: playerAnalysisStore.getSnapshot().primary,
+    compare: playerAnalysisStore.getSnapshot().compare,
+    options: playerAnalysisStore.getSnapshot().compareEntries,
+    ourEvents: getFilteredPlayerAttackSummaryEventsForPlayer(0, 'our').map(ev => ev.eventId),
+    otherEvents: getFilteredPlayerAttackSummaryEventsForPlayer(0, 'opponent').map(ev => ev.eventId),
+    otherSets: getFilteredPlayerSecondEventsForPlayer(0, 'opponent').map(ev => ev.eventId),
+    otherChart: buildAnalysisSkillChartEvents({ scope: 'opponent', skillId: 'attack', playerIdx: 0 }).map(ev => ev.eventId)
+  })`, context));
+  assert.equal(result.primary.name, 'Casa');
+  assert.equal(result.compare.name, 'Ospite');
+  assert.equal(result.compare.scope, 'opponent');
+  assert.equal(result.options[0].value, 'opponent:0');
+  const attack = snapshot => snapshot.metrics.find(item => item.title === 'Attacco').entries;
+  assert.equal(attack(result.primary).find(entry => entry.label === 'Err').value, 0);
+  assert.equal(attack(result.compare).find(entry => entry.label === 'Err').value, 1);
+  assert.deepEqual(result.ourEvents, [1]);
+  assert.deepEqual(result.otherEvents, [2]);
+  assert.deepEqual(result.otherSets, [2]);
+  assert.deepEqual(result.otherChart, [2]);
+  vm.runInContext(`analysisTeamFilterState.teams = new Set(['opponent']); state.uiPlayerAnalysis.playerIdx = 0;
+    state.uiPlayerAnalysis.comparePlayerScope = 'our'; state.uiPlayerAnalysis.comparePlayerIdx = 0;
+    publishReactPlayerAnalysis();`, context);
+  assert.equal(vm.runInContext('playerAnalysisStore.getSnapshot().compare.scope', context), 'our');
+  assert.equal(vm.runInContext('playerAnalysisStore.getSnapshot().compareEntries[0].value', context), 'our:0');
+});
+
 test('il backup ripristina impostazioni scout, regole e preferenze senza cambiare import partita', async () => {
   const context = buildBrowserContext();
   context.alert = () => {};

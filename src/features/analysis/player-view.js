@@ -12,6 +12,7 @@ import { getAnalysisTeamScope } from "./filter-model.js";
 import {
   getPlayersForScope,
   getPlayerNumbersForScope,
+  getTeamNameForScope,
 } from "../teams/selectors.js";
 
 import { ensureSkillChartsUiState } from "./skill-chart-model.js";
@@ -37,6 +38,7 @@ import {
 } from "./trajectory-view.js";
 import { publishReactPlayerSecondTable } from "./setting-view.js";
 import { analysisTableStore } from "../../state/analysis-table-store.mjs";
+import { session as matchState } from "../../../js/globals.js";
 
 export function publishReactPlayerAnalysis() {
   const prefs = ensurePlayerAnalysisState(),
@@ -59,27 +61,34 @@ export function publishReactPlayerAnalysis() {
     idx = getPlayerAnalysisPlayerIdx(),
     compareIdx = getPlayerAnalysisCompareIdx(),
     snapshots = buildReactPlayerAnalysisSnapshots();
+  const compareEntries = [scope, ...(matchState.state.useOpponentTeam ? [scope === 'our' ? 'opponent' : 'our'] : [])].flatMap(teamScope => {
+    const teamNumbers = getPlayerNumbersForScope(teamScope);
+    return getSortedPlayerEntriesForScope(teamScope).filter(entry => teamScope !== scope || entry.idx !== idx).map(({ name, idx }) => ({
+      idx, value: `${teamScope}:${idx}`,
+      label: `${matchState.state.useOpponentTeam ? getTeamNameForScope(teamScope) + ' · ' : ''}${formatNameWithNumberFor(name, teamNumbers) || name}`,
+    }));
+  });
   playerAnalysisStore.publish({
     ...snapshots,
     entries,
-    compareEntries: entries.filter((entry) => entry.idx !== idx),
+    compareEntries,
     preferences: { ...prefs },
     playerIdx: idx === null ? "" : String(idx),
-    compareIdx: compareIdx === null ? "" : String(compareIdx),
+    compareIdx: compareIdx === null ? "" : `${prefs.comparePlayerScope}:${compareIdx}`,
     scope,
   });
   return { prefs, compare: !!snapshots.compare };
 }
 
-export function refreshReactCompareSections(index, other, nodes) {
+export function refreshReactCompareSections(index, other, nodes, scope = getAnalysisTeamScope(), otherScope = scope) {
   if (nodes.attackSummary)
     publishReactAttackSummary(
       nodes.attackSummary,
-      getFilteredPlayerAttackSummaryEventsForPlayer(index),
-      getFilteredPlayerAttackSummaryEventsForPlayer(other),
+      getFilteredPlayerAttackSummaryEventsForPlayer(index, scope),
+      getFilteredPlayerAttackSummaryEventsForPlayer(other, otherScope),
     );
-  if (nodes.attackGrid) publishReactPlayerAttackGrid(nodes.attackGrid, index);
-  if (nodes.serveGrid) publishReactPlayerServeGrid(nodes.serveGrid, index);
+  if (nodes.attackGrid) publishReactPlayerAttackGrid(nodes.attackGrid, index, scope);
+  if (nodes.serveGrid) publishReactPlayerServeGrid(nodes.serveGrid, index, scope);
   if (nodes.secondBody)
     publishReactPlayerSecondTable(
       nodes.secondBody,
@@ -87,12 +96,11 @@ export function refreshReactCompareSections(index, other, nodes) {
       index,
       nodes.attackBody,
       other,
-      { comparison: true },
+      { comparison: true, scope, compareScope: otherScope },
     );
   if (nodes.charts) {
     skillAnalysisState.skillChartToneColorCache = null;
-    const scope = getAnalysisTeamScope(),
-      players = getPlayersForScope(scope),
+    const players = getPlayersForScope(scope),
       numbers = getPlayerNumbersForScope(scope),
       metricId = ensureSkillChartsUiState().playerMetric || "eff",
       label =

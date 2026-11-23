@@ -22,6 +22,7 @@ import { session as analysisFiltersState } from "../state/analysis-analysis-filt
 import {
   getPlayersForScope,
   getPlayerNumbersForScope,
+  getTeamScopeFromEvent,
 } from "../teams/selectors.js";
 
 import {
@@ -169,14 +170,15 @@ export function publishReactPlayerSecondTable(
   playerIdx,
   targetAttackBody = null,
   comparePlayerIdx = null,
-  { comparison = false } = {},
+  { comparison = false, scope = null, compareScope = null } = {},
 ) {
   if (!targetBody) return;
   const viewRows = [];
   const publish = () =>
     analysisTableStore.publish(targetBody, { rows: viewRows });
   const attackOutcomeBody = targetAttackBody;
-  const analysisScope = getAnalysisTeamScope();
+  const analysisScope = scope || getAnalysisTeamScope();
+  const otherScope = compareScope || analysisScope;
   const players = getPlayersForScope(analysisScope);
   const numbers = getPlayerNumbersForScope(analysisScope);
   const isCompareTable = comparison;
@@ -202,45 +204,43 @@ export function publishReactPlayerSecondTable(
     publishReactDistributionGrid(targetDistribution, []);
     return;
   }
-  const secondEventsFor = (index) =>
+  const secondEventsFor = (index, teamScope) =>
     getAnalysisEvents().filter(
       (ev) =>
         ev &&
         ev.skillId === "second" &&
-        matchesTeamFilter(
-          ev,
-          analysisFiltersState.analysisTeamFilterState.teams,
-        ) &&
+        (scope ? getTeamScopeFromEvent(ev) === teamScope : matchesTeamFilter(ev, analysisFiltersState.analysisTeamFilterState.teams)) &&
         typeof ev.playerIdx === "number" &&
         ev.playerIdx === index,
     );
-  const secondEvents = secondEventsFor(playerIdx);
+  const secondEvents = secondEventsFor(playerIdx, analysisScope);
   const compareSecondEvents =
     typeof comparePlayerIdx === "number"
-      ? secondEventsFor(comparePlayerIdx)
+      ? secondEventsFor(comparePlayerIdx, otherScope)
       : [];
   const secondCounts = countEvaluatedEvents(secondEvents);
   const filteredAttackEvents =
-    getFilteredPlayerSecondEventsForPlayer(playerIdx);
+    getFilteredPlayerSecondEventsForPlayer(playerIdx, scope);
   const compareAttackEvents =
     typeof comparePlayerIdx === "number"
-      ? getFilteredPlayerSecondEventsForPlayer(comparePlayerIdx)
+      ? getFilteredPlayerSecondEventsForPlayer(comparePlayerIdx, scope ? otherScope : null)
       : [];
-  const identifyAttacker = (ev) => {
+  const identifyAttacker = (ev, teamScope) => {
     const idx = resolvePlayerIdx(ev);
+    const teamPlayers = getPlayersForScope(teamScope), teamNumbers = getPlayerNumbersForScope(teamScope);
     const name =
-      typeof idx === "number" && players[idx]
-        ? formatScopedPlayerName(idx)
+      typeof idx === "number" && teamPlayers[idx]
+        ? formatNameWithNumberFor(teamPlayers[idx], teamNumbers)
         : ev.playerName || "Attaccante";
-    return { key: typeof idx === "number" ? "idx-" + idx : name, name };
+    return { key: typeof idx === "number" ? teamScope + ":" + idx : teamScope + ":" + name, name };
   };
   const attackRowsMap = groupEventCounts(
     filteredAttackEvents,
-    identifyAttacker,
+    ev => identifyAttacker(ev, analysisScope),
   );
   const compareAttackRowsMap = groupEventCounts(
     compareAttackEvents,
-    identifyAttacker,
+    ev => identifyAttacker(ev, otherScope),
   );
   const attackRows = Array.from(attackRowsMap.entries())
     .map(([key, value]) => ({ key, ...value }))
@@ -304,9 +304,9 @@ export function publishReactPlayerSecondTable(
     publish();
     publishReactDistributionGrid(
       targetDistribution,
-      getFilteredPlayerAttacksForSecondDistribution(playerIdx),
+      getFilteredPlayerAttacksForSecondDistribution(playerIdx, scope),
       typeof comparePlayerIdx === "number"
-        ? getFilteredPlayerAttacksForSecondDistribution(comparePlayerIdx)
+        ? getFilteredPlayerAttacksForSecondDistribution(comparePlayerIdx, scope ? otherScope : null)
         : null,
     );
     return;
@@ -351,9 +351,9 @@ export function publishReactPlayerSecondTable(
   publish();
   publishReactDistributionGrid(
     targetDistribution,
-    getFilteredPlayerAttacksForSecondDistribution(playerIdx),
+    getFilteredPlayerAttacksForSecondDistribution(playerIdx, scope),
     typeof comparePlayerIdx === "number"
-      ? getFilteredPlayerAttacksForSecondDistribution(comparePlayerIdx)
+      ? getFilteredPlayerAttacksForSecondDistribution(comparePlayerIdx, scope ? otherScope : null)
       : null,
   );
 }

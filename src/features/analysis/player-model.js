@@ -68,8 +68,10 @@ export function getPlayerAnalysisPlayerIdx() {
 
 export function getPlayerAnalysisCompareIdx() {
   const prefs = ensurePlayerAnalysisState();
-  const players = getPlayersForScope(getAnalysisTeamScope());
-  if (!prefs.compareEnabled || !players.length) {
+  const primaryScope = getAnalysisTeamScope();
+  if (!matchState.state.useOpponentTeam || !['our', 'opponent'].includes(prefs.comparePlayerScope)) prefs.comparePlayerScope = primaryScope;
+  let players = getPlayersForScope(prefs.comparePlayerScope);
+  if (!prefs.compareEnabled || !getPlayersForScope(primaryScope).length) {
     prefs.comparePlayerIdx = null;
     return null;
   }
@@ -78,9 +80,15 @@ export function getPlayerAnalysisCompareIdx() {
     typeof prefs.comparePlayerIdx !== "number" ||
     prefs.comparePlayerIdx < 0 ||
     prefs.comparePlayerIdx >= players.length ||
-    prefs.comparePlayerIdx === primaryIdx;
+    (prefs.comparePlayerScope === primaryScope && prefs.comparePlayerIdx === primaryIdx);
   if (isInvalid) {
-    const fallbackIdx = players.findIndex((_name, idx) => idx !== primaryIdx);
+    prefs.comparePlayerScope = primaryScope;
+    players = getPlayersForScope(primaryScope);
+    let fallbackIdx = players.findIndex((_name, idx) => idx !== primaryIdx);
+    if (fallbackIdx < 0 && matchState.state.useOpponentTeam) {
+      const opposite = primaryScope === 'our' ? 'opponent' : 'our';
+      if (getPlayersForScope(opposite).length) { prefs.comparePlayerScope = opposite; fallbackIdx = 0; }
+    }
     prefs.comparePlayerIdx = fallbackIdx >= 0 ? fallbackIdx : null;
   }
   return prefs.comparePlayerIdx;

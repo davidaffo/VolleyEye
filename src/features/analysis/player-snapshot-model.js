@@ -10,12 +10,13 @@ import {
 } from "./player-model.js";
 import {
   getAnalysisTeamScope,
-  filterEventsByAnalysisTeam,
   matchesSummarySetFilter,
 } from "./filter-model.js";
 import {
   getPlayersForScope,
   getPlayerNumbersForScope,
+  getTeamScopeFromEvent,
+  getTeamNameForScope,
 } from "../teams/selectors.js";
 import { getPlayerPhotoForScope } from "../teams/player-identity.js";
 import {
@@ -34,20 +35,18 @@ export function buildReactPlayerAnalysisSnapshots() {
   const compareIdx = getPlayerAnalysisCompareIdx();
   const analysisScope = getAnalysisTeamScope();
   const players = getPlayersForScope(analysisScope);
-  const numbers = getPlayerNumbersForScope(analysisScope);
   const prefs = ensurePlayerAnalysisState();
-  const filteredEvents = filterEventsByAnalysisTeam().filter((ev) =>
-    matchesSummarySetFilter(ev),
-  );
-  const statsByPlayer = computeStatsByPlayerForEvents(filteredEvents, players);
   if (idx === null || !players || !players[idx]) {
     return { primary: null, compare: null };
   }
-  const playerRallies = computePlayerRallies(getAnalysisEvents(), analysisScope);
-  const playerPoints = computePlayerPointsMap(filteredEvents, analysisScope);
-  const playerErrors = computePlayerErrorsMap(filteredEvents);
-  const playerPassAces = computePlayerPassAceMap(filteredEvents, analysisScope);
-  const buildPlayerSnapshot = (playerIdx) => {
+  const buildPlayerSnapshot = (playerIdx, scope) => {
+    const players = getPlayersForScope(scope), numbers = getPlayerNumbersForScope(scope);
+    const filteredEvents = getAnalysisEvents().filter(ev => getTeamScopeFromEvent(ev) === scope && matchesSummarySetFilter(ev));
+    const statsByPlayer = computeStatsByPlayerForEvents(filteredEvents, players);
+    const playerRallies = computePlayerRallies(getAnalysisEvents(), scope);
+    const playerPoints = computePlayerPointsMap(filteredEvents, scope);
+    const playerErrors = computePlayerErrorsMap(filteredEvents);
+    const playerPassAces = computePlayerPassAceMap(filteredEvents, scope);
     const name = players[playerIdx];
     const countsBySkill = normalizeSkillCounts(statsByPlayer[playerIdx]);
     const points = playerPoints[playerIdx] || { for: 0, against: 0 };
@@ -55,9 +54,11 @@ export function buildReactPlayerAnalysisSnapshots() {
     const passAces = playerPassAces[playerIdx] || 0;
     return {
       playerIdx,
-      photo: getPlayerPhotoForScope(analysisScope, name),
+      scope,
+      teamName: getTeamNameForScope(scope),
+      photo: getPlayerPhotoForScope(scope, name),
       name:
-        analysisScope === "opponent"
+        scope === "opponent"
           ? formatNameWithNumberFor(name, numbers)
           : formatNameWithNumber(name),
       metrics: [
@@ -84,10 +85,10 @@ export function buildReactPlayerAnalysisSnapshots() {
     };
   };
   return {
-    primary: buildPlayerSnapshot(idx),
+    primary: buildPlayerSnapshot(idx, analysisScope),
     compare:
-      prefs.compareEnabled && compareIdx !== null && players[compareIdx]
-        ? buildPlayerSnapshot(compareIdx)
+      prefs.compareEnabled && compareIdx !== null && getPlayersForScope(prefs.comparePlayerScope)[compareIdx]
+        ? buildPlayerSnapshot(compareIdx, prefs.comparePlayerScope)
         : null,
   };
 }
