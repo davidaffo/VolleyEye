@@ -140,8 +140,8 @@ export function TeamDefaultLineup() {
   return (
     <div ref={interactions.root} className="team-manager-default">
       <h4>Formazione di default</h4>
-      <label className="default-lineup-rotation">
-        <span>Rotazione iniziale</span>
+      <div className="default-lineup-rotation">
+        <label htmlFor="default-lineup-rotation">Rotazione iniziale</label>
         <RotationControls
           className="rotation-controls default-lineup-rotation-controls"
           ids={['default-lineup-rotate-cw', 'default-lineup-rotation', 'default-lineup-rotate-ccw']}
@@ -149,7 +149,7 @@ export function TeamDefaultLineup() {
           onChange={value => act(view.onRotation, value)}
           onRotate={direction => act(view.onRotate, direction)}
         />
-      </label>
+      </div>
       <label className="default-lineup-preferred-libero">
         <span>Libero principale</span>
         <select
