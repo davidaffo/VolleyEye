@@ -34,6 +34,8 @@ import { session as rosterLineupState } from "../state/roster-lineup.js";
 import { demoActionStore, demoWelcomeStore } from "../../state/roster-import-store.mjs";
 import { setGlobalModalState } from "../layout/modals.js";
 import { session as persistentStorageState } from "../state/storage-persistent-storage.js";
+import { applyTopBarVisibility, applyVideoLayoutWidths, applyScoutColumnLayout } from "../scout-ui.js";
+import { applyScoutWidgetLayout } from "../live/workspace-layout.js";
 
 const matchIoState = session;
 
@@ -57,13 +59,17 @@ export function applyImportedMatch(nextState, options = {}) {
   }
   nextState =
     (cloneIsolationData(nextState));
-  const preservedPointRules = matchState.state.pointRules;
-  const preservedTheme = getStoredThemePreference() || normalizeThemePreference(matchState.state.theme);
+  const restoreSettings = !!options.restoreSettings;
+  const preservedPointRules = restoreSettings && nextState.pointRules ? nextState.pointRules : matchState.state.pointRules;
+  const preservedTheme = restoreSettings && nextState.theme
+    ? normalizeThemePreference(nextState.theme)
+    : getStoredThemePreference() || normalizeThemePreference(matchState.state.theme);
   const preservedSavedTeams = matchState.state.savedTeams || {};
   const preservedSavedOpponentTeams = matchState.state.savedOpponentTeams || {};
   const preservedSavedMatches = matchState.state.savedMatches || {};
   const preservedPlayersDb = matchState.state.playersDb || {};
-  const preservedOpponentSkillConfig = matchState.state.opponentSkillConfig || {};
+  const preservedOpponentSkillConfig = restoreSettings && nextState.opponentSkillConfig
+    ? nextState.opponentSkillConfig : matchState.state.opponentSkillConfig || {};
   resetSetTypeState();
   const merged = Object.assign({}, matchState.state, nextState);
   merged.notes = normalizeMatchNotes(nextState.notes);
@@ -164,6 +170,13 @@ export function applyImportedMatch(nextState, options = {}) {
   // Settings and roster managers retain this object from bootstrap.
   // Replacing it leaves their writes on the previous match's state.
   Object.assign(matchState.state, merged);
+  if (restoreSettings) {
+    document.body.classList.toggle("force-mobile", !!matchState.state.forceMobileLayout);
+    applyTopBarVisibility();
+    applyVideoLayoutWidths();
+    applyScoutColumnLayout();
+    applyScoutWidgetLayout();
+  }
   matchState.state.uiAnalysisExtraMatchesByScope = cloneIsolationData(nextState.uiAnalysisExtraMatchesByScope || { our: [], opponent: [] });
   resetAnalysisForMatch();
   sanitizeRosterIsolation("our");
@@ -397,7 +410,7 @@ export async function applyImportedDatabase(nextState) {
     alert("File database non valido: mancano roster o cronologia del match.");
     return false;
   }
-  applyImportedMatch(imported, { silent: true });
+  applyImportedMatch(imported, { silent: true, restoreSettings: true });
   const failedWrites = [];
   const importedTeams = imported.savedTeams || imported.savedOpponentTeams || {};
   if (importedTeams && typeof importedTeams === "object") {

@@ -31,15 +31,12 @@ export function publishAttackSetterOptions(scope, setterIndex) {
     if (slot.main) inCourt.add(slot.main);
     if (slot.replaced) inCourt.add(slot.replaced);
   });
-  if (document.body.dataset.activeTab === "video")
-    liberos.forEach((name) => {
-      if (name) inCourt.add(name);
-    });
+  const videoAnalysis = document.body.dataset.activeTab === "video";
   const options = [
     Object.freeze({ index: null, label: "—", className: "base-modal-btn" }),
   ];
   players.forEach((name, index) => {
-    if (!inCourt.has(name)) return;
+    if (!videoAnalysis && !inCourt.has(name)) return;
     options.push(
       Object.freeze({
         index,

@@ -182,6 +182,22 @@ export function buildDatabaseBackupPayload() {
   const payload = buildMatchExportPayload();
   payload.kind = "database-backup";
   payload.savedAt = payload.exportedAt;
+  // Le preferenze dell'appartenenza al dispositivo non fanno parte del file
+  // di una singola partita, ma devono seguire il backup completo.
+  const settings = [
+    "theme", "autoRotate", "autoRolePositioning", "autoRoleP1American", "opponentAutoRoleP1American",
+    "predictiveSkillFlow", "useOpponentTeam", "autoLiberoBackline", "autoLiberoRole",
+    "opponentAutoLiberoBackline", "opponentAutoLiberoRole", "autoLiberoRoleDefaultVersion",
+    "attackTrajectoryEnabled", "attackTrajectorySimplified", "opponentAttackTrajectoryEnabled",
+    "serveTrajectoryEnabled", "opponentServeTrajectoryEnabled", "setTypePromptEnabled", "opponentSetTypePromptEnabled",
+    "evaluateDefenseAfterBlock", "opponentEvaluateDefenseAfterBlock", "showServeTrajectoryLogOur", "showServeTrajectoryLogOpp",
+    "videoScoutMode", "videoPlayByPlay", "defaultSetType", "metricsConfig", "pointRules", "opponentSkillConfig",
+    "videoFilterPresets", "forceMobileLayout", "uiTopBarHidden", "uiScoutColumns", "uiScoutWidgetLayout",
+    "uiPlayerAnalysis", "uiVideoLayout", "uiVideoAnalysisSort"
+  ];
+  for (const key of settings) {
+    if (matchState.state[key] !== undefined) payload.state[key] = cloneIsolationData(matchState.state[key]);
+  }
   const savedMatches =
     matchState.state && matchState.state.savedMatches && typeof matchState.state.savedMatches === "object"
       ? JSON.parse(JSON.stringify(matchState.state.savedMatches))

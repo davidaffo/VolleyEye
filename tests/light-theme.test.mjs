@@ -68,7 +68,8 @@ test("il tema predefinito è scuro e i selettori offrono solo chiaro e scuro", (
 test("il tema è globale e non viene sostituito caricando o esportando una partita", () => {
   assert.match(stateStore, /THEME_PREFERENCE_KEY = "volleyeye-theme-preference"/);
   assert.match(stateStore, /state\.theme = globalThemePreference \|\| normalizeThemePreference\(parsed\.theme\)/);
-  assert.match(matchIo, /const preservedTheme = getStoredThemePreference\(\)/);
+  assert.match(matchIo, /getStoredThemePreference\(\)/);
+  assert.match(matchIo, /restoreSettings && nextState\.theme/);
   assert.match(matchIo, /merged\.theme = preservedTheme/);
   assert.match(matchIo, /applyTheme\(preservedTheme\)/);
   assert.match(exportsSource, /applyTheme\("light", \{ persistPreference: false \}\)/);

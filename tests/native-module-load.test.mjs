@@ -93,6 +93,62 @@ test("il grafo dei moduli ES nativi completa il bootstrap", async () => {
   );
 });
 
+test('il backup ripristina impostazioni scout, regole e preferenze senza cambiare import partita', async () => {
+  const context = buildBrowserContext();
+  context.alert = () => {};
+  runtimeFiles.forEach(path => vm.runInContext(readRuntimeSource(path), context, { filename: path }));
+  await context.init();
+  vm.runInContext(`
+    Object.assign(state, {
+      theme: 'light', autoRotate: false, autoRolePositioning: false, predictiveSkillFlow: false,
+      attackTrajectoryEnabled: false, attackTrajectorySimplified: false, serveTrajectoryEnabled: false,
+      setTypePromptEnabled: false, showServeTrajectoryLogOur: false, forceMobileLayout: true,
+      uiPlayerAnalysis: { showAttack: false, showServe: true },
+      uiVideoLayout: { analysisHeight: 450, scoutHeight: 300, analysisHeightVersion: 1 },
+      uiScoutColumns: { left: 310, right: 410 },
+      pointRules: { attack: { for: ['+'], against: ['='] } },
+      opponentSkillConfig: { attack: false },
+      videoFilterPresets: [{ id: 'p', name: 'Preferito', filters: {} }]
+    });
+    const backup = JSON.parse(JSON.stringify(buildDatabaseBackupPayload()));
+    Object.assign(state, {
+      theme: 'dark', autoRotate: true, autoRolePositioning: true, predictiveSkillFlow: true,
+      attackTrajectoryEnabled: true, attackTrajectorySimplified: true, serveTrajectoryEnabled: true,
+      setTypePromptEnabled: true, showServeTrajectoryLogOur: true, forceMobileLayout: false,
+      uiPlayerAnalysis: { showAttack: true }, uiScoutColumns: { left: 100, right: 100 },
+      pointRules: { attack: { for: ['#'], against: ['='] } },
+      opponentSkillConfig: { attack: true }, videoFilterPresets: []
+    });
+  `, context);
+  await vm.runInContext('applyImportedDatabase(backup)', context);
+  const restored = JSON.parse(vm.runInContext(`JSON.stringify({
+    theme: state.theme, autoRotate: state.autoRotate, autoRolePositioning: state.autoRolePositioning,
+    predictiveSkillFlow: state.predictiveSkillFlow, attackTrajectoryEnabled: state.attackTrajectoryEnabled,
+    attackTrajectorySimplified: state.attackTrajectorySimplified, serveTrajectoryEnabled: state.serveTrajectoryEnabled,
+    setTypePromptEnabled: state.setTypePromptEnabled, showServeTrajectoryLogOur: state.showServeTrajectoryLogOur,
+    forceMobileLayout: state.forceMobileLayout, showAttack: state.uiPlayerAnalysis.showAttack,
+    columns: state.uiScoutColumns, rules: state.pointRules.attack, opponent: state.opponentSkillConfig.attack,
+    presets: state.videoFilterPresets, snapshot: buildCompactLocalStateSnapshot(state)
+  })`, context));
+  assert.equal(restored.theme, 'light');
+  for (const key of ['autoRotate', 'autoRolePositioning', 'predictiveSkillFlow', 'attackTrajectoryEnabled',
+    'attackTrajectorySimplified', 'serveTrajectoryEnabled', 'setTypePromptEnabled', 'showServeTrajectoryLogOur', 'showAttack']) {
+    assert.equal(restored[key], false, key);
+  }
+  assert.equal(restored.forceMobileLayout, true);
+  assert.deepEqual(restored.columns, { left: 310, right: 410 });
+  assert.deepEqual(restored.rules, { for: ['+'], against: ['='] });
+  assert.equal(restored.opponent, false);
+  assert.equal(restored.presets[0].name, 'Preferito');
+  assert.equal(restored.snapshot.attackTrajectoryEnabled, false);
+  assert.equal(restored.snapshot.pointRules.attack.for[0], '+');
+  vm.runInContext(`applyImportedMatch({ ...backup.state, theme: 'dark', pointRules: { attack: { for: ['#'], against: [] } },
+    opponentSkillConfig: { attack: true } }, { silent: true })`, context);
+  assert.equal(vm.runInContext('state.theme', context), 'light');
+  assert.equal(vm.runInContext('state.pointRules.attack.for[0]', context), '+');
+  assert.equal(vm.runInContext('state.opponentSkillConfig.attack', context), false);
+});
+
 for (const kind of ['match', 'backup']) {
   for (const previous of ['demo', 'empty', 'same roster']) {
     test(`import ${kind} replaces automatic lineup caches after ${previous}`, async () => {
