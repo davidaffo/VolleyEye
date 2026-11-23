@@ -58,6 +58,9 @@ export function handleAutoRotationFromEvent(eventObj, scope = "our", { persist =
       if (matchState.state.isServing) {
         enforceAutoLiberoForScope("opponent", { skipServerOnServe: true });
       }
+      if (direction && matchState.state.isServing) {
+        enforceAutoLiberoForScope("our", { skipServerOnServe: true });
+      }
       if (persist) saveState();
       return;
     }
@@ -95,8 +98,11 @@ export function handleAutoRotationFromEvent(eventObj, scope = "our", { persist =
     matchState.state.opponentAutoRotatePending = pending;
     matchState.state.isServing = !serving;
     eventObj.autoRotateNext = pending;
-    if (matchState.state.isServing) {
+    if (matchState.state.isServing || direction) {
       enforceAutoLiberoForScope("opponent", { skipServerOnServe: true });
+    }
+    if (direction) {
+      enforceAutoLiberoForScope("our", { skipServerOnServe: true });
     }
     if (persist) saveState();
     return;
@@ -120,6 +126,9 @@ export function handleAutoRotationFromEvent(eventObj, scope = "our", { persist =
       enforceAutoLiberoForScope("our", { skipServerOnServe: true });
     }
     if (matchState.state.isServing) {
+      enforceAutoLiberoForScope("opponent", { skipServerOnServe: true });
+    }
+    if (direction && !matchState.state.isServing && matchState.state.useOpponentTeam) {
       enforceAutoLiberoForScope("opponent", { skipServerOnServe: true });
     }
     if (persist) saveState();
@@ -162,8 +171,11 @@ export function handleAutoRotationFromEvent(eventObj, scope = "our", { persist =
   if (!matchState.state.isServing) {
     enforceAutoLiberoForScope("our", { skipServerOnServe: true });
   }
-  if (matchState.state.isServing) {
+  if (matchState.state.isServing || (direction && matchState.state.useOpponentTeam)) {
     enforceAutoLiberoForScope("opponent", { skipServerOnServe: true });
+  }
+  if (direction && matchState.state.isServing) {
+    enforceAutoLiberoForScope("our", { skipServerOnServe: true });
   }
   if (persist) saveState();
   if (matchState.state.autoRolePositioning) {

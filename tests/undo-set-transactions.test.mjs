@@ -6,6 +6,8 @@ import test from 'node:test';
 import vm from 'node:vm';
 import { IDBFactory } from 'fake-indexeddb';
 import { repairBug1023, scoringContext, originalPath, repairedPath, officialScores } from '../scripts/repairs/bug-1023.mjs';
+import { session as matchSession } from '../js/globals.js';
+import { enforceAutoLiberoForScope } from '../src/features/teams/court-state-model.js';
 
 const modules = {
   'js/scout/live/game-flow.js': ['src/features/live/flow-model.js', 'src/features/events/block-inference-model.js'],
@@ -396,6 +398,33 @@ for (const [code, staleOverride, expectedSkill] of [['+', 'serve', 'defense'], [
     assert.equal(c.state.opponentSkillFlowOverride, null);
     assert.deepEqual(plain(c.getAutoFlowState()), { teamScope: 'opponent', skillId: expectedSkill });
     assert.equal(c.getPredictedSkillIdForScope('opponent'), expectedSkill);
+  });
+}
+
+for (const receiving of ['our', 'opponent']) {
+  test(`il libero entra dopo il turno in battuta del centrale (${receiving})`, () => {
+    const c = setup();
+    const previous = matchSession.state;
+    try {
+      matchSession.state = c.state;
+      c.state.isServing = receiving === 'our';
+      c.state.autoRotatePending = receiving !== 'our';
+      c.state.opponentAutoRotatePending = receiving === 'our';
+      c.state[receiving === 'our' ? 'rotation' : 'opponentRotation'] = 2;
+      c.state[receiving === 'our' ? 'autoLiberoBackline' : 'opponentAutoLiberoBackline'] = true;
+      c.state[receiving === 'our' ? 'autoLiberoRole' : 'opponentAutoLiberoRole'] = 'C';
+      c.state[receiving === 'our' ? 'liberos' : 'opponentLiberos'] = ['Libero'];
+      c.state[receiving === 'our' ? 'players' : 'opponentPlayers'].push('Libero');
+      c.enforceAutoLiberoForScope = enforceAutoLiberoForScope;
+      const courtKey = receiving === 'our' ? 'court' : 'opponentCourt';
+      const server = c.state[courtKey][0].main;
+      const scoring = receiving === 'our' ? 'opponent' : 'our';
+      c.handleAutoRotationFromEvent({ team: scoring, skillId: 'attack', code: '#' }, scoring, { persist: false });
+      assert.equal(c.state.isServing, scoring === 'our');
+      assert.deepEqual(plain(c.state[courtKey][0]), { main: 'Libero', replaced: server });
+    } finally {
+      matchSession.state = previous;
+    }
   });
 }
 
