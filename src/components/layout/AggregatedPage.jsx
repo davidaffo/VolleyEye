@@ -12,7 +12,7 @@ import { AggTabButton } from "../RuntimeControls.jsx";
 import { PlayerAnalysisRegion, PlayerAnalysisHeader, PlayerAnalysisSelect, PlayerAnalysisToggle, PlayerAnalysisHero, PlayerAnalysisBody, PlayerComparison } from "../PlayerAnalysis.jsx";
 
 import { DistributionGrid } from "../AnalysisTable.jsx";
-import { AggregatedTable, AggregatedExtraTable } from "../AggregatedTable.jsx";
+import { AggregatedTable, AggregatedExtraTable, TeamComparisonToggle } from "../AggregatedTable.jsx";
 import { SetTrendGrid, SetTrendDetail } from "../SetTrend.jsx";
 import { PlayByPlaySelect, PlayByPlaySummary, PlayByPlayTable } from "../PlayByPlay.jsx";
 import { MatchSheetControls, MatchSheetPage } from "../MatchSheet.jsx";
@@ -64,6 +64,7 @@ export function AggregatedPage() {
               "Clicca una giocatrice per aprire l’analisi individuale oppure un fondamentale per vederne i dettagli."
             }
           </p>
+          <TeamComparisonToggle />
           <AggregatedTable />
           <AggregatedExtraTable />
         </TabPanel>

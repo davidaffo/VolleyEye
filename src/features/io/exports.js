@@ -193,7 +193,7 @@ export function buildDatabaseBackupPayload() {
     "evaluateDefenseAfterBlock", "opponentEvaluateDefenseAfterBlock", "showServeTrajectoryLogOur", "showServeTrajectoryLogOpp",
     "videoScoutMode", "videoPlayByPlay", "defaultSetType", "metricsConfig", "pointRules", "opponentSkillConfig",
     "videoFilterPresets", "forceMobileLayout", "uiTopBarHidden", "uiScoutColumns", "uiScoutWidgetLayout",
-    "uiPlayerAnalysis", "uiVideoLayout", "uiVideoAnalysisSort"
+    "uiPlayerAnalysis", "uiTeamComparisonColors", "uiVideoLayout", "uiVideoAnalysisSort"
   ];
   for (const key of settings) {
     if (matchState.state[key] !== undefined) payload.state[key] = cloneIsolationData(matchState.state[key]);

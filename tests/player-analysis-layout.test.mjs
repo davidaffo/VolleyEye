@@ -38,3 +38,26 @@ test('React player regions follow comparison and preferences without replacing m
     dom.window.close();
   }
 });
+
+test('il comando colori squadra è visibile solo nel confronto e riflette la preferenza', () => {
+  const dom = new JSDOM('<div id="root"></div>', { runScripts: 'outside-only', url: 'https://volleyeye.test/' });
+  const window = dom.window;
+  try {
+    window.eval(readRuntimeSource('react-views'));
+    const store = window.__reactViews.aggregatedTableStore;
+    const toggle = () => window.document.querySelector('.team-comparison-toggle input');
+    assert.equal(toggle(), null);
+    store.publish({ showTeamComparisonControl: true, teamComparisonColors: true });
+    window.__flushReactViews();
+    assert.equal(toggle().checked, true);
+    store.publish({ teamComparisonColors: false });
+    window.__flushReactViews();
+    assert.equal(toggle().checked, false);
+    store.publish({ showTeamComparisonControl: false });
+    window.__flushReactViews();
+    assert.equal(toggle(), null);
+  } finally {
+    window.__unmountReactViews?.();
+    dom.window.close();
+  }
+});

@@ -70,14 +70,11 @@ import { computePointsSummary, getEventPointValue } from "./scores.js";
 
 export function buildAggregatedSkillCells(countsBySkill, passAces) {
   return SKILL_COLUMNS.flatMap(({ id }) =>
-    skillCells(
-      id,
-      buildSkillEntries(id, countsBySkill[id], passAces).map((entry) =>
-        !["Eff", "Pos", "Prf", "% Punti", "% Err"].includes(entry.label)
-          ? entry.value
-          : entry.text,
-      ),
-    ),
+    buildSkillEntries(id, countsBySkill[id], passAces).map(entry => ({
+      text: !["Eff", "Pos", "Prf", "% Punti", "% Err"].includes(entry.label) ? entry.value : entry.text,
+      className: `skill-col skill-${id}`,
+      comparisonValue: entry.value, comparisonBetter: entry.better, comparisonSkill: id,
+    })),
   );
 }
 
@@ -266,6 +263,8 @@ export function buildReactAggregatedTable({ chartTones } = {}) {
       extraRows,
       charts,
       tableClass,
+      showTeamComparisonControl: showBothTeams,
+      teamComparisonColors: matchState.state.uiTeamComparisonColors !== false,
       hiddenSkills: SKILLS.filter(
         (skill) =>
           matchState.state.metricsConfig?.[skill.id]?.enabled === false,
@@ -664,19 +663,19 @@ export function buildReactAggregatedTable({ chartTones } = {}) {
       { text: "Totale squadra" },
       ...startTotalsCells,
       { text: "–" },
-      { text: teamTotals.totalFor || 0 },
-      { text: teamTotals.totalAgainst || 0 },
+      { text: teamTotals.totalFor || 0, comparisonValue: teamTotals.totalFor || 0, comparisonBetter: 'higher' },
+      { text: teamTotals.totalAgainst || 0, comparisonValue: teamTotals.totalAgainst || 0, comparisonBetter: 'lower' },
       {
         text: formatDelta(
           (teamTotals.totalFor || 0) - (teamTotals.totalAgainst || 0),
-        ),
+        ), comparisonValue: (teamTotals.totalFor || 0) - (teamTotals.totalAgainst || 0), comparisonBetter: 'higher',
       },
-      { text: teamTotals.totalErrors || 0 },
+      { text: teamTotals.totalErrors || 0, comparisonValue: teamTotals.totalErrors || 0, comparisonBetter: 'lower' },
       ...(includeOpponentErrorsCol ? [{ text: teamOpponentErrors || 0 }] : []),
 
       ...buildAggregatedSkillCells(totalsBySkill, totalPassAces),
     ];
-    rows.push({ className: "rotation-row total", cells: totalCells });
+    rows.push({ className: "rotation-row total", scope, comparisonKey: 'total', cells: totalCells });
     playedSets.forEach((setNum) => {
       const setEvents = summaryEvents.filter(
         (ev) => normalizeSetNumber(ev.set) === setNum,
@@ -697,24 +696,44 @@ export function buildReactAggregatedTable({ chartTones } = {}) {
         { text: "Set " + setNum },
         ...setStartCells,
         { text: "–" },
-        { text: setTotals.totalFor || 0 },
-        { text: setTotals.totalAgainst || 0 },
+        { text: setTotals.totalFor || 0, comparisonValue: setTotals.totalFor || 0, comparisonBetter: 'higher' },
+        { text: setTotals.totalAgainst || 0, comparisonValue: setTotals.totalAgainst || 0, comparisonBetter: 'lower' },
         {
           text: formatDelta(
             (setTotals.totalFor || 0) - (setTotals.totalAgainst || 0),
-          ),
+          ), comparisonValue: (setTotals.totalFor || 0) - (setTotals.totalAgainst || 0), comparisonBetter: 'higher',
         },
-        { text: setTotals.totalErrors || 0 },
+        { text: setTotals.totalErrors || 0, comparisonValue: setTotals.totalErrors || 0, comparisonBetter: 'lower' },
         ...(includeOpponentErrorsCol ? [{ text: setOpponentErrors || 0 }] : []),
 
         ...buildAggregatedSkillCells(setTotals.totalsBySkill, setPassAces),
       ];
-      rows.push({ className: "rotation-row", cells: setCells });
+      rows.push({ className: "rotation-row", scope, comparisonKey: `set:${setNum}`, cells: setCells });
     });
   };
   if (showBothTeams) {
     renderAggSummaryForScope("our", { showHeader: true });
     renderAggSummaryForScope("opponent", { showHeader: true });
+    if (matchState.state.uiTeamComparisonColors !== false) {
+      const pairs = new Map();
+      rows.filter(row => row.comparisonKey).forEach(row => {
+        const pair = pairs.get(row.comparisonKey) || {};
+        pair[row.scope] = row;
+        pairs.set(row.comparisonKey, pair);
+      });
+      pairs.forEach(({ our, opponent }) => {
+        if (!our || !opponent) return;
+        our.cells.forEach((cell, index) => {
+          const other = opponent.cells[index];
+          const a = cell.comparisonValue, b = other?.comparisonValue, better = cell.comparisonBetter;
+          if (better === 'neutral' || !better || typeof a !== 'number' || typeof b !== 'number' || !Number.isFinite(a) || !Number.isFinite(b) || a === b) return;
+          if (cell.comparisonSkill && (!isSkillEnabledForScope(cell.comparisonSkill, 'our') || !isSkillEnabledForScope(cell.comparisonSkill, 'opponent'))) return;
+          const ourBetter = better === 'lower' ? a < b : a > b;
+          cell.className = `${cell.className || ''} team-comparison-value ${ourBetter ? 'is-better' : 'is-worse'}`.trim();
+          other.className = `${other.className || ''} team-comparison-value ${ourBetter ? 'is-worse' : 'is-better'}`.trim();
+        });
+      });
+    }
     renderSummaryExtraTable(["our", "opponent"]);
     return finish();
   }

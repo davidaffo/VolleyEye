@@ -5,7 +5,7 @@ import { downloadVideoFromSelection } from "../features/video/clip-commands.js";
 import { deleteEventByKey, undoLastEvent } from "../features/events/history-commands.js";
 import { runAnalysisFilterAction } from "../features/analysis/analysis-filters.js";
 import { runScoutSkillAction } from "../features/scout/skill-actions.js";
-import { openReactAggregatedSkill, openReactAggregatedPlayer, showAggregatedSummary, openAggregatedSetStart } from "../features/analysis/summary-commands.js";
+import { openReactAggregatedSkill, openReactAggregatedPlayer, showAggregatedSummary, openAggregatedSetStart, setTeamComparisonColors } from "../features/analysis/summary-commands.js";
 import { publishApplicationViews } from "./view-publication.js";
 import { openPlayerPhotoEditor, closePlayerPhotoEditor, renderPlayerPhotoEditor, exportPlayerPhotoDataUrl, handlePlayerPhotoPointerDown, handlePlayerPhotoPointerMove, handlePlayerPhotoPointerUp } from "../features/players/photo-editor.js";
 import { session as photoState } from "../features/state/players-photo-editor.js";
@@ -80,7 +80,7 @@ import { handleScoutWidgetPointerDown, moveScoutWidgetWithKeyboard } from "../fe
 import { session as application } from "./lifecycle.js";
 
 export const actions = createCommands({
-  openReactAggregatedSkill, openReactAggregatedPlayer, showAggregatedSummary, openAggregatedSetStart,
+  openReactAggregatedSkill, openReactAggregatedPlayer, showAggregatedSummary, openAggregatedSetStart, setTeamComparisonColors,
   recordReactFloatingServeError,
   changeReactSetType,
   changeReactOpponentSkill,

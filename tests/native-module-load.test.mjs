@@ -150,6 +150,7 @@ test('il backup ripristina impostazioni scout, regole e preferenze senza cambiar
       theme: 'light', autoRotate: false, autoRolePositioning: false, predictiveSkillFlow: false,
       attackTrajectoryEnabled: false, attackTrajectorySimplified: false, serveTrajectoryEnabled: false,
       setTypePromptEnabled: false, showServeTrajectoryLogOur: false, forceMobileLayout: true,
+      uiTeamComparisonColors: false,
       uiPlayerAnalysis: { showAttack: false, showServe: true },
       uiVideoLayout: { analysisHeight: 450, scoutHeight: 300, analysisHeightVersion: 1 },
       uiScoutColumns: { left: 310, right: 410 },
@@ -162,6 +163,7 @@ test('il backup ripristina impostazioni scout, regole e preferenze senza cambiar
       theme: 'dark', autoRotate: true, autoRolePositioning: true, predictiveSkillFlow: true,
       attackTrajectoryEnabled: true, attackTrajectorySimplified: true, serveTrajectoryEnabled: true,
       setTypePromptEnabled: true, showServeTrajectoryLogOur: true, forceMobileLayout: false,
+      uiTeamComparisonColors: true,
       uiPlayerAnalysis: { showAttack: true }, uiScoutColumns: { left: 100, right: 100 },
       pointRules: { attack: { for: ['#'], against: ['='] } },
       opponentSkillConfig: { attack: true }, videoFilterPresets: []
@@ -174,6 +176,7 @@ test('il backup ripristina impostazioni scout, regole e preferenze senza cambiar
     attackTrajectorySimplified: state.attackTrajectorySimplified, serveTrajectoryEnabled: state.serveTrajectoryEnabled,
     setTypePromptEnabled: state.setTypePromptEnabled, showServeTrajectoryLogOur: state.showServeTrajectoryLogOur,
     forceMobileLayout: state.forceMobileLayout, showAttack: state.uiPlayerAnalysis.showAttack,
+    teamComparisonColors: state.uiTeamComparisonColors,
     columns: state.uiScoutColumns, rules: state.pointRules.attack, opponent: state.opponentSkillConfig.attack,
     presets: state.videoFilterPresets, snapshot: buildCompactLocalStateSnapshot(state)
   })`, context));
@@ -183,11 +186,13 @@ test('il backup ripristina impostazioni scout, regole e preferenze senza cambiar
     assert.equal(restored[key], false, key);
   }
   assert.equal(restored.forceMobileLayout, true);
+  assert.equal(restored.teamComparisonColors, false);
   assert.deepEqual(restored.columns, { left: 310, right: 410 });
   assert.deepEqual(restored.rules, { for: ['+'], against: ['='] });
   assert.equal(restored.opponent, false);
   assert.equal(restored.presets[0].name, 'Preferito');
   assert.equal(restored.snapshot.attackTrajectoryEnabled, false);
+  assert.equal(restored.snapshot.uiTeamComparisonColors, false);
   assert.equal(restored.snapshot.pointRules.attack.for[0], '+');
   vm.runInContext(`applyImportedMatch({ ...backup.state, theme: 'dark', pointRules: { attack: { for: ['#'], against: [] } },
     opponentSkillConfig: { attack: true } }, { silent: true })`, context);

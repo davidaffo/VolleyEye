@@ -278,4 +278,30 @@ for (const both of [false, true])
       assert.equal(emptyRows[3][7].text, "0%");
       assert.equal(emptyRows[3][13].text, "0%");
       assert.equal(emptyRows[7][5].text, "0%");
+      if (both && team === 'both') {
+        selectedSet = null;
+        events.push(...['#', '#', '='].map(code => ({ team: 'our', playerIdx: 0, skillId: 'attack', code, set: 1, value: 1 })));
+        events.push(...['#', '=', '='].map(code => ({ team: 'opponent', playerIdx: 0, skillId: 'attack', code, set: 1, value: 1 })));
+        context.renderAggregatedTable();
+        assert.equal(view.showTeamComparisonControl, true);
+        assert.equal(view.teamComparisonColors, true);
+        for (const key of ['total', 'set:1']) {
+          const ours = view.rows.find(row => row.scope === 'our' && row.comparisonKey === key);
+          const theirs = view.rows.find(row => row.scope === 'opponent' && row.comparisonKey === key);
+          const index = ours.cells.findIndex(cell => cell.comparisonSkill === 'attack');
+          assert.equal(ours.cells[index].className.includes('is-better'), false); // Totale neutro.
+          assert.match(ours.cells[index + 1].className, /is-better/);
+          assert.match(theirs.cells[index + 1].className, /is-worse/);
+          assert.match(ours.cells[index + 2].className, /is-better/);
+          assert.match(theirs.cells[index + 2].className, /is-worse/);
+          assert.match(ours.cells[index + 4].className, /is-better/);
+          assert.match(theirs.cells[index + 4].className, /is-worse/);
+        }
+        const emptySet = view.rows.find(row => row.scope === 'our' && row.comparisonKey === 'set:2');
+        assert.ok(emptySet.cells.every(cell => !cell.className?.includes('team-comparison-value')));
+        state.uiTeamComparisonColors = false;
+        context.renderAggregatedTable();
+        assert.equal(view.teamComparisonColors, false);
+        assert.ok(view.rows.flatMap(row => row.cells).every(cell => !cell.className?.includes('team-comparison-value')));
+      }
     });

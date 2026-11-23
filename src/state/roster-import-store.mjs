@@ -84,6 +84,8 @@ export const aggregatedTableStore = createStore({
   charts: [],
   tableClass: "agg-table",
   hiddenSkills: [],
+  showTeamComparisonControl: false,
+  teamComparisonColors: true,
 });
 
 export const playerAnalysisStore = createStore({

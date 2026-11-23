@@ -16,6 +16,15 @@ const matchIo = readFileSync("src/features/io/match-io.js", "utf8");
 const exportsSource = readFileSync("src/features/io/exports.js", "utf8");
 const serviceWorker = readFileSync("src/main.jsx", "utf8");
 
+test('i colori del confronto prevalgono sulla palette dei fondamentali in entrambi i temi', () => {
+  assert.ok(entrypoint.indexOf('skill-charts.css') < entrypoint.indexOf('skill-palette.css'));
+  assert.match(skillPaletteCss, /\.agg-table td\.skill-col\[class\*="skill-"\]/);
+  for (const tone of ['better', 'worse']) {
+    assert.ok(skillChartsCss.includes(`.agg-table td.skill-col.team-comparison-value.is-${tone}`));
+    assert.ok(skillChartsCss.includes(`body[data-theme="light"] .agg-table td.skill-col.team-comparison-value.is-${tone}`));
+  }
+});
+
 function rgb(hex) {
   const value = hex.replace("#", "");
   return [0, 2, 4].map(offset => Number.parseInt(value.slice(offset, offset + 2), 16));

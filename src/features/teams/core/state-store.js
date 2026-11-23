@@ -132,6 +132,7 @@ export function applyStateSnapshot(parsed, options = {}) {
   matchState.state.nextSetType = parsed.nextSetType || "";
   matchState.state.videoFilterPresets = normalizeVideoFilterPresets(parsed.videoFilterPresets || matchState.state.videoFilterPresets || []);
   matchState.state.uiPlayerAnalysis = Object.assign({}, matchState.state.uiPlayerAnalysis || {}, asRecord(parsed.uiPlayerAnalysis));
+  matchState.state.uiTeamComparisonColors = parsed.uiTeamComparisonColors !== false;
   if (parsed.uiVideoLayout && typeof parsed.uiVideoLayout === "object") {
     matchState.state.uiVideoLayout = { ...asRecord(parsed.uiVideoLayout) };
   }
@@ -337,4 +338,3 @@ export async function loadStateFromIndexedDb() {
   }
   return false;
 }
-

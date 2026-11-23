@@ -8,6 +8,13 @@ import { renderAggregatedTable } from "./aggregated-table.js";
 import { renderPlayerAnalysis } from "./skill-tables.js";
 import { saveState } from "../storage/save-state.js";
 import { setActiveAggTab } from "../core/app-lifecycle.js";
+import { session as matchState } from "../../../js/globals.js";
+
+export function setTeamComparisonColors(enabled) {
+  matchState.state.uiTeamComparisonColors = !!enabled;
+  saveState();
+  renderAggregatedTable({ related: false });
+}
 
 export function openReactAggregatedSkill(skillId, scope, chooseTeam = false) {
   if (chooseTeam)

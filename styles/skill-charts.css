@@ -495,6 +495,26 @@ body[data-theme="light"] .player-analysis-compare-subsection {
 .player-analysis-compare-value.is-neutral {
   color: inherit;
 }
+.team-comparison-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.25rem 0 0.6rem;
+}
+.agg-table td.team-comparison-value.is-better,
+.agg-table td.skill-col.team-comparison-value.is-better {
+  color: #22c55e !important;
+  font-weight: 700;
+}
+.agg-table td.team-comparison-value.is-worse,
+.agg-table td.skill-col.team-comparison-value.is-worse {
+  color: #ef4444 !important;
+  font-weight: 700;
+}
+body[data-theme="light"] .agg-table td.team-comparison-value.is-better,
+body[data-theme="light"] .agg-table td.skill-col.team-comparison-value.is-better { color: #15803d !important; }
+body[data-theme="light"] .agg-table td.team-comparison-value.is-worse,
+body[data-theme="light"] .agg-table td.skill-col.team-comparison-value.is-worse { color: #b91c1c !important; }
 .player-analysis-compare-subsection .agg-table td.player-analysis-compare-value.is-better {
   color: #22c55e !important;
   font-weight: 700;

@@ -5,6 +5,17 @@ Le voci storiche riportano i messaggi originali dei commit e i relativi collegam
 
 Prima della versione 0.1.0 il progetto era già in sviluppo, ma non aveva una numerazione di release registrata.
 
+## 0.24.0 — 2026-11-23
+
+- Corretto il passaggio tra continuazione dell'azione e battuta dopo gli attacchi nelle partite a doppia squadra.
+- Corretto l'ingresso automatico del libero quando il centrale termina il turno di battuta.
+- Corretto l'effetto evidenziato dei pulsanti di rotazione nella creazione della squadra.
+- In analisi video la scelta dell'alzatore include tutta la rosa, anche le giocatrici non presenti nella formazione attuale.
+- Il backup completo ora esporta e ripristina le impostazioni dello scout e le preferenze dell'applicazione.
+- Aggiunta al tabellino degli attacchi la percentuale di errori sul totale degli attacchi.
+- Nel confronto giocatrici è possibile selezionare anche una giocatrice della squadra avversaria.
+- Nel tabellino a due squadre i totali e i set evidenziano in verde e rosso anche i valori dei fondamentali, con un'opzione per disattivare i colori.
+
 ## 0.23.2 — 2026-11-22
 
 - Durante la partita è possibile mettere fuori rosa dalla modifica rapida le giocatrici senza eventi collegati; la casella è disabilitata per quelle protette e le attribuzioni restano corrette.

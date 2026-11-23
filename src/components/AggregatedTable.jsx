@@ -6,6 +6,15 @@ import { aggregatedTableStore } from "../state/roster-import-store.mjs";
 function useView() {
   return useViewStore(aggregatedTableStore);
 }
+export function TeamComparisonToggle() {
+  const view = useView();
+  if (!view.showTeamComparisonControl) return null;
+  return <label className="team-comparison-toggle">
+    <input type="checkbox" checked={view.teamComparisonColors !== false}
+      onChange={event => actions.setTeamComparisonColors(event.target.checked).catch(console.error)} />
+    Evidenzia confronto squadre
+  </label>;
+}
 function Cell({ cell, header = false, hiddenSkills = [] }) {
   const Tag = cell.tag || (header ? "th" : "td"),
     classes = cell.className || "",

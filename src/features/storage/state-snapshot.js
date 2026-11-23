@@ -39,6 +39,7 @@ export function buildCompactLocalStateSnapshot(snapshot, { journal = false } = {
     },
     uiScoutWidgetLayout: snapshot.uiScoutWidgetLayout || null,
     uiPlayerAnalysis: snapshot.uiPlayerAnalysis || null,
+    uiTeamComparisonColors: snapshot.uiTeamComparisonColors !== false,
     uiVideoLayout: snapshot.uiVideoLayout || null,
     uiVideoAnalysisSort: snapshot.uiVideoAnalysisSort || null,
     video: snapshot.video || { offsetSeconds: 0, fileName: "", youtubeId: "", youtubeUrl: "", lastPlaybackSeconds: 0 },
