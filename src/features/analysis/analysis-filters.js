@@ -34,7 +34,7 @@ export function handleAnalysisMatchFilterChange() {
 export function handleAnalysisTeamFilterChange(e) {
 
   const values = getCheckedValues("analysis-filter-teams");
-  analysisFiltersState.analysisTeamFilterState.teams = new Set(values);
+  analysisFiltersState.analysisTeamFilterState.teams = new Set(values.filter(value => value !== "both"));
   renderAnalysisMatchFilter();
   publishReactMultiscout();
   invalidateAnalysisCaches();

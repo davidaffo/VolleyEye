@@ -404,6 +404,9 @@ body[data-theme="light"] .metric-helper {
 .agg-table tbody tr.agg-body-header td {
   background-image: none !important;
 }
+.agg-table tbody tr.agg-body-header td.set-start-header {
+  font-weight: normal;
+}
 .agg-table tbody tr.agg-body-header td.skill-col {
   box-shadow: none !important;
 }

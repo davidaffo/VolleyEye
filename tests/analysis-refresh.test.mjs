@@ -150,6 +150,8 @@ function navigationContext() {
     renderPlayerAnalysis: () => calls.push('player'), renderSetTrendAnalysis: () => calls.push('trend'),
     renderPlayByPlayAnalysis: () => calls.push('play'), renderAnalysisSkillChartsPanel: () => calls.push('charts'),
     renderMatchSheetAnalysis: () => calls.push('sheet'),
+    renderAnalysisTeamFilter: () => {}, invalidateAnalysisCaches: () => {},
+    analysisTeamFilterState: { teams: new Set(['opponent']) }, renderAggregatedTable: () => calls.push('summary'),
   });
   vm.runInContext(sourceFunctions(navigationSource, ['getAggTabRenderer', 'scheduleAggRefresh', 'setActiveAggTab', 'setActiveTab']), context);
   return { context, calls, frames, timers };
@@ -187,12 +189,20 @@ test('analysis navigation covers each panel and skips unknown panels and saves d
     frames[0]();
     assert.deepEqual(calls, [expected]);
   }
-  for (const tab of ['summary', 'toString', '__proto__', 'unknown']) {
+  for (const tab of ['toString', '__proto__', 'unknown']) {
     const { context, frames, timers } = navigationContext();
     context.setActiveAggTab(tab);
     assert.equal(frames.length, 0);
     assert.equal(timers.length, 0);
   }
+});
+
+test('opening the summary defaults to both teams and refreshes its table', () => {
+  const { context, calls } = navigationContext();
+  context.state.useOpponentTeam = true;
+  context.setActiveAggTab('summary');
+  assert.equal(context.analysisTeamFilterState.teams.size, 0);
+  assert.deepEqual(calls, ['summary', 'save']);
 });
 
 test('lo scout aggiorna subito statistiche e punteggio e ricostruisce le viste differite una sola volta', () => {

@@ -30,6 +30,10 @@ import { renderAnalysisSkillChartsPanel } from "../analysis/skill-analysis.js";
 import { renderMatchSheetAnalysis } from "../analysis/match-sheet.js";
 import { stopPlayByPlay, scheduleVideoMobileSourcePrompt } from "../video/playback.js";
 import { clearVolleyEyeAppAssets } from "./browser-storage-cleanup.js";
+import { renderAnalysisTeamFilter } from "../analysis/shared-filter-view.js";
+import { invalidateAnalysisCaches } from "../analysis/cache-model.js";
+import { session as analysisFiltersState } from "../state/analysis-analysis-filters.js";
+import { renderAggregatedTable } from "../analysis/aggregated-table.js";
 
 export function resetMatch() {
   if (!confirm("Sei sicuro di voler resettare tutti i dati del match?")) return;
@@ -310,8 +314,15 @@ function scheduleAggRefresh(refresh) {
 
 export function setActiveAggTab(target) {
   const desired = target || "summary";
+  const enteringSummary = desired === "summary" && rosterLineupState.activeAggTab !== "summary";
+  if (enteringSummary && matchState.state.useOpponentTeam) {
+    analysisFiltersState.analysisTeamFilterState.teams = new Set();
+  }
   rosterLineupState.activeAggTab = desired;
   matchState.state.uiAggTab = desired;
+  renderAnalysisTeamFilter();
+  invalidateAnalysisCaches();
+  if (enteringSummary) renderAggregatedTable({ related: false });
   if (!rosterLineupState.isLoadingMatch) saveState();
   if (document && document.body) {
     document.body.dataset.aggTab = desired;

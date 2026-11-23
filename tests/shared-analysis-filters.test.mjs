@@ -7,6 +7,7 @@ import { readSourceFixture } from './helpers/source-fixture.mjs';
 import { session as match } from '../js/globals.js';
 import { session as ui } from '../src/features/state/scout-ui.js';
 import { session as filters } from '../src/features/state/analysis-analysis-filters.js';
+import { session as roster } from '../src/features/state/roster-lineup.js';
 import { filterStore } from '../src/state/filter-store.mjs';
 import { multiscoutStore } from '../src/state/roster-import-store.mjs';
 import { renderAnalysisTeamFilter, renderAnalysisMatchFilter, renderAnalysisSummarySetFilter } from '../src/features/analysis/shared-filter-view.js';
@@ -41,13 +42,28 @@ test('shared team and match publishers prune options and publish cloneable comma
   renderAnalysisTeamFilter();
   const team = filterStore.getView('analysis-filter-teams'), matches = filterStore.getView('analysis-filter-matches');
   assert.deepEqual(team.selected, ['our']);
-  assert.deepEqual(team.options.map(option => option.value), ['our', 'opponent']);
+  assert.deepEqual(team.options.map(option => option.value), roster.activeAggTab === 'summary' ? ['our', 'opponent', 'both'] : ['our', 'opponent']);
+  assert.equal(team.type, 'radio');
   assert.equal(team.onChange, null);
   assert.deepEqual(team.changeAction, { command: 'handleAnalysisTeamFilterChange' });
   assert.deepEqual(structuredClone(team), team);
   assert.deepEqual(matches.changeAction, { command: 'handleAnalysisMatchFilterChange' });
   assert.deepEqual(matches.selected, []);
   assert.deepEqual(match.state.uiAnalysisExtraMatchesByScope, { our: [], opponent: ['other'] });
+}));
+
+test('team radios offer both teams only in the summary and select one when leaving it', () => isolated(() => {
+  const previous = roster.activeAggTab;
+  try {
+    roster.activeAggTab = 'summary';
+    filters.analysisTeamFilterState.teams = new Set();
+    renderAnalysisTeamFilter();
+    assert.deepEqual(filterStore.getView('analysis-filter-teams').selected, ['both']);
+    roster.activeAggTab = 'trajectory';
+    renderAnalysisTeamFilter();
+    assert.deepEqual(filterStore.getView('analysis-filter-teams').selected, ['our']);
+    assert.deepEqual([...filters.analysisTeamFilterState.teams], ['our']);
+  } finally { roster.activeAggTab = previous; }
 }));
 
 test('shared summary and match filters publish visibility, empty selections and counts without DOM containers', () => isolated(() => {

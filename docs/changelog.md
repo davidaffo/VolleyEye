@@ -5,6 +5,11 @@ Le voci storiche riportano i messaggi originali dei commit e i relativi collegam
 
 Prima della versione 0.1.0 il progetto era già in sviluppo, ma non aveva una numerazione di release registrata.
 
+## 0.24.1 — 2026-11-23
+
+- In analisi la squadra si sceglie con pulsanti esclusivi; il tabellino mostra entrambe le squadre per impostazione predefinita.
+- Nel tabellino le intestazioni della formazione di partenza hanno tutte lo stesso stile.
+
 ## 0.24.0 — 2026-11-23
 
 - Corretto il passaggio tra continuazione dell'azione e battuta dopo gli attacchi nelle partite a doppia squadra.

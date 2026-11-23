@@ -9,6 +9,8 @@ import {
   filterEventsByAnalysisTeam,
 } from "./filter-model.js";
 import { session as analysisFiltersState } from "../state/analysis-analysis-filters.js";
+import { session as rosterLineupState } from "../state/roster-lineup.js";
+import { getDefaultAnalysisTeamScope } from "./filter-model.js";
 
 import { normalizeSetNumber, buildUniqueOptions } from "./values.js";
 import { publishReactMultiscoutCount } from "./multiscout-view.js";
@@ -22,11 +24,22 @@ export function renderAnalysisTeamFilter() {
       options.some((opt) => opt.value === val),
     ),
   );
+  const teams = analysisFiltersState.analysisTeamFilterState.teams;
+  const summary = rosterLineupState.activeAggTab === "summary";
+  if ((!summary || options.length === 1) && teams.size !== 1) {
+    analysisFiltersState.analysisTeamFilterState.teams = new Set([getDefaultAnalysisTeamScope()]);
+  }
+  const selected = analysisFiltersState.analysisTeamFilterState.teams;
+  const radioOptions = summary && options.length > 1
+    ? [...options, { value: "both", label: "Entrambe" }]
+    : options;
   const visible = renderDynamicFilter(
     "analysis-filter-teams",
-    options,
-    analysisFiltersState.analysisTeamFilterState.teams,
+    radioOptions,
+    selected.size === 0 ? new Set(["both"]) : selected,
     {
+      type: "radio",
+      name: "analysis-team",
       changeAction: Object.freeze({
         command: "handleAnalysisTeamFilterChange",
       }),
