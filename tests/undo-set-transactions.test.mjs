@@ -386,6 +386,19 @@ test('annulla dopo contesa non attraversa il confine di set', () => {
   assert.deepEqual(score(c, 1), [1, 0]);
 });
 
+for (const [code, staleOverride, expectedSkill] of [['+', 'serve', 'defense'], ['=', 'defense', 'serve']]) {
+  test(`un attacco ${code} elimina le indicazioni residue dell'altra squadra`, async () => {
+    const c = setup();
+    c.state.events = [{ eventId: 1, skillId: 'second', code: '+', team: 'our', set: 1 }];
+    c.state.opponentSkillFlowOverride = staleOverride;
+    await c.handleEventClick('0', 'attack', code, 'A0', null, { attackMeta: {} });
+    assert.equal(c.state.events.at(-1).code, code);
+    assert.equal(c.state.opponentSkillFlowOverride, null);
+    assert.deepEqual(plain(c.getAutoFlowState()), { teamScope: 'opponent', skillId: expectedSkill });
+    assert.equal(c.getPredictedSkillIdForScope('opponent'), expectedSkill);
+  });
+}
+
 test('il contesto di ricezione e le variabili dei due campi vengono sincronizzati dopo annulla', async () => {
   const c = setup();
   c.state.autoRoleBaseCourt = plain(c.state.court);

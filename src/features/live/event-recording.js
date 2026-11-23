@@ -237,11 +237,10 @@ export async function handleEventClick(
   const changedEvents = [];
   matchState.state.freeballPending = false;
   matchState.state.freeballPendingScope = scope;
-  if (scope === "opponent") {
-    matchState.state.opponentSkillFlowOverride = null;
-  } else {
-    matchState.state.skillFlowOverride = null;
-  }
+  // Un evento completato consuma anche le indicazioni temporanee dell'altro
+  // campo: il prossimo fondamentale va determinato dal nuovo evento.
+  if (matchState.state.useOpponentTeam || scope === "our") matchState.state.skillFlowOverride = null;
+  if (matchState.state.useOpponentTeam || scope === "opponent") matchState.state.opponentSkillFlowOverride = null;
   const selectionVideoTime = matchState.state.videoScoutMode
     ? serveMeta && typeof serveMeta.videoTime === "number"
       ? serveMeta.videoTime
