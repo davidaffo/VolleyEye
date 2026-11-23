@@ -73,7 +73,7 @@ export function buildAggregatedSkillCells(countsBySkill, passAces) {
     skillCells(
       id,
       buildSkillEntries(id, countsBySkill[id], passAces).map((entry) =>
-        !["Eff", "Pos", "Prf", "% Punti"].includes(entry.label)
+        !["Eff", "Pos", "Prf", "% Punti", "% Err"].includes(entry.label)
           ? entry.value
           : entry.text,
       ),
@@ -276,8 +276,8 @@ export function buildReactAggregatedTable({ chartTones } = {}) {
   const analysisEvents = getAnalysisEvents();
   const playedSets = getSummarySetNumbers();
   const includeOpponentErrorsCol = !matchState.state.useOpponentTeam;
-  const summaryColCount =
-    33 + (includeOpponentErrorsCol ? 1 : 0) + playedSets.length;
+  const summaryColCount = 2 + (includeOpponentErrorsCol ? 5 : 4) + playedSets.length +
+    SKILL_COLUMNS.reduce((total, skill) => total + skill.columns.length, 0);
   const showBothTeams =
     matchState.state.useOpponentTeam &&
     analysisFiltersState.analysisTeamFilterState.teams.size === 0 &&

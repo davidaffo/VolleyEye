@@ -17,6 +17,7 @@ export function buildSkillEntries(skill, counts, passAces = 0) {
   const values = {
     Tot: total,
     Err: ['serve', 'attack'].includes(skill) ? counts['='] || 0 : metrics.negativeCount || 0,
+    '% Err': total > 0 ? (counts['='] || 0) / total : null,
     Ace: passAces || 0,
     Mur: counts['/'] || 0,
     Punti: points,
@@ -25,9 +26,10 @@ export function buildSkillEntries(skill, counts, passAces = 0) {
   };
   return SKILL_COLUMNS.find(({ id }) => id === skill).columns.map(label => {
     const value = values[label];
-    const better = label === 'Tot' ? 'neutral' : ['Err', 'Ace', 'Mur'].includes(label) ? 'lower' : 'higher';
+    const better = label === 'Tot' ? 'neutral' : ['Err', '% Err', 'Ace', 'Mur'].includes(label) ? 'lower' : 'higher';
     const text = ['Eff', 'Pos', 'Prf'].includes(label) ? value === null ? '-' : formatPercent(value)
-      : label === '% Punti' ? formatPercentValue(points, total) : String(value);
+      : label === '% Punti' ? formatPercentValue(points, total)
+      : label === '% Err' ? formatPercentValue(counts['='] || 0, total) : String(value);
     return statisticEntry(label, value, better, text);
   });
 }

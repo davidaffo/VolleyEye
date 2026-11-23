@@ -474,6 +474,10 @@ test("modelli statistici condivisi conservano regole personalizzate, percentuali
   assert.equal(entry('Eff').value, 20);
   assert.equal(entry('Eff').text, '20%');
   assert.equal(entry('Err').better, 'lower');
+  assert.equal(entry('% Err').value, 0.2);
+  assert.equal(entry('% Err').text, '20%');
+  assert.equal(entry('% Err').better, 'lower');
+  assert.equal(context.buildSkillEntries('attack', undefined).find(item => item.label === '% Err').text, '-');
   assert.equal(entry('Tot').better, 'neutral');
 
   const absent = context.buildSkillEntries('freeball', undefined);

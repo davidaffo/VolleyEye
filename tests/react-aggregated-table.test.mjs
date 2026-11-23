@@ -195,9 +195,14 @@ for (const both of [false, true])
             ),
           ),
         );
+      const attackHeader = view.headers[1].findIndex(cell => cell.text === "% Err");
+      assert.ok(attackHeader > 0);
       const legacyRows = nativeRows(view.rows).map((row, index) => {
-        if (view.rows[index].className === "agg-body-header") return row.filter(cell => cell.text !== "Azioni");
-        if (row.length === 1 && row[0].span > 1) return [{ ...row[0], span: row[0].span - 1 }];
+        if (view.rows[index].className === "agg-body-header") return row
+          .filter(cell => cell.text !== "Azioni" && cell.text !== "% Err")
+          .map(cell => cell.text === "Attacco" ? { ...cell, span: cell.span - 1 } : cell);
+        if (row.length === 1 && row[0].span > 1) return [{ ...row[0], span: row[0].span - 2 }];
+        row = row.filter((cell, cellIndex) => cellIndex !== attackHeader + 2);
         if (row.length > 4 && row[4].text !== "Azioni") return [...row.slice(0, 4), ...row.slice(5)];
         return row.filter(cell => cell.text !== "Azioni");
       });
@@ -208,9 +213,9 @@ for (const both of [false, true])
         JSON.parse(
           JSON.stringify(
             view.headers.map((cells) =>
-              cells.filter(cell => cell.text !== "Azioni").map((cell) => ({
+              cells.filter(cell => cell.text !== "Azioni" && cell.text !== "% Err").map((cell) => ({
                 text: String(cell.text ?? ""),
-                span: cell.colspan || 1,
+                span: (cell.colspan || 1) - (cell.text === "Attacco" ? 1 : 0),
               })),
             ),
           ),
