@@ -216,6 +216,46 @@ export function VideoElement({ scout = false }) {
   );
 }
 
+export function VideoDetachButton({ scout = false }) {
+  const view = useVideoView();
+  const [detached, setDetached] = useState(false);
+  const [error, setError] = useState("");
+  const id = scout ? "analysis-video-scout" : "analysis-video";
+  useEffect(() => {
+    const video = document.getElementById(id);
+    if (!video) return;
+    const enter = () => setDetached(true);
+    const leave = () => setDetached(false);
+    video.addEventListener("enterpictureinpicture", enter);
+    video.addEventListener("leavepictureinpicture", leave);
+    setDetached(document.pictureInPictureElement === video);
+    return () => {
+      video.removeEventListener("enterpictureinpicture", enter);
+      video.removeEventListener("leavepictureinpicture", leave);
+    };
+  }, [id]);
+  const supported = typeof document !== "undefined" && document.pictureInPictureEnabled &&
+    typeof HTMLVideoElement !== "undefined" && typeof HTMLVideoElement.prototype.requestPictureInPicture === "function";
+  const toggle = async () => {
+    setError("");
+    try {
+      const video = document.getElementById(id);
+      if (document.pictureInPictureElement === video) await document.exitPictureInPicture();
+      else await video.requestPictureInPicture();
+    } catch {
+      setError("Impossibile aprire o riagganciare il video. Riprova.");
+    }
+  };
+  return <>
+    <button type="button" className="secondary" onClick={toggle}
+      disabled={!supported || (!detached && (!view.localSource || !!view.youtubeId))}
+      title={!supported ? "Picture-in-Picture non disponibile in questo browser" : view.youtubeId ? "Disponibile per i video caricati dal dispositivo" : "Apri il video in una finestra separata"}>
+      {detached ? "Riporta nell’app" : "Apri in una finestra"}
+    </button>
+    {error && <span role="alert" className="section-note">{error}</span>}
+  </>;
+}
+
 export function YouTubeFrame({ scout = false }) {
   return <>
     <iframe id={'youtube-frame' + (scout ? '-scout' : '')} className="youtube-frame"

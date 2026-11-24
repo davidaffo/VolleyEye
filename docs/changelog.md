@@ -5,6 +5,10 @@ Le voci storiche riportano i messaggi originali dei commit e i relativi collegam
 
 Prima della versione 0.1.0 il progetto era già in sviluppo, ma non aveva una numerazione di release registrata.
 
+## 0.24.2 — 2026-11-24
+
+- Possibilità di aprire i video locali in una finestra Picture-in-Picture, liberando spazio nell'interfaccia, e riportarli nell'app durante l'analisi e lo scouting.
+
 ## 0.24.1 — 2026-11-23
 
 - In analisi la squadra si sceglie con pulsanti esclusivi; il tabellino mostra entrambe le squadre per impostazione predefinita.

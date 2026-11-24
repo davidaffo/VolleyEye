@@ -8,7 +8,7 @@ import { TabPanel } from "../ui/TabPanel.jsx";
 
 import { PanelResizeHandle } from "../PanelResizeHandle.jsx";
 import { AppActionButton } from "../AppActions.jsx";
-import { VideoActionButton, VideoSourceControls, VideoMobileSourceButton, VideoMobileNavigation, VideoViewText, VideoFilterCount, VideoOverlay, VideoElement } from "../VideoControls.jsx";
+import { VideoActionButton, VideoSourceControls, VideoMobileSourceButton, VideoMobileNavigation, VideoViewText, VideoFilterCount, VideoOverlay, VideoElement, VideoDetachButton } from "../VideoControls.jsx";
 import { VideoPresets, VideoPresetCreate } from "../VideoPresets.jsx";
 
 import { EventTable } from "../EventTable.jsx";
@@ -108,6 +108,7 @@ export function VideoPage() {
               </div>
               <PanelResizeHandle panel="analysisHeight" />
               <div className="video-frame-actions">
+                <VideoDetachButton />
                 <VideoActionButton
                   id="btn-video-frame-prev"
                   className="secondary"

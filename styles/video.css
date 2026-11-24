@@ -119,6 +119,9 @@
   #video-panel .video-media {
     width: 100%;
   }
+  #video-panel .video-player-wrap:has(video:picture-in-picture) .video-media {
+    width: 1px;
+  }
   #video-panel .video-mobile-overlay-nav {
     position: absolute;
     inset: 0;

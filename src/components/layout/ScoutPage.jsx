@@ -13,7 +13,7 @@ import { PanelResizeHandle } from "../PanelResizeHandle.jsx";
 import { DvwEntry } from "../DvwEntry.jsx";
 import { AppActionButton, ScoutDrawerButton, ScoutDrawerBackdrop } from "../AppActions.jsx";
 import { ScoutToggle, SetTypeShortcuts, ScoutActionButton } from "../ScoutOptions.jsx";
-import { VideoSourceControls, VideoElement } from "../VideoControls.jsx";
+import { VideoSourceControls, VideoElement, VideoDetachButton } from "../VideoControls.jsx";
 import { LogServeTrajectories } from "../TrajectoryGrid.jsx";
 import { EventTable } from "../EventTable.jsx";
 
@@ -160,6 +160,7 @@ export function ScoutPage() {
                     <YouTubeFrame scout />
                   </div>
                   <PanelResizeHandle panel="scoutHeight" />
+                  <VideoDetachButton scout />
                 </div>
               </div>
             </ScoutWidgetPortal>

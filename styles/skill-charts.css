@@ -990,6 +990,27 @@ body.video-panel-resizing * {
 .video-media {
   position: relative;
 }
+/* Keep the same media element playing while its floating window is open,
+   but return its space to the analysis table or scout panel. */
+.video-analysis__grid:has(.video-player-wrap--analysis video:picture-in-picture) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.video-analysis__grid:has(.video-player-wrap--analysis video:picture-in-picture) .video-player-wrap--analysis {
+  grid-row: 1;
+  position: static;
+  min-width: 0;
+}
+.video-player-wrap:has(video:picture-in-picture) .video-media {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+.video-player-wrap:has(video:picture-in-picture) .video-resize-handle {
+  display: none;
+}
 /* Same swatches and layout as the setting distribution legend in both themes. */
 .trajectory-legend {
   grid-column: 1 / -1;
