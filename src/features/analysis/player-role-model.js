@@ -2,6 +2,7 @@ import { session as matchState } from '../../../js/globals.js';
 import { inferPlayerRole, getHistoricalEventRole, inferRoleFromSetStarts } from '../events/player-role.js';
 import { getAnalysisRoster } from './analysis-roster.js';
 import { session as analysisFiltersState } from '../state/analysis-analysis-filters.js';
+import { matchesFilterSelection } from '../../domain/filter-selections.js';
 
 function sourceForEvent(event) {
   const source = event.analysisMatchKey ? matchState.state.savedMatches?.[event.analysisMatchKey]?.state : matchState.state;
@@ -32,8 +33,8 @@ export function getAnalysisPlayerRole(events, playerIdx, scope = 'our') {
     const liberos = (sourceScope === 'opponent' ? source?.opponentLiberos : source?.liberos) || [];
     const selectedSets = analysisFiltersState.analysisSummaryFilterState?.sets;
     const starts = source?.setStarts || {};
-    const relevantStarts = selectedSets?.size
-      ? Object.fromEntries(Object.entries(starts).filter(([set]) => selectedSets.has(Number(set))))
+    const relevantStarts = selectedSets?.size || selectedSets?.excluded?.size
+      ? Object.fromEntries(Object.entries(starts).filter(([set]) => matchesFilterSelection(selectedSets, Number(set))))
       : starts;
     const role = inferRoleFromSetStarts(name, sourceScope, null, relevantStarts, liberos);
     if (role) candidates.add(role);

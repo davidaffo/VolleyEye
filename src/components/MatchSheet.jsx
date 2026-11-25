@@ -134,13 +134,15 @@ export function MatchSheetCourt({ court, notes = {} }) {
 export function MatchSheetControls() {
   const view = useSheet(),
     [open, setOpen] = useState(false);
-  const option = (kind, value, label, selected) => (
-    <label key={value}>
+  const option = (kind, value, label, selected, excluded) => (
+    <label key={value} className={selected?.includes(String(value)) ? 'filter-option--included' : excluded?.includes(String(value)) ? 'filter-option--excluded' : 'filter-option--neutral'}>
       <input
         type="checkbox"
         data-sideout-filter={kind}
         value={String(value)}
         checked={selected?.includes(String(value)) || false}
+        aria-checked={excluded?.includes(String(value)) ? 'mixed' : undefined}
+        aria-label={`${label}: ${selected?.includes(String(value)) ? 'incluso' : excluded?.includes(String(value)) ? 'escluso' : 'nessun filtro'}`}
         onChange={(event) => {
           setOpen(true);
           run(
@@ -150,7 +152,7 @@ export function MatchSheetControls() {
             event.target.checked,
           );
         }}
-      />{" "}
+      /><span className="filter-option__mark" aria-hidden="true">{selected?.includes(String(value)) ? '✓' : excluded?.includes(String(value)) ? '✕' : '○'}</span>{" "}
       {label}
     </label>
   );
@@ -183,19 +185,18 @@ export function MatchSheetControls() {
       >
         <summary>Filtri cambio palla · set e giocatrici</summary>
         <p>
-          Nessuna selezione: tutti i set e tutte le giocatrici. Restano validi i
-          filtri generali dell’analisi.
+          Un clic include, due escludono, tre rimuovono il filtro. Restano validi i filtri generali dell’analisi.
         </p>
         <fieldset>
           <legend>Set</legend>
           {view.sets.map((set) =>
-            option("sets", set, `Set ${set}`, view.filters.sets),
+            option("sets", set, `Set ${set}`, view.filters.sets, view.filters.excludedSets),
           )}
         </fieldset>
         <fieldset>
           <legend>Giocatrici</legend>
           {view.roster.map((player) =>
-            option("players", player.index, player.name, view.filters.players),
+            option("players", player.index, player.name, view.filters.players, view.filters.excludedPlayers),
           )}
         </fieldset>
       </details>

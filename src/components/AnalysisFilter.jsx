@@ -20,7 +20,7 @@ export function AnalysisFilter({ id, className }) {
   const view = filterStore.getView(id);
   const options = (items, groupId) =>
     items.map((option, index) => (
-      <label key={index}>
+      <label key={index} className={view.triState ? (view.selected.includes(String(option.value)) ? 'filter-option--included' : view.excluded?.includes(String(option.value)) ? 'filter-option--excluded' : 'filter-option--neutral') : undefined}>
         <input
           type={view.type}
           name={view.name}
@@ -29,6 +29,8 @@ export function AnalysisFilter({ id, className }) {
             view.type === "checkbox" ? groupId + "-" + option.value : undefined
           }
           checked={view.selected.includes(String(option.value))}
+          aria-checked={view.triState && view.excluded?.includes(String(option.value)) ? 'mixed' : undefined}
+          aria-label={view.triState ? `${option.label}: ${view.selected.includes(String(option.value)) ? 'incluso' : view.excluded?.includes(String(option.value)) ? 'escluso' : 'nessun filtro'}` : undefined}
           onChange={(event) =>
             changeFilter(
               id,
@@ -39,6 +41,7 @@ export function AnalysisFilter({ id, className }) {
             )
           }
         />
+        {view.triState && <span className="filter-option__mark" aria-hidden="true">{view.selected.includes(String(option.value)) ? '✓' : view.excluded?.includes(String(option.value)) ? '✕' : '○'}</span>}
         <span>{option.label}</span>
       </label>
     ));

@@ -85,6 +85,8 @@ export function publishReactMatchSheet() {
       includeAttackErrors: filters.includeAttackErrors,
       sets: [...(filters.sideoutSets || [])],
       players: [...((filters.sideoutPlayers || {})[scope] || [])],
+      excludedSets: [...(filters.sideoutExcludedSets || [])],
+      excludedPlayers: [...((filters.sideoutExcludedPlayers || {})[scope] || [])],
     },
     sets: [
       ...new Set(events.map((ev) => ev.set).filter((value) => value != null)),

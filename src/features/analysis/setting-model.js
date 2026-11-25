@@ -1,3 +1,4 @@
+import { matchesFilterSelection } from '../../domain/filter-selections.js';
 import { getBaseZoneForPlayer } from "../teams/court-model.js";
 import { totalFromCounts, formatPercent } from "../../domain/counts.js";
 import { computeMetrics } from "./metrics.js";
@@ -6,7 +7,6 @@ import {
   getAnalysisEvents,
   matchesTeamFilter,
   matchesAdvancedFilters,
-  getSetterFromEvent,
 } from "./filter-model.js";
 import { session as analysisFiltersState } from "../state/analysis-analysis-filters.js";
 import { normalizeSetTypeValue } from "../../domain/skill-values.js";
@@ -37,32 +37,20 @@ export function getFilteredSecondEvents() {
       })
     )
       return false;
-    if (analysisFiltersState.secondFilterState.setters.size) {
-      const setterIdx = getSetterFromEvent(ev);
-      if (
-        setterIdx === null ||
-        !analysisFiltersState.secondFilterState.setters.has(setterIdx)
-      )
-        return false;
-    }
     if (
-      analysisFiltersState.secondFilterState.players.size &&
-      !analysisFiltersState.secondFilterState.players.has(ev.playerIdx)
+      !matchesFilterSelection(analysisFiltersState.secondFilterState.players, ev.playerIdx)
     )
       return false;
     if (
-      analysisFiltersState.secondFilterState.sets.size &&
-      !analysisFiltersState.secondFilterState.sets.has(ev.set)
+      !matchesFilterSelection(analysisFiltersState.secondFilterState.sets, ev.set)
     )
       return false;
     if (
-      analysisFiltersState.secondFilterState.codes.size &&
-      !analysisFiltersState.secondFilterState.codes.has(ev.code)
+      !matchesFilterSelection(analysisFiltersState.secondFilterState.codes, ev.code)
     )
       return false;
     if (
-      analysisFiltersState.secondFilterState.zones.size &&
-      !analysisFiltersState.secondFilterState.zones.has(startZone)
+      !matchesFilterSelection(analysisFiltersState.secondFilterState.zones, startZone)
     )
       return false;
     return true;

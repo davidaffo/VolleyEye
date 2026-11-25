@@ -61,11 +61,7 @@ export function renderVideoFilters(events) {
     };
     return map[val] || val;
   };
-  const filteredByTeam = analysisFiltersState.videoFilterState.teams.size
-    ? list.filter((ev) =>
-        matchesTeamFilter(ev, analysisFiltersState.videoFilterState.teams),
-      )
-    : list;
+  const filteredByTeam = list.filter((ev) => matchesTeamFilter(ev, analysisFiltersState.videoFilterState.teams));
   const showBothTeams =
     matchState.state.useOpponentTeam &&
     analysisFiltersState.videoFilterState.teams.size !== 1;
@@ -289,6 +285,7 @@ export function renderVideoFilters(events) {
     analysisFiltersState.videoFilterState.teams,
     {
       onChange: videoTeamFilterAction,
+      triState: true,
     },
   );
   if (showBothTeams) {
@@ -319,6 +316,7 @@ export function renderVideoFilters(events) {
       analysisFiltersState.videoFilterState.players,
       {
         onChange: videoFilterAction,
+        triState: true,
       },
     );
     renderDynamicFilter(
@@ -327,6 +325,7 @@ export function renderVideoFilters(events) {
       analysisFiltersState.videoFilterState.setters,
       {
         onChange: videoFilterAction,
+        triState: true,
       },
     );
   }

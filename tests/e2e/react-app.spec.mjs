@@ -1451,6 +1451,8 @@ test("filtri e preset React: applicazione, rinomina, reset e selezione multiscou
   const serve = page.locator('#video-filter-skills input[value="serve"]');
   await serve.check();
   await expect(serve).toBeChecked();
+  const includedEventKeys = await page.locator('#video-skills-container tr[data-event-key]').evaluateAll(rows => rows.map(row => row.dataset.eventKey));
+  expect(includedEventKeys.length).toBeGreaterThan(0);
   await page.locator("#video-filter-preset-name").fill("Servizio React");
   await page.locator("#video-filter-preset-save").click();
   const saved = page
@@ -1462,6 +1464,23 @@ test("filtri e preset React: applicazione, rinomina, reset e selezione multiscou
   await expect(preset).toBeVisible();
   await page.locator("#video-filter-reset").click();
   await expect(serve).not.toBeChecked();
+  await preset.click();
+  await expect(serve).toBeChecked();
+  await serve.locator('..').click();
+  await expect(serve).toHaveAttribute('aria-checked', 'mixed');
+  await expect(serve.locator('..')).toHaveClass(/filter-option--excluded/);
+  const excludedEventKeys = await page.locator('#video-skills-container tr[data-event-key]').evaluateAll(rows => rows.map(row => row.dataset.eventKey));
+  expect(excludedEventKeys.length).toBeGreaterThan(0);
+  expect(excludedEventKeys.some(key => includedEventKeys.includes(key))).toBe(false);
+  await page.locator('#video-filter-preset-name').fill('Senza servizio');
+  await page.locator('#video-filter-preset-save').click();
+  const excludedPreset = page.locator('.video-filter-preset-card').filter({ hasText: 'Senza servizio' });
+  await expect(excludedPreset).toBeVisible();
+  await page.locator('#video-filter-reset').click();
+  await excludedPreset.click();
+  await expect(serve).toHaveAttribute('aria-checked', 'mixed');
+  await serve.locator('..').click();
+  await expect(serve.locator('..')).toHaveClass(/filter-option--neutral/);
   await preset.click();
   await expect(serve).toBeChecked();
   await preset.locator(".video-filter-preset-rename").click();
@@ -1512,6 +1531,11 @@ test("scheda partita React: campi SVG, filtri e note dopo aggiornamento", async 
   const set = page.locator('[data-sideout-filter="sets"]').first();
   await set.check();
   await expect(set).toBeChecked();
+  await set.locator('..').click();
+  await expect(set).toHaveAttribute('aria-checked', 'mixed');
+  await expect(set.locator('..')).toHaveClass(/filter-option--excluded/);
+  await set.locator('..').click();
+  await expect(set.locator('..')).toHaveClass(/filter-option--neutral/);
   await expect(page.locator(".match-sheet-sideout-filters")).toHaveAttribute(
     "open",
     "",

@@ -69,6 +69,7 @@ export function ensureSkillChartsUiState() {
 
 export function getSkillChartBaseEvents(scope = getAnalysisTeamScope()) {
   const extraState = getAnalysisExtraMatchState();
+  const excludedSets = Array.from(analysisFiltersState.analysisSummaryFilterState?.sets?.excluded || []).map(String).sort().join(',');
   const multiMatchActive = !!(
     extraState &&
     extraState[scope] &&
@@ -357,7 +358,7 @@ export function getSkillChartFiltersCacheToken(scope = getAnalysisTeamScope()) {
     .sort()
     .join(",");
   const currentMatch = getCurrentMatchKey() || "";
-  return `rev:${skillAnalysisState.skillChartCacheRevision}|scope:${scope}|sets:${sets}|extra:${extraMatches}|cur:${currentMatch}`;
+  return `rev:${skillAnalysisState.skillChartCacheRevision}|scope:${scope}|sets:${sets}|excluded:${excludedSets}|extra:${extraMatches}|cur:${currentMatch}`;
 }
 
 export function getSkillMetricSeriesCached(

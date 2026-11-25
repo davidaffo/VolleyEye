@@ -355,6 +355,8 @@ export function getMatchSheetSideoutEvents(scope) {
   const filters = ensureMatchSheetFiltersState();
   const sets = filters.sideoutSets || [];
   const players = (filters.sideoutPlayers || {})[scope] || [];
+  const excludedSets = filters.sideoutExcludedSets || [];
+  const excludedPlayers = (filters.sideoutExcludedPlayers || {})[scope] || [];
   return getMatchSheetEvents(scope).filter((ev) => {
     const idx =
       typeof ev.playerIdx === "number"
@@ -362,7 +364,9 @@ export function getMatchSheetSideoutEvents(scope) {
         : resolvePlayerIdxFromNameForScope(ev.playerName, scope);
     return (
       (!sets.length || sets.includes(String(ev.set))) &&
-      (!players.length || players.includes(String(idx)))
+      !excludedSets.includes(String(ev.set)) &&
+      (!players.length || players.includes(String(idx))) &&
+      !excludedPlayers.includes(String(idx))
     );
   });
 }

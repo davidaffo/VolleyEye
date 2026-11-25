@@ -1,3 +1,4 @@
+import { matchesFilterSelection } from '../../domain/filter-selections.js';
 import {
   getAnalysisEvents,
   matchesTeamFilter,
@@ -33,8 +34,7 @@ export function getFilteredPlayerSecondEventsForPlayer(playerIdx, scope = null) 
     )
       return false;
     if (
-      analysisFiltersState.playerSecondFilterState.sets.size &&
-      !analysisFiltersState.playerSecondFilterState.sets.has(setNum)
+      !matchesFilterSelection(analysisFiltersState.playerSecondFilterState.sets, setNum)
     )
       return false;
     return true;

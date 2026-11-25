@@ -13,7 +13,7 @@ export { clearFilterSelections } from '../../domain/filter-selections.js';
 import { pruneFilterSelections } from "../../domain/filter-selections.js";
 
 
-import { renderDynamicFilter, getCheckedValues } from "./filter-view.js";
+import { renderDynamicFilter, getFilterSelection } from "./filter-view.js";
 import { getSetterFromEvent } from "./filter-model.js";
 import { normalizeSetTypeValue } from "../../domain/skill-values.js";
 import { getAttackErrorType, ATTACK_ERROR_LABELS } from "../../domain/attack-errors.js";
@@ -39,7 +39,7 @@ export function buildAdvancedFilterOptions(events, {
 
 export function syncFilterSelections(state, fields) {
   for (const [key, container, asNumber = false] of fields) {
-    state[key] = new Set(getCheckedValues(container, { asNumber }));
+    state[key] = getFilterSelection(container, { asNumber });
   }
 }
 
@@ -50,7 +50,7 @@ export function pruneFilterControls(state, fields, options) {
 export function renderFilterControls(state, fields, options, onChange, { prune = true } = {}) {
   if (prune) pruneFilterControls(state, fields, options);
   return fields.map(([key, container, , asNumber]) =>
-    renderDynamicFilter(container, options[key], state[key], { asNumber, onChange }));
+    renderDynamicFilter(container, options[key], state[key], { asNumber, onChange, triState: true }));
 }
 
 export function buildPlayerFilterOptions(events, scope) {

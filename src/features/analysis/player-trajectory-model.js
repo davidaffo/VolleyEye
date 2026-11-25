@@ -1,3 +1,4 @@
+import { matchesFilterSelection } from '../../domain/filter-selections.js';
 import {
   getAnalysisEvents,
   matchesTeamFilter,
@@ -36,25 +37,19 @@ export function getFilteredPlayerTrajectoryEventsForPlayer(playerIdx, scope = nu
     )
       return false;
     if (
-      analysisFiltersState.playerTrajectoryFilterState.sets.size &&
-      !analysisFiltersState.playerTrajectoryFilterState.sets.has(setNum)
+      !matchesFilterSelection(analysisFiltersState.playerTrajectoryFilterState.sets, setNum)
     )
       return false;
     if (
-      analysisFiltersState.playerTrajectoryFilterState.codes.size &&
-      !analysisFiltersState.playerTrajectoryFilterState.codes.has(ev.code)
+      !matchesFilterSelection(analysisFiltersState.playerTrajectoryFilterState.codes, ev.code)
     )
       return false;
     if (
-      analysisFiltersState.playerTrajectoryFilterState.attackTypes.size &&
-      !analysisFiltersState.playerTrajectoryFilterState.attackTypes.has(
-        buildAttackTypeLabel(ev.attackType),
-      )
+      !matchesFilterSelection(analysisFiltersState.playerTrajectoryFilterState.attackTypes, buildAttackTypeLabel(ev.attackType))
     )
       return false;
     if (
-      analysisFiltersState.playerTrajectoryFilterState.zones.size &&
-      !analysisFiltersState.playerTrajectoryFilterState.zones.has(startZone)
+      !matchesFilterSelection(analysisFiltersState.playerTrajectoryFilterState.zones, startZone)
     )
       return false;
     return true;
@@ -88,25 +83,19 @@ export function getFilteredPlayerAttackSummaryEventsForPlayer(playerIdx, scope =
     )
       return false;
     if (
-      analysisFiltersState.playerTrajectoryFilterState.sets.size &&
-      !analysisFiltersState.playerTrajectoryFilterState.sets.has(setNum)
+      !matchesFilterSelection(analysisFiltersState.playerTrajectoryFilterState.sets, setNum)
     )
       return false;
     if (
-      analysisFiltersState.playerTrajectoryFilterState.codes.size &&
-      !analysisFiltersState.playerTrajectoryFilterState.codes.has(ev.code)
+      !matchesFilterSelection(analysisFiltersState.playerTrajectoryFilterState.codes, ev.code)
     )
       return false;
     if (
-      analysisFiltersState.playerTrajectoryFilterState.attackTypes.size &&
-      !analysisFiltersState.playerTrajectoryFilterState.attackTypes.has(
-        buildAttackTypeLabel(ev.attackType),
-      )
+      !matchesFilterSelection(analysisFiltersState.playerTrajectoryFilterState.attackTypes, buildAttackTypeLabel(ev.attackType))
     )
       return false;
     if (
-      analysisFiltersState.playerTrajectoryFilterState.zones.size &&
-      !analysisFiltersState.playerTrajectoryFilterState.zones.has(startZone)
+      !matchesFilterSelection(analysisFiltersState.playerTrajectoryFilterState.zones, startZone)
     )
       return false;
     return true;
@@ -135,20 +124,15 @@ export function getFilteredPlayerServeTrajectoryEventsForPlayer(playerIdx, scope
     )
       return false;
     if (
-      analysisFiltersState.playerServeTrajectoryFilterState.sets.size &&
-      !analysisFiltersState.playerServeTrajectoryFilterState.sets.has(setNum)
+      !matchesFilterSelection(analysisFiltersState.playerServeTrajectoryFilterState.sets, setNum)
     )
       return false;
     if (
-      analysisFiltersState.playerServeTrajectoryFilterState.codes.size &&
-      !analysisFiltersState.playerServeTrajectoryFilterState.codes.has(ev.code)
+      !matchesFilterSelection(analysisFiltersState.playerServeTrajectoryFilterState.codes, ev.code)
     )
       return false;
     if (
-      analysisFiltersState.playerServeTrajectoryFilterState.zones.size &&
-      !analysisFiltersState.playerServeTrajectoryFilterState.zones.has(
-        startZone,
-      )
+      !matchesFilterSelection(analysisFiltersState.playerServeTrajectoryFilterState.zones, startZone)
     )
       return false;
     return true;

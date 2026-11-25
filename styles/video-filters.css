@@ -36,6 +36,33 @@ body[data-theme="light"] .filter-scope-group {
 .analysis-filter__options input {
   accent-color: #2563eb;
 }
+:is(.analysis-filter__options, .match-sheet-sideout-filters) label[class^="filter-option--"] {
+  position: relative;
+  border: 1px solid transparent;
+  border-radius: 0.4rem;
+  padding: 0.18rem 0.35rem;
+}
+:is(.analysis-filter__options, .match-sheet-sideout-filters) label[class^="filter-option--"] input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+:is(.analysis-filter__options, .match-sheet-sideout-filters) label:has(input:focus-visible) {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+:is(.analysis-filter__options, .match-sheet-sideout-filters) .filter-option--included {
+  color: #dcfce7;
+  background: #166534;
+  border-color: #22c55e;
+}
+:is(.analysis-filter__options, .match-sheet-sideout-filters) .filter-option--excluded {
+  color: #fee2e2;
+  background: #991b1b;
+  border-color: #f87171;
+}
+.filter-option__mark { width: 1em; text-align: center; font-weight: 700; }
 .multiscout-list {
   padding: 0.4rem 0;
 }

@@ -99,7 +99,7 @@ test('filter command dispatch updates numeric selection before invalidation and 
   const calls = [];
   const context = vm.createContext({
     elAnalysisFilterSets: {}, analysisSummaryFilterState: { sets: new Set() },
-    getCheckedValues: (_container, config) => { assert.equal(config.asNumber, true); return [2, 3]; },
+    getFilterSelection: (_container, config) => { assert.equal(config.asNumber, true); return new Set([2, 3]); },
     invalidateSkillChartCaches: () => calls.push(['invalidate', [...context.analysisSummaryFilterState.sets]]),
     renderAggregatedTable: () => calls.push(['aggregate']), renderPlayerAnalysis: () => calls.push(['player']),
   });
@@ -141,6 +141,31 @@ test('React changes the selection synchronously before dispatch and preserves th
     assert.deepEqual(calls[0].selected, ['our']);
     assert.equal(calls[0].event.target, input);
     assert.equal(calls[0].event.target.checked, true);
+  } finally { window.unmountFilter?.(); window.close(); }
+});
+
+test('checkbox filters cycle through include, exclude and neutral with accessible indicators', () => {
+  const dom = new JSDOM('<div id="root"></div>', { runScripts: 'outside-only' });
+  const window = dom.window;
+  try {
+    window.eval(bundle.outputFiles[0].text);
+    window.filterStore.publish('test', { type: 'checkbox', triState: true, groups: [], options: [{ value: 'x', label: 'Ricezione' }],
+      selected: [], excluded: [], changeAction: { command: 'test' }, onChange: null });
+    window.dispatchFilter = () => {};
+    window.renderFilter();
+    const input = window.document.querySelector('input');
+    input.click();
+    assert.deepEqual([...window.filterStore.getView('test').selected], ['x']);
+    assert.match(input.getAttribute('aria-label'), /incluso/);
+    assert.ok(input.closest('label').classList.contains('filter-option--included'));
+    input.click();
+    assert.deepEqual([...window.filterStore.getView('test').excluded], ['x']);
+    assert.equal(input.getAttribute('aria-checked'), 'mixed');
+    assert.ok(input.closest('label').classList.contains('filter-option--excluded'));
+    input.click();
+    assert.deepEqual([...window.filterStore.getView('test').selected], []);
+    assert.deepEqual([...window.filterStore.getView('test').excluded], []);
+    assert.match(input.getAttribute('aria-label'), /nessun filtro/);
   } finally { window.unmountFilter?.(); window.close(); }
 });
 

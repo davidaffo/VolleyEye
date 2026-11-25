@@ -14,6 +14,7 @@ import { getDefaultAnalysisTeamScope } from "./filter-model.js";
 
 import { normalizeSetNumber, buildUniqueOptions } from "./values.js";
 import { publishReactMultiscoutCount } from "./multiscout-view.js";
+import { pruneFilterSelections } from '../../domain/filter-selections.js';
 
 export function renderAnalysisTeamFilter() {
   
@@ -82,16 +83,13 @@ export function renderAnalysisSummarySetFilter() {
       labelFn: (val) => "Set " + val,
     },
   );
-  analysisFiltersState.analysisSummaryFilterState.sets = new Set(
-    [...analysisFiltersState.analysisSummaryFilterState.sets].filter((val) =>
-      setOpts.some((opt) => Number(opt.value) === val),
-    ),
-  );
+  pruneFilterSelections(analysisFiltersState.analysisSummaryFilterState, [['sets', setOpts, true]]);
   const visible = renderDynamicFilter(
     "analysis-filter-sets",
     setOpts,
     analysisFiltersState.analysisSummaryFilterState.sets,
     {
+      triState: true,
       changeAction: Object.freeze({
         command: "handleAnalysisSummarySetFilterChange",
       }),

@@ -394,6 +394,8 @@ Tutte le successive viste della sezione **Analisi** usano un sistema di filtri s
 
 Questi mi permettono, oltre ad altre cose, di filtrare ad esempio i dati per giocatrice, per alzatrice, per palla precedente, per valutazione ecc...
 
+Nei filtri a scelta multipla, il primo clic su un valore lo **include** (✓ verde), il secondo lo **esclude** (✕ rossa) e il terzo rimuove il filtro. Puoi includere alcuni valori ed escluderne altri: se non includi nessun valore, restano visibili tutti quelli non esclusi. Il reset cancella inclusioni ed esclusioni. Anche i filtri video e quelli per set e giocatrici del foglio gara funzionano così; i preset video conservano entrambe le scelte.
+
 
 ### Analisi delle alzate
 

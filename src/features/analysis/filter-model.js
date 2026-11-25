@@ -12,6 +12,7 @@ import { formatPercentValue } from '../../domain/counts.js';
 import { normalizeSetTypeValue } from '../../domain/skill-values.js';
 import { getAttackErrorType } from '../../domain/attack-errors.js';
 import { getAnalysisRoster } from './analysis-roster.js';
+import { matchesFilterSelection, matchesFilterAlternatives, isFilterSelectionActive } from '../../domain/filter-selections.js';
 
 export function findEventById(id) {
   if (!matchState.state.events || !Array.isArray(matchState.state.events)) return null;
@@ -280,12 +281,7 @@ export function makeScopedIndexKey(scope, idx) {
 }
 
 export function matchScopedIndexFilter(selectedSet, scope, idx) {
-  if (!selectedSet || selectedSet.size === 0) return true;
-  const key = makeScopedIndexKey(scope, idx);
-  if (selectedSet.has(key)) return true;
-  if (selectedSet.has(idx)) return true;
-  if (selectedSet.has(String(idx))) return true;
-  return false;
+  return matchesFilterAlternatives(selectedSet, idx == null || idx === -1 ? [] : [makeScopedIndexKey(scope, idx), idx, String(idx)]);
 }
 
 export function getTeamFilterOptions() {
@@ -311,9 +307,8 @@ export function ensureAnalysisTeamFilterDefault() {
 }
 
 export function matchesTeamFilter(ev, selectedSet) {
-  if (!selectedSet || selectedSet.size === 0) return true;
   const scope = getTeamScopeFromEvent(ev);
-  return selectedSet.has(scope);
+  return matchesFilterSelection(selectedSet, scope);
 }
 
 export function getAnalysisTeamScope() {
@@ -330,10 +325,8 @@ export function filterEventsByAnalysisTeam(events) {
 }
 
 export function matchesSummarySetFilter(ev) {
-  if (!analysisFiltersState.analysisSummaryFilterState.sets || analysisFiltersState.analysisSummaryFilterState.sets.size === 0) return true;
   const setNum = normalizeSetNumber(ev && ev.set);
-  if (setNum === null) return false;
-  return analysisFiltersState.analysisSummaryFilterState.sets.has(setNum);
+  return matchesFilterSelection(analysisFiltersState.analysisSummaryFilterState.sets, setNum);
 }
 
 export function getPointDirectionFor(scope, ev) {
@@ -397,8 +390,7 @@ export function getSummarySetNumbers() {
     if (num) setNums.add(num);
   });
   const played = Array.from(setNums).sort((a, b) => a - b);
-  if (!analysisFiltersState.analysisSummaryFilterState.sets || analysisFiltersState.analysisSummaryFilterState.sets.size === 0) return played;
-  return played.filter(num => analysisFiltersState.analysisSummaryFilterState.sets.has(num));
+  return played.filter(num => matchesFilterSelection(analysisFiltersState.analysisSummaryFilterState.sets, num));
 }
 
 export function filterNormalEvalOptions(options) {
@@ -438,112 +430,47 @@ export function matchesPreviousSkill(ev, filterVal) {
 
 export function matchesAdvancedFilters(ev, filters, { includeSetter = false } = {}) {
   if (!ev || !filters) return true;
-  if (filters.attackErrors?.size && !filters.attackErrors.has(getAttackErrorType(ev))) return false;
-  if (includeSetter && filters.setters && filters.setters.size) {
-    const setterIdx = getSetterFromEvent(ev);
-    if (setterIdx === null || !filters.setters.has(setterIdx)) return false;
-  }
-  if (filters.setTypes && filters.setTypes.size) {
-    const setType = normalizeSetTypeValue(
-      ev.setType || (ev.combination && ev.combination.set_type) || (ev.combination && ev.combination.setType)
-    );
-    if (!setType || !filters.setTypes.has(setType)) return false;
-  }
-  if (filters.bases && filters.bases.size) {
-    const base = normalizeBaseValue(ev.base);
-    if (!base || !filters.bases.has(base)) return false;
-  }
-  if (filters.phases && filters.phases.size) {
-    let rawPhase = ev.attackBp;
-    if (rawPhase === undefined || rawPhase === null) {
-      rawPhase = ev.phase !== undefined ? ev.phase : ev.attackPhase !== undefined ? ev.attackPhase : true; // default BP
-    }
-    const phase = normalizePhaseValue(rawPhase);
-    if (phase === null || !filters.phases.has(phase)) return false;
-  }
-  if (filters.receiveEvaluations && filters.receiveEvaluations.size) {
-    const recvEval = normalizeEvalCode(ev.receiveEvaluation);
-    if (!recvEval || !filters.receiveEvaluations.has(recvEval)) return false;
-  }
-  if (filters.receiveZones && filters.receiveZones.size) {
-    const recvZone = normalizeReceiveZone(ev.receivePosition || ev.receiveZone);
-    if (recvZone === null || !filters.receiveZones.has(recvZone)) return false;
-  }
-  if (filters.sets && filters.sets.size) {
-    const setNum = normalizeSetNumber(ev.set);
-    if (setNum === null || !filters.sets.has(setNum)) return false;
-  }
+  if (!matchesFilterSelection(filters.attackErrors, getAttackErrorType(ev))) return false;
+  if (includeSetter && isFilterSelectionActive(filters.setters) && !matchesFilterSelection(filters.setters, getSetterFromEvent(ev))) return false;
+  const setType = normalizeSetTypeValue(ev.setType || ev.combination?.set_type || ev.combination?.setType);
+  if (!matchesFilterSelection(filters.setTypes, setType)) return false;
+  if (!matchesFilterSelection(filters.bases, normalizeBaseValue(ev.base))) return false;
+  let rawPhase = ev.attackBp;
+  if (rawPhase === undefined || rawPhase === null) rawPhase = ev.phase !== undefined ? ev.phase : ev.attackPhase !== undefined ? ev.attackPhase : true;
+  if (!matchesFilterSelection(filters.phases, normalizePhaseValue(rawPhase))) return false;
+  if (!matchesFilterSelection(filters.receiveEvaluations, normalizeEvalCode(ev.receiveEvaluation))) return false;
+  if (!matchesFilterSelection(filters.receiveZones, normalizeReceiveZone(ev.receivePosition || ev.receiveZone))) return false;
+  if (!matchesFilterSelection(filters.sets, normalizeSetNumber(ev.set))) return false;
   if (filters.prevSkill && !matchesPreviousSkill(ev, filters.prevSkill)) return false;
   return true;
 }
 
 export function matchesVideoFilters(ev, filters) {
   if (!ev || !filters) return true;
-  if (filters.attackErrors?.size && !filters.attackErrors.has(getAttackErrorType(ev))) return false;
-  if (filters.teams && filters.teams.size) {
-    if (!matchesTeamFilter(ev, filters.teams)) return false;
-  }
-  if (filters.players && filters.players.size) {
-    const idx = resolvePlayerIdx(ev);
-    const scope = getTeamScopeFromEvent(ev);
-    if (idx === -1 || !matchScopedIndexFilter(filters.players, scope, idx)) return false;
-  }
-  if (filters.setters && filters.setters.size) {
-    const setterIdx = getSetterFromEvent(ev);
-    const scope = getTeamScopeFromEvent(ev);
-    if (setterIdx === null || !matchScopedIndexFilter(filters.setters, scope, setterIdx)) return false;
-  }
-  if (filters.skills && filters.skills.size) {
-    if (!ev.skillId || !filters.skills.has(ev.skillId)) return false;
-  }
-  if (filters.codes && filters.codes.size) {
-    if (!ev.code || !filters.codes.has(ev.code)) return false;
-  }
-  if (filters.sets && filters.sets.size) {
-    const setNum = normalizeSetNumber(ev.set);
-    if (setNum === null || !filters.sets.has(setNum)) return false;
-  }
-  if (filters.rotations && filters.rotations.size) {
-    const rot = Number(ev.rotation);
-    if (!Number.isFinite(rot) || !filters.rotations.has(rot)) return false;
-  }
-  if (filters.zones && filters.zones.size) {
-    const zoneVal = Number(ev.zone || ev.playerPosition);
-    if (!Number.isFinite(zoneVal) || !filters.zones.has(zoneVal)) return false;
-  }
-  if (filters.bases && filters.bases.size) {
-    const base = normalizeBaseValue(ev.base);
-    if (!base || !filters.bases.has(base)) return false;
-  }
-  if (filters.setTypes && filters.setTypes.size) {
-    const setType = normalizeSetTypeValue(
-      ev.setType || (ev.combination && ev.combination.set_type) || (ev.combination && ev.combination.setType)
-    );
-    if (!setType || !filters.setTypes.has(setType)) return false;
-  }
-  if (filters.phases && filters.phases.size) {
-    let rawPhase = ev.attackBp;
-    if (rawPhase === undefined || rawPhase === null) {
-      rawPhase = ev.phase !== undefined ? ev.phase : ev.attackPhase !== undefined ? ev.attackPhase : true;
-    }
-    const phase = normalizePhaseValue(rawPhase);
-    if (phase === null || !filters.phases.has(phase)) return false;
-  }
-  if (filters.receiveEvaluations && filters.receiveEvaluations.size) {
-    const recvEval = normalizeEvalCode(ev.receiveEvaluation);
-    if (!recvEval || !filters.receiveEvaluations.has(recvEval)) return false;
-  }
-  if (filters.receiveZones && filters.receiveZones.size) {
-    const recvZone = normalizeReceiveZone(ev.receivePosition || ev.receiveZone);
-    if (recvZone === null || !filters.receiveZones.has(recvZone)) return false;
-  }
-  if (filters.serveTypes && filters.serveTypes.size) {
-    if (!ev.serveType || !filters.serveTypes.has(ev.serveType)) return false;
-  }
-  if (filters.attackTypes && filters.attackTypes.size) {
-    if (ev.skillId !== "attack") return false;
-    if (!filters.attackTypes.has(buildAttackTypeLabel(ev.attackType))) return false;
-  }
+  if (!matchesFilterSelection(filters.attackErrors, getAttackErrorType(ev))) return false;
+  if (!matchesTeamFilter(ev, filters.teams)) return false;
+  const scope = getTeamScopeFromEvent(ev);
+  if (isFilterSelectionActive(filters.players) && !matchScopedIndexFilter(filters.players, scope, resolvePlayerIdx(ev))) return false;
+  if (isFilterSelectionActive(filters.setters) && !matchScopedIndexFilter(filters.setters, scope, getSetterFromEvent(ev))) return false;
+  if (!matchesFilterSelection(filters.skills, ev.skillId)) return false;
+  if (!matchesFilterSelection(filters.codes, ev.code)) return false;
+  if (!matchesFilterSelection(filters.sets, normalizeSetNumber(ev.set))) return false;
+  const rotation = ev.rotation == null || ev.rotation === '' ? null : Number(ev.rotation);
+  if (!matchesFilterSelection(filters.rotations, Number.isFinite(rotation) ? rotation : null)) return false;
+  const rawZone = ev.zone || ev.playerPosition;
+  const zone = rawZone == null || rawZone === '' ? null : Number(rawZone);
+  if (!matchesFilterSelection(filters.zones, Number.isFinite(zone) ? zone : null)) return false;
+  if (!matchesFilterSelection(filters.bases, normalizeBaseValue(ev.base))) return false;
+  const setType = normalizeSetTypeValue(ev.setType || ev.combination?.set_type || ev.combination?.setType);
+  if (!matchesFilterSelection(filters.setTypes, setType)) return false;
+  let rawPhase = ev.attackBp;
+  if (rawPhase === undefined || rawPhase === null) rawPhase = ev.phase !== undefined ? ev.phase : ev.attackPhase !== undefined ? ev.attackPhase : true;
+  if (!matchesFilterSelection(filters.phases, normalizePhaseValue(rawPhase))) return false;
+  if (!matchesFilterSelection(filters.receiveEvaluations, normalizeEvalCode(ev.receiveEvaluation))) return false;
+  if (!matchesFilterSelection(filters.receiveZones, normalizeReceiveZone(ev.receivePosition || ev.receiveZone))) return false;
+  if (!matchesFilterSelection(filters.serveTypes, ev.serveType)) return false;
+  const attackType = ev.skillId === 'attack' ? buildAttackTypeLabel(ev.attackType) : null;
+  if (!matchesFilterSelection(filters.attackTypes, attackType)) return false;
   if (filters.prevSkill && !matchesPreviousSkill(ev, filters.prevSkill)) return false;
   return true;
 }

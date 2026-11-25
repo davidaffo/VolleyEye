@@ -1,5 +1,6 @@
 import { session as matchState } from "../../../js/globals.js";
 import { session as analysisFiltersState } from "../state/analysis-analysis-filters.js";
+import { createFilterSelection } from '../../domain/filter-selections.js';
 export function ensureVideoFilterPresetsState() {
   if (!Array.isArray(matchState.state.videoFilterPresets)) {
     matchState.state.videoFilterPresets = [];
@@ -23,7 +24,7 @@ export function listFromSet(setObj, { asNumber = false } = {}) {
 }
 
 export function snapshotVideoFilters() {
-  return Object.fromEntries(
+  const snapshot = Object.fromEntries(
     Object.entries(VIDEO_FILTER_FIELDS).map(([field, kind]) => [
       field,
       kind === "previous"
@@ -33,6 +34,10 @@ export function snapshotVideoFilters() {
           }),
     ]),
   );
+  const excluded = Object.fromEntries(Object.entries(VIDEO_FILTER_FIELDS).filter(([field, kind]) => kind !== 'previous' && analysisFiltersState.videoFilterState[field]?.excluded?.size)
+    .map(([field, kind]) => [field, listFromSet(analysisFiltersState.videoFilterState[field].excluded, { asNumber: kind === 'number' })]));
+  if (Object.keys(excluded).length) snapshot.excluded = excluded;
+  return snapshot;
 }
 
 export function countActiveVideoFilters(snapshot) {
@@ -44,7 +49,7 @@ export function countActiveVideoFilters(snapshot) {
         ? snapshot[field] && snapshot[field] !== "any"
           ? 1
           : 0
-        : Array.isArray(snapshot[field]) && snapshot[field].length
+        : (Array.isArray(snapshot[field]) && snapshot[field].length) || (Array.isArray(snapshot.excluded?.[field]) && snapshot.excluded[field].length)
           ? 1
           : 0),
     0,
@@ -58,10 +63,13 @@ export function applyVideoFilterSnapshot(snapshot) {
     analysisFiltersState.videoFilterState[field] =
       kind === "previous"
         ? src[field] || "any"
-        : new Set(
+        : createFilterSelection(
             kind === "number"
               ? values.map(Number).filter(Number.isFinite)
               : values.map(String),
+            kind === "number"
+              ? (Array.isArray(src.excluded?.[field]) ? src.excluded[field] : []).map(Number).filter(Number.isFinite)
+              : (Array.isArray(src.excluded?.[field]) ? src.excluded[field] : []).map(String),
           );
   }
 }

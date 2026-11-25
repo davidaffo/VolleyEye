@@ -12,20 +12,25 @@ export function changeReactMatchSheetFilter(kind, value, checked) {
   else {
     const scope = getAnalysisTeamScope();
     if (!filters.sideoutPlayers) filters.sideoutPlayers = {};
+    if (!filters.sideoutExcludedPlayers) filters.sideoutExcludedPlayers = {};
     const current =
         kind === "sets"
           ? filters.sideoutSets || []
           : filters.sideoutPlayers[scope] || [],
       selected = new Set(current);
-    if (checked) selected.add(String(value));
-    else selected.delete(String(value));
+    const excluded = new Set(kind === 'sets' ? filters.sideoutExcludedSets || [] : filters.sideoutExcludedPlayers[scope] || []);
+    const key = String(value);
+    if (selected.has(key)) { selected.delete(key); excluded.add(key); }
+    else if (excluded.has(key)) excluded.delete(key);
+    else selected.add(key);
     const options =
         kind === "sets"
           ? matchSheetStore.getSnapshot().sets
           : matchSheetStore.getSnapshot().roster.map((player) => player.index),
-      next = options.map(String).filter((option) => selected.has(option));
-    if (kind === "sets") filters.sideoutSets = next;
-    else filters.sideoutPlayers[scope] = next;
+      next = options.map(String).filter((option) => selected.has(option)),
+      nextExcluded = options.map(String).filter((option) => excluded.has(option));
+    if (kind === "sets") { filters.sideoutSets = next; filters.sideoutExcludedSets = nextExcluded; }
+    else { filters.sideoutPlayers[scope] = next; filters.sideoutExcludedPlayers[scope] = nextExcluded; }
   }
   saveState({ persistLocal: true });
   renderMatchSheetAnalysis();

@@ -1,6 +1,7 @@
 import { filterStore } from "../../state/filter-store.mjs";
 import { getTeamNameForScope } from "../teams/selectors.js";
 import { session as liveScoreAndSetState } from "../state/live-live-score-and-set.js";
+import { createFilterSelection } from '../../domain/filter-selections.js';
 // Commands keep publishers independent of the controllers that handle the gesture.
 function filterInteraction(id, handler) {
   if (handler && typeof handler === "object") {
@@ -32,6 +33,8 @@ export function publishReactFilter(
       options.map((option) => Object.freeze({ ...option })),
     ),
     selected,
+    excluded: Object.freeze([...(selectedSet.excluded || [])].map(String)),
+    triState: !!config.triState && type === 'checkbox',
     value: selected[0] || null,
     ...filterInteraction(id, config.changeAction || config.onChange),
   });
@@ -59,6 +62,8 @@ export function publishReactSplitFilter(
       ),
     ),
     selected: Object.freeze([...selectedSet].map(String)),
+    excluded: Object.freeze([...(selectedSet.excluded || [])].map(String)),
+    triState: true,
     ...filterInteraction(id, onChange),
   });
 }
@@ -105,7 +110,7 @@ export function renderDynamicFilter(
   config = {},
 ) {
   const shouldShow = Array.isArray(options) && options.length > 0;
-  if (!shouldShow) selectedSet.clear();
+  if (!shouldShow) { selectedSet.clear(); selectedSet.excluded?.clear(); }
   publishReactFilter(id, shouldShow ? options : [], selectedSet, config);
   toggleFilterVisibility(id, shouldShow);
   return shouldShow;
@@ -115,6 +120,12 @@ export function getCheckedValues(id, { asNumber = false } = {}) {
   if (!id) return [];
 
   return readReactFilterValues(id, asNumber);
+}
+
+export function getFilterSelection(id, { asNumber = false } = {}) {
+  const view = filterStore.getView(id);
+  const convert = value => asNumber ? Number(value) : String(value);
+  return createFilterSelection(readReactFilterValues(id, asNumber), (view.excluded || []).map(convert).filter(value => !Number.isNaN(value)));
 }
 
 export function getCheckedRadioValue(id) {

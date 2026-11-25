@@ -1,7 +1,7 @@
 import { renderAnalysisMatchFilter } from "./shared-filter-view.js";
 import { getFilterControlIds } from "../../domain/analysis-filter-schema.js";
 
-import { getCheckedValues } from "./filter-view.js";
+import { getCheckedValues, getFilterSelection } from "./filter-view.js";
 import { getAnalysisExtraMatchState, saveAnalysisExtraMatchState, getAnalysisTeamScope, ensureCourtSideState, getAnalysisCourtSide } from "./filter-model.js";
 import { session } from "../state/analysis-analysis-filters.js";
 
@@ -43,16 +43,15 @@ export function handleAnalysisTeamFilterChange(e) {
 
 export function handleAnalysisSummarySetFilterChange() {
 
-  analysisFiltersState.analysisSummaryFilterState.sets = new Set(getCheckedValues("analysis-filter-sets", { asNumber: true }));
+  analysisFiltersState.analysisSummaryFilterState.sets = getFilterSelection("analysis-filter-sets", { asNumber: true });
   invalidateSkillChartCaches();
   renderAggregatedTable();
   renderPlayerAnalysis();
 }
 
 export function handleVideoTeamFilterChange(e) {
-
-  const values = getCheckedValues("video-filter-teams");
-  analysisFiltersState.videoFilterState.teams = new Set(values);
+  analysisFiltersState.activeVideoFilterPresetId = null;
+  analysisFiltersState.videoFilterState.teams = getFilterSelection("video-filter-teams");
   renderVideoAnalysis();
 }
 

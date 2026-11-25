@@ -73,6 +73,8 @@ test("i filtri cambio palla combinano set e giocatrice della squadra selezionata
   assert.deepEqual(evaluate('getMatchSheetSideoutEvents("our")'), [{set: 2, playerIdx: 1}]);
   context.state.uiMatchSheetFilters = {};
   assert.equal(evaluate('getMatchSheetSideoutEvents("our")').length, 3);
+  context.state.uiMatchSheetFilters = { sideoutExcludedSets: ['1'], sideoutExcludedPlayers: { our: ['0'] } };
+  assert.deepEqual(evaluate('getMatchSheetSideoutEvents("our")'), [{set: 2, playerIdx: 1}]);
 });
 
 test("i ruoli seguono le zone degli attacchi e non le posizioni assolute di rotazione", () => {

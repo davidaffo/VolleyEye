@@ -1,3 +1,4 @@
+import { matchesFilterSelection, isFilterSelectionActive } from '../../domain/filter-selections.js';
 import {
   buildAttackTypeLabel,
   buildUniqueOptions,
@@ -60,39 +61,25 @@ export function getFilteredTrajectoryEvents() {
       return false;
     if (!matchesAdvancedFilters(ev, analysisFiltersState.trajectoryFilterState))
       return false;
-    if (analysisFiltersState.trajectoryFilterState.setters.size) {
-      const setterIdx = getSetterFromEvent(ev);
-      if (
-        setterIdx === null ||
-        !analysisFiltersState.trajectoryFilterState.setters.has(setterIdx)
-      )
-        return false;
-    }
+    if (isFilterSelectionActive(analysisFiltersState.trajectoryFilterState.setters) && !matchesFilterSelection(analysisFiltersState.trajectoryFilterState.setters, getSetterFromEvent(ev))) return false;
     if (
-      analysisFiltersState.trajectoryFilterState.players.size &&
-      !analysisFiltersState.trajectoryFilterState.players.has(ev.playerIdx)
+      !matchesFilterSelection(analysisFiltersState.trajectoryFilterState.players, ev.playerIdx)
     )
       return false;
     if (
-      analysisFiltersState.trajectoryFilterState.sets.size &&
-      !analysisFiltersState.trajectoryFilterState.sets.has(ev.set)
+      !matchesFilterSelection(analysisFiltersState.trajectoryFilterState.sets, ev.set)
     )
       return false;
     if (
-      analysisFiltersState.trajectoryFilterState.codes.size &&
-      !analysisFiltersState.trajectoryFilterState.codes.has(ev.code)
+      !matchesFilterSelection(analysisFiltersState.trajectoryFilterState.codes, ev.code)
     )
       return false;
     if (
-      analysisFiltersState.trajectoryFilterState.attackTypes.size &&
-      !analysisFiltersState.trajectoryFilterState.attackTypes.has(
-        buildAttackTypeLabel(ev.attackType),
-      )
+      !matchesFilterSelection(analysisFiltersState.trajectoryFilterState.attackTypes, buildAttackTypeLabel(ev.attackType))
     )
       return false;
     if (
-      analysisFiltersState.trajectoryFilterState.zones.size &&
-      !analysisFiltersState.trajectoryFilterState.zones.has(startZone)
+      !matchesFilterSelection(analysisFiltersState.trajectoryFilterState.zones, startZone)
     )
       return false;
     return true;
@@ -226,23 +213,19 @@ export function getFilteredServeTrajectoryEvents() {
     )
       return false;
     if (
-      analysisFiltersState.serveTrajectoryFilterState.players.size &&
-      !analysisFiltersState.serveTrajectoryFilterState.players.has(ev.playerIdx)
+      !matchesFilterSelection(analysisFiltersState.serveTrajectoryFilterState.players, ev.playerIdx)
     )
       return false;
     if (
-      analysisFiltersState.serveTrajectoryFilterState.sets.size &&
-      !analysisFiltersState.serveTrajectoryFilterState.sets.has(ev.set)
+      !matchesFilterSelection(analysisFiltersState.serveTrajectoryFilterState.sets, ev.set)
     )
       return false;
     if (
-      analysisFiltersState.serveTrajectoryFilterState.codes.size &&
-      !analysisFiltersState.serveTrajectoryFilterState.codes.has(ev.code)
+      !matchesFilterSelection(analysisFiltersState.serveTrajectoryFilterState.codes, ev.code)
     )
       return false;
     if (
-      analysisFiltersState.serveTrajectoryFilterState.zones.size &&
-      !analysisFiltersState.serveTrajectoryFilterState.zones.has(startZone)
+      !matchesFilterSelection(analysisFiltersState.serveTrajectoryFilterState.zones, startZone)
     )
       return false;
     return true;
@@ -269,39 +252,25 @@ export function getFilteredAttackSummaryEvents() {
     const setNum = normalizeSetNumber(ev.set);
     if (!matchesAdvancedFilters(ev, analysisFiltersState.trajectoryFilterState))
       return false;
-    if (analysisFiltersState.trajectoryFilterState.setters.size) {
-      const setterIdx = getSetterFromEvent(ev);
-      if (
-        setterIdx === null ||
-        !analysisFiltersState.trajectoryFilterState.setters.has(setterIdx)
-      )
-        return false;
-    }
+    if (isFilterSelectionActive(analysisFiltersState.trajectoryFilterState.setters) && !matchesFilterSelection(analysisFiltersState.trajectoryFilterState.setters, getSetterFromEvent(ev))) return false;
     if (
-      analysisFiltersState.trajectoryFilterState.players.size &&
-      !analysisFiltersState.trajectoryFilterState.players.has(ev.playerIdx)
+      !matchesFilterSelection(analysisFiltersState.trajectoryFilterState.players, ev.playerIdx)
     )
       return false;
     if (
-      analysisFiltersState.trajectoryFilterState.sets.size &&
-      !analysisFiltersState.trajectoryFilterState.sets.has(setNum)
+      !matchesFilterSelection(analysisFiltersState.trajectoryFilterState.sets, setNum)
     )
       return false;
     if (
-      analysisFiltersState.trajectoryFilterState.codes.size &&
-      !analysisFiltersState.trajectoryFilterState.codes.has(ev.code)
+      !matchesFilterSelection(analysisFiltersState.trajectoryFilterState.codes, ev.code)
     )
       return false;
     if (
-      analysisFiltersState.trajectoryFilterState.attackTypes.size &&
-      !analysisFiltersState.trajectoryFilterState.attackTypes.has(
-        buildAttackTypeLabel(ev.attackType),
-      )
+      !matchesFilterSelection(analysisFiltersState.trajectoryFilterState.attackTypes, buildAttackTypeLabel(ev.attackType))
     )
       return false;
     if (
-      analysisFiltersState.trajectoryFilterState.zones.size &&
-      !analysisFiltersState.trajectoryFilterState.zones.has(startZone)
+      !matchesFilterSelection(analysisFiltersState.trajectoryFilterState.zones, startZone)
     )
       return false;
     return true;
