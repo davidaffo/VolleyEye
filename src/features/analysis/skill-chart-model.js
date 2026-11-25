@@ -69,7 +69,6 @@ export function ensureSkillChartsUiState() {
 
 export function getSkillChartBaseEvents(scope = getAnalysisTeamScope()) {
   const extraState = getAnalysisExtraMatchState();
-  const excludedSets = Array.from(analysisFiltersState.analysisSummaryFilterState?.sets?.excluded || []).map(String).sort().join(',');
   const multiMatchActive = !!(
     extraState &&
     extraState[scope] &&
@@ -345,6 +344,7 @@ export function deferSkillChartRenderWhilePaused() {
 }
 
 export function getSkillChartFiltersCacheToken(scope = getAnalysisTeamScope()) {
+  const excludedSets = Array.from(analysisFiltersState.analysisSummaryFilterState?.sets?.excluded || []).map(String).sort().join(',');
   const sets = Array.from(
     (analysisFiltersState.analysisSummaryFilterState &&
       analysisFiltersState.analysisSummaryFilterState.sets) ||

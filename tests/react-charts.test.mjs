@@ -2,6 +2,7 @@ import {reference} from "./helpers/ui-reference.mjs";
 import { sourceFunctions } from "./helpers/source-functions.mjs";
 import assert from "node:assert/strict";
 import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
+import { readFileSync as readCurrentFileSync } from 'node:fs';
 import { createRequire } from "node:module";
 import vm from "node:vm";
 import test from "node:test";
@@ -71,6 +72,22 @@ function canonical(node) {
       .filter(Boolean),
   };
 }
+test('la cache dei grafici distingue i set esclusi', () => {
+  const sets = new Set([1]);
+  sets.excluded = new Set([2]);
+  const context = vm.createContext({
+    analysisFiltersState: { analysisSummaryFilterState: { sets } },
+    skillAnalysisState: { skillChartCacheRevision: 0 },
+    getAnalysisExtraMatchState: () => ({}),
+    getCurrentMatchKey: () => 'partita',
+  });
+  const currentSource = readCurrentFileSync(new URL('../src/features/analysis/skill-chart-model.js', import.meta.url), 'utf8');
+  vm.runInContext(sourceFunctions(currentSource, ['getSkillChartFiltersCacheToken']), context);
+  const first = context.getSkillChartFiltersCacheToken('our');
+  sets.excluded = new Set([3]);
+  const second = context.getSkillChartFiltersCacheToken('our');
+  assert.notEqual(first, second);
+});
 for (const metric of [
   { id: "eff", kind: "percent" },
   { id: "pos", kind: "percent" },

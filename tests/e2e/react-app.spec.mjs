@@ -1,6 +1,28 @@
 import { test, expect } from "@playwright/test";
 import { readFileSync } from "node:fs";
 
+test('video: la scorciatoia per il tipo di alzata mantiene visibile la vista', async ({ page }) => {
+  const errors = await openApp(page);
+  await page.locator('#btn-load-match').click();
+  await page.evaluate(() => window.VolleyEye.app.invoke('setActiveTab', 'aggregated'));
+  await page.locator('[data-agg-tab-target="player"]').click();
+  await page.locator('#player-analysis-compare-enabled').check();
+  await expect(page.locator('#player-analysis-compare-view .player-analysis-compare-card')).toHaveCount(2);
+  await page.evaluate(() => window.VolleyEye.app.invoke('setActiveTab', 'video'));
+  const rows = page.locator('#video-skills-container tbody tr.event-row');
+  const rowCount = await rows.count();
+  const attack = rows.filter({ hasText: 'Attacco' }).first();
+  await expect(attack).toBeVisible();
+  const key = await attack.getAttribute('data-event-key');
+  await attack.locator('.row-select input').check();
+  await page.locator('body').click({ position: { x: 1, y: 1 } });
+  await page.keyboard.press('m');
+  await expect.poll(async () => (await page.evaluate(() => window.VolleyEye.app.getMatchSnapshot())).events.find(ev => String(ev.eventId) === key)?.setType).toBe('mezza');
+  await expect(rows).toHaveCount(rowCount);
+  await expect(page.locator('body')).toHaveAttribute('data-active-tab', 'video');
+  expect(errors).toEqual([]);
+});
+
 const retiredSelectors = JSON.parse(readFileSync(new URL('../fixtures/retired-ui-selectors.json', import.meta.url), 'utf8'));
 
 test.afterEach(async ({ page }) => {
