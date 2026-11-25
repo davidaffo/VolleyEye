@@ -2,6 +2,8 @@ import { addMatchNote, editMatchNote, resolveMatchNote, deleteMatchNote, seekMat
 import { updateNextSetOption } from "../features/live/next-set-model.js";
 import { saveCurrentVideoFrame } from "../features/video/playback.js";
 import { downloadVideoFromSelection } from "../features/video/clip-commands.js";
+import { openSetTypeBySetter, closeSetTypeBySetter, applySetTypeBySetter } from "../features/video/set-type-by-setter.js";
+import { openSetTypeByRole, closeSetTypeByRole, applySetTypeByRole } from "../features/video/set-type-by-role.js";
 import { deleteEventByKey, undoLastEvent } from "../features/events/history-commands.js";
 import { runAnalysisFilterAction } from "../features/analysis/analysis-filters.js";
 import { runScoutSkillAction } from "../features/scout/skill-actions.js";
@@ -169,6 +171,12 @@ export const actions = createCommands({
     publishReactSettings();
   },
   openOffsetModal,
+  openSetTypeBySetter,
+  closeSetTypeBySetter,
+  applySetTypeBySetter,
+  openSetTypeByRole,
+  closeSetTypeByRole,
+  applySetTypeByRole,
   closeOffsetModal,
   applyOffsetsToSelectedSkills,
   openSkillDurationModal,

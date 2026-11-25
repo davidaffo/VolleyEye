@@ -585,7 +585,7 @@ export function buildReactAggregatedTable({ chartTones } = {}) {
         : getSortedPlayerEntries();
     const startInfoList = buildSetStartInfoList(playedSets, scope);
     sortedEntries.forEach(({ name, idx }) => {
-      const role = getAnalysisPlayerRole(summaryEvents, idx);
+      const role = getAnalysisPlayerRole(summaryEvents, idx, scope);
       const countsBySkill = normalizeSkillCounts(statsByPlayer[idx]);
       SKILL_COLUMNS.forEach(({ id }) =>
         mergeCounts(totalsBySkill[id], countsBySkill[id]),

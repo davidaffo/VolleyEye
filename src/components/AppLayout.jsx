@@ -88,6 +88,8 @@ export const AppLayout = memo(function AppLayout() {
       <VideoEditModal kind="unify" />
       <MultiscoutModal />
       <VideoEditModal kind="duration" />
+      <VideoEditModal kind="setterSetType" />
+      <VideoEditModal kind="roleSetType" />
       <FloatingServeErrorBtn />
       <AppFooter />
       <AppDialogs />

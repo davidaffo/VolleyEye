@@ -5,6 +5,22 @@ import { useViewStore } from "../hooks/useViewStore.js";
 import { videoEditStore } from "../state/video-edit-store.mjs";
 import { actions as appActions } from "../app/actions.mjs";
 const configs = {
+  roleSetType: {
+    prefix: "role-set-type",
+    title: "Tipo alzata per ruolo",
+    grid: "role-set-type-grid",
+    close: "closeSetTypeByRole",
+    apply: "applySetTypeByRole",
+    note: "Scegli il tipo per ruolo dell'attaccante: vengono modificati gli attacchi filtrati alzati da palleggiatrici. Se il ruolo non è disponibile, vengono usati quello prevalente o la formazione di partenza.",
+  },
+  setterSetType: {
+    prefix: "setter-set-type",
+    title: "Tipo alzata per alzatrice",
+    grid: "setter-set-type-grid",
+    close: "closeSetTypeBySetter",
+    apply: "applySetTypeBySetter",
+    note: "Scegli il tipo da assegnare agli attacchi filtrati per ciascuna alzatrice. Le righe lasciate invariate non modificano gli attacchi.",
+  },
   offset: {
     prefix: "offset",
     title: "Offset video per skill (secondi)",
@@ -53,9 +69,20 @@ export function VideoEditModal({ kind }) {
       closeProps={{ id: prefix + "-close" }}
     >
       {config.note && <p className="section-note">{config.note}</p>}
+      {kind === "setterSetType" && view.unknownCount > 0 && <p className="section-note">{view.unknownCount} {view.unknownCount === 1 ? 'attacco filtrato senza alzatrice associata' : 'attacchi filtrati senza alzatrice associata'}.</p>}
+      {kind === "roleSetType" && view.unknownCount > 0 && <p className="section-note">{view.unknownCount} {view.unknownCount === 1 ? 'attacco filtrato escluso perché alzatrice o ruolo non determinabili' : 'attacchi filtrati esclusi perché alzatrice o ruolo non determinabili'}.</p>}
       <div id={config.grid} className={kind === "unify" ? "unify-times-grid" : "offset-skill-grid"}>
         {view.rows.map((row) =>
-          kind === "unify" ? (
+          kind === "setterSetType" || kind === "roleSetType" ? (
+            <div key={row.id} className="offset-skill-row">
+              <label htmlFor={prefix + '-' + row.id}>{row.label} · {row.count} {row.count === 1 ? 'attacco' : 'attacchi'}</label>
+              <select id={prefix + '-' + row.id} value={row.value} disabled={!row.count}
+                onChange={(event) => videoEditStore.change(kind, row.id, { value: event.target.value })}>
+                <option value="">Lascia invariato</option>
+                {view.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+            </div>
+          ) : kind === "unify" ? (
             <div key={row.id} className="unify-times-row">
               <div className="unify-times-row__head">
                 <input
@@ -108,6 +135,8 @@ export function VideoEditModal({ kind }) {
           ),
         )}
       </div>
+      {kind === "setterSetType" && !view.rows.length && <p className="section-note">Nessuna alzatrice trovata nelle azioni della partita.</p>}
+      {kind === "roleSetType" && !view.rows.length && <p className="section-note">Nessun attacco filtrato con ruolo riconosciuto e alzata da palleggiatrice.</p>}
       <div className="offset-actions">
         <button id={prefix + "-apply"} className="small" onClick={() => run(config.apply)}>
           Applica

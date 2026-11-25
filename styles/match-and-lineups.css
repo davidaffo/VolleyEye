@@ -85,6 +85,10 @@ body[data-theme="light"] .match-list {
   padding: 0.25rem 0.4rem;
   text-align: right;
 }
+.offset-skill-row select {
+  max-width: 60%;
+  padding: 0.25rem 0.4rem;
+}
 .offset-actions {
   display: flex;
   justify-content: flex-end;

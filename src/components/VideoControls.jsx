@@ -18,6 +18,8 @@ const actions = {
   "btn-fix-video-score": ["openVideoScoreModal"],
   "btn-video-add-event": ["addEmptyVideoEventAfterSelection"],
   "btn-offset-skills": ["openOffsetModal"],
+  "btn-set-type-by-setter": ["openSetTypeBySetter"],
+  "btn-set-type-by-role": ["openSetTypeByRole"],
   "btn-unify-times": ["openUnifyTimesModal"],
   "btn-skill-duration": ["openSkillDurationModal"],
   "btn-video-undo": ["undoLastVideoEdit"],

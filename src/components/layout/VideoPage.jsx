@@ -70,6 +70,8 @@ export function VideoPage() {
                   ["btn-fix-video-score","Correggi punteggio",{"className":"secondary","type":"button"}],
                   ["btn-video-add-event","Aggiungi evento",{"className":"secondary","type":"button"}],
                   ["btn-offset-skills","Offset skill",{"className":"secondary"}],
+                  ["btn-set-type-by-setter","Tipo alzata per alzatrice",{"className":"secondary","type":"button"}],
+                  ["btn-set-type-by-role","Tipo alzata per ruolo",{"className":"secondary","type":"button"}],
                   ["btn-unify-times","Unifica tempi",{"className":"secondary"}],
                   ["btn-skill-duration","Durata skill",{"className":"secondary"}],
                   ["btn-video-undo","Annulla ultima",{"className":"danger"}],

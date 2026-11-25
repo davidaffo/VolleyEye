@@ -25,6 +25,20 @@ export function getRoleFamily(role) {
   return value || null;
 }
 
+export function inferRoleFromSetStarts(name, scope, setNumber, setStarts, liberos = []) {
+  if (!name) return null;
+  if (liberos.includes(name)) return 'L';
+  const roleFromStart = start => {
+    const lineup = start?.[scope];
+    return getRoleFamily(getRoleAtCourt(name, lineup?.court, lineup?.rotation, liberos));
+  };
+  const starts = setStarts || {};
+  const currentRole = roleFromStart(starts[setNumber]);
+  if (currentRole) return currentRole;
+  const otherRoles = new Set(Object.values(starts).map(roleFromStart).filter(Boolean));
+  return otherRoles.size === 1 ? [...otherRoles][0] : null;
+}
+
 export function inferPlayerRole(events, getRole = getHistoricalEventRole) {
   const counts = {};
   for (const event of events || []) {

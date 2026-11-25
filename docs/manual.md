@@ -440,7 +440,7 @@ Gli attacchi errore sono esclusi di default dalle traiettorie del foglio gara, m
 
 La sezione **Giocatrice** permette di selezionare un'atleta e vedere una scheda completa con tutti i dati delle altre sezioni di analisi (tabellino, traiettorie ecc...)
 
-La scheda e la colonna **Ruolo** del tabellino mostrano il ruolo prevalente, calcolato contando le azioni con ruolo riconosciuto nelle partite e nei set selezionati. I due posti da schiacciatrice e da centrale vengono raggruppati nei rispettivi ruoli; in caso di parità il ruolo prevalente rimane non determinato. Le nuove azioni conservano il ruolo della formazione effettiva al momento della registrazione, incluso il libero. Per le azioni precedenti viene ricostruito soltanto quando la formazione e la rotazione salvate permettono di riconoscerlo; le azioni senza dati sufficienti non contribuiscono al conteggio.
+La scheda e la colonna **Ruolo** del tabellino mostrano il ruolo prevalente, calcolato contando le azioni con ruolo riconosciuto nelle partite e nei set selezionati. I due posti da schiacciatrice e da centrale vengono raggruppati nei rispettivi ruoli; in caso di parità il ruolo prevalente rimane non determinato. Le nuove azioni conservano il ruolo della formazione effettiva al momento della registrazione, incluso il libero. Per le partite precedenti, se il ruolo non è ricavabile dalle azioni, viene stimato dalle formazioni iniziali salvate e dalla posizione della palleggiatrice. Se i dati mancano o indicano ruoli discordanti, rimane non determinato.
 
 Puoi anche attivare il **confronto tra giocatrici**. In questo caso il programma affianca due atlete della stessa squadra e confronta automaticamente i loro valori, evidenziando dove una rende meglio o peggio dell'altra.
 
@@ -607,6 +607,8 @@ La sezione video include alcuni strumenti aggiuntivi per correggere e rifinire i
 
 - **Correggi punteggio**: modifica il punteggio associato agli eventi quando trova incongruenze tra gli eventi o se è stato aggiunto manualmente un evento mancante
 - **Aggiungi evento**: inserisce un evento mancante direttamente dalla sezione video
+- **Tipo alzata per alzatrice**: apre un elenco delle giocatrici che hanno alzato e permette di scegliere un tipo d'alzata per ciascuna. La scelta viene applicata agli attacchi associati a quella giocatrice che rispettano i filtri video attivi; le righe lasciate su **Lascia invariato** non modificano gli attacchi. Per annullare l'operazione usa **Annulla ultima**.
+- **Tipo alzata per ruolo**: assegna il tipo scelto per ruolo dell'attaccante agli attacchi filtrati alzati da palleggiatrici. Se manca il ruolo nell'azione, usa quello prevalente ricavato dalle altre azioni o, in mancanza, la formazione di partenza del set e la posizione della palleggiatrice; se la giocatrice non compare nella formazione del set, usa le altre formazioni solo quando indicano lo stesso ruolo. Gli attacchi con ruoli o alzatrice non determinabili sono esclusi. L'operazione è annullabile con **Annulla ultima**.
 - **Offset skill**: applica uno spostamento temporale agli eventi filtrati, anche per fondamentale. Particolarmente utile in fase di sincronizzazione per applicare il ritardo di un determinato fondamentale in base al ritardo di inserimento dello scout man
 - **Unifica tempi**: copia il tempo video tra eventi collegati, ad esempio battuta e ricezione oppure attacco, muro e difesa
 - **Durata skill**: imposta il tempo di visualizzazione usato nel play by play video

@@ -5,6 +5,8 @@ export function createVideoEditStore() {
     offset: { open: false, rows: [] },
     duration: { open: false, rows: [] },
     unify: { open: false, rows: [] },
+    setterSetType: { open: false, rows: [], options: [] },
+    roleSetType: { open: false, rows: [], options: [] },
   }, {}, { merge: true });
   return {
     ...store,

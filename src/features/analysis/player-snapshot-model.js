@@ -45,7 +45,7 @@ export function buildReactPlayerAnalysisSnapshots() {
     const playerErrors = computePlayerErrorsMap(filteredEvents);
     const playerPassAces = computePlayerPassAceMap(filteredEvents, scope);
     const name = players[playerIdx];
-    const role = getAnalysisPlayerRole(filteredEvents, playerIdx);
+    const role = getAnalysisPlayerRole(filteredEvents, playerIdx, scope);
     const countsBySkill = normalizeSkillCounts(statsByPlayer[playerIdx]);
     const points = playerPoints[playerIdx] || { for: 0, against: 0 };
     const personalErrors = playerErrors[playerIdx] || 0;
