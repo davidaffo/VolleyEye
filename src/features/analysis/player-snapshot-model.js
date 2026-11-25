@@ -4,6 +4,7 @@ import { getAnalysisEvents } from "./filter-model.js";
 import { SKILL_COLUMNS } from "../../domain/analysis-columns.js";
 import { normalizeSkillCounts, buildSkillEntries } from "./statistic-model.js";
 import { statisticEntry } from "./table-cells.js";
+import { getAnalysisPlayerRole } from "./player-role-model.js";
 import {
   getPlayerAnalysisPlayerIdx,
   getPlayerAnalysisCompareIdx,
@@ -44,12 +45,14 @@ export function buildReactPlayerAnalysisSnapshots() {
     const playerErrors = computePlayerErrorsMap(filteredEvents);
     const playerPassAces = computePlayerPassAceMap(filteredEvents, scope);
     const name = players[playerIdx];
+    const role = getAnalysisPlayerRole(filteredEvents, playerIdx);
     const countsBySkill = normalizeSkillCounts(statsByPlayer[playerIdx]);
     const points = playerPoints[playerIdx] || { for: 0, against: 0 };
     const personalErrors = playerErrors[playerIdx] || 0;
     const passAces = playerPassAces[playerIdx] || 0;
     return {
       playerIdx,
+      role,
       scope,
       teamName: getTeamNameForScope(scope),
       photo: getPlayerPhotoForScope(scope, name),

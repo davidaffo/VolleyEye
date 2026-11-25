@@ -17,6 +17,7 @@ import { closeReactBulkEditor, openReactBulkEditor } from "../events/dialog-view
 import { session as teamManagementState } from "../state/live-team-management.js";
 import { publishReactVideoOverlay } from "./view.js";
 import { recalcAllStatsAndUpdateUI } from "../analysis/stats-update.js";
+import { getRoleAtCourt } from "../events/player-role.js";
 
 export function refreshAfterVideoEdit(shouldRecalcStats) {
   if (workspaceLayoutState.bulkEditActive) return;
@@ -99,9 +100,16 @@ export function applyBulkEditSession() {
       const undoCapture = pushVideoUndoSnapshot(true, workspaceLayoutState.bulkEditSession.events);
       workspaceLayoutState.bulkEditActive = false;
       workspaceLayoutState.bulkEditSession.events.forEach(ev => {
+        const previousIdentity = [ev.playerName, ev.playerIdx, ev.rotation, ev.team];
         entries.forEach(([key, value]) => {
+          if (key === "playerRole") return;
           ev[key] = value;
         });
+        if (previousIdentity.some((value, index) => value !== [ev.playerName, ev.playerIdx, ev.rotation, ev.team][index])) {
+          const scope = ev.team === "opponent" ? "opponent" : "our";
+          ev.playerRole = getRoleAtCourt(ev.playerName, ev.courtPlayers?.[scope], ev.rotation ?? ev.setterPosition,
+            (scope === "opponent" ? matchState.state.opponentLiberos : matchState.state.liberos) || []);
+        }
       });
       commitVideoUndoSnapshot(undoCapture);
       const shouldRecalc = workspaceLayoutState.bulkEditSession.shouldRecalc;

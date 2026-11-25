@@ -440,6 +440,8 @@ Gli attacchi errore sono esclusi di default dalle traiettorie del foglio gara, m
 
 La sezione **Giocatrice** permette di selezionare un'atleta e vedere una scheda completa con tutti i dati delle altre sezioni di analisi (tabellino, traiettorie ecc...)
 
+La scheda e la colonna **Ruolo** del tabellino mostrano il ruolo prevalente, calcolato contando le azioni con ruolo riconosciuto nelle partite e nei set selezionati. I due posti da schiacciatrice e da centrale vengono raggruppati nei rispettivi ruoli; in caso di parità il ruolo prevalente rimane non determinato. Le nuove azioni conservano il ruolo della formazione effettiva al momento della registrazione, incluso il libero. Per le azioni precedenti viene ricostruito soltanto quando la formazione e la rotazione salvate permettono di riconoscerlo; le azioni senza dati sufficienti non contribuiscono al conteggio.
+
 Puoi anche attivare il **confronto tra giocatrici**. In questo caso il programma affianca due atlete della stessa squadra e confronta automaticamente i loro valori, evidenziando dove una rende meglio o peggio dell'altra.
 
 ### Esportazione dell'analisi

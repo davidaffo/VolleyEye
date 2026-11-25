@@ -4,6 +4,7 @@ import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs'
 import vm from "node:vm";
 import test from "node:test";
 import { JSDOM } from "jsdom";
+import { getAnalysisPlayerRole } from '../src/features/analysis/player-role-model.js';
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8"),
   skills = ["serve", "pass", "freeball", "attack", "block", "defense"],
   codes = ["#", "+", "!", "-", "=", "/"],
@@ -48,6 +49,7 @@ for (const both of [false, true])
       const context = vm.createContext({
         document,
         state,
+        getAnalysisPlayerRole,
         elAggTableBody: body,
         elAggSummaryExtraBody: extra,
         aggTableHeadCache: null,
@@ -199,21 +201,22 @@ for (const both of [false, true])
       assert.ok(attackHeader > 0);
       const legacyRows = nativeRows(view.rows).map((row, index) => {
         if (view.rows[index].className === "agg-body-header") return row
-          .filter(cell => cell.text !== "Azioni" && cell.text !== "% Err")
+          .filter(cell => cell.text !== "Azioni" && cell.text !== "% Err" && cell.text !== "Ruolo")
           .map(cell => cell.text === "Attacco" ? { ...cell, span: cell.span - 1 } : cell);
-        if (row.length === 1 && row[0].span > 1) return [{ ...row[0], span: row[0].span - 2 }];
+        if (row.length === 1 && row[0].span > 1) return [{ ...row[0], span: row[0].span - 3 }];
+        row = row.filter((cell, cellIndex) => cellIndex !== 1);
         row = row.filter((cell, cellIndex) => cellIndex !== attackHeader + 2);
         if (row.length > 4 && row[4].text !== "Azioni") return [...row.slice(0, 4), ...row.slice(5)];
         return row.filter(cell => cell.text !== "Azioni");
       });
-      assert.ok(nativeRows(view.rows).some(row => row[4]?.text === "7"));
+      assert.ok(nativeRows(view.rows).some(row => row[5]?.text === "7"));
       assert.deepEqual(legacyRows, reference("react-aggregated-table:8060"));
       assert.deepEqual(nativeRows(view.extraRows), reference("react-aggregated-table:8119"));
       assert.deepEqual(
         JSON.parse(
           JSON.stringify(
             view.headers.map((cells) =>
-              cells.filter(cell => cell.text !== "Azioni" && cell.text !== "% Err").map((cell) => ({
+              cells.filter(cell => cell.text !== "Azioni" && cell.text !== "% Err" && cell.text !== "Ruolo").map((cell) => ({
                 text: String(cell.text ?? ""),
                 span: (cell.colspan || 1) - (cell.text === "Attacco" ? 1 : 0),
               })),
@@ -222,6 +225,13 @@ for (const both of [false, true])
         ),
         reference("react-aggregated-table:8184"),
       );
+
+      events.forEach(event => { event.playerRole = event.team === 'our' ? 'S1' : 'C2'; });
+      context.renderAggregatedTable();
+      const names = view.rows.map(row => row.cells.map(cell => String(cell.text ?? '')));
+      assert.ok(view.headers[0].some(cell => cell.text === 'Ruolo'));
+      if (team !== 'opponent') assert.ok(names.some(row => row[0] === 'Casa Uno' && row[1] === 'S'));
+      if (team === 'opponent' || (both && team === 'both')) assert.ok(names.some(row => row[0] === 'Ospite Due' && row[1] === 'C'));
 
       // Known receptions are split explicitly; missing and invalid values stay out.
       rotationInputs.length = 0;

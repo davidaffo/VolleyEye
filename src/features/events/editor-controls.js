@@ -8,6 +8,8 @@ import { syncManualEventPointDirection } from "./point-direction.js";
 import { session as liveScoreAndSetState } from "../state/live-live-score-and-set.js";
 import { normalizePhaseValue } from "../analysis/values.js";
 import { valueToString, parseInputValue } from "../../domain/value-string.js";
+import { session as matchState } from "../../../js/globals.js";
+import { getRoleAtCourt } from "./player-role.js";
 
 export function buildReactBulkControl(ev, key, context) {
   const empty = { value: "", label: "—" };
@@ -50,7 +52,14 @@ export function buildReactBulkControl(ev, key, context) {
       ),
       (value) => {
         const n = parseInt(value, 10);
-        if (!isNaN(n) && n >= min && n <= max) ev[key] = n;
+        if (!isNaN(n) && n >= min && n <= max) {
+          ev[key] = n;
+          if (key === "rotation") {
+            const scope = getTeamScopeFromEvent(ev);
+            ev.playerRole = getRoleAtCourt(ev.playerName, ev.courtPlayers?.[scope], n,
+              (scope === "opponent" ? matchState.state.opponentLiberos : matchState.state.liberos) || []);
+          }
+        }
       },
     );
   }
@@ -93,6 +102,7 @@ export function buildReactBulkControl(ev, key, context) {
             ev.playerIdx = null;
             ev.playerName = null;
             ev.playerId = null;
+            ev.playerRole = null;
           }
           return;
         }
@@ -101,9 +111,12 @@ export function buildReactBulkControl(ev, key, context) {
             ev.setterIdx = index;
             ev.setterName = players[index];
           } else {
+            const playerChanged = ev.playerIdx !== index || ev.playerName !== players[index];
             ev.playerIdx = index;
             ev.playerName = players[index];
             ev.playerId = getPlayerIdForScope(scope, index, players[index]);
+            if (playerChanged) ev.playerRole = getRoleAtCourt(players[index], ev.courtPlayers?.[scope], ev.rotation ?? ev.setterPosition,
+              (scope === "opponent" ? matchState.state.opponentLiberos : matchState.state.liberos) || []);
           }
         }
       },

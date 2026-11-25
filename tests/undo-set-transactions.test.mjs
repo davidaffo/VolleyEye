@@ -8,6 +8,7 @@ import { IDBFactory } from 'fake-indexeddb';
 import { repairBug1023, scoringContext, originalPath, repairedPath, officialScores } from '../scripts/repairs/bug-1023.mjs';
 import { session as matchSession } from '../js/globals.js';
 import { enforceAutoLiberoForScope } from '../src/features/teams/court-state-model.js';
+import { getRoleAtCourt } from '../src/features/events/player-role.js';
 
 const modules = {
   'js/scout/live/game-flow.js': ['src/features/live/flow-model.js', 'src/features/events/block-inference-model.js'],
@@ -28,6 +29,7 @@ const court = prefix => Array.from({ length: 6 }, (_, i) => ({ main: prefix + i,
 
 function setup(dual = true) {
   const c = vm.createContext({
+    getRoleAtCourt,
     state: {
       events: [], stats: {}, opponentStats: {}, currentSet: 1, rotation: 2, opponentRotation: 3,
       matchFinished: false, isServing: true, autoRotate: true, useOpponentTeam: dual, predictiveSkillFlow: true,

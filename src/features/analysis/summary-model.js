@@ -1,5 +1,6 @@
 import { getPlayerNumbersForScope, getPlayersForScope, getSortedPlayerEntries, getSortedPlayerEntriesForScope } from './analysis-roster.js';
 import { computePlayerRallies } from "./player-rallies.js";
+import { getAnalysisPlayerRole } from "./player-role-model.js";
 import { SKILL_COLUMNS } from "../../domain/analysis-columns.js";
 import { normalizeSkillCounts, buildSkillEntries } from "./statistic-model.js";
 import { skillCells } from "./table-cells.js";
@@ -71,7 +72,7 @@ export function buildAggregatedSkillCells(countsBySkill, passAces) {
 }
 
 export function buildReactAggregatedHeaders(sets, includeErrors) {
-  const top = [{ text: "Atleta", rowspan: 2 }],
+  const top = [{ text: "Atleta", rowspan: 2 }, { text: "Ruolo", rowspan: 2 }],
     bottom = [];
   if (sets.length) {
     top.push({ text: "Formazione di partenza", colspan: sets.length });
@@ -267,7 +268,7 @@ export function buildReactAggregatedTable({ chartTones } = {}) {
   const analysisEvents = getAnalysisEvents();
   const playedSets = getSummarySetNumbers();
   const includeOpponentErrorsCol = !matchState.state.useOpponentTeam;
-  const summaryColCount = 2 + (includeOpponentErrorsCol ? 5 : 4) + playedSets.length +
+  const summaryColCount = 3 + (includeOpponentErrorsCol ? 5 : 4) + playedSets.length +
     SKILL_COLUMNS.reduce((total, skill) => total + skill.columns.length, 0);
   const showBothTeams =
     matchState.state.useOpponentTeam &&
@@ -584,6 +585,7 @@ export function buildReactAggregatedTable({ chartTones } = {}) {
         : getSortedPlayerEntries();
     const startInfoList = buildSetStartInfoList(playedSets, scope);
     sortedEntries.forEach(({ name, idx }) => {
+      const role = getAnalysisPlayerRole(summaryEvents, idx);
       const countsBySkill = normalizeSkillCounts(statsByPlayer[idx]);
       SKILL_COLUMNS.forEach(({ id }) =>
         mergeCounts(totalsBySkill[id], countsBySkill[id]),
@@ -612,13 +614,11 @@ export function buildReactAggregatedTable({ chartTones } = {}) {
       });
       const cells = [
         {
-          text:
-            scope === "opponent"
-              ? formatNameWithNumberFor(name, analysisNumbers)
-              : formatNameWithNumberFor(name, analysisNumbers),
+          text: formatNameWithNumberFor(name, analysisNumbers) || name,
           isPlayer: true,
           playerIdx: idx,
         },
+        { text: role || "–" },
         ...startCells,
         { text: playerRallies[idx] ?? "–" },
         { text: points.for || 0 },
@@ -653,6 +653,7 @@ export function buildReactAggregatedTable({ chartTones } = {}) {
     const startTotalsCells = playedSets.map(() => ({ text: "-" }));
     const totalCells = [
       { text: "Totale squadra" },
+      { text: "–" },
       ...startTotalsCells,
       { text: "–" },
       { text: teamTotals.totalFor || 0, comparisonValue: teamTotals.totalFor || 0, comparisonBetter: 'higher' },
@@ -686,6 +687,7 @@ export function buildReactAggregatedTable({ chartTones } = {}) {
       const setStartCells = playedSets.map(() => ({ text: "-" }));
       const setCells = [
         { text: "Set " + setNum },
+        { text: "–" },
         ...setStartCells,
         { text: "–" },
         { text: setTotals.totalFor || 0, comparisonValue: setTotals.totalFor || 0, comparisonBetter: 'higher' },

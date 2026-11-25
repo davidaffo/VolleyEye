@@ -8,6 +8,7 @@ import { getTeamScopeFromEvent } from "../teams/selectors.js";
 import { normalizeDataVolleyEventMeta } from "../teams/player-identity.js";
 import { computeAttackDirectionDeg } from "../../domain/trajectory-geometry.js";
 import { session as matchState } from "../../../js/globals.js";
+import { getRoleAtCourt } from "../events/player-role.js";
 
 export function restoreDvwAttackContexts(events) {
   const contexts = new Map();
@@ -473,6 +474,7 @@ export function parseDataVolleyDvwToMatchState(text) {
       })(),
       playerNumberAtEvent: decoded.playerNumber,
       playerName: playerName || null,
+      playerRole: getRoleAtCourt(playerName, scope === "opponent" ? awayLineup : homeLineup, Number(cells[scope === "opponent" ? 10 : 9]), payload.liberos),
       zone: startZoneNum,
       originZone: startZoneNum,
       skillId,

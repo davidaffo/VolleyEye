@@ -9,6 +9,7 @@ import { ensureSkillClock, getSkillClockMs, ensureVideoClock, getVideoClockSecon
 import { getActiveVideoPlaybackSeconds } from "../video/media-state.js";
 import { clearReceiveContext } from "../live/flow-model.js";
 import { ensureSetStartSnapshot } from "../analysis/player-model.js";
+import { getRoleAtCourt } from "./player-role.js";
 
 export function getNextEventId() {
   const maxId = (matchState.state.events || []).reduce((max, ev) => {
@@ -104,6 +105,9 @@ export function buildBaseEventPayload(base) {
         })();
   const rotationValue = teamScope === "opponent" ? matchState.state.opponentRotation : matchState.state.rotation;
   const rotation = Math.min(6, Math.max(1, parseInt(rotationValue, 10) || 1));
+  const playerName = base.playerName || (typeof base.playerIdx === "number" ? getPlayersForScope(teamScope)[base.playerIdx] : "") || "";
+  const court = teamScope === "opponent" ? matchState.state.opponentCourt : matchState.state.court;
+  const liberos = teamScope === "opponent" ? matchState.state.opponentLiberos : matchState.state.liberos;
   const scoreSnapshot = computePointsSummary(matchState.state.currentSet || 1);
   const zone =
     typeof base.playerIdx === "number"
@@ -123,6 +127,7 @@ export function buildBaseEventPayload(base) {
     courtSideSwapped: !!matchState.state.courtSideSwapped,
     playerIdx: base.playerIdx,
     playerId: base.playerId || null,
+    playerRole: base.playerRole || getRoleAtCourt(playerName, court, rotation, liberos || []),
     playerCodeOfficial: sanitizeOfficialString(base.playerCodeOfficial) || getPlayerOfficialCodeForScope(teamScope, base.playerIdx, base.playerName),
     playerNumberAtEvent,
     playerName:

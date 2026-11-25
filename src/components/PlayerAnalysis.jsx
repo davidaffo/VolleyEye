@@ -121,6 +121,7 @@ function Identity({ snapshot, compact = false, badge }) {
           <div className="player-analysis-hero-card__badge">{badge}</div>
         )}
         <h3 className="player-analysis-hero-card__title">{snapshot.name}</h3>
+        {snapshot.role && <p className="section-note">{({ P: 'Palleggiatrice', S: 'Schiacciatrice', C: 'Centrale', O: 'Opposta', L: 'Libero' })[snapshot.role] || snapshot.role}</p>}
       </div>
     </div>
   );

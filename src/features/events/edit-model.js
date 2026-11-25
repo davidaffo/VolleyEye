@@ -28,6 +28,7 @@ export function buildEventEditControl(ev, field, baseMs, videoTime) {
         ev.playerIdx = null;
         ev.playerId = null;
         ev.playerName = null;
+        ev.playerRole = null;
         ev.setterIdx = null;
         ev.setterName = null;
         syncManualEventPointDirection(ev);

@@ -4,11 +4,12 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readdirSync } from 'node:fs';
 import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs';
+import { getRoleAtCourt } from '../src/features/events/player-role.js';
 
 function harness() {
   let playerId = 0;
   const context = {
-    state: { useOpponentTeam: true }, DEFAULT_STAFF: {},
+    state: { useOpponentTeam: true }, DEFAULT_STAFF: {}, getRoleAtCourt,
     generatePlayerId: () => `test-player-${++playerId}`,
     getRoleLabelForRotation: () => "P",
     ensureCourtShapeFor: court => court,

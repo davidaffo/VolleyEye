@@ -235,6 +235,7 @@ export function getAnalysisEvents() {
         cloned.analysisMatchLabel = buildMatchLabelFromPayload(payload) || name;
         cloned.analysisMatchDate = (payload && payload.state && payload.state.match && payload.state.match.date) || "";
         const evScope = getTeamScopeFromEvent(cloned);
+        cloned.analysisOriginalTeam = evScope;
         if (!cloned.playerName && typeof cloned.playerIdx === "number") {
           const roster = evScope === "opponent" ? rosterOpp : rosterOur;
           if (roster && roster[cloned.playerIdx]) {
@@ -247,6 +248,7 @@ export function getAnalysisEvents() {
             cloned.playerId = map.nameToId.get(normalizePlayerKey(cloned.playerName)) || null;
           }
         }
+        cloned.analysisOriginalPlayerName = cloned.playerName;
         if (source && evScope === source.sourceScope) {
           const sourceIndex = typeof ev.playerIdx === 'number' ? ev.playerIdx : (evScope === 'opponent' ? rosterOpp : rosterOur).findIndex(player => normalizePlayerKey(player) === normalizePlayerKey(ev.playerName));
           const byId = cloned.playerId ? analysisRoster.ids.get(cloned.playerId) : undefined;

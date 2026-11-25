@@ -4,6 +4,7 @@ import { readSourceFixture as readFileSync } from './helpers/source-fixture.mjs'
 import vm from "node:vm";
 import test from "node:test";
 import { JSDOM } from "jsdom";
+import { getRoleAtCourt } from '../src/features/events/player-role.js';
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const old = read("../src/features/events/point-direction.js") + read("../src/features/video/event-editor.js"),
   model = read("../src/features/events/display-model.js") + read("../src/features/events/table-model.js") + read("../src/features/events/edit-model.js") + read("../src/features/events/table-view.js") + read("../src/features/events/table-commands.js"),
@@ -25,6 +26,7 @@ function setup() {
     document: dom.window.document,
     HTMLElement: dom.window.HTMLElement,
     state,
+    getRoleAtCourt,
     selectedEventIds: new Set(),
     lastSelectedEventId: null,
     bulkEditActive: true,
@@ -216,10 +218,9 @@ for (const field of [
                   ? view.options.at(-1).value
                   : "2750";
     view.onChange(value);
-    assert.deepEqual(
-      JSON.parse(JSON.stringify(second)),
-      reference("react-events:8096"),
-    );
+    const expected = structuredClone(reference("react-events:8096"));
+    if (["player", "rotation", "team"].includes(field)) expected.playerRole = null;
+    assert.deepEqual(JSON.parse(JSON.stringify(second)), expected);
   });
 
 test('editing an event captures one undo snapshot before changes and refreshes views after completion', () => {
