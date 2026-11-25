@@ -53,7 +53,7 @@ export function renderPlayerSecondFilters() {
       return false;
     return getSetterFromEvent(ev) === playerIdx;
   });
-  const { setTypeOpts, baseOpts, phaseOpts, recvEvalOpts, recvZoneOpts } =
+  const { setTypeOpts, baseOpts, phaseOpts, recvEvalOpts, recvZoneOpts, attackErrorOpts } =
     buildAdvancedFilterOptions(attackEvents);
   const setOpts = buildUniqueOptions(
     attackEvents.map((ev) => normalizeSetNumber(ev.set)),
@@ -81,6 +81,7 @@ export function renderPlayerSecondFilters() {
       phases: phaseOpts,
       receiveEvaluations: recvEvalOpts,
       receiveZones: recvZoneOpts,
+      attackErrors: attackErrorOpts,
       sets: setOpts,
     },
     handlePlayerSecondFilterChange,

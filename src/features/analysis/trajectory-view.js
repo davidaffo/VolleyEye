@@ -4,6 +4,7 @@ import { normalizeEvalCode, clamp01Val } from "./values.js";
 import { normalizeSetTypeValue } from "../../domain/skill-values.js";
 import { session as liveScoreAndSetState } from "../state/live-live-score-and-set.js";
 import { buildSkillEntries } from "./statistic-model.js";
+import { countAttackErrors, ATTACK_ERROR_LABELS } from "../../domain/attack-errors.js";
 import { analysisTableStore } from "../../state/analysis-table-store.mjs";
 import {
   emptyCounts,
@@ -212,6 +213,15 @@ export function publishReactAttackGrid(target, events, far) {
 
 export function publishReactGlobalAttackGrid() {
   const summaryEvents = getFilteredAttackSummaryEvents();
+  const errors = countAttackErrors(summaryEvents);
+  const total = Object.values(errors).reduce((sum, value) => sum + value, 0);
+  analysisTableStore.publish("trajectory-attack-errors", {
+    rows: Object.entries(errors).map(([key, count]) => ({ cells: [
+      { text: ATTACK_ERROR_LABELS[key] }, { text: count },
+      { text: total ? Math.round(count * 100 / total) + "%" : "–" },
+    ] })),
+    footerRows: [{ cells: [{ text: "Totale" }, { text: total }, { text: total ? "100%" : "–" }] }],
+  });
   publishReactAttackSummary(
     "trajectory-attack-summary",
     summaryEvents,

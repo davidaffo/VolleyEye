@@ -227,7 +227,7 @@ export function renderVideoFilters(events) {
       labelFn: (val) => "Z" + val,
     },
   );
-  const { setTypeOpts, baseOpts, phaseOpts, recvEvalOpts, recvZoneOpts } =
+  const { setTypeOpts, baseOpts, phaseOpts, recvEvalOpts, recvZoneOpts, attackErrorOpts } =
     buildAdvancedFilterOptions(filteredByTeam, {
       baseLabel: (val) => val.toUpperCase(),
       phaseValue: (ev) => {
@@ -272,6 +272,7 @@ export function renderVideoFilters(events) {
     receiveZones: recvZoneOpts,
     serveTypes: serveTypeOpts,
     attackTypes: attackTypeOpts,
+    attackErrors: attackErrorOpts,
   };
   pruneFilterControls(analysisFiltersState.videoFilterState, fields, options);
   if (
@@ -360,6 +361,7 @@ export function renderVideoFilters(events) {
     recvZoneOpts.length,
     serveTypeOpts.length,
     attackTypeOpts.length,
+    attackErrorOpts.length,
   ];
   toggleFilterVisibility("video-filters", visibleFilters.some(Boolean));
   toggleFilterVisibility(controlIds.reset, visibleFilters.some(Boolean));

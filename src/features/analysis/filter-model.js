@@ -10,6 +10,7 @@ import { loadTeamFromStorage, loadOpponentTeamFromStorage, extractRosterFromTeam
 import { getPointDirectionForScope, getPointDirection, getEventPointValue } from './scores.js';
 import { formatPercentValue } from '../../domain/counts.js';
 import { normalizeSetTypeValue } from '../../domain/skill-values.js';
+import { getAttackErrorType } from '../../domain/attack-errors.js';
 import { getAnalysisRoster } from './analysis-roster.js';
 
 export function findEventById(id) {
@@ -435,6 +436,7 @@ export function matchesPreviousSkill(ev, filterVal) {
 
 export function matchesAdvancedFilters(ev, filters, { includeSetter = false } = {}) {
   if (!ev || !filters) return true;
+  if (filters.attackErrors?.size && !filters.attackErrors.has(getAttackErrorType(ev))) return false;
   if (includeSetter && filters.setters && filters.setters.size) {
     const setterIdx = getSetterFromEvent(ev);
     if (setterIdx === null || !filters.setters.has(setterIdx)) return false;
@@ -475,6 +477,7 @@ export function matchesAdvancedFilters(ev, filters, { includeSetter = false } = 
 
 export function matchesVideoFilters(ev, filters) {
   if (!ev || !filters) return true;
+  if (filters.attackErrors?.size && !filters.attackErrors.has(getAttackErrorType(ev))) return false;
   if (filters.teams && filters.teams.size) {
     if (!matchesTeamFilter(ev, filters.teams)) return false;
   }

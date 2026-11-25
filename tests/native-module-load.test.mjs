@@ -480,7 +480,7 @@ test('lo schema filtri conserva indici numerici, chiavi video e ordine dei campi
   const context = buildBrowserContext();
   runtimeFiles.forEach(path => vm.runInContext(readRuntimeSource(path), context, { filename: path }));
   const keys = ['teams', 'players', 'setters', 'skills', 'codes', 'sets', 'rotations',
-    'zones', 'bases', 'setTypes', 'phases', 'receiveEvals', 'receiveZones', 'serveTypes', 'attackTypes'];
+    'zones', 'bases', 'setTypes', 'phases', 'receiveEvals', 'receiveZones', 'serveTypes', 'attackTypes', 'attackErrors'];
   const elements = Object.fromEntries(keys.map(key => [key, { id: key, classList: makeClassList(), closest() { return null; } }]));
   const video = context.getFilterFields('videoFilterState');
   assert.deepEqual(Array.from(video, row => row[0]), keys.map(key => key === 'receiveEvals' ? 'receiveEvaluations' : key));
@@ -504,7 +504,7 @@ test('lo schema filtri conserva indici numerici, chiavi video e ordine dei campi
   assert.deepEqual([...state.sets], [1]);
   const trajectory = context.getFilterFields('trajectoryFilterState');
   assert.deepEqual(Array.from(trajectory, row => row[0]), ['setters', 'players', 'sets', 'setTypes',
-    'bases', 'phases', 'receiveEvaluations', 'receiveZones', 'codes', 'attackTypes', 'zones']);
+    'bases', 'phases', 'receiveEvaluations', 'receiveZones', 'codes', 'attackTypes', 'attackErrors', 'zones']);
   assert.ok(trajectory.filter(row => ['setters', 'players', 'sets', 'zones', 'receiveZones'].includes(row[0]))
     .every(row => row[2] && row[3]));
 });

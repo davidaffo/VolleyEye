@@ -3,7 +3,7 @@ const labels = {
   teams: 'Squadra', setters: 'Alzatrice', players: 'Giocatrici', skills: 'Fondamentale',
   sets: 'Set', rotations: 'Rotazione', 'set-types': 'Tipo alzata', bases: 'Base',
   phases: 'Fase (SO/BP)', 'receive-evals': 'Valutazione rice', 'receive-zones': 'Zona ricezione',
-  codes: 'Valutazione attacco', 'attack-types': 'Tipo attacco', zones: 'Zona partenza',
+  codes: 'Valutazione attacco', 'attack-types': 'Tipo attacco', 'attack-errors': 'Errore attacco', zones: 'Zona partenza',
   prev: 'Skill precedente', 'serve-types': 'Tipo servizio',
 };
 const overrides = {

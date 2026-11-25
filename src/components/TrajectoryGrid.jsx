@@ -138,6 +138,19 @@ export function AttackSummary({ id, groupLabel = "Tipo attacco" }) {
   );
 }
 
+export function AttackErrorSummary() {
+  const view = useView("trajectory-attack-errors");
+  const rows = items => items.map((row, index) => <tr key={index}>{row.cells.map((cell, column) => <td key={column}>{cell.text}</td>)}</tr>);
+  return <section className="attack-analysis-summary" aria-label="Analisi errori d'attacco">
+    <h4>Errori d'attacco</h4>
+    <p className="section-note">Per gli attacchi con valutazione =, la traiettoria indica un errore fuori; senza traiettoria l'errore è classificato in rete.</p>
+    <table className="attack-analysis-type-table">
+      <thead><tr><th>Errore</th><th>Tot</th><th>% errori</th></tr></thead>
+      <tbody>{rows(view.rows)}</tbody><tfoot>{rows(view.footerRows)}</tfoot>
+    </table>
+  </section>;
+}
+
 export function LogServeTrajectories() {
   const view = useView("log-serve-trajectory"),
     cards = view.cards.length

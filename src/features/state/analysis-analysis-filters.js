@@ -2,15 +2,15 @@ import { createFilterSelections } from "../../domain/filter-selections.js";
 import { createDomainState } from "../../app/domain-state.mjs";
 
 export const session = createDomainState({
-"trajectoryFilterState": () => (createFilterSelections(["setters","players","sets","codes","attackTypes","zones","setTypes","bases","phases","receiveEvaluations","receiveZones"], { previousSkill: true })),
+"trajectoryFilterState": () => (createFilterSelections(["setters","players","sets","codes","attackTypes","attackErrors","zones","setTypes","bases","phases","receiveEvaluations","receiveZones"], { previousSkill: true })),
 "analysisTeamFilterState": () => (createFilterSelections(["teams"])),
 "analysisSummaryFilterState": () => (createFilterSelections(["sets"])),
 "serveTrajectoryFilterState": () => (createFilterSelections(["players","sets","codes","zones","setTypes","bases","phases","receiveEvaluations","receiveZones"])),
-"playerTrajectoryFilterState": () => (createFilterSelections(["sets","codes","attackTypes","zones","setTypes","bases","phases","receiveEvaluations","receiveZones"], { previousSkill: true })),
+"playerTrajectoryFilterState": () => (createFilterSelections(["sets","codes","attackTypes","attackErrors","zones","setTypes","bases","phases","receiveEvaluations","receiveZones"], { previousSkill: true })),
 "playerServeTrajectoryFilterState": () => (createFilterSelections(["sets","codes","zones","setTypes","bases","phases","receiveEvaluations","receiveZones"])),
-"secondFilterState": () => (createFilterSelections(["setters","players","codes","zones","setTypes","bases","phases","receiveEvaluations","receiveZones","sets"], { previousSkill: true })),
-"playerSecondFilterState": () => (createFilterSelections(["setTypes","bases","phases","receiveEvaluations","receiveZones","sets"], { previousSkill: true })),
-"videoFilterState": () => (createFilterSelections(["teams","players","setters","skills","codes","sets","rotations","zones","bases","setTypes","phases","receiveEvaluations","receiveZones","serveTypes","attackTypes"], { previousSkill: true })),
+"secondFilterState": () => (createFilterSelections(["setters","players","codes","attackErrors","zones","setTypes","bases","phases","receiveEvaluations","receiveZones","sets"], { previousSkill: true })),
+"playerSecondFilterState": () => (createFilterSelections(["setTypes","bases","phases","receiveEvaluations","receiveZones","sets","attackErrors"], { previousSkill: true })),
+"videoFilterState": () => (createFilterSelections(["teams","players","setters","skills","codes","sets","rotations","zones","bases","setTypes","phases","receiveEvaluations","receiveZones","serveTypes","attackTypes","attackErrors"], { previousSkill: true })),
 "activeVideoFilterPresetId": () => (null),
 "TRAJECTORY_BG_BY_ZONE": () => ({
   1: "images/trajectory/attack_2_near.png",

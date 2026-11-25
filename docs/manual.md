@@ -407,6 +407,8 @@ La sezione mostra anche le valutazioni d'alzata, disponibili nel tabellino, e un
 
 Il tabellino per **tipo alzata** raggruppa gli attacchi filtrati e usa le stesse colonne e metriche d'attacco del tabellino riepilogativo. Gli attacchi senza tipo sono raccolti in **Non specificata**; sono inclusi anche quelli senza traiettoria disegnata.
 
+La sezione **Errori d'attacco** conta e confronta gli attacchi fuori, in rete e murati tra gli eventi filtrati. La percentuale è calcolata sul totale di queste tre categorie. Un attacco valutato `=` è classificato fuori se ha una traiettoria completa e in rete se non ce l'ha; un attacco `/` è classificato murato. La classificazione in rete si applica anche ai dati precedenti privi di traiettoria, quindi dipende dalla completezza dello scout. Il filtro **Errore attacco** è disponibile nell'analisi d'attacco e delle alzate, anche nella scheda giocatrice, e nella sezione video; nei preset video viene salvato insieme agli altri filtri.
+
 Se durante lo scout hai registrato le traiettorie di attacco, il programma le organizza in una vista dedicata.
 
 Le traiettorie vengono raggruppate per zona di partenza.

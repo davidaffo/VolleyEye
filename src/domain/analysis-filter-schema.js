@@ -1,15 +1,15 @@
 const filterSchemaAdvanced = ['sets', 'set-types', 'bases', 'phases', 'receive-evals', 'receive-zones'];
-const attack = ['codes', 'attack-types', 'zones', 'prev'];
+const attack = ['codes', 'attack-types', 'attack-errors', 'zones', 'prev'];
 const serve = ['codes', 'zones'];
 const filterSchemaGroups = {
   attack: ['setters', 'players', ...filterSchemaAdvanced, ...attack],
   serve: ['players', ...filterSchemaAdvanced, ...serve],
   playerAttack: [...filterSchemaAdvanced, ...attack],
   playerServe: [...filterSchemaAdvanced, ...serve],
-  second: ['setters', 'players', ...filterSchemaAdvanced, 'codes', 'zones', 'prev'],
-  playerSecond: [...filterSchemaAdvanced.slice(1), 'sets', 'prev'],
+  second: ['setters', 'players', ...filterSchemaAdvanced, 'codes', 'attack-errors', 'zones', 'prev'],
+  playerSecond: [...filterSchemaAdvanced.slice(1), 'sets', 'attack-errors', 'prev'],
   video: ['teams', 'players', 'setters', 'skills', 'codes', 'prev', 'sets', 'rotations', 'zones',
-    'bases', 'set-types', 'phases', 'receive-evals', 'receive-zones', 'serve-types', 'attack-types'],
+    'bases', 'set-types', 'phases', 'receive-evals', 'receive-zones', 'serve-types', 'attack-types', 'attack-errors'],
 };
 const filterSchemaDefinitions = {
   trajectoryFilterState: ['attack', 'traj-filter-'],
@@ -22,7 +22,7 @@ const filterSchemaDefinitions = {
 };
 const filterSchemaNames = {
   'set-types': 'setTypes', 'receive-evals': 'receiveEvaluations', 'receive-zones': 'receiveZones',
-  'attack-types': 'attackTypes', 'serve-types': 'serveTypes',
+  'attack-types': 'attackTypes', 'attack-errors': 'attackErrors', 'serve-types': 'serveTypes',
 };
 const filterSchemaNumericFields = new Set(['setters', 'players', 'sets', 'zones', 'receiveZones', 'rotations']);
 

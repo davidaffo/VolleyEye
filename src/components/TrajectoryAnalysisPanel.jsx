@@ -1,5 +1,5 @@
 import { AnalysisFilterPanel } from './AnalysisFilterPanel.jsx';
-import { TrajectoryGrid, AttackSummary } from './TrajectoryGrid.jsx';
+import { TrajectoryGrid, AttackSummary, AttackErrorSummary } from './TrajectoryGrid.jsx';
 
 export function TrajectoryAnalysisPanel({ variant = 'attack', individual = false }) {
   const serve = variant === 'serve';
@@ -18,6 +18,7 @@ export function TrajectoryAnalysisPanel({ variant = 'attack', individual = false
     <>
       {!serve && <AttackSummary id={(individual ? 'player' : 'trajectory') + '-attack-summary'} />}
       {!serve && !individual && <AttackSummary id="trajectory-set-type-summary" groupLabel="Tipo alzata" />}
+      {!serve && !individual && <AttackErrorSummary />}
       <div className={'trajectory-layout' + (serve ? ' serve-trajectory-layout' : '')}>
         {individual ? <>{grid}{filter}</> : <>{filter}{grid}</>}
       </div>

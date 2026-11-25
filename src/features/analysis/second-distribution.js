@@ -66,7 +66,7 @@ export function renderSecondFilters() {
     zonesOpts,
   } = buildEventFilterOptions(attackEvents, getAttackStartZone);
 
-  const { setTypeOpts, baseOpts, phaseOpts, recvEvalOpts, recvZoneOpts } =
+  const { setTypeOpts, baseOpts, phaseOpts, recvEvalOpts, recvZoneOpts, attackErrorOpts } =
     buildAdvancedFilterOptions(attackEvents);
 
   if (
@@ -89,6 +89,7 @@ export function renderSecondFilters() {
       phases: phaseOpts,
       receiveEvaluations: recvEvalOpts,
       receiveZones: recvZoneOpts,
+      attackErrors: attackErrorOpts,
       codes: codesOpts,
       zones: zonesOpts,
     },

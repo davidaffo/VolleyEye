@@ -84,4 +84,5 @@ export const VIDEO_FILTER_FIELDS = Object.freeze({
   receiveZones: "number",
   serveTypes: "string",
   attackTypes: "string",
+  attackErrors: "string",
 });

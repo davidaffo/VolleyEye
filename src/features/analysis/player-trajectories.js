@@ -61,23 +61,18 @@ export function renderPlayerTrajectoryFilters() {
       return false;
     return ev.playerIdx === playerIdx;
   });
-  const events = allAttackEvents.filter((ev) => {
-    if (!ev || ev.skillId !== "attack") return false;
-    const dir = ev.attackDirection || ev.attackTrajectory;
-    if (!dir || !dir.start || !dir.end) return false;
-    return true;
-  });
   const {
     setsOpts,
     codesOpts,
     zonesOpts,
     attackTypeOpts,
+    attackErrorOpts,
     setTypeOpts,
     baseOpts,
     phaseOpts,
     recvEvalOpts,
     recvZoneOpts,
-  } = buildAttackTrajectoryFilterOptions(events, allAttackEvents);
+  } = buildAttackTrajectoryFilterOptions(allAttackEvents, allAttackEvents);
 
   if (
     !liveScoreAndSetState.PREVIOUS_SKILL_OPTIONS.some(
@@ -101,6 +96,7 @@ export function renderPlayerTrajectoryFilters() {
       receiveZones: recvZoneOpts,
       codes: codesOpts,
       attackTypes: attackTypeOpts,
+      attackErrors: attackErrorOpts,
       zones: zonesOpts,
     },
     handlePlayerTrajectoryFilterChange,

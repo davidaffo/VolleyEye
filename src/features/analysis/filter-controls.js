@@ -16,6 +16,7 @@ import { pruneFilterSelections } from "../../domain/filter-selections.js";
 import { renderDynamicFilter, getCheckedValues } from "./filter-view.js";
 import { getSetterFromEvent } from "./filter-model.js";
 import { normalizeSetTypeValue } from "../../domain/skill-values.js";
+import { getAttackErrorType, ATTACK_ERROR_LABELS } from "../../domain/attack-errors.js";
 import { session as liveScoreAndSetState } from "../state/live-live-score-and-set.js";
 
 export function buildAdvancedFilterOptions(events, {
@@ -24,6 +25,7 @@ export function buildAdvancedFilterOptions(events, {
   phaseLabel = value => getOptionLabel(liveScoreAndSetState.DEFAULT_PHASE_OPTIONS, value),
 } = {}) {
   return {
+    attackErrorOpts: buildUniqueOptions(events.map(getAttackErrorType), { labelFn: value => ATTACK_ERROR_LABELS[value] }),
     setTypeOpts: buildUniqueOptions(events.map(event => normalizeSetTypeValue(
       event.setType || event.combination?.set_type || event.combination?.setType,
     )), { labelFn: value => getOptionLabel(liveScoreAndSetState.DEFAULT_SET_TYPE_OPTIONS, value) }),
@@ -89,5 +91,6 @@ export function buildAttackTrajectoryFilterOptions(trajectoryEvents, attackEvent
     ...buildEventFilterOptions(trajectoryEvents, getAttackStartZone),
     attackTypeOpts: buildAttackTypeFilterOptions(attackEvents),
     ...buildAdvancedFilterOptions(trajectoryEvents),
+    attackErrorOpts: buildAdvancedFilterOptions(attackEvents).attackErrorOpts,
   };
 }

@@ -38,23 +38,20 @@ export function renderTrajectoryFilters() {
   const analysisScope = getAnalysisTeamScope();
   const events = filterEventsByAnalysisTeam();
   const attackEvents = events.filter((ev) => ev && ev.skillId === "attack");
-  const trajEvents = attackEvents.filter((ev) => {
-    const dir = ev.attackDirection || ev.attackTrajectory;
-    return dir && dir.start && dir.end;
-  });
-  const setterOpts = buildSetterFilterOptions(trajEvents, analysisScope);
-  const playersOpts = buildPlayerFilterOptions(trajEvents, analysisScope);
+  const setterOpts = buildSetterFilterOptions(attackEvents, analysisScope);
+  const playersOpts = buildPlayerFilterOptions(attackEvents, analysisScope);
   const {
     setsOpts,
     codesOpts,
     zonesOpts,
     attackTypeOpts,
+    attackErrorOpts,
     setTypeOpts,
     baseOpts,
     phaseOpts,
     recvEvalOpts,
     recvZoneOpts,
-  } = buildAttackTrajectoryFilterOptions(trajEvents, attackEvents);
+  } = buildAttackTrajectoryFilterOptions(attackEvents, attackEvents);
 
   if (
     !liveScoreAndSetState.PREVIOUS_SKILL_OPTIONS.some(
@@ -79,6 +76,7 @@ export function renderTrajectoryFilters() {
       receiveZones: recvZoneOpts,
       codes: codesOpts,
       attackTypes: attackTypeOpts,
+      attackErrors: attackErrorOpts,
       zones: zonesOpts,
     },
     trajectoryFilterAction,
