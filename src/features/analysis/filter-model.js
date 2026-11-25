@@ -10,6 +10,7 @@ import { loadTeamFromStorage, loadOpponentTeamFromStorage, extractRosterFromTeam
 import { getPointDirectionForScope, getPointDirection, getEventPointValue } from './scores.js';
 import { formatPercentValue } from '../../domain/counts.js';
 import { normalizeSetTypeValue } from '../../domain/skill-values.js';
+import { getAnalysisRoster } from './analysis-roster.js';
 
 export function findEventById(id) {
   if (!matchState.state.events || !Array.isArray(matchState.state.events)) return null;
@@ -181,9 +182,11 @@ export function getAnalysisEvents() {
   const extraEvents = [];
   const scopes = scopesForKey;
   scopes.forEach(scope => {
+    const analysisRoster = getAnalysisRoster(scope);
     const matchNames = extraState[scope] || new Set();
     matchNames.forEach(name => {
       const payload = matchState.state.savedMatches && matchState.state.savedMatches[name];
+      const source = analysisRoster.sources.get(name);
       const events = payload && payload.state && Array.isArray(payload.state.events) ? payload.state.events : [];
       const rosterOur = payload && payload.state && Array.isArray(payload.state.players) ? payload.state.players : [];
       const rosterOpp =
@@ -243,7 +246,23 @@ export function getAnalysisEvents() {
             cloned.playerId = map.nameToId.get(normalizePlayerKey(cloned.playerName)) || null;
           }
         }
-        syncEventPlayerLink(cloned);
+        if (source && evScope === source.sourceScope) {
+          const sourceIndex = typeof ev.playerIdx === 'number' ? ev.playerIdx : (evScope === 'opponent' ? rosterOpp : rosterOur).findIndex(player => normalizePlayerKey(player) === normalizePlayerKey(ev.playerName));
+          const byId = cloned.playerId ? analysisRoster.ids.get(cloned.playerId) : undefined;
+          const index = byId ?? source.mapping[sourceIndex] ?? analysisRoster.names.get(normalizePlayerKey(cloned.playerName));
+          cloned.team = scope === 'opponent' ? 'opponent' : 'our';
+          cloned.playerIdx = index ?? null;
+          if (index != null) cloned.playerName = analysisRoster.players[index];
+          if (typeof ev.setterIdx === 'number') cloned.setterIdx = source.mapping[ev.setterIdx] ?? null;
+          if (typeof ev.setterId === 'number') cloned.setterId = source.mapping[ev.setterId] ?? null;
+        } else if (source) {
+          cloned.team = scope === 'our' ? 'opponent' : 'our';
+          cloned.playerIdx = null;
+          cloned.setterIdx = null;
+          if (typeof cloned.setterId === 'number') cloned.setterId = null;
+        } else {
+          syncEventPlayerLink(cloned);
+        }
         extraEvents.push(cloned);
       });
     });

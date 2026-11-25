@@ -1,4 +1,5 @@
-import { getPlayersForScope } from '../teams/selectors.js';
+import { getPlayersForScope } from './analysis-roster.js';
+
 import { makePlayerNameKey } from './player-model.js';
 import { getPointDirection, getEventPointValue } from './scores.js';
 import { matchesSummarySetFilter } from './filter-model.js';

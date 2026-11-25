@@ -1,3 +1,4 @@
+import { getPlayerNumbersForScope, getPlayersForScope } from './analysis-roster.js';
 import { computePlayerRallies } from "./player-rallies.js";
 import { getAnalysisEvents } from "./filter-model.js";
 import { SKILL_COLUMNS } from "../../domain/analysis-columns.js";
@@ -12,12 +13,7 @@ import {
   getAnalysisTeamScope,
   matchesSummarySetFilter,
 } from "./filter-model.js";
-import {
-  getPlayersForScope,
-  getPlayerNumbersForScope,
-  getTeamScopeFromEvent,
-  getTeamNameForScope,
-} from "../teams/selectors.js";
+import { getTeamScopeFromEvent, getTeamNameForScope } from '../teams/selectors.js';
 import { getPlayerPhotoForScope } from "../teams/player-identity.js";
 import {
   computeStatsByPlayerForEvents,

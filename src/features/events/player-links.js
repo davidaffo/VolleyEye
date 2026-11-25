@@ -1,6 +1,7 @@
 import { getTeamScopeFromEvent, getPlayersForScope } from '../teams/selectors.js';
 import { getPlayerIndexForId, ensureEventDataVolleyFields, getRosterIdMapsForScope, normalizePlayerKey } from '../teams/player-identity.js';
 export function resolvePlayerIdx(ev) {
+  if (ev.analysisMatchKey && typeof ev.playerIdx === 'number') return ev.playerIdx;
   const scope = getTeamScopeFromEvent(ev);
   const players = getPlayersForScope(scope);
   const idxById = getPlayerIndexForId(scope, ev.playerId);

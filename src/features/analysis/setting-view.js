@@ -1,3 +1,4 @@
+import { getPlayerNumbersForScope, getPlayersForScope } from './analysis-roster.js';
 import { buildDistributionCards } from "./setting-model.js";
 import {
   countRowCells,
@@ -19,11 +20,7 @@ import {
   getSetterFromEvent,
 } from "./filter-model.js";
 import { session as analysisFiltersState } from "../state/analysis-analysis-filters.js";
-import {
-  getPlayersForScope,
-  getPlayerNumbersForScope,
-  getTeamScopeFromEvent,
-} from "../teams/selectors.js";
+import { getTeamScopeFromEvent } from '../teams/selectors.js';
 
 import {
   getFilteredPlayerSecondEventsForPlayer,
@@ -84,7 +81,7 @@ const aggSecondAttackBody = "agg-second-attack-body";
       playerIdx !== null && analysisPlayers[playerIdx]
         ? analysisScope === "opponent"
           ? formatNameWithNumberFor(analysisPlayers[playerIdx], analysisNumbers)
-          : formatNameWithNumber(analysisPlayers[playerIdx])
+          : formatNameWithNumberFor(analysisPlayers[playerIdx], analysisNumbers)
         : ev.playerName || "Alzatrice";
     return { key, name };
   });
@@ -101,7 +98,7 @@ const aggSecondAttackBody = "agg-second-attack-body";
       typeof setterIdx === "number" && analysisPlayers[setterIdx]
         ? analysisScope === "opponent"
           ? formatNameWithNumberFor(analysisPlayers[setterIdx], analysisNumbers)
-          : formatNameWithNumber(analysisPlayers[setterIdx])
+          : formatNameWithNumberFor(analysisPlayers[setterIdx], analysisNumbers)
         : ev.setterName || "Alzatrice";
     return {
       key: typeof setterIdx === "number" ? "idx-" + setterIdx : name,
@@ -185,7 +182,7 @@ export function publishReactPlayerSecondTable(
   const formatScopedPlayerName = (idx) =>
     analysisScope === "opponent"
       ? formatNameWithNumberFor(players[idx], numbers)
-      : formatNameWithNumber(players[idx]);
+      : formatNameWithNumberFor(players[idx], numbers);
   if (playerIdx === null) {
     viewRows.push({
       cells: [

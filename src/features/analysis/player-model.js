@@ -1,7 +1,8 @@
+import { getPlayerNumbersForScope, getPlayersForScope } from './analysis-roster.js';
 
 import { SKILLS, session as matchState } from '../../../js/globals.js';
 import { session as scoutUiState } from '../state/scout-ui.js';
-import { getPlayersForScope, getPlayerNumbersForScope, getTeamScopeFromEvent } from '../teams/selectors.js';
+import { getTeamScopeFromEvent } from '../teams/selectors.js';
 import { getAnalysisCourtSide, getAnalysisTeamScope } from './filter-model.js';
 import { removeLiberosAndRestoreForScope } from '../teams/libero-model.js';
 import { cloneCourt } from '../teams/court-model.js';

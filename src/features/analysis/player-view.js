@@ -1,3 +1,4 @@
+import { getPlayerNumbersForScope, getPlayersForScope, getSortedPlayerEntries, getSortedPlayerEntriesForScope } from './analysis-roster.js';
 import { buildReactPlayerAnalysisSnapshots } from "./player-snapshot-model.js";
 import { buildPlayerSkillChartModels } from "./chart-model.js";
 import { getSkillChartToneColors } from "./chart-theme.js";
@@ -9,11 +10,7 @@ import {
 } from "./player-model.js";
 import { getAnalysisTeamScope } from "./filter-model.js";
 
-import {
-  getPlayersForScope,
-  getPlayerNumbersForScope,
-  getTeamNameForScope,
-} from "../teams/selectors.js";
+import { getTeamNameForScope } from '../teams/selectors.js';
 
 import { ensureSkillChartsUiState } from "./skill-chart-model.js";
 import { session as skillAnalysisState } from "../state/analysis-skill-analysis.js";
@@ -22,10 +19,7 @@ import {
   formatNameWithNumber,
 } from "../teams/roster-data.js";
 
-import {
-  getSortedPlayerEntriesForScope,
-  getSortedPlayerEntries,
-} from "../teams/lineup-selectors.js";
+
 
 import { playerAnalysisStore } from "../../state/roster-import-store.mjs";
 
@@ -54,7 +48,7 @@ export function publishReactPlayerAnalysis() {
       label:
         (scope === "opponent"
           ? formatNameWithNumberFor(name, numbers)
-          : formatNameWithNumber(name)) ||
+          : formatNameWithNumberFor(name, numbers)) ||
         name ||
         "Giocatrice " + (idx + 1),
     })),
@@ -106,7 +100,7 @@ export function refreshReactCompareSections(index, other, nodes, scope = getAnal
       label =
         scope === "opponent"
           ? formatNameWithNumberFor(players[index], numbers)
-          : formatNameWithNumber(players[index]);
+          : formatNameWithNumberFor(players[index], numbers);
     analysisTableStore.publish(nodes.charts, {
       charts: buildPlayerSkillChartModels({
         scope,

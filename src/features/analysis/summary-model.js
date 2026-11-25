@@ -1,3 +1,4 @@
+import { getPlayerNumbersForScope, getPlayersForScope, getSortedPlayerEntries, getSortedPlayerEntriesForScope } from './analysis-roster.js';
 import { computePlayerRallies } from "./player-rallies.js";
 import { SKILL_COLUMNS } from "../../domain/analysis-columns.js";
 import { normalizeSkillCounts, buildSkillEntries } from "./statistic-model.js";
@@ -38,18 +39,9 @@ import {
 } from "./filter-model.js";
 
 import { session as scoutUiState } from "../state/scout-ui.js";
-import {
-  getPlayersForScope,
-  getPlayerNumbersForScope,
-  getTeamScopeFromEvent,
-  isSkillEnabledForScope,
-  getTeamNameForScope,
-} from "../teams/selectors.js";
+import { getTeamScopeFromEvent, isSkillEnabledForScope, getTeamNameForScope } from '../teams/selectors.js';
 
-import {
-  getSortedPlayerEntriesForScope,
-  getSortedPlayerEntries,
-} from "../teams/lineup-selectors.js";
+
 import {
   formatNameWithNumberFor,
   formatNameWithNumber,
@@ -195,7 +187,7 @@ export function buildReactAggregatedDetail(headers, rows, summary, tones) {
       add(
         scope === "opponent"
           ? formatNameWithNumberFor(name, numbers)
-          : formatNameWithNumber(name),
+          : formatNameWithNumberFor(name, numbers),
         counts,
         skillId,
         idx,
@@ -623,7 +615,7 @@ export function buildReactAggregatedTable({ chartTones } = {}) {
           text:
             scope === "opponent"
               ? formatNameWithNumberFor(name, analysisNumbers)
-              : formatNameWithNumber(name),
+              : formatNameWithNumberFor(name, analysisNumbers),
           isPlayer: true,
           playerIdx: idx,
         },

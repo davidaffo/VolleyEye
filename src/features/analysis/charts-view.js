@@ -1,3 +1,4 @@
+import { getPlayerNumbersForScope, getPlayersForScope } from './analysis-roster.js';
 import { buildPlayerSkillChartModels } from "./chart-model.js";
 import { getSkillChartToneColors } from "./chart-theme.js";
 
@@ -24,10 +25,7 @@ import {
   getAggSkillCounts,
   getAggSkillPlayerLabel,
 } from "./player-model.js";
-import {
-  getPlayersForScope,
-  getPlayerNumbersForScope,
-} from "../teams/selectors.js";
+
 import {
   formatNameWithNumberFor,
   formatNameWithNumber,

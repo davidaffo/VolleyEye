@@ -1,13 +1,10 @@
+import { getPlayerNumbersForScope, getPlayersForScope } from './analysis-roster.js';
 import { session as skillAnalysisState } from "../state/analysis-skill-analysis.js";
 import { computeMetrics, getSkillChartCodeTone } from "./metrics.js";
 import { normalizeSetNumber } from "./values.js";
 import { SKILLS, session as matchState } from "../../../js/globals.js";
 import { emptyCounts, formatPercent } from "../../domain/counts.js";
-import {
-  getTeamScopeFromEvent,
-  getPlayersForScope,
-  getPlayerNumbersForScope,
-} from "../teams/selectors.js";
+import { getTeamScopeFromEvent } from '../teams/selectors.js';
 import { session as scoutUiState } from "../state/scout-ui.js";
 import { resolvePlayerIdx } from "../events/player-links.js";
 import { formatNameWithNumberFor } from "../teams/roster-data.js";

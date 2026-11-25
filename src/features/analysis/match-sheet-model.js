@@ -1,3 +1,4 @@
+import { getPlayerNumbersForScope, getPlayersForScope } from './analysis-roster.js';
 import { clamp01Val } from "./values.js";
 import { session as matchState } from "../../../js/globals.js";
 import {
@@ -13,13 +14,7 @@ import {
   resolvePlayerIdxFromNameForScope,
 } from "./trajectory-model.js";
 import { formatStructuredPlayerName } from "../teams/roster-data.js";
-import {
-  getPlayersForScope,
-  getPlayerNumbersForScope,
-  getLiberosForScope,
-  getTeamScopeFromEvent,
-  getOppositeScope,
-} from "../teams/selectors.js";
+import { getLiberosForScope, getTeamScopeFromEvent, getOppositeScope } from '../teams/selectors.js';
 import { getSetStartEntryForScope } from "./player-model.js";
 import { getDefaultSetStartForScope } from "../teams/set-start-model.js";
 import { getCourtShape } from "../teams/court-model.js";

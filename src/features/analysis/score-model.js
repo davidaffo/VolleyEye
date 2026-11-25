@@ -1,3 +1,4 @@
+import { getPlayersForScope } from './analysis-roster.js';
 import { session as matchState } from "../../../js/globals.js";
 import { session as scoutUiState } from "../state/scout-ui.js";
 import {
@@ -10,7 +11,7 @@ import {
   getAnalysisTeamScope,
   filterEventsByAnalysisTeam,
 } from "./filter-model.js";
-import { getPlayersForScope } from "../teams/selectors.js";
+
 export function computePlayerPointsMap(
   events = matchState.state.events || [],
   scope = "our",

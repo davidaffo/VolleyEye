@@ -1,3 +1,4 @@
+import { getPlayerNumbersForScope, getPlayersForScope } from './analysis-roster.js';
 import { comparisonCell } from "./table-cells.js";
 import { normalizeEvalCode, clamp01Val } from "./values.js";
 import { normalizeSetTypeValue } from "../../domain/skill-values.js";
@@ -39,17 +40,13 @@ import {
   getFilteredPlayerTrajectoryEventsForPlayer,
   getFilteredPlayerServeTrajectoryEventsForPlayer,
 } from "./player-trajectory-model.js";
-import {
-  getPlayersForScope,
-  getPlayerNumbersForScope,
-  isFarSideForScope,
-} from "../teams/selectors.js";
+import { isFarSideForScope } from '../teams/selectors.js';
 import { session as scoutUiState } from "../state/scout-ui.js";
 import {
   formatNameWithNumberFor,
   formatNameWithNumber,
 } from "../teams/roster-data.js";
-import { sortPlayerIndexesByNumberForScope } from "../teams/lineup-selectors.js";
+import { sortPlayerIndexesByNumberForScope } from '../teams/lineup-selectors.js';
 
 export function publishReactAttackSummary(target, events, compareEvents = null, { groupBy = "attackType" } = {}) {
   if (!target) return;

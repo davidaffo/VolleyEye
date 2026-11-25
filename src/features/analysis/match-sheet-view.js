@@ -1,3 +1,4 @@
+import { getPlayersForScope } from './analysis-roster.js';
 import { buildReactMatchSheetCourt } from "./match-sheet-model.js";
 
 import { session as trajectoryRenderingState } from "../state/analysis-trajectory-rendering.js";
@@ -18,7 +19,7 @@ import { matchSheetStore } from "../../state/roster-import-store.mjs";
 import { buildMatchDisplayName } from "../teams/match-details.js";
 
 import { session as matchState } from "../../../js/globals.js";
-import { getTeamNameForScope, getPlayersForScope } from "../teams/selectors.js";
+import { getTeamNameForScope } from '../teams/selectors.js';
 
 export function publishReactMatchSheet() {
   const scope = getAnalysisTeamScope(),

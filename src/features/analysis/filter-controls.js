@@ -1,3 +1,4 @@
+import { getPlayerNumbersForScope, getPlayersForScope } from './analysis-roster.js';
 import { buildAttackTypeFilterOptions } from "./trajectory-model.js";
 import { getAttackStartZone } from "./values.js";
 export { getFilterFields } from "../../domain/analysis-filter-schema.js";
@@ -5,9 +6,9 @@ export { getFilterFields } from "../../domain/analysis-filter-schema.js";
 import { buildSetFilterOptions } from "./values.js";
 import { filterNormalEvalOptions } from "./filter-model.js";
 import { buildUniqueOptions, getOptionLabel, normalizeBaseValue, getEventPhaseValue, normalizeEvalCode, normalizeReceiveZone } from "./values.js";
-import { getPlayersForScope, getPlayerNumbersForScope } from "../teams/selectors.js";
+
 import { formatNameWithNumberFor, formatNameWithNumber } from "../teams/roster-data.js";
-import { sortPlayerOptionsByNumberForScope } from "../teams/lineup-selectors.js";
+import { sortPlayerOptionsByNumberForScope } from '../teams/lineup-selectors.js';
 export { clearFilterSelections } from '../../domain/filter-selections.js';
 import { pruneFilterSelections } from "../../domain/filter-selections.js";
 
@@ -56,7 +57,7 @@ export function buildPlayerFilterOptions(events, scope) {
   return sortPlayerOptionsByNumberForScope(buildUniqueOptions(events.map(event => event.playerIdx), {
     asNumber: true,
     labelFn: index => !players[index] ? '—' : scope === 'opponent'
-      ? formatNameWithNumberFor(players[index], numbers) : formatNameWithNumber(players[index]),
+      ? formatNameWithNumberFor(players[index], numbers) : formatNameWithNumberFor(players[index], numbers),
   }), scope);
 }
 
@@ -68,7 +69,7 @@ export function buildSetterFilterOptions(events, scope) {
     const index = getSetterFromEvent(event);
     if (typeof index !== 'number') continue;
     const name = event.setterName || players[index];
-    const label = (scope === 'opponent' ? formatNameWithNumberFor(name, numbers) : formatNameWithNumber(name))
+    const label = (scope === 'opponent' ? formatNameWithNumberFor(name, numbers) : formatNameWithNumberFor(name, numbers))
       || name || 'Alzatrice ' + (index + 1);
     labels.set(index, label);
   }
