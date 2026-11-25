@@ -5,6 +5,17 @@ Le voci storiche riportano i messaggi originali dei commit e i relativi collegam
 
 Prima della versione 0.1.0 il progetto era già in sviluppo, ma non aveva una numerazione di release registrata.
 
+## 0.25.0 — 2026-11-25
+
+- Corretta la schermata vuota durante la modifica video con il confronto tra giocatrici attivo.
+- I filtri di analisi e video permettono di includere o escludere valori con tre clic, mantenendo le esclusioni nei preset video.
+- In analisi video si può assegnare il tipo d'alzata per ruolo dell'attaccante agli attacchi filtrati alzati da palleggiatrici, usando anche le formazioni di partenza quando il ruolo non è disponibile.
+- In analisi video è possibile assegnare ai soli attacchi filtrati un tipo d'alzata per ciascuna alzatrice.
+- Le azioni registrano il ruolo svolto, mostrato nella scheda giocatrice e nel tabellino; per le partite precedenti viene usata anche la formazione di partenza.
+- Aggiunta l'analisi degli errori d'attacco fuori, in rete e murati, con filtri dedicati anche nel video.
+- Nell'analisi d'attacco i tabellini per tipo d'attacco e d'alzata usano le colonne e le metriche del riepilogo principale.
+- Nell'analisi di più partite sono incluse sia le giocatrici della partita attuale sia quelle presenti soltanto nelle altre partite selezionate.
+
 ## 0.24.2 — 2026-11-24
 
 - Possibilità di aprire i video locali in una finestra Picture-in-Picture, liberando spazio nell'interfaccia, e riportarli nell'app durante l'analisi e lo scouting.
