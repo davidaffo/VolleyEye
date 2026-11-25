@@ -17,6 +17,7 @@ export function TrajectoryAnalysisPanel({ variant = 'attack', individual = false
   return (
     <>
       {!serve && <AttackSummary id={(individual ? 'player' : 'trajectory') + '-attack-summary'} />}
+      {!serve && !individual && <AttackSummary id="trajectory-set-type-summary" groupLabel="Tipo alzata" />}
       <div className={'trajectory-layout' + (serve ? ' serve-trajectory-layout' : '')}>
         {individual ? <>{grid}{filter}</> : <>{filter}{grid}</>}
       </div>

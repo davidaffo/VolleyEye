@@ -405,6 +405,8 @@ La sezione mostra anche le valutazioni d'alzata, disponibili nel tabellino, e un
 
 ### Analisi delle traiettorie di attacco
 
+Il tabellino per **tipo alzata** raggruppa gli attacchi filtrati e usa le stesse colonne e metriche d'attacco del tabellino riepilogativo. Gli attacchi senza tipo sono raccolti in **Non specificata**; sono inclusi anche quelli senza traiettoria disegnata.
+
 Se durante lo scout hai registrato le traiettorie di attacco, il programma le organizza in una vista dedicata.
 
 Le traiettorie vengono raggruppate per zona di partenza.
@@ -573,6 +575,27 @@ Queste azioni vengono ripetute per tutti gli altri tipi di eventi.
 Alcuni eventi sono collegati, ad esempio battuta e ricezione, attacco muro e difesa ecc...
 
 In questo caso basta sincronizzare solo, ad esempio, tutte le battute, e poi premere il taasto apposito per sincronizzare automaticamente tutte le ricezioni allo stesso tempo.
+
+### Scorciatoie da tastiera in analisi video
+
+Seleziona un evento nella tabella per lavorare sui suoi dati. Le scorciatoie non intervengono mentre stai scrivendo in un campo.
+
+| Tasti | Azione |
+| --- | --- |
+| **Spazio** | Avvia o mette in pausa il video. |
+| **← / →** | Sposta il video indietro o avanti di 3 secondi. |
+| **Shift + ← / →** | Sposta il video indietro o avanti di 1/30 di secondo. |
+| **↑ / ↓** | Passa all'evento precedente o successivo. Con **Shift** estende la selezione. |
+| **Q / W** | Diminuisce o aumenta di 0,5 secondi il tempo video dell'evento corrente. |
+| **[ / ]** oppure **Alt + ← / →** | Diminuisce o aumenta di 0,2 secondi il tempo video degli eventi selezionati. |
+| **K** | Apre la scelta della base per gli attacchi selezionati. Poi premi **1, 2, C, B, 7 o F** per scegliere rispettivamente K1, K2, KC, KB, K7 o KF. |
+| **A** | Apre la scelta dell'alzatrice per gli attacchi selezionati. |
+| **T** | Apre la scelta del tipo di attacco. Poi premi **R** per Regolare, **P** per Pallonetto, **Z** per Piazzata o **S** per Spinta. |
+| **N** | Apre la scelta del numero di giocatrici a muro; premi **0, 1, 2 o 3**. |
+| **M, S, V, F, D, H** | Imposta direttamente il tipo d'alzata degli attacchi selezionati: rispettivamente Mezza, Super, Veloce, Fast, Damp o Alta. |
+| **Esc** | Chiude i menu di scelta aperti. Anche il tasto che ha aperto un menu rapido può richiuderlo. |
+
+Nella sezione video **Q** serve a correggere il tempo e non seleziona l'alzata Quick. Puoi modificare i campi anche con un doppio clic sulla cella.
 
 ### Strumenti avanzati della sezione video
 

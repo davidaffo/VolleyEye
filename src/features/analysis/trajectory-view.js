@@ -1,12 +1,12 @@
 import { comparisonCell } from "./table-cells.js";
 import { normalizeEvalCode, clamp01Val } from "./values.js";
+import { normalizeSetTypeValue } from "../../domain/skill-values.js";
+import { session as liveScoreAndSetState } from "../state/live-live-score-and-set.js";
+import { buildSkillEntries } from "./statistic-model.js";
 import { analysisTableStore } from "../../state/analysis-table-store.mjs";
 import {
   emptyCounts,
-  totalFromCounts,
   normalizeCounts,
-  formatPercentValue,
-  formatPercent,
 } from "../../domain/counts.js";
 import { session as analysisFiltersState } from "../state/analysis-analysis-filters.js";
 import {
@@ -30,9 +30,7 @@ import {
   getServeTrajectoryEventsForServer,
   getServeStatsForServer,
 } from "./trajectory-model.js";
-import { countPointsForSkill } from "./points.js";
 import { ensurePlayerAnalysisState } from "./player-model.js";
-import { computeMetrics } from "./metrics.js";
 import { mirrorTrajectoryPoint } from "../../domain/trajectory-geometry.js";
 
 import { session as matchState } from "../../../js/globals.js";
@@ -53,7 +51,7 @@ import {
 } from "../teams/roster-data.js";
 import { sortPlayerIndexesByNumberForScope } from "../teams/lineup-selectors.js";
 
-export function publishReactAttackSummary(target, events, compareEvents = null) {
+export function publishReactAttackSummary(target, events, compareEvents = null, { groupBy = "attackType" } = {}) {
   if (!target) return;
 
   const list = Array.isArray(events) ? events.filter((ev) => ev && ev.skillId === "attack") : [];
@@ -78,7 +76,11 @@ export function publishReactAttackSummary(target, events, compareEvents = null) 
     for (const event of events) {
       const code = normalizeEvalCode(event.code || event.evaluation);
       if (code) counts[code] = (counts[code] || 0) + 1;
-      const type = buildAttackTypeLabel(event.attackType);
+      const rawSetType = normalizeSetTypeValue(event.setType || event.combination?.set_type || event.combination?.setType);
+      const setKey = rawSetType?.toLocaleLowerCase("it");
+      const type = groupBy === "setType"
+        ? (liveScoreAndSetState.DEFAULT_SET_TYPE_OPTIONS.find(option => option.value.toLocaleLowerCase("it") === setKey)?.label || (setKey ? setKey[0].toLocaleUpperCase("it") + setKey.slice(1) : "Non specificata"))
+        : buildAttackTypeLabel(event.attackType);
       const bucket = (byType[type] ||= emptyCounts());
       if (code) bucket[code] = (bucket[code] || 0) + 1;
     }
@@ -87,41 +89,22 @@ export function publishReactAttackSummary(target, events, compareEvents = null) 
   const main = count(list),
     other = count(compareList || []);
   const buildCells = (label, counts, comparison) => {
-    const total = totalFromCounts(counts),
-      otherTotal = totalFromCounts(comparison);
-    const points = countPointsForSkill(counts, "attack"),
-      otherPoints = countPointsForSkill(comparison, "attack");
-    const metrics = computeMetrics(counts, "attack"),
-      otherMetrics = computeMetrics(comparison, "attack");
-    return [
-      comparisonCell(label, null, "neutral"),
-      comparisonCell(total, otherTotal, "neutral"),
-      comparisonCell(counts["="] || 0, comparison["="] || 0, "lower"),
-      comparisonCell(counts["/"] || 0, comparison["/"] || 0, "lower"),
-      comparisonCell(points || 0, otherPoints || 0),
-      comparisonCell(
-        formatPercentValue(points || 0, total),
-        otherTotal ? (otherPoints || 0) / otherTotal : null,
-        "higher",
-        total ? (points || 0) / total : null,
-      ),
-      comparisonCell(
-        metrics.eff === null ? "-" : formatPercent(metrics.eff),
-        otherMetrics.eff,
-        "higher",
-        metrics.eff,
-      ),
-    ].map((cell) => {
+    const entries = buildSkillEntries("attack", counts);
+    const otherEntries = buildSkillEntries("attack", comparison);
+    return [comparisonCell(label, null, "neutral"), ...entries.map((entry, index) => {
+      const percent = ["Eff", "% Punti", "% Err"].includes(entry.label);
+      return comparisonCell(percent ? entry.text : entry.value, otherEntries[index].value, entry.better, entry.value);
+    })].map((cell, index) => {
       const value = Object.hasOwn(cell, "raw") ? cell.raw : cell.text;
       const comparable =
         compareList && value !== null && cell.compare !== null && value !== cell.compare;
       return {
         ...cell,
-        className: comparable
+        className: (index ? "skill-col skill-attack " : "") + (comparable
           ? (cell.better === "lower" ? value < cell.compare : value > cell.compare)
             ? "is-better"
             : "is-worse"
-          : "",
+          : ""),
       };
     });
   };
@@ -231,10 +214,12 @@ export function publishReactAttackGrid(target, events, far) {
 }
 
 export function publishReactGlobalAttackGrid() {
+  const summaryEvents = getFilteredAttackSummaryEvents();
   publishReactAttackSummary(
     "trajectory-attack-summary",
-    getFilteredAttackSummaryEvents(),
+    summaryEvents,
   );
+  publishReactAttackSummary("trajectory-set-type-summary", summaryEvents, null, { groupBy: "setType" });
   const scope = getAnalysisTeamScope(),
     far =
       getAnalysisCourtSide(

@@ -4,6 +4,7 @@ import { ScoutWidgetHandle } from "./ScoutWidgetHandle.jsx";
 import { useViewStore } from "../hooks/useViewStore.js";
 import { useLayoutEffect, useRef } from "react";
 import { analysisTableStore } from "../state/analysis-table-store.mjs";
+import { SKILL_COLUMNS } from "../domain/analysis-columns.js";
 function useView(id) {
   useViewStore(analysisTableStore);
   return analysisTableStore.getView(id);
@@ -102,7 +103,7 @@ export function TrajectoryGrid({ id, variant = "attack" }) {
     </div>
   );
 }
-export function AttackSummary({ id }) {
+export function AttackSummary({ id, groupLabel = "Tipo attacco" }) {
   const view = useView(id),
     rows = (items) =>
       items.map((row, index) => (
@@ -123,15 +124,7 @@ export function AttackSummary({ id }) {
           <table className="attack-analysis-type-table">
             <thead>
               <tr>
-                {[
-                  "Tipo attacco",
-                  "Tot",
-                  "Err",
-                  "Mur",
-                  "Punti",
-                  "% Punti",
-                  "Eff",
-                ].map((label) => (
+                {[groupLabel, ...SKILL_COLUMNS.find(skill => skill.id === "attack").columns].map((label) => (
                   <th key={label}>{label}</th>
                 ))}
               </tr>
