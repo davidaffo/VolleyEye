@@ -82,7 +82,7 @@ test('la cache dei grafici distingue i set esclusi', () => {
     getCurrentMatchKey: () => 'partita',
   });
   const currentSource = readCurrentFileSync(new URL('../src/features/analysis/skill-chart-model.js', import.meta.url), 'utf8');
-  vm.runInContext(sourceFunctions(currentSource, ['getSkillChartFiltersCacheToken']), context);
+  vm.runInContext(sourceFunctions(currentSource.replace('export function getSkillChartFiltersCacheToken', 'function getSkillChartFiltersCacheToken'), ['getSkillChartFiltersCacheToken']), context);
   const first = context.getSkillChartFiltersCacheToken('our');
   sets.excluded = new Set([3]);
   const second = context.getSkillChartFiltersCacheToken('our');
